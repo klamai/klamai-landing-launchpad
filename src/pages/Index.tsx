@@ -22,7 +22,7 @@ const Index = () => {
     
     // Encode the consultation text for URL
     const encodedConsultation = encodeURIComponent(consultation.trim());
-    const utmUrl = `https://bot.misitio.com/open-ai-assistant-chat-30pe3ns?utm_value=${encodedConsultation}`;
+    const utmUrl = `https://bot.autoiax.com/open-ai-assistant-chat-30pe3ns?utm_value=${encodedConsultation}`;
     
     // Simulate a brief loading state for better UX
     setTimeout(() => {
