@@ -71,44 +71,70 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Consultation Form */}
+          {/* Consultation Form - Enhanced */}
           <div className="max-w-2xl mx-auto mb-20">
-            <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/30 dark:border-gray-700/30">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-3">
-                  <label htmlFor="consultation" className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Describe tu caso legal aquí
-                  </label>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                    vitorIA, nuestro asistente especializado, te ayudará a resolver tu consulta
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 relative overflow-hidden">
+              {/* Animated background elements */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/20 animate-pulse"></div>
+              <div className="relative z-10">
+                {/* Call to action header */}
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mb-4 animate-bounce">
+                    <MessageCircle className="h-8 w-8 text-white" />
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    🚀 ¡Cuéntanos tu caso ahora!
+                  </h2>
+                  <p className="text-lg text-blue-600 dark:text-blue-400 font-semibold">
+                    vitorIA te responderá al instante
                   </p>
-                  <Textarea
-                    id="consultation"
-                    placeholder="Ejemplo: Necesito asesoramiento sobre un accidente de tráfico que tuve la semana pasada..."
-                    value={consultation}
-                    onChange={(e) => setConsultation(e.target.value)}
-                    className="min-h-32 text-base resize-none border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl font-medium"
-                    required
-                  />
                 </div>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || !consultation.trim()}
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-4 px-8 rounded-xl text-lg shadow-lg transform transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Conectando con vitorIA...
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="space-y-4">
+                    <label htmlFor="consultation" className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                      ✍️ Describe tu situación legal aquí
+                    </label>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border-l-4 border-blue-500">
+                      💡 <strong>Tip:</strong> Cuanto más detalles proporciones, mejor podrá ayudarte vitorIA
+                    </p>
+                    <div className="relative">
+                      <Textarea
+                        id="consultation"
+                        placeholder="Ejemplo: Tuve un accidente de tráfico la semana pasada y el otro conductor no tenía seguro. ¿Qué opciones legales tengo para recuperar los gastos médicos y reparaciones del vehículo?"
+                        value={consultation}
+                        onChange={(e) => setConsultation(e.target.value)}
+                        className="min-h-40 text-base resize-none border-2 border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl font-medium bg-white/80 dark:bg-gray-900/80 shadow-inner"
+                        required
+                      />
+                      <div className="absolute bottom-3 right-3 text-xs text-gray-400">
+                        {consultation.length}/500 caracteres
+                      </div>
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <MessageCircle className="h-5 w-5" />
-                      Hablar con vitorIA
-                    </div>
-                  )}
-                </Button>
-              </form>
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting || !consultation.trim()}
+                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-6 px-8 rounded-xl text-xl shadow-2xl transform transition-all duration-200 hover:scale-105 hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+                    {isSubmitting ? (
+                      <div className="flex items-center justify-center gap-3 relative z-10">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                        Conectando con vitorIA...
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-3 relative z-10">
+                        <MessageCircle className="h-6 w-6" />
+                        💬 Consultar con vitorIA GRATIS
+                      </div>
+                    )}
+                  </Button>
+                  <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
+                    🔒 Tu consulta es <strong>100% confidencial</strong> y sin compromiso
+                  </p>
+                </form>
+              </div>
             </div>
           </div>
 
@@ -146,11 +172,11 @@ const Index = () => {
             <div className="flex flex-wrap justify-center gap-8 text-lg font-medium">
               <div className="flex items-center gap-2">
                 <Phone className="h-5 w-5" />
-                <span>+34 XXX XXX XXX</span>
+                <span>632 018 899</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-5 w-5" />
-                <span>contacto@klamai.es</span>
+                <span>contacto@klamai.com</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
