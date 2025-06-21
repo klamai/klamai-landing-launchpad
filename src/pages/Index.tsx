@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { cn } from "@/lib/utils";
+
 const transitionVariants = {
   item: {
     hidden: {
@@ -23,16 +24,19 @@ const transitionVariants = {
     }
   }
 };
+
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -40,6 +44,7 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consultation.trim()) return;
@@ -50,6 +55,7 @@ const Index = () => {
       window.location.href = utmUrl;
     }, 500);
   };
+
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
@@ -130,7 +136,7 @@ const Index = () => {
                       </div>
                     </div>
                 
-                    <h1 className="mt-8 max-w-4xl mx-auto text-balance text-4xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
+                    <h1 className="mt-8 max-w-4xl mx-auto text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
                       Recibe asesoramiento jurídico
                       <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"> de especialistas</span>
                     </h1>
@@ -208,14 +214,14 @@ const Index = () => {
                                 </div>
                               </div>
                             </div>
-                            <Button type="submit" disabled={isSubmitting || !consultation.trim()} className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-6 px-8 rounded-xl text-xl shadow-2xl transform transition-all duration-200 hover:scale-105 hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden">
+                            <Button type="submit" disabled={isSubmitting || !consultation.trim()} className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-6 px-8 rounded-xl text-lg sm:text-xl shadow-2xl transform transition-all duration-200 hover:scale-105 hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden">
                               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                              {isSubmitting ? <div className="flex items-center justify-center gap-3 relative z-10">
-                                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                                  Conectando con vitorIA...
-                                </div> : <div className="flex items-center justify-center gap-3 relative z-10 my-0 rounded-none mx-0">
-                                  <MessageCircle className="h-6 w-6" />
-                                  💬 Consultar con vitorIA GRATIS
+                              {isSubmitting ? <div className="flex items-center justify-center gap-2 sm:gap-3 relative z-10">
+                                  <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-white"></div>
+                                  <span className="text-sm sm:text-base">Conectando con vitorIA...</span>
+                                </div> : <div className="flex items-center justify-center gap-2 sm:gap-3 relative z-10">
+                                  <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
+                                  <span className="text-sm sm:text-base">💬 Consultar con vitorIA GRATIS</span>
                                 </div>}
                             </Button>
                             <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
@@ -290,4 +296,5 @@ const Index = () => {
       </div>
     </div>;
 };
+
 export default Index;
