@@ -18,7 +18,7 @@ const transitionVariants = {
       filter: 'blur(0px)',
       y: 0,
       transition: {
-        type: 'spring',
+        type: 'spring' as const,
         bounce: 0.3,
         duration: 1.5,
       },
@@ -62,7 +62,7 @@ const Index = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
-      <div className="bg-gradient-to-br from-blue-100 via-sky-50 to-indigo-100 dark:from-gray-900 dark:via-blue-900 dark:to-gray-800 min-h-screen">
+      <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
         <header>
           <nav
@@ -170,7 +170,23 @@ const Index = () => {
                           },
                         },
                       },
-                      ...transitionVariants,
+                      item: {
+                        hidden: {
+                          opacity: 0,
+                          filter: 'blur(12px)',
+                          y: 12,
+                        },
+                        visible: {
+                          opacity: 1,
+                          filter: 'blur(0px)',
+                          y: 0,
+                          transition: {
+                            type: 'spring' as const,
+                            bounce: 0.3,
+                            duration: 1.5,
+                          },
+                        },
+                      },
                     }}
                     className="mt-12">
                     <div className="max-w-2xl mx-auto">
@@ -230,7 +246,7 @@ const Index = () => {
                               )}
                             </Button>
                             <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
-                              🔒 Tu consulta es <strong>100% confidencial</strong> y sin compromiso
+                              🔒 Tu consulta es <strong>100% confidential</strong> y sin compromiso
                             </p>
                           </form>
                         </div>
