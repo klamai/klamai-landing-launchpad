@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,7 @@ const Index = () => {
                       onClick={toggleDarkMode}
                       variant="outline"
                       size="icon"
-                      className="rounded-full bg-gray-900 border-gray-900 text-white hover:bg-gray-800 hover:border-gray-800 dark:bg-white dark:border-white dark:text-gray-900 dark:hover:bg-gray-200"
+                      className="rounded-full"
                     >
                       {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                     </Button>
@@ -99,20 +100,20 @@ const Index = () => {
                     onClick={toggleDarkMode}
                     variant="outline"
                     size="icon"
-                    className="rounded-full bg-gray-900 border-gray-900 text-white hover:bg-gray-800 hover:border-gray-800 dark:bg-white dark:border-white dark:text-gray-900 dark:hover:bg-gray-200"
+                    className="rounded-full"
                   >
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    className="bg-white text-gray-900 hover:bg-gray-50 border border-gray-300 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600"
+                    className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
                   >
                     Login
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                    className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
                   >
                     Sign Up
                   </Button>
@@ -122,15 +123,15 @@ const Index = () => {
                 <div className="bg-background group-data-[state=active]:block hidden w-full p-4 rounded-2xl border shadow-lg mt-4 lg:hidden">
                   <div className="flex flex-col gap-3 w-full">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="bg-white text-gray-900 hover:bg-gray-50 border border-gray-300 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600 w-full justify-center"
+                      className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center"
                     >
                       Login
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 w-full"
+                      className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 w-full"
                     >
                       Sign Up
                     </Button>
@@ -171,7 +172,7 @@ const Index = () => {
                       </div>
                     </div>
                 
-                    <h1 className="mt-8 max-w-4xl mx-auto text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl lg:mt-16 xl:text-[4.5rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
+                    <h1 className="mt-8 max-w-4xl mx-auto text-balance text-4xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
                       Recibe asesoramiento jurídico
                       <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"> de especialistas</span>
                     </h1>
