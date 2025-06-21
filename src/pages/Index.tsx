@@ -141,7 +141,7 @@ const Index = () => {
                       <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"> de especialistas</span>
                     </h1>
                     <p className="mx-auto mt-8 max-w-2xl text-balance text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
-                      Resuelve tus consultas legales con <span className="font-semibold text-blue-700 dark:text-blue-300">vitorIA</span>, nuestro asistente inteligente, y conecta con abogados especialistas. Rápido, seguro y eficiente.
+                      Resuelve tus consultas legales con <span className="font-semibold text-blue-700 dark:text-blue-300">VitorIA</span>, nuestro asistente inteligente, y conecta con abogados especialistas. Rápido, seguro y eficiente.
                     </p>
                     <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400 font-medium mt-6">
                       <div className="flex items-center gap-2">
@@ -195,7 +195,7 @@ const Index = () => {
                               🚀 ¡Cuéntanos tu caso ahora!
                             </h2>
                             <p className="text-lg text-blue-600 dark:text-blue-400 font-semibold">
-                              vitorIA te responderá al instante
+                              VitorIA te responderá al instante
                             </p>
                           </div>
 
@@ -205,10 +205,10 @@ const Index = () => {
                                 ✍️ Describe tu situación legal aquí
                               </label>
                               <p className="text-sm text-gray-600 dark:text-gray-400 font-medium bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border-l-4 border-blue-500">
-                                💡 <strong>Tip:</strong> Cuanto más detalles proporciones, mejor podrá ayudarte vitorIA
+                                💡 <strong>Tip:</strong> Cuanto más detalles proporciones, mejor podrá ayudarte VitorIA
                               </p>
                               <div className="relative">
-                                <Textarea id="consultation" placeholder="Ejemplo: Tuve un accidente de tráfico la semana pasada y el otro conductor no tenía seguro. ¿Qué opciones legales tengo para recuperar los gastos médicos y reparaciones del vehículo?" value={consultation} onChange={e => setConsultation(e.target.value)} className="min-h-40 text-base resize-none border-2 border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl font-medium bg-white/80 dark:bg-gray-900/80 shadow-inner" required />
+                                <Textarea id="consultation" placeholder="Ejemplo: Tuve un accidente de tráfico la semana pasada y el otro conductor no tenía seguro. Qué opciones legales tengo para recuperar los gastos médicos y reparaciones" value={consultation} onChange={e => setConsultation(e.target.value)} className="min-h-40 text-base resize-none border-2 border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl font-medium bg-white/80 dark:bg-gray-900/80 shadow-inner dark:placeholder:text-opacity-30 placeholder:text-opacity-30 placeholder:text-gray-500 dark:placeholder:text-gray-400" required />
                                 <div className="absolute bottom-3 right-3 text-xs text-gray-400">
                                   {consultation.length}/500 caracteres
                                 </div>
@@ -218,10 +218,10 @@ const Index = () => {
                               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
                               {isSubmitting ? <div className="flex items-center justify-center gap-2 sm:gap-3 relative z-10">
                                   <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-white"></div>
-                                  <span className="text-sm sm:text-base">Conectando con vitorIA...</span>
+                                  <span className="text-sm sm:text-base">Conectando con VitorIA...</span>
                                 </div> : <div className="flex items-center justify-center gap-2 sm:gap-3 relative z-10">
                                   <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
-                                  <span className="text-sm sm:text-base">💬 Consultar con vitorIA GRATIS</span>
+                                  <span className="text-sm sm:text-base">Consultar con VitorIA GRATIS</span>
                                 </div>}
                             </Button>
                             <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
