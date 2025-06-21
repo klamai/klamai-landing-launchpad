@@ -1,17 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { cn } from "@/lib/utils";
-
 const transitionVariants = {
   item: {
     hidden: {
       opacity: 0,
       filter: 'blur(12px)',
-      y: 12,
+      y: 12
     },
     visible: {
       opacity: 1,
@@ -20,54 +18,43 @@ const transitionVariants = {
       transition: {
         type: 'spring' as const,
         bounce: 0.3,
-        duration: 1.5,
-      },
-    },
-  },
-}
-
+        duration: 1.5
+      }
+    }
+  }
+};
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
-
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consultation.trim()) return;
-
     setIsSubmitting(true);
-    
     const encodedConsultation = encodeURIComponent(consultation.trim());
     const utmUrl = `https://bot.autoiax.com/open-ai-assistant-chat-30pe3ns?utm_value=${encodedConsultation}`;
-    
     setTimeout(() => {
       window.location.href = utmUrl;
     }, 500);
   };
-
-  return (
-    <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
+  return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
         <header>
-          <nav
-            data-state={menuState && 'active'}
-            className="fixed z-20 w-full px-2 group">
+          <nav data-state={menuState && 'active'} className="fixed z-20 w-full px-2 group">
             <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-white/80 dark:bg-gray-800/80 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
               <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
                 <div className="flex w-full justify-between lg:w-auto">
@@ -77,18 +64,10 @@ const Index = () => {
                   </div>
 
                   <div className="flex items-center gap-4 lg:hidden">
-                    <Button
-                      onClick={toggleDarkMode}
-                      variant="outline"
-                      size="icon"
-                      className="rounded-full"
-                    >
+                    <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
                       {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                     </Button>
-                    <button
-                      onClick={() => setMenuState(!menuState)}
-                      aria-label={menuState == true ? 'Close Menu' : 'Open Menu'}
-                      className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5">
+                    <button onClick={() => setMenuState(!menuState)} aria-label={menuState == true ? 'Close Menu' : 'Open Menu'} className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5">
                       <Menu className="group-data-[state=active]:rotate-180 group-data-[state=active]:scale-0 group-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
                       <X className="group-data-[state=active]:rotate-0 group-data-[state=active]:scale-100 group-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
                     </button>
@@ -96,25 +75,13 @@ const Index = () => {
                 </div>
 
                 <div className="hidden lg:flex items-center gap-4">
-                  <Button
-                    onClick={toggleDarkMode}
-                    variant="outline"
-                    size="icon"
-                    className="rounded-full"
-                  >
+                  <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
-                  >
+                  <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700">
                     Login
                   </Button>
-                  <Button
-                    size="sm"
-                    className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
-                  >
+                  <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
                     Sign Up
                   </Button>
                 </div>
@@ -122,17 +89,10 @@ const Index = () => {
                 {/* Mobile menu */}
                 <div className="bg-background group-data-[state=active]:block hidden w-full p-4 rounded-2xl border shadow-lg mt-4 lg:hidden">
                   <div className="flex flex-col gap-3 w-full">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center"
-                    >
+                    <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center">
                       Login
                     </Button>
-                    <Button
-                      size="sm"
-                      className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 w-full"
-                    >
+                    <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 w-full">
                       Sign Up
                     </Button>
                   </div>
@@ -144,9 +104,7 @@ const Index = () => {
 
         {/* Hero Section */}
         <main className="overflow-hidden">
-          <div
-            aria-hidden
-            className="z-[2] absolute inset-0 pointer-events-none isolate opacity-50 contain-strict hidden lg:block">
+          <div aria-hidden className="z-[2] absolute inset-0 pointer-events-none isolate opacity-50 contain-strict hidden lg:block">
             <div className="w-[35rem] h-[80rem] -translate-y-[350px] absolute left-0 top-0 -rotate-45 rounded-full bg-[radial-gradient(68.54%_68.72%_at_55.02%_31.46%,hsla(220,84%,65%,.08)_0,hsla(220,84%,55%,.02)_50%,hsla(220,84%,45%,0)_80%)]" />
             <div className="h-[80rem] absolute left-0 top-0 w-56 -rotate-45 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(220,84%,65%,.06)_0,hsla(220,84%,45%,.02)_80%,transparent_100%)] [translate:5%_-50%]" />
           </div>
@@ -192,35 +150,33 @@ const Index = () => {
                   </AnimatedGroup>
 
                   {/* Consultation Form */}
-                  <AnimatedGroup
-                    variants={{
-                      container: {
-                        visible: {
-                          transition: {
-                            staggerChildren: 0.05,
-                            delayChildren: 0.75,
-                          },
-                        },
-                      },
-                      item: {
-                        hidden: {
-                          opacity: 0,
-                          filter: 'blur(12px)',
-                          y: 12,
-                        },
-                        visible: {
-                          opacity: 1,
-                          filter: 'blur(0px)',
-                          y: 0,
-                          transition: {
-                            type: 'spring' as const,
-                            bounce: 0.3,
-                            duration: 1.5,
-                          },
-                        },
-                      },
-                    }}
-                    className="mt-12">
+                  <AnimatedGroup variants={{
+                  container: {
+                    visible: {
+                      transition: {
+                        staggerChildren: 0.05,
+                        delayChildren: 0.75
+                      }
+                    }
+                  },
+                  item: {
+                    hidden: {
+                      opacity: 0,
+                      filter: 'blur(12px)',
+                      y: 12
+                    },
+                    visible: {
+                      opacity: 1,
+                      filter: 'blur(0px)',
+                      y: 0,
+                      transition: {
+                        type: 'spring' as const,
+                        bounce: 0.3,
+                        duration: 1.5
+                      }
+                    }
+                  }
+                }} className="mt-12">
                     <div className="max-w-2xl mx-auto">
                       <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 relative overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/20 animate-pulse"></div>
@@ -246,36 +202,21 @@ const Index = () => {
                                 💡 <strong>Tip:</strong> Cuanto más detalles proporciones, mejor podrá ayudarte vitorIA
                               </p>
                               <div className="relative">
-                                <Textarea
-                                  id="consultation"
-                                  placeholder="Ejemplo: Tuve un accidente de tráfico la semana pasada y el otro conductor no tenía seguro. ¿Qué opciones legales tengo para recuperar los gastos médicos y reparaciones del vehículo?"
-                                  value={consultation}
-                                  onChange={(e) => setConsultation(e.target.value)}
-                                  className="min-h-40 text-base resize-none border-2 border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl font-medium bg-white/80 dark:bg-gray-900/80 shadow-inner"
-                                  required
-                                />
+                                <Textarea id="consultation" placeholder="Ejemplo: Tuve un accidente de tráfico la semana pasada y el otro conductor no tenía seguro. ¿Qué opciones legales tengo para recuperar los gastos médicos y reparaciones del vehículo?" value={consultation} onChange={e => setConsultation(e.target.value)} className="min-h-40 text-base resize-none border-2 border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl font-medium bg-white/80 dark:bg-gray-900/80 shadow-inner" required />
                                 <div className="absolute bottom-3 right-3 text-xs text-gray-400">
                                   {consultation.length}/500 caracteres
                                 </div>
                               </div>
                             </div>
-                            <Button
-                              type="submit"
-                              disabled={isSubmitting || !consultation.trim()}
-                              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-6 px-8 rounded-xl text-xl shadow-2xl transform transition-all duration-200 hover:scale-105 hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden"
-                            >
+                            <Button type="submit" disabled={isSubmitting || !consultation.trim()} className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-6 px-8 rounded-xl text-xl shadow-2xl transform transition-all duration-200 hover:scale-105 hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden">
                               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                              {isSubmitting ? (
-                                <div className="flex items-center justify-center gap-3 relative z-10">
+                              {isSubmitting ? <div className="flex items-center justify-center gap-3 relative z-10">
                                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
                                   Conectando con vitorIA...
-                                </div>
-                              ) : (
-                                <div className="flex items-center justify-center gap-3 relative z-10">
+                                </div> : <div className="flex items-center justify-center gap-3 relative z-10 my-0 rounded-none mx-[5px]">
                                   <MessageCircle className="h-6 w-6" />
                                   💬 Consultar con vitorIA GRATIS
-                                </div>
-                              )}
+                                </div>}
                             </Button>
                             <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
                               🔒 Tu consulta es <strong>100% confidential</strong> y sin compromiso
@@ -347,8 +288,6 @@ const Index = () => {
           <p>&copy; 2024 klamAI. Todos los derechos reservados. | Asesoramiento jurídico con IA en España</p>
         </footer>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
