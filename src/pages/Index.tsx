@@ -120,18 +120,18 @@ const Index = () => {
                 </div>
 
                 {/* Mobile menu */}
-                <div className="bg-background group-data-[state=active]:block lg:group-data-[state=active]:hidden mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:hidden lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
-                  <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+                <div className="bg-background group-data-[state=active]:block hidden w-full p-4 rounded-2xl border shadow-lg mt-4 lg:hidden">
+                  <div className="flex flex-col gap-3 w-full">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                      className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white w-full justify-center"
                     >
                       Login
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300"
+                      className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 w-full"
                     >
                       Sign Up
                     </Button>
