@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -106,13 +107,13 @@ const Index = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
                   >
                     Login
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300"
+                    className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
                   >
                     Sign Up
                   </Button>
@@ -124,13 +125,13 @@ const Index = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white w-full justify-center"
+                      className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center"
                     >
                       Login
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 w-full"
+                      className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 w-full"
                     >
                       Sign Up
                     </Button>
