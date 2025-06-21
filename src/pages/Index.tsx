@@ -213,7 +213,7 @@ const Index = () => {
                               {isSubmitting ? <div className="flex items-center justify-center gap-3 relative z-10">
                                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
                                   Conectando con vitorIA...
-                                </div> : <div className="flex items-center justify-center gap-3 relative z-10 my-0 rounded-none mx-[5px]">
+                                </div> : <div className="flex items-center justify-center gap-3 relative z-10 my-0 rounded-none mx-0">
                                   <MessageCircle className="h-6 w-6" />
                                   💬 Consultar con vitorIA GRATIS
                                 </div>}
