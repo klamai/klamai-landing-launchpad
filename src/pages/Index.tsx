@@ -95,7 +95,7 @@ const Index = () => {
                   </div>
                 </div>
 
-                <div className="hidden lg:block">
+                <div className="hidden lg:flex items-center gap-4">
                   <Button
                     onClick={toggleDarkMode}
                     variant="outline"
@@ -104,6 +104,38 @@ const Index = () => {
                   >
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300"
+                  >
+                    Sign Up
+                  </Button>
+                </div>
+
+                {/* Mobile menu */}
+                <div className="bg-background group-data-[state=active]:block lg:group-data-[state=active]:hidden mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:hidden lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
+                  <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    >
+                      Login
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300"
+                    >
+                      Sign Up
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
