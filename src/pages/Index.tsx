@@ -58,6 +58,11 @@ const Index = () => {
     }, 500);
   };
 
+  const handleLogoClick = () => {
+    // If already on home page, scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
@@ -66,10 +71,13 @@ const Index = () => {
             <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-white/80 dark:bg-gray-800/80 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
               <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
                 <div className="flex w-full justify-between lg:w-auto">
-                  <div className="flex items-center space-x-3">
+                  <button 
+                    onClick={handleLogoClick}
+                    className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
+                  >
                     <Scale className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                     <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">klamAI</span>
-                  </div>
+                  </button>
 
                   <div className="flex items-center gap-4 lg:hidden">
                     <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
