@@ -7,7 +7,6 @@ import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-
 const transitionVariants = {
   item: {
     hidden: {
@@ -27,7 +26,6 @@ const transitionVariants = {
     }
   }
 };
-
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
@@ -35,12 +33,10 @@ const Index = () => {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
-
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
-
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -48,50 +44,45 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consultation.trim()) return;
     setIsSubmitting(true);
-    
+
     // Redirect to chat page instead of external URL
     setTimeout(() => {
       navigate('/chat');
     }, 500);
   };
-
   const handleLogoClick = () => {
     // If already on home page, scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
-
-  const testimonials = [
-    {
-      name: "Laura P.",
-      role: "Cliente",
-      company: "Valencia",
-      rating: 5,
-      image: "https://i.pravatar.cc/150?u=laura",
-      testimonial: "VitorIA me ayudó a resolver mi consulta laboral en minutos. Luego me conectaron con la abogada perfecta para mi caso. ¡Increíble servicio!"
-    },
-    {
-      name: "Miguel R.",
-      role: "Cliente",
-      company: "Madrid",
-      rating: 5,
-      image: "https://i.pravatar.cc/150?u=miguel",
-      testimonial: "Excelente atención. Resolvieron mi problema de herencia de forma rápida y profesional. Totalmente recomendable."
-    },
-    {
-      name: "Carmen S.",
-      role: "Cliente",
-      company: "Barcelona",
-      rating: 5,
-      image: "https://i.pravatar.cc/150?u=carmen",
-      testimonial: "La IA es impresionante, me dio consejos muy útiles al instante. El equipo humano también fue excepcional."
-    }
-  ];
-
+  const testimonials = [{
+    name: "Laura P.",
+    role: "Cliente",
+    company: "Valencia",
+    rating: 5,
+    image: "https://i.pravatar.cc/150?u=laura",
+    testimonial: "VitorIA me ayudó a resolver mi consulta laboral en minutos. Luego me conectaron con la abogada perfecta para mi caso. ¡Increíble servicio!"
+  }, {
+    name: "Miguel R.",
+    role: "Cliente",
+    company: "Madrid",
+    rating: 5,
+    image: "https://i.pravatar.cc/150?u=miguel",
+    testimonial: "Excelente atención. Resolvieron mi problema de herencia de forma rápida y profesional. Totalmente recomendable."
+  }, {
+    name: "Carmen S.",
+    role: "Cliente",
+    company: "Barcelona",
+    rating: 5,
+    image: "https://i.pravatar.cc/150?u=carmen",
+    testimonial: "La IA es impresionante, me dio consejos muy útiles al instante. El equipo humano también fue excepcional."
+  }];
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
@@ -100,10 +91,7 @@ const Index = () => {
             <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-white/80 dark:bg-gray-800/80 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
               <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
                 <div className="flex w-full justify-between lg:w-auto">
-                  <button 
-                    onClick={handleLogoClick}
-                    className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
-                  >
+                  <button onClick={handleLogoClick} className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer">
                     <Scale className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                     <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">klamAI</span>
                   </button>
@@ -388,9 +376,7 @@ const Index = () => {
                 </div>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                  {testimonials.map((testimonial) => (
-                    <Testimonial key={testimonial.name} {...testimonial} />
-                  ))}
+                  {testimonials.map(testimonial => <Testimonial key={testimonial.name} className="bg-slate-800" />)}
                 </div>
               </section>
 
@@ -424,5 +410,4 @@ const Index = () => {
       </div>
     </div>;
 };
-
 export default Index;
