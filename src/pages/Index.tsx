@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 const transitionVariants = {
   item: {
@@ -31,6 +32,7 @@ const Index = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate();
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -49,10 +51,10 @@ const Index = () => {
     e.preventDefault();
     if (!consultation.trim()) return;
     setIsSubmitting(true);
-    const encodedConsultation = encodeURIComponent(consultation.trim());
-    const utmUrl = `https://bot.autoiax.com/open-ai-assistant-chat-30pe3ns?utm_value=${encodedConsultation}`;
+    
+    // Simulate a brief loading state before redirecting
     setTimeout(() => {
-      window.location.href = utmUrl;
+      navigate('/chat');
     }, 500);
   };
 
@@ -218,10 +220,10 @@ const Index = () => {
                               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
                               {isSubmitting ? <div className="flex items-center justify-center gap-2 sm:gap-3 relative z-10">
                                   <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-white"></div>
-                                  <span className="text-sm sm:text-base">Conectando con VitorIA...</span>
+                                  <span className="text-base sm:text-lg">Conectando con VitorIA...</span>
                                 </div> : <div className="flex items-center justify-center gap-2 sm:gap-3 relative z-10">
                                   <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
-                                  <span className="text-sm sm:text-base">Consultar con VitorIA GRATIS</span>
+                                  <span className="text-base sm:text-lg">Consultar con VitorIA GRATIS</span>
                                 </div>}
                             </Button>
                             <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
