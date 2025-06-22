@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
-import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X } from "lucide-react";
+import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X, Star, Quote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -275,6 +277,145 @@ const Index = () => {
                   <p className="text-gray-600 dark:text-gray-300 font-medium">Nuestro equipo de abogados especialistas está disponible para resolver tus consultas más complejas.</p>
                 </div>
               </div>
+
+              {/* Lawyers Section */}
+              <section className="py-16">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    Nuestro Equipo de Especialistas
+                  </h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                    Abogados expertos en todas las áreas del derecho, listos para ayudarte
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-8 mb-16">
+                  <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+                    <CardHeader className="text-center">
+                      <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                        <Users className="h-12 w-12 text-white" />
+                      </div>
+                      <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
+                        María González
+                      </CardTitle>
+                      <p className="text-blue-600 dark:text-blue-400 font-semibold">
+                        Derecho Laboral
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-600 dark:text-gray-300 text-center">
+                        15+ años de experiencia en casos laborales. Especialista en despidos improcedentes y acoso laboral.
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+                    <CardHeader className="text-center">
+                      <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                        <Scale className="h-12 w-12 text-white" />
+                      </div>
+                      <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
+                        Carlos Rodríguez
+                      </CardTitle>
+                      <p className="text-green-600 dark:text-green-400 font-semibold">
+                        Derecho Civil
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-600 dark:text-gray-300 text-center">
+                        Experto en contratos, herencias y derecho inmobiliario. Más de 12 años resolviendo conflictos civiles.
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+                    <CardHeader className="text-center">
+                      <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <Shield className="h-12 w-12 text-white" />
+                      </div>
+                      <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
+                        Ana Martínez
+                      </CardTitle>
+                      <p className="text-purple-600 dark:text-purple-400 font-semibold">
+                        Derecho Penal
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-600 dark:text-gray-300 text-center">
+                        Defensora experimentada en casos penales. Especializada en delitos económicos y violencia de género.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </section>
+
+              {/* Satisfied Clients Section */}
+              <section className="py-16">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    Lo Que Dicen Nuestros Clientes
+                  </h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                    Testimonios reales de personas que han confiado en nosotros
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+                  <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-white/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300">
+                    <CardContent className="p-6">
+                      <div className="flex items-center mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                        ))}
+                      </div>
+                      <Quote className="h-8 w-8 text-blue-500 mb-4" />
+                      <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
+                        "VitorIA me ayudó a resolver mi consulta laboral en minutos. Luego me conectaron con la abogada perfecta para mi caso. ¡Increíble servicio!"
+                      </p>
+                      <div className="border-t pt-4">
+                        <p className="font-semibold text-gray-900 dark:text-white">Laura P.</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Valencia</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-white/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300">
+                    <CardContent className="p-6">
+                      <div className="flex items-center mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                        ))}
+                      </div>
+                      <Quote className="h-8 w-8 text-green-500 mb-4" />
+                      <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
+                        "Excelente atención. Resolvieron mi problema de herencia de forma rápida y profesional. Totalmente recomendable."
+                      </p>
+                      <div className="border-t pt-4">
+                        <p className="font-semibold text-gray-900 dark:text-white">Miguel R.</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Madrid</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-white/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300">
+                    <CardContent className="p-6">
+                      <div className="flex items-center mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                        ))}
+                      </div>
+                      <Quote className="h-8 w-8 text-purple-500 mb-4" />
+                      <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
+                        "La IA es impresionante, me dio consejos muy útiles al instante. El equipo humano también fue excepcional."
+                      </p>
+                      <div className="border-t pt-4">
+                        <p className="font-semibold text-gray-900 dark:text-white">Carmen S.</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Barcelona</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </section>
 
               {/* Contact Section */}
               <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-3xl p-8 md:p-12 text-white text-center">
