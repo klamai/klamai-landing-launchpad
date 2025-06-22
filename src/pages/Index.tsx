@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 const transitionVariants = {
   item: {
@@ -31,6 +32,7 @@ const Index = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate();
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -49,10 +51,10 @@ const Index = () => {
     e.preventDefault();
     if (!consultation.trim()) return;
     setIsSubmitting(true);
-    const encodedConsultation = encodeURIComponent(consultation.trim());
-    const utmUrl = `https://bot.autoiax.com/open-ai-assistant-chat-30pe3ns?utm_value=${encodedConsultation}`;
+    
+    // Redirect to chat page instead of external URL
     setTimeout(() => {
-      window.location.href = utmUrl;
+      navigate('/chat');
     }, 500);
   };
 
