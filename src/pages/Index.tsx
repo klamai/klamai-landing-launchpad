@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X, Star, Quote } from "lucide-react";
+import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedGroup } from "@/components/ui/animated-group";
-import { Testimonial } from "@/components/ui/testimonial-card";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+
 const transitionVariants = {
   item: {
     hidden: {
@@ -26,6 +25,7 @@ const transitionVariants = {
     }
   }
 };
+
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
@@ -33,10 +33,12 @@ const Index = () => {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -44,45 +46,23 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consultation.trim()) return;
     setIsSubmitting(true);
-
+    
     // Redirect to chat page instead of external URL
     setTimeout(() => {
       navigate('/chat');
     }, 500);
   };
+
   const handleLogoClick = () => {
     // If already on home page, scroll to top
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  const testimonials = [{
-    name: "Laura P.",
-    role: "Cliente",
-    company: "Valencia",
-    rating: 5,
-    image: "https://i.pravatar.cc/150?u=laura",
-    testimonial: "VitorIA me ayudó a resolver mi consulta laboral en minutos. Luego me conectaron con la abogada perfecta para mi caso. ¡Increíble servicio!"
-  }, {
-    name: "Miguel R.",
-    role: "Cliente",
-    company: "Madrid",
-    rating: 5,
-    image: "https://i.pravatar.cc/150?u=miguel",
-    testimonial: "Excelente atención. Resolvieron mi problema de herencia de forma rápida y profesional. Totalmente recomendable."
-  }, {
-    name: "Carmen S.",
-    role: "Cliente",
-    company: "Barcelona",
-    rating: 5,
-    image: "https://i.pravatar.cc/150?u=carmen",
-    testimonial: "La IA es impresionante, me dio consejos muy útiles al instante. El equipo humano también fue excepcional."
-  }];
+
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
@@ -91,7 +71,10 @@ const Index = () => {
             <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-white/80 dark:bg-gray-800/80 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
               <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
                 <div className="flex w-full justify-between lg:w-auto">
-                  <button onClick={handleLogoClick} className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer">
+                  <button 
+                    onClick={handleLogoClick}
+                    className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
+                  >
                     <Scale className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                     <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">klamAI</span>
                   </button>
@@ -293,93 +276,6 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Lawyers Section */}
-              <section className="py-16">
-                <div className="text-center mb-12">
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                    Nuestro Equipo de Especialistas
-                  </h2>
-                  <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                    Abogados expertos en todas las áreas del derecho, listos para ayudarte
-                  </p>
-                </div>
-
-                <div className="grid md:grid-cols-3 gap-8 mb-16">
-                  <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                    <CardHeader className="text-center">
-                      <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                        <Users className="h-12 w-12 text-white" />
-                      </div>
-                      <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
-                        María González
-                      </CardTitle>
-                      <p className="text-blue-600 dark:text-blue-400 font-semibold">
-                        Derecho Laboral
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 dark:text-gray-300 text-center">
-                        15+ años de experiencia en casos laborales. Especialista en despidos improcedentes y acoso laboral.
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                    <CardHeader className="text-center">
-                      <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                        <Scale className="h-12 w-12 text-white" />
-                      </div>
-                      <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
-                        Carlos Rodríguez
-                      </CardTitle>
-                      <p className="text-green-600 dark:text-green-400 font-semibold">
-                        Derecho Civil
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 dark:text-gray-300 text-center">
-                        Experto en contratos, herencias y derecho inmobiliario. Más de 12 años resolviendo conflictos civiles.
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                    <CardHeader className="text-center">
-                      <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                        <Shield className="h-12 w-12 text-white" />
-                      </div>
-                      <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
-                        Ana Martínez
-                      </CardTitle>
-                      <p className="text-purple-600 dark:text-purple-400 font-semibold">
-                        Derecho Penal
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 dark:text-gray-300 text-center">
-                        Defensora experimentada en casos penales. Especializada en delitos económicos y violencia de género.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </section>
-
-              {/* Satisfied Clients Section */}
-              <section className="py-16">
-                <div className="text-center mb-12">
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                    Lo Que Dicen Nuestros Clientes
-                  </h2>
-                  <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                    Testimonios reales de personas que han confiado en nosotros
-                  </p>
-                </div>
-
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                  {testimonials.map(testimonial => <Testimonial key={testimonial.name} className="bg-slate-800" />)}
-                </div>
-              </section>
-
               {/* Contact Section */}
               <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-3xl p-8 md:p-12 text-white text-center">
                 <h2 className="text-3xl md:text-4xl font-bold mb-6">¿Necesitas contacto directo?</h2>
@@ -410,4 +306,5 @@ const Index = () => {
       </div>
     </div>;
 };
+
 export default Index;
