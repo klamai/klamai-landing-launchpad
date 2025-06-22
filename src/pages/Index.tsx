@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X, Star, Quote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedGroup } from "@/components/ui/animated-group";
+import { Testimonial } from "@/components/ui/testimonial-card";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
@@ -64,6 +64,33 @@ const Index = () => {
     // If already on home page, scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const testimonials = [
+    {
+      name: "Laura P.",
+      role: "Cliente",
+      company: "Valencia",
+      rating: 5,
+      image: "https://i.pravatar.cc/150?u=laura",
+      testimonial: "VitorIA me ayudó a resolver mi consulta laboral en minutos. Luego me conectaron con la abogada perfecta para mi caso. ¡Increíble servicio!"
+    },
+    {
+      name: "Miguel R.",
+      role: "Cliente",
+      company: "Madrid",
+      rating: 5,
+      image: "https://i.pravatar.cc/150?u=miguel",
+      testimonial: "Excelente atención. Resolvieron mi problema de herencia de forma rápida y profesional. Totalmente recomendable."
+    },
+    {
+      name: "Carmen S.",
+      role: "Cliente",
+      company: "Barcelona",
+      rating: 5,
+      image: "https://i.pravatar.cc/150?u=carmen",
+      testimonial: "La IA es impresionante, me dio consejos muy útiles al instante. El equipo humano también fue excepcional."
+    }
+  ];
 
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
@@ -361,59 +388,9 @@ const Index = () => {
                 </div>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                  <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-white/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300">
-                    <CardContent className="p-6">
-                      <div className="flex items-center mb-4">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                        ))}
-                      </div>
-                      <Quote className="h-8 w-8 text-blue-500 mb-4" />
-                      <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
-                        "VitorIA me ayudó a resolver mi consulta laboral en minutos. Luego me conectaron con la abogada perfecta para mi caso. ¡Increíble servicio!"
-                      </p>
-                      <div className="border-t pt-4">
-                        <p className="font-semibold text-gray-900 dark:text-white">Laura P.</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Valencia</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-white/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300">
-                    <CardContent className="p-6">
-                      <div className="flex items-center mb-4">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                        ))}
-                      </div>
-                      <Quote className="h-8 w-8 text-green-500 mb-4" />
-                      <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
-                        "Excelente atención. Resolvieron mi problema de herencia de forma rápida y profesional. Totalmente recomendable."
-                      </p>
-                      <div className="border-t pt-4">
-                        <p className="font-semibold text-gray-900 dark:text-white">Miguel R.</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Madrid</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-white/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300">
-                    <CardContent className="p-6">
-                      <div className="flex items-center mb-4">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                        ))}
-                      </div>
-                      <Quote className="h-8 w-8 text-purple-500 mb-4" />
-                      <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
-                        "La IA es impresionante, me dio consejos muy útiles al instante. El equipo humano también fue excepcional."
-                      </p>
-                      <div className="border-t pt-4">
-                        <p className="font-semibold text-gray-900 dark:text-white">Carmen S.</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Barcelona</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  {testimonials.map((testimonial) => (
+                    <Testimonial key={testimonial.name} {...testimonial} />
+                  ))}
                 </div>
               </section>
 
