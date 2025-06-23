@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,7 +53,10 @@ const Index = () => {
     if (!consultation.trim()) return;
     setIsSubmitting(true);
     
-    // Redirect to chat page instead of external URL
+    // Guardar el texto de consulta en localStorage antes de redirigir
+    localStorage.setItem('userConsultation', consultation.trim());
+    
+    // Redirect to chat page
     setTimeout(() => {
       navigate('/chat');
     }, 500);

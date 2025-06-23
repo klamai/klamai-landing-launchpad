@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ const Chat = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [userConsultation, setUserConsultation] = useState("");
   const navigate = useNavigate();
 
   const toggleDarkMode = () => {
@@ -22,6 +24,16 @@ const Chat = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    // Obtener el texto de consulta guardado en localStorage
+    const savedConsultation = localStorage.getItem('userConsultation');
+    if (savedConsultation) {
+      setUserConsultation(savedConsultation);
+      // Opcional: limpiar el localStorage después de usarlo
+      localStorage.removeItem('userConsultation');
+    }
   }, []);
 
   const handleLogoClick = () => {
@@ -92,6 +104,9 @@ const Chat = () => {
               typebot="open-ai-assistant-chat-30pe3ns"
               apiHost="https://bot.autoiax.com"
               style={{ width: "100%", height: "100%" }}
+              prefilledVariables={{
+                "utm_value": userConsultation || "Hola, necesito asesoramiento legal"
+              }}
             />
           </div>
         </main>
