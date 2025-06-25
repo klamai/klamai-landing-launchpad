@@ -11,8 +11,8 @@ const transitionVariants = {
   item: {
     hidden: {
       opacity: 0,
-      filter: 'blur(12px)',
-      y: 12
+      filter: 'blur(6px)',
+      y: 8
     },
     visible: {
       opacity: 1,
@@ -20,8 +20,8 @@ const transitionVariants = {
       y: 0,
       transition: {
         type: 'spring' as const,
-        bounce: 0.3,
-        duration: 1.5
+        bounce: 0.2,
+        duration: 0.8
       }
     }
   }
@@ -134,7 +134,17 @@ const Index = () => {
               <div aria-hidden className="absolute inset-0 -z-10 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--background)_75%)]" />
               <div className="mx-auto max-w-7xl px-6">
                 <div className="text-center sm:mx-auto lg:mr-auto lg:mt-0">
-                  <AnimatedGroup variants={transitionVariants}>
+                  <AnimatedGroup variants={{
+                    container: {
+                      visible: {
+                        transition: {
+                          staggerChildren: 0.1,
+                          delayChildren: 0.1
+                        }
+                      }
+                    },
+                    item: transitionVariants.item
+                  }}>
                     <div className="hover:bg-background dark:hover:border-t-border bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-black/5 transition-all duration-300 dark:border-t-white/5 dark:shadow-zinc-950">
                       <span className="text-foreground text-sm">🚀 Tecnología IA Avanzada para Asesoramiento Legal</span>
                       <span className="dark:border-background block h-4 w-0.5 border-l bg-white dark:bg-zinc-700"></span>
@@ -175,15 +185,15 @@ const Index = () => {
                     visible: {
                       transition: {
                         staggerChildren: 0.05,
-                        delayChildren: 0.75
+                        delayChildren: 0.3
                       }
                     }
                   },
                   item: {
                     hidden: {
                       opacity: 0,
-                      filter: 'blur(12px)',
-                      y: 12
+                      filter: 'blur(6px)',
+                      y: 8
                     },
                     visible: {
                       opacity: 1,
@@ -191,8 +201,8 @@ const Index = () => {
                       y: 0,
                       transition: {
                         type: 'spring' as const,
-                        bounce: 0.3,
-                        duration: 1.5
+                        bounce: 0.2,
+                        duration: 0.8
                       }
                     }
                   }
