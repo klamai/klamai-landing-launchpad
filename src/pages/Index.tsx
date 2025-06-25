@@ -27,19 +27,20 @@ const transitionVariants = {
   }
 };
 
-// Mobile-optimized variants with faster animations
+// Mobile-optimized variants without blur effects to prevent blurry text
 const mobileTransitionVariants = {
   item: {
     hidden: {
       opacity: 0,
-      y: 4
+      y: 20
     },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
         type: 'tween' as const,
-        duration: 0.3
+        duration: 0.4,
+        ease: 'easeOut'
       }
     }
   }
@@ -171,7 +172,7 @@ const Index = () => {
                     container: {
                       visible: {
                         transition: {
-                          staggerChildren: isMobile ? 0.05 : 0.1,
+                          staggerChildren: isMobile ? 0.03 : 0.1,
                           delayChildren: isMobile ? 0 : 0.1
                         }
                       }
@@ -217,7 +218,7 @@ const Index = () => {
                   container: {
                     visible: {
                       transition: {
-                        staggerChildren: isMobile ? 0.02 : 0.05,
+                        staggerChildren: isMobile ? 0.01 : 0.05,
                         delayChildren: isMobile ? 0.1 : 0.3
                       }
                     }
