@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,7 @@ const mobileTransitionVariants = {
       transition: {
         type: 'tween' as const,
         duration: 0.4,
-        ease: 'easeOut'
+        ease: [0.4, 0, 0.2, 1]
       }
     }
   }
