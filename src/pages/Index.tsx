@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,32 +27,12 @@ const transitionVariants = {
   }
 };
 
-// Mobile-optimized variants without blur effects to prevent blurry text
-const mobileTransitionVariants = {
-  item: {
-    hidden: {
-      opacity: 0,
-      y: 20
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: 'tween' as const,
-        duration: 0.4,
-        ease: [0.4, 0, 0.2, 1]
-      }
-    }
-  }
-};
-
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
 
   const toggleDarkMode = () => {
@@ -63,19 +44,8 @@ const Index = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-    
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    handleResize(); // Check initial screen size
     window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', handleResize);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,9 +66,6 @@ const Index = () => {
     // If already on home page, scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  // Use mobile variants if on mobile device
-  const currentVariants = isMobile ? mobileTransitionVariants : transitionVariants;
 
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
@@ -171,12 +138,12 @@ const Index = () => {
                     container: {
                       visible: {
                         transition: {
-                          staggerChildren: isMobile ? 0.03 : 0.1,
-                          delayChildren: isMobile ? 0 : 0.1
+                          staggerChildren: 0.1,
+                          delayChildren: 0.1
                         }
                       }
                     },
-                    item: currentVariants.item
+                    item: transitionVariants.item
                   }}>
                     <div className="hover:bg-background dark:hover:border-t-border bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-black/5 transition-all duration-300 dark:border-t-white/5 dark:shadow-zinc-950">
                       <span className="text-foreground text-sm">🚀 Tecnología IA Avanzada para Asesoramiento Legal</span>
@@ -217,12 +184,28 @@ const Index = () => {
                   container: {
                     visible: {
                       transition: {
-                        staggerChildren: isMobile ? 0.01 : 0.05,
-                        delayChildren: isMobile ? 0.1 : 0.3
+                        staggerChildren: 0.05,
+                        delayChildren: 0.3
                       }
                     }
                   },
-                  item: currentVariants.item
+                  item: {
+                    hidden: {
+                      opacity: 0,
+                      filter: 'blur(6px)',
+                      y: 8
+                    },
+                    visible: {
+                      opacity: 1,
+                      filter: 'blur(0px)',
+                      y: 0,
+                      transition: {
+                        type: 'spring' as const,
+                        bounce: 0.2,
+                        duration: 0.8
+                      }
+                    }
+                  }
                 }} className="mt-12">
                     <div className="max-w-2xl mx-auto">
                       <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 relative overflow-hidden">
