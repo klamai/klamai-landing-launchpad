@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
-import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
+import { BentoDemo } from "@/components/ui/bento-demo";
 import { FooterSection } from "@/components/ui/footer-section";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -297,7 +297,7 @@ const Index = () => {
             </div>
           </section>
 
-          {/* Features Section */}
+          {/* Features Section - Replaced with Bento Grid */}
           <section className="py-16 md:py-32">
             <div className="container mx-auto px-4">
               <div className="mb-20">
@@ -309,7 +309,7 @@ const Index = () => {
                     Descubre las ventajas de nuestro servicio de asesoramiento jurídico con tecnología IA
                   </p>
                 </div>
-                <FeaturesSectionWithHoverEffects />
+                <BentoDemo />
               </div>
 
               {/* Testimonials Section */}
