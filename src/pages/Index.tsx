@@ -8,7 +8,6 @@ import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section
 import { FooterSection } from "@/components/ui/footer-section";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-
 const transitionVariants = {
   item: {
     hidden: {
@@ -28,7 +27,6 @@ const transitionVariants = {
     }
   }
 };
-
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
@@ -36,12 +34,10 @@ const Index = () => {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
-
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
-
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -49,53 +45,48 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consultation.trim()) return;
     setIsSubmitting(true);
-    
+
     // Guardar el texto de consulta en localStorage antes de redirigir
     localStorage.setItem('userConsultation', consultation.trim());
-    
+
     // Redirect to chat page
     setTimeout(() => {
       navigate('/chat');
     }, 500);
   };
-
   const handleLogoClick = () => {
     // If already on home page, scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
-
-  const testimonials = [
-    {
-      name: "María González",
-      role: "Empresaria",
-      company: "Valencia Tech",
-      rating: 5,
-      image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face",
-      testimonial: "VitorIA me ayudó a resolver un problema laboral complejo en minutos. El asesoramiento fue preciso y me conectó con el abogado perfecto para mi caso. ¡Increíble servicio!"
-    },
-    {
-      name: "Carlos Martín",
-      role: "Autónomo",
-      company: "Madrid",
-      rating: 5,
-      image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=150&h=150&fit=crop&crop=face",
-      testimonial: "Necesitaba asesoramiento urgente sobre contratos y klamAI me dio respuestas inmediatas. La plataforma es intuitiva y los especialistas muy profesionales."
-    },
-    {
-      name: "Ana Rodríguez",
-      role: "Directora",
-      company: "Barcelona Solutions",
-      rating: 5,
-      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face",
-      testimonial: "Como directora de empresa, valoro la rapidez y precisión. VitorIA superó mis expectativas y me ahorró tiempo y dinero en consultas legales."
-    }
-  ];
-
+  const testimonials = [{
+    name: "María González",
+    role: "Empresaria",
+    company: "Valencia Tech",
+    rating: 5,
+    image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face",
+    testimonial: "VitorIA me ayudó a resolver un problema laboral complejo en minutos. El asesoramiento fue preciso y me conectó con el abogado perfecto para mi caso. ¡Increíble servicio!"
+  }, {
+    name: "Carlos Martín",
+    role: "Autónomo",
+    company: "Madrid",
+    rating: 5,
+    image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=150&h=150&fit=crop&crop=face",
+    testimonial: "Necesitaba asesoramiento urgente sobre contratos y klamAI me dio respuestas inmediatas. La plataforma es intuitiva y los especialistas muy profesionales."
+  }, {
+    name: "Ana Rodríguez",
+    role: "Directora",
+    company: "Barcelona Solutions",
+    rating: 5,
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face",
+    testimonial: "Como directora de empresa, valoro la rapidez y precisión. VitorIA superó mis expectativas y me ahorró tiempo y dinero en consultas legales."
+  }];
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
@@ -104,10 +95,7 @@ const Index = () => {
             <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-white/80 dark:bg-gray-800/80 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
               <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
                 <div className="flex w-full justify-between lg:w-auto">
-                  <button 
-                    onClick={handleLogoClick}
-                    className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
-                  >
+                  <button onClick={handleLogoClick} className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer">
                     <Scale className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                     <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">klamAI</span>
                   </button>
@@ -164,16 +152,16 @@ const Index = () => {
               <div className="mx-auto max-w-7xl px-6">
                 <div className="text-center sm:mx-auto lg:mr-auto lg:mt-0">
                   <AnimatedGroup variants={{
-                    container: {
-                      visible: {
-                        transition: {
-                          staggerChildren: 0.1,
-                          delayChildren: 0.1
-                        }
+                  container: {
+                    visible: {
+                      transition: {
+                        staggerChildren: 0.1,
+                        delayChildren: 0.1
                       }
-                    },
-                    item: transitionVariants.item
-                  }}>
+                    }
+                  },
+                  item: transitionVariants.item
+                }}>
                     <div className="hover:bg-background dark:hover:border-t-border bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-black/5 transition-all duration-300 dark:border-t-white/5 dark:shadow-zinc-950">
                       <span className="text-foreground text-sm">
                         <Sparkles className="inline h-4 w-4 mr-2" />
@@ -324,34 +312,12 @@ const Index = () => {
                   </p>
                 </div>
                 <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                  {testimonials.map((testimonial) => (
-                    <Testimonial key={testimonial.name} {...testimonial} />
-                  ))}
+                  {testimonials.map(testimonial => <Testimonial key={testimonial.name} {...testimonial} />)}
                 </div>
               </div>
 
               {/* Contact Section */}
-              <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-3xl p-8 md:p-12 text-white text-center" id="contact">
-                <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center justify-center gap-3">
-                  <Phone className="h-8 w-8" />
-                  ¿Necesitas contacto directo?
-                </h2>
-                <p className="text-xl mb-8 opacity-90 font-medium">Estamos aquí para ayudarte en Valencia y toda España</p>
-                <div className="flex flex-wrap justify-center gap-8 text-lg font-medium">
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-5 w-5" />
-                    <span>632 018 899</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
-                    <span>contacto@klamai.com</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5" />
-                    <span>Valencia, España</span>
-                  </div>
-                </div>
-              </div>
+              
             </div>
           </section>
         </main>
@@ -361,5 +327,4 @@ const Index = () => {
       </div>
     </div>;
 };
-
 export default Index;
