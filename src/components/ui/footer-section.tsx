@@ -78,15 +78,15 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
             <h3 className="mb-4 text-lg font-semibold text-white">Contacto</h3>
             <address className="space-y-3 text-sm not-italic">
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-blue-200" />
+                <MapPin className="h-4 w-4 text-cyan-200" />
                 <span className="text-blue-100">Valencia, España</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-blue-200" />
+                <Phone className="h-4 w-4 text-cyan-200" />
                 <span className="text-blue-100">632 018 899</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-blue-200" />
+                <Mail className="h-4 w-4 text-cyan-200" />
                 <span className="text-blue-100">contacto@klamai.com</span>
               </div>
             </address>
@@ -99,7 +99,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-white/30 hover:border-white/50">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
                       <Facebook className="h-4 w-4" />
                       <span className="sr-only">Facebook</span>
                     </Button>
@@ -112,7 +112,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-white/30 hover:border-white/50">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
                       <Twitter className="h-4 w-4" />
                       <span className="sr-only">Twitter</span>
                     </Button>
@@ -125,7 +125,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-white/30 hover:border-white/50">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
                       <Instagram className="h-4 w-4" />
                       <span className="sr-only">Instagram</span>
                     </Button>
@@ -138,7 +138,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-white/30 hover:border-white/50">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
                       <Linkedin className="h-4 w-4" />
                       <span className="sr-only">LinkedIn</span>
                     </Button>
@@ -151,14 +151,14 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
             </div>
             {onDarkModeToggle && (
               <div className="flex items-center space-x-2">
-                <Sun className="h-4 w-4 text-blue-200" />
+                <Sun className="h-4 w-4 text-cyan-200" />
                 <Switch
                   id="dark-mode"
                   checked={darkMode}
                   onCheckedChange={onDarkModeToggle}
-                  className="data-[state=checked]:bg-white/30 data-[state=unchecked]:bg-white/20"
+                  className="data-[state=checked]:bg-cyan-500/50 data-[state=unchecked]:bg-white/20"
                 />
-                <Moon className="h-4 w-4 text-blue-200" />
+                <Moon className="h-4 w-4 text-cyan-200" />
                 <Label htmlFor="dark-mode" className="sr-only">
                   Alternar modo oscuro
                 </Label>
@@ -173,13 +173,13 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
             © 2024 klamAI. Todos los derechos reservados. | Asesoramiento jurídico con IA en España
           </p>
           <nav className="flex gap-4 text-sm">
-            <a href="#" className="transition-colors hover:text-blue-200 text-blue-100">
+            <a href="#" className="transition-colors hover:text-cyan-200 text-blue-100">
               Política de Privacidad
             </a>
-            <a href="#" className="transition-colors hover:text-blue-200 text-blue-100">
+            <a href="#" className="transition-colors hover:text-cyan-200 text-blue-100">
               Términos de Servicio
             </a>
-            <a href="#" className="transition-colors hover:text-blue-200 text-blue-100">
+            <a href="#" className="transition-colors hover:text-cyan-200 text-blue-100">
               Cookies
             </a>
           </nav>
