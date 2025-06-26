@@ -6,8 +6,10 @@ import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
 import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
 import { FooterSection } from "@/components/ui/footer-section";
+import { StarBorder } from "@/components/ui/star-border";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+
 const transitionVariants = {
   item: {
     hidden: {
@@ -261,16 +263,28 @@ const Index = () => {
                                 </div>
                               </div>
                             </div>
-                            <Button type="submit" disabled={isSubmitting || !consultation.trim()} className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-6 px-8 rounded-xl text-lg sm:text-xl shadow-2xl transform transition-all duration-200 hover:scale-105 hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden">
-                              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                              {isSubmitting ? <div className="flex items-center justify-center gap-2 sm:gap-3 relative z-10">
-                                  <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-white"></div>
-                                  <span className="text-sm sm:text-base">Conectando con VitorIA...</span>
-                                </div> : <div className="flex items-center justify-center gap-2 sm:gap-3 relative z-10">
-                                  <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
-                                  <span className="text-sm sm:text-base">Consultar con VitorIA GRATIS</span>
-                                </div>}
-                            </Button>
+                            <StarBorder
+                              type="submit"
+                              disabled={isSubmitting || !consultation.trim()}
+                              className={cn(
+                                "w-full transition-all duration-200",
+                                (isSubmitting || !consultation.trim()) && "opacity-50 cursor-not-allowed"
+                              )}
+                              color="rgb(59 130 246)"
+                              speed="4s"
+                            >
+                              {isSubmitting ? (
+                                <div className="flex items-center justify-center gap-2 sm:gap-3">
+                                  <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-blue-600"></div>
+                                  <span className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">Conectando con VitorIA...</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-center gap-2 sm:gap-3">
+                                  <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
+                                  <span className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">Consultar con VitorIA GRATIS</span>
+                                </div>
+                              )}
+                            </StarBorder>
                             <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
                               <Shield className="inline h-4 w-4 mr-2" />
                               Tu consulta es <strong>100% confidencial</strong> y sin compromiso
