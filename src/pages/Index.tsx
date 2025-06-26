@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
-import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
+import { FeaturesCards } from "@/components/ui/features-cards";
 import { FooterSection } from "@/components/ui/footer-section";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -314,21 +314,11 @@ const Index = () => {
           </section>
 
           {/* Features Section */}
+          <FeaturesCards />
+
+          {/* Testimonials Section */}
           <section className="py-16 md:py-32">
             <div className="container mx-auto px-4">
-              <div className="mb-20">
-                <div className="text-center mb-12">
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                    ¿Por qué elegir klamAI?
-                  </h2>
-                  <p className="text-xl text-gray-600 dark:text-gray-300 font-medium max-w-2xl mx-auto">
-                    Descubre las ventajas de nuestro servicio de asesoramiento jurídico con tecnología IA
-                  </p>
-                </div>
-                <FeaturesSectionWithHoverEffects />
-              </div>
-
-              {/* Testimonials Section */}
               <div className="mb-20" id="testimonials">
                 <div className="text-center mb-12">
                   <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-center gap-3">
