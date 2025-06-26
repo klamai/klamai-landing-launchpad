@@ -264,6 +264,7 @@ const Index = () => {
                               </div>
                             </div>
                             <StarBorder
+                              as="button"
                               type="submit"
                               disabled={isSubmitting || !consultation.trim()}
                               className={cn(
@@ -273,17 +274,19 @@ const Index = () => {
                               color="rgb(59 130 246)"
                               speed="4s"
                             >
-                              {isSubmitting ? (
-                                <div className="flex items-center justify-center gap-2 sm:gap-3">
-                                  <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-blue-600"></div>
-                                  <span className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">Conectando con VitorIA...</span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center justify-center gap-2 sm:gap-3">
-                                  <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
-                                  <span className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">Consultar con VitorIA GRATIS</span>
-                                </div>
-                              )}
+                              <div className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 px-6 rounded-[20px] transition-all duration-200 w-full">
+                                {isSubmitting ? (
+                                  <div className="flex items-center justify-center gap-2 sm:gap-3">
+                                    <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-white"></div>
+                                    <span className="text-sm sm:text-base font-bold text-white">Conectando con VitorIA...</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-center gap-2 sm:gap-3">
+                                    <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                                    <span className="text-sm sm:text-base font-bold text-white">Consultar con VitorIA GRATIS</span>
+                                  </div>
+                                )}
+                              </div>
                             </StarBorder>
                             <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
                               <Shield className="inline h-4 w-4 mr-2" />
