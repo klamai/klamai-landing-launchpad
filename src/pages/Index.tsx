@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
-import { FeaturesCards } from "@/components/ui/features-cards";
+import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
 import { FooterSection } from "@/components/ui/footer-section";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { BentoDemo } from "@/components/ui/bento-demo";
 
 const transitionVariants = {
   item: {
@@ -173,23 +172,7 @@ const Index = () => {
                         }
                       }
                     },
-                    item: {
-                      hidden: {
-                        opacity: 0,
-                        filter: 'blur(6px)',
-                        y: 8
-                      },
-                      visible: {
-                        opacity: 1,
-                        filter: 'blur(0px)',
-                        y: 0,
-                        transition: {
-                          type: 'spring' as const,
-                          bounce: 0.2,
-                          duration: 0.8
-                        }
-                      }
-                    }
+                    item: transitionVariants.item
                   }}>
                     <div className="hover:bg-background dark:hover:border-t-border bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-black/5 transition-all duration-300 dark:border-t-white/5 dark:shadow-zinc-950">
                       <span className="text-foreground text-sm">
@@ -315,11 +298,21 @@ const Index = () => {
           </section>
 
           {/* Features Section */}
-          <BentoDemo />
-
-          {/* Testimonials Section */}
           <section className="py-16 md:py-32">
             <div className="container mx-auto px-4">
+              <div className="mb-20">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    ¿Por qué elegir klamAI?
+                  </h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-300 font-medium max-w-2xl mx-auto">
+                    Descubre las ventajas de nuestro servicio de asesoramiento jurídico con tecnología IA
+                  </p>
+                </div>
+                <FeaturesSectionWithHoverEffects />
+              </div>
+
+              {/* Testimonials Section */}
               <div className="mb-20" id="testimonials">
                 <div className="text-center mb-12">
                   <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-center gap-3">
@@ -336,11 +329,34 @@ const Index = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Contact Section */}
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-3xl p-8 md:p-12 text-white text-center" id="contact">
+                <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center justify-center gap-3">
+                  <Phone className="h-8 w-8" />
+                  ¿Necesitas contacto directo?
+                </h2>
+                <p className="text-xl mb-8 opacity-90 font-medium">Estamos aquí para ayudarte en Valencia y toda España</p>
+                <div className="flex flex-wrap justify-center gap-8 text-lg font-medium">
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-5 w-5" />
+                    <span>632 018 899</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    <span>contacto@klamai.com</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    <span>Valencia, España</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
         </main>
 
-        {/* Footer */}
+        {/* New Footer */}
         <FooterSection darkMode={darkMode} onDarkModeToggle={toggleDarkMode} />
       </div>
     </div>;
