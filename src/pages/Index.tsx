@@ -238,6 +238,7 @@ const Index = () => {
                           proximity={100} 
                           borderWidth={2}
                           movementDuration={1.5}
+                          disabled={false}
                         />
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/20 animate-pulse"></div>
                         <div className="relative z-10">
