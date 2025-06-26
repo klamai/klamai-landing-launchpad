@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
+import { Testimonial } from "@/components/ui/testimonial-card";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
@@ -66,6 +66,33 @@ const Index = () => {
     // If already on home page, scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const testimonials = [
+    {
+      name: "María González",
+      role: "Empresaria",
+      company: "Valencia Tech",
+      rating: 5,
+      image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face",
+      testimonial: "VitorIA me ayudó a resolver un problema laboral complejo en minutos. El asesoramiento fue preciso y me conectó con el abogado perfecto para mi caso. ¡Increíble servicio!"
+    },
+    {
+      name: "Carlos Martín",
+      role: "Autónomo",
+      company: "Madrid",
+      rating: 5,
+      image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=150&h=150&fit=crop&crop=face",
+      testimonial: "Necesitaba asesoramiento urgente sobre contratos y klamAI me dio respuestas inmediatas. La plataforma es intuitiva y los especialistas muy profesionales."
+    },
+    {
+      name: "Ana Rodríguez",
+      role: "Directora",
+      company: "Barcelona Solutions",
+      rating: 5,
+      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face",
+      testimonial: "Como directora de empresa, valoro la rapidez y precisión. VitorIA superó mis expectativas y me ahorró tiempo y dinero en consultas legales."
+    }
+  ];
 
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
@@ -287,6 +314,23 @@ const Index = () => {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Especialistas Expertos</h3>
                   <p className="text-gray-600 dark:text-gray-300 font-medium">Nuestro equipo de abogados especialistas está disponible para resolver tus consultas más complejas.</p>
+                </div>
+              </div>
+
+              {/* Testimonials Section */}
+              <div className="mb-20">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    Lo que dicen nuestros clientes
+                  </h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-300 font-medium max-w-2xl mx-auto">
+                    Miles de personas ya confían en <span className="font-semibold text-blue-700 dark:text-blue-300">VitorIA</span> para resolver sus consultas legales
+                  </p>
+                </div>
+                <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                  {testimonials.map((testimonial) => (
+                    <Testimonial key={testimonial.name} {...testimonial} />
+                  ))}
                 </div>
               </div>
 
