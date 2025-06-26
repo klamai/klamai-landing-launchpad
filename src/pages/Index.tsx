@@ -6,8 +6,10 @@ import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
 import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
 import { FooterSection } from "@/components/ui/footer-section";
+import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+
 const transitionVariants = {
   item: {
     hidden: {
@@ -27,6 +29,7 @@ const transitionVariants = {
     }
   }
 };
+
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
@@ -34,10 +37,12 @@ const Index = () => {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -45,6 +50,7 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consultation.trim()) return;
@@ -58,6 +64,7 @@ const Index = () => {
       navigate('/chat');
     }, 500);
   };
+
   const handleLogoClick = () => {
     // If already on home page, scroll to top
     window.scrollTo({
@@ -65,6 +72,7 @@ const Index = () => {
       behavior: 'smooth'
     });
   };
+
   const testimonials = [{
     name: "María González",
     role: "Empresaria",
@@ -87,6 +95,7 @@ const Index = () => {
     image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face",
     testimonial: "Como directora de empresa, valoro la rapidez y precisión. VitorIA superó mis expectativas y me ahorró tiempo y dinero en consultas legales."
   }];
+
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
@@ -228,7 +237,15 @@ const Index = () => {
                   }
                 }} className="mt-12">
                     <div className="max-w-2xl mx-auto">
-                      <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 relative overflow-hidden">
+                      <div className="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 overflow-hidden">
+                        <GlowingEffect
+                          spread={40}
+                          glow={true}
+                          disabled={false}
+                          proximity={64}
+                          inactiveZone={0.01}
+                          borderWidth={3}
+                        />
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/20 animate-pulse"></div>
                         <div className="relative z-10">
                           <div className="text-center mb-8">
@@ -327,4 +344,5 @@ const Index = () => {
       </div>
     </div>;
 };
+
 export default Index;
