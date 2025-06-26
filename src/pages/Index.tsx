@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Moon, Sun, Scale, Zap, Shield, Users, MessageCircle, Phone, Mail, MapPin, ArrowRight, ChevronRight, Menu, X } from "lucide-react";
+import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
+import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
@@ -291,30 +292,16 @@ const Index = () => {
           {/* Features Section */}
           <section className="py-16 md:py-32">
             <div className="container mx-auto px-4">
-              <div className="grid md:grid-cols-3 gap-8 mb-20">
-                <div className="text-center p-8 rounded-2xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                  <div className="bg-gradient-to-br from-blue-500 to-cyan-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Zap className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Tecnología IA Avanzada</h3>
-                  <p className="text-gray-600 dark:text-gray-300 font-medium">Utilizamos las últimas herramientas de inteligencia artificial para brindarte el mejor asesoramiento legal.</p>
+              <div className="mb-20">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    ¿Por qué elegir klamAI?
+                  </h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-300 font-medium max-w-2xl mx-auto">
+                    Descubre las ventajas de nuestro servicio de asesoramiento jurídico con tecnología IA
+                  </p>
                 </div>
-
-                <div className="text-center p-8 rounded-2xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                  <div className="bg-gradient-to-br from-green-500 to-emerald-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Shield className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Seguridad Garantizada</h3>
-                  <p className="text-gray-600 dark:text-gray-300 font-medium">Tus datos y consultas están protegidos con los más altos estándares de seguridad y confidencialidad.</p>
-                </div>
-
-                <div className="text-center p-8 rounded-2xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                  <div className="bg-gradient-to-br from-purple-500 to-pink-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Especialistas Expertos</h3>
-                  <p className="text-gray-600 dark:text-gray-300 font-medium">Nuestro equipo de abogados especialistas está disponible para resolver tus consultas más complejas.</p>
-                </div>
+                <FeaturesSectionWithHoverEffects />
               </div>
 
               {/* Testimonials Section */}
