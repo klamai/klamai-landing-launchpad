@@ -8,6 +8,8 @@ import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section
 import { FooterSection } from "@/components/ui/footer-section";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { MovingBorder } from "@/components/ui/moving-border";
+
 const transitionVariants = {
   item: {
     hidden: {
@@ -229,7 +231,11 @@ const Index = () => {
                 }} className="mt-12">
                     <div className="max-w-2xl mx-auto">
                       <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/20 animate-pulse"></div>
+                        <div className="absolute inset-0">
+                          <MovingBorder duration={3000} rx="10%" ry="10%">
+                            <div className="h-16 w-16 opacity-[0.8] bg-[radial-gradient(var(--blue-500)_40%,var(--cyan-500)_60%,transparent_80%)]" />
+                          </MovingBorder>
+                        </div>
                         <div className="relative z-10">
                           <div className="text-center mb-8">
                             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mb-4 animate-bounce">
