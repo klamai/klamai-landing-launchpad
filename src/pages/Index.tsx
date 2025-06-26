@@ -230,10 +230,10 @@ const Index = () => {
                   }
                 }} className="mt-12">
                     <div className="max-w-2xl mx-auto">
-                      <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 relative overflow-hidden">
-                        <div className="absolute inset-0">
-                          <MovingBorder duration={3000} rx="10%" ry="10%">
-                            <div className="h-16 w-16 opacity-[0.8] bg-[radial-gradient(var(--blue-500)_40%,var(--cyan-500)_60%,transparent_80%)]" />
+                      <div className="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-blue-200/50 dark:border-blue-500/30 overflow-hidden">
+                        <div className="absolute inset-0 rounded-3xl">
+                          <MovingBorder duration={4000} rx="12%" ry="12%">
+                            <div className="h-3 w-12 opacity-[0.8] bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-600 rounded-full blur-[1px]" />
                           </MovingBorder>
                         </div>
                         <div className="relative z-10">
