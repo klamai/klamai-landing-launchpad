@@ -8,6 +8,7 @@ import { FeaturesCards } from "@/components/ui/features-cards";
 import { FooterSection } from "@/components/ui/footer-section";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { BentoDemo } from "@/components/ui/bento-demo";
 
 const transitionVariants = {
   item: {
@@ -314,7 +315,7 @@ const Index = () => {
           </section>
 
           {/* Features Section */}
-          <FeaturesCards />
+          <BentoDemo />
 
           {/* Testimonials Section */}
           <section className="py-16 md:py-32">
