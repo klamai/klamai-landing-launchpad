@@ -239,12 +239,13 @@ const Index = () => {
                     <div className="max-w-2xl mx-auto">
                       <div className="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 overflow-hidden">
                         <GlowingEffect
-                          spread={40}
+                          spread={60}
                           glow={true}
                           disabled={false}
-                          proximity={64}
+                          proximity={100}
                           inactiveZone={0.01}
-                          borderWidth={3}
+                          borderWidth={2}
+                          movementDuration={1.5}
                         />
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/20 animate-pulse"></div>
                         <div className="relative z-10">
@@ -329,12 +330,22 @@ const Index = () => {
                   </p>
                 </div>
                 <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                  {testimonials.map(testimonial => <Testimonial key={testimonial.name} {...testimonial} />)}
+                  {testimonials.map((testimonial, index) => (
+                    <div key={testimonial.name} className="relative">
+                      <GlowingEffect
+                        spread={40}
+                        glow={true}
+                        disabled={false}
+                        proximity={80}
+                        inactiveZone={0.3}
+                        borderWidth={1}
+                        movementDuration={2}
+                      />
+                      <Testimonial {...testimonial} />
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {/* Contact Section */}
-              
             </div>
           </section>
         </main>
