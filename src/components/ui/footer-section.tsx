@@ -21,53 +21,53 @@ interface FooterSectionProps {
 
 function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProps) {
   return (
-    <footer className="relative border-t bg-gradient-to-r from-blue-600 to-cyan-600 text-white transition-colors duration-300">
+    <footer className="relative border-t bg-gradient-to-r from-blue-600 to-cyan-600 dark:bg-white text-white dark:text-gray-900 transition-colors duration-300">
       <div className="container mx-auto px-4 py-12 md:px-6 lg:px-8">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Newsletter Section */}
           <div className="relative">
             <div className="flex items-center gap-3 mb-4">
-              <Scale className="h-8 w-8 text-white" />
-              <h2 className="text-2xl font-bold tracking-tight text-white">klamAI</h2>
+              <Scale className="h-8 w-8 text-white dark:text-blue-600" />
+              <h2 className="text-2xl font-bold tracking-tight text-white dark:text-gray-900">klamAI</h2>
             </div>
-            <p className="mb-6 text-blue-100">
+            <p className="mb-6 text-blue-100 dark:text-gray-600">
               Recibe las últimas noticias sobre tecnología legal y consejos de VitorIA directamente en tu email.
             </p>
             <form className="relative">
               <Input
                 type="email"
                 placeholder="Tu email aquí"
-                className="pr-12 backdrop-blur-sm bg-white/20 border-white/30 text-white placeholder:text-blue-100 focus:bg-white/30 focus:border-white/50"
+                className="pr-12 backdrop-blur-sm bg-white/20 dark:bg-gray-100 border-white/30 dark:border-gray-300 text-white dark:text-gray-900 placeholder:text-blue-100 dark:placeholder:text-gray-500 focus:bg-white/30 dark:focus:bg-white focus:border-white/50 dark:focus:border-gray-400"
               />
               <Button
                 type="submit"
                 size="icon"
-                className="absolute right-1 top-1 h-8 w-8 rounded-full bg-white text-blue-600 hover:bg-blue-50 transition-transform hover:scale-105"
+                className="absolute right-1 top-1 h-8 w-8 rounded-full bg-white text-blue-600 hover:bg-blue-50 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700 transition-transform hover:scale-105"
               >
                 <Send className="h-4 w-4" />
                 <span className="sr-only">Suscribirse</span>
               </Button>
             </form>
-            <div className="absolute -right-4 top-0 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
+            <div className="absolute -right-4 top-0 h-24 w-24 rounded-full bg-white/10 dark:bg-gray-200/50 blur-2xl" />
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="mb-4 text-lg font-semibold text-white">Enlaces Rápidos</h3>
+            <h3 className="mb-4 text-lg font-semibold text-white dark:text-gray-900">Enlaces Rápidos</h3>
             <nav className="space-y-2 text-sm">
-              <a href="/" className="block transition-colors hover:text-blue-200 text-blue-100">
+              <a href="/" className="block transition-colors hover:text-blue-200 dark:hover:text-blue-600 text-blue-100 dark:text-gray-600">
                 Inicio
               </a>
-              <a href="/chat" className="block transition-colors hover:text-blue-200 text-blue-100">
+              <a href="/chat" className="block transition-colors hover:text-blue-200 dark:hover:text-blue-600 text-blue-100 dark:text-gray-600">
                 Consultar con VitorIA
               </a>
-              <a href="#features" className="block transition-colors hover:text-blue-200 text-blue-100">
+              <a href="#features" className="block transition-colors hover:text-blue-200 dark:hover:text-blue-600 text-blue-100 dark:text-gray-600">
                 Características
               </a>
-              <a href="#testimonials" className="block transition-colors hover:text-blue-200 text-blue-100">
+              <a href="#testimonials" className="block transition-colors hover:text-blue-200 dark:hover:text-blue-600 text-blue-100 dark:text-gray-600">
                 Testimonios
               </a>
-              <a href="#contact" className="block transition-colors hover:text-blue-200 text-blue-100">
+              <a href="#contact" className="block transition-colors hover:text-blue-200 dark:hover:text-blue-600 text-blue-100 dark:text-gray-600">
                 Contacto
               </a>
             </nav>
@@ -75,31 +75,31 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
 
           {/* Contact Info */}
           <div>
-            <h3 className="mb-4 text-lg font-semibold text-white">Contacto</h3>
+            <h3 className="mb-4 text-lg font-semibold text-white dark:text-gray-900">Contacto</h3>
             <address className="space-y-3 text-sm not-italic">
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-cyan-200" />
-                <span className="text-blue-100">Valencia, España</span>
+                <MapPin className="h-4 w-4 text-cyan-200 dark:text-blue-600" />
+                <span className="text-blue-100 dark:text-gray-600">Valencia, España</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-cyan-200" />
-                <span className="text-blue-100">632 018 899</span>
+                <Phone className="h-4 w-4 text-cyan-200 dark:text-blue-600" />
+                <span className="text-blue-100 dark:text-gray-600">632 018 899</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-cyan-200" />
-                <span className="text-blue-100">contacto@klamai.com</span>
+                <Mail className="h-4 w-4 text-cyan-200 dark:text-blue-600" />
+                <span className="text-blue-100 dark:text-gray-600">contacto@klamai.com</span>
               </div>
             </address>
           </div>
 
           {/* Social Media & Theme Toggle */}
           <div className="relative">
-            <h3 className="mb-4 text-lg font-semibold text-white">Síguenos</h3>
+            <h3 className="mb-4 text-lg font-semibold text-white dark:text-gray-900">Síguenos</h3>
             <div className="mb-6 flex space-x-3">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 dark:bg-gray-100 border-white/30 dark:border-gray-300 text-white dark:text-gray-700 hover:bg-cyan-500/30 dark:hover:bg-gray-200 hover:border-cyan-300/50 dark:hover:border-gray-400 transition-all duration-200">
                       <Facebook className="h-4 w-4" />
                       <span className="sr-only">Facebook</span>
                     </Button>
@@ -112,7 +112,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 dark:bg-gray-100 border-white/30 dark:border-gray-300 text-white dark:text-gray-700 hover:bg-cyan-500/30 dark:hover:bg-gray-200 hover:border-cyan-300/50 dark:hover:border-gray-400 transition-all duration-200">
                       <Twitter className="h-4 w-4" />
                       <span className="sr-only">Twitter</span>
                     </Button>
@@ -125,7 +125,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 dark:bg-gray-100 border-white/30 dark:border-gray-300 text-white dark:text-gray-700 hover:bg-cyan-500/30 dark:hover:bg-gray-200 hover:border-cyan-300/50 dark:hover:border-gray-400 transition-all duration-200">
                       <Instagram className="h-4 w-4" />
                       <span className="sr-only">Instagram</span>
                     </Button>
@@ -138,7 +138,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 dark:bg-gray-100 border-white/30 dark:border-gray-300 text-white dark:text-gray-700 hover:bg-cyan-500/30 dark:hover:bg-gray-200 hover:border-cyan-300/50 dark:hover:border-gray-400 transition-all duration-200">
                       <Linkedin className="h-4 w-4" />
                       <span className="sr-only">LinkedIn</span>
                     </Button>
@@ -151,14 +151,14 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
             </div>
             {onDarkModeToggle && (
               <div className="flex items-center space-x-2">
-                <Sun className="h-4 w-4 text-cyan-200" />
+                <Sun className="h-4 w-4 text-cyan-200 dark:text-blue-600" />
                 <Switch
                   id="dark-mode"
                   checked={darkMode}
                   onCheckedChange={onDarkModeToggle}
-                  className="data-[state=checked]:bg-cyan-500/50 data-[state=unchecked]:bg-white/20"
+                  className="data-[state=checked]:bg-cyan-500/50 data-[state=unchecked]:bg-white/20 dark:data-[state=checked]:bg-blue-600 dark:data-[state=unchecked]:bg-gray-300"
                 />
-                <Moon className="h-4 w-4 text-cyan-200" />
+                <Moon className="h-4 w-4 text-cyan-200 dark:text-blue-600" />
                 <Label htmlFor="dark-mode" className="sr-only">
                   Alternar modo oscuro
                 </Label>
@@ -168,18 +168,18 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
         </div>
         
         {/* Bottom Section */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/30 pt-8 text-center md:flex-row">
-          <p className="text-sm text-blue-100">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/30 dark:border-gray-300 pt-8 text-center md:flex-row">
+          <p className="text-sm text-blue-100 dark:text-gray-600">
             © 2024 klamAI. Todos los derechos reservados. | Asesoramiento jurídico con IA en España
           </p>
           <nav className="flex gap-4 text-sm">
-            <a href="#" className="transition-colors hover:text-cyan-200 text-blue-100">
+            <a href="#" className="transition-colors hover:text-cyan-200 dark:hover:text-blue-600 text-blue-100 dark:text-gray-600">
               Política de Privacidad
             </a>
-            <a href="#" className="transition-colors hover:text-cyan-200 text-blue-100">
+            <a href="#" className="transition-colors hover:text-cyan-200 dark:hover:text-blue-600 text-blue-100 dark:text-gray-600">
               Términos de Servicio
             </a>
-            <a href="#" className="transition-colors hover:text-cyan-200 text-blue-100">
+            <a href="#" className="transition-colors hover:text-cyan-200 dark:hover:text-blue-600 text-blue-100 dark:text-gray-600">
               Cookies
             </a>
           </nav>
