@@ -6,10 +6,8 @@ import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
 import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
 import { FooterSection } from "@/components/ui/footer-section";
-import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-
 const transitionVariants = {
   item: {
     hidden: {
@@ -29,7 +27,6 @@ const transitionVariants = {
     }
   }
 };
-
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
@@ -231,15 +228,7 @@ const Index = () => {
                   }
                 }} className="mt-12">
                     <div className="max-w-2xl mx-auto">
-                      <div className="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 overflow-hidden">
-                        <GlowingEffect 
-                          variant="blue" 
-                          spread={60} 
-                          proximity={100} 
-                          borderWidth={2}
-                          movementDuration={1.5}
-                          disabled={false}
-                        />
+                      <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 relative overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/20 animate-pulse"></div>
                         <div className="relative z-10">
                           <div className="text-center mb-8">
@@ -338,5 +327,4 @@ const Index = () => {
       </div>
     </div>;
 };
-
 export default Index;
