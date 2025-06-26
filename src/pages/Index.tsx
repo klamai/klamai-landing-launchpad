@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
 import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
+import { FooterSection } from "@/components/ui/footer-section";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
@@ -312,7 +313,7 @@ const Index = () => {
               </div>
 
               {/* Testimonials Section */}
-              <div className="mb-20">
+              <div className="mb-20" id="testimonials">
                 <div className="text-center mb-12">
                   <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-center gap-3">
                     <Users2 className="h-8 w-8" />
@@ -330,7 +331,7 @@ const Index = () => {
               </div>
 
               {/* Contact Section */}
-              <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-3xl p-8 md:p-12 text-white text-center">
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-3xl p-8 md:p-12 text-white text-center" id="contact">
                 <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center justify-center gap-3">
                   <Phone className="h-8 w-8" />
                   ¿Necesitas contacto directo?
@@ -355,10 +356,8 @@ const Index = () => {
           </section>
         </main>
 
-        {/* Footer */}
-        <footer className="container mx-auto px-4 py-8 text-center text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 font-medium">
-          <p>&copy; 2024 klamAI. Todos los derechos reservados. | Asesoramiento jurídico con IA en España</p>
-        </footer>
+        {/* New Footer */}
+        <FooterSection darkMode={darkMode} onDarkModeToggle={toggleDarkMode} />
       </div>
     </div>;
 };
