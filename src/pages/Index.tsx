@@ -6,9 +6,9 @@ import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
 import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
 import { FooterSection } from "@/components/ui/footer-section";
-import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { MovingBorder } from "@/components/ui/moving-border";
 
 const transitionVariants = {
   item: {
@@ -29,7 +29,6 @@ const transitionVariants = {
     }
   }
 };
-
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
@@ -37,12 +36,10 @@ const Index = () => {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
-
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
-
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -50,7 +47,6 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consultation.trim()) return;
@@ -64,7 +60,6 @@ const Index = () => {
       navigate('/chat');
     }, 500);
   };
-
   const handleLogoClick = () => {
     // If already on home page, scroll to top
     window.scrollTo({
@@ -72,7 +67,6 @@ const Index = () => {
       behavior: 'smooth'
     });
   };
-
   const testimonials = [{
     name: "María González",
     role: "Empresaria",
@@ -95,7 +89,6 @@ const Index = () => {
     image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face",
     testimonial: "Como directora de empresa, valoro la rapidez y precisión. VitorIA superó mis expectativas y me ahorró tiempo y dinero en consultas legales."
   }];
-
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
@@ -237,17 +230,12 @@ const Index = () => {
                   }
                 }} className="mt-12">
                     <div className="max-w-2xl mx-auto">
-                      <div className="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 overflow-hidden">
-                        <GlowingEffect
-                          spread={60}
-                          glow={true}
-                          disabled={false}
-                          proximity={100}
-                          inactiveZone={0.01}
-                          borderWidth={2}
-                          movementDuration={1.5}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/20 animate-pulse"></div>
+                      <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 relative overflow-hidden">
+                        <div className="absolute inset-0">
+                          <MovingBorder duration={3000} rx="10%" ry="10%">
+                            <div className="h-16 w-16 opacity-[0.8] bg-[radial-gradient(var(--blue-500)_40%,var(--cyan-500)_60%,transparent_80%)]" />
+                          </MovingBorder>
+                        </div>
                         <div className="relative z-10">
                           <div className="text-center mb-8">
                             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mb-4 animate-bounce">
@@ -330,22 +318,12 @@ const Index = () => {
                   </p>
                 </div>
                 <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                  {testimonials.map((testimonial, index) => (
-                    <div key={testimonial.name} className="relative">
-                      <GlowingEffect
-                        spread={40}
-                        glow={true}
-                        disabled={false}
-                        proximity={80}
-                        inactiveZone={0.3}
-                        borderWidth={1}
-                        movementDuration={2}
-                      />
-                      <Testimonial {...testimonial} />
-                    </div>
-                  ))}
+                  {testimonials.map(testimonial => <Testimonial key={testimonial.name} {...testimonial} />)}
                 </div>
               </div>
+
+              {/* Contact Section */}
+              
             </div>
           </section>
         </main>
@@ -355,5 +333,4 @@ const Index = () => {
       </div>
     </div>;
 };
-
 export default Index;
