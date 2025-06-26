@@ -87,7 +87,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-cyan-200" />
-                <span className="text-blue-100">contacto@klamai.com</span>
+                <span className="text-blue-100">gestiones@klamai.com</span>
               </div>
             </address>
           </div>
@@ -170,7 +170,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
         {/* Bottom Section */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/30 pt-8 text-center md:flex-row">
           <p className="text-sm text-blue-100">
-            © 2024 klamAI. Todos los derechos reservados. | Asesoramiento jurídico con IA en España
+            © 2025 KlamAI. Todos los derechos reservados. | Asesoramiento jurídico con IA en España
           </p>
           <nav className="flex gap-4 text-sm">
             <a href="#" className="transition-colors hover:text-cyan-200 text-blue-100">
