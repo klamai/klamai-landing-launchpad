@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail } from "lucide-react";
+import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
@@ -174,7 +174,10 @@ const Index = () => {
                     item: transitionVariants.item
                   }}>
                     <div className="hover:bg-background dark:hover:border-t-border bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-black/5 transition-all duration-300 dark:border-t-white/5 dark:shadow-zinc-950">
-                      <span className="text-foreground text-sm">🚀 Tecnología IA Avanzada para Asesoramiento Legal</span>
+                      <span className="text-foreground text-sm">
+                        <Sparkles className="inline h-4 w-4 mr-2" />
+                        Tecnología IA Avanzada para Asesoramiento Legal
+                      </span>
                       <span className="dark:border-background block h-4 w-0.5 border-l bg-white dark:bg-zinc-700"></span>
                       <div className="bg-background group-hover:bg-muted size-6 overflow-hidden rounded-full duration-500">
                         <div className="flex w-12 -translate-x-1/2 duration-500 ease-in-out group-hover:translate-x-0">
@@ -201,8 +204,8 @@ const Index = () => {
                         <span>Valencia, España</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Zap className="h-4 w-4" />
-                        <span>Atención Virtual en toda España</span>
+                        <Clock className="h-4 w-4" />
+                        <span>Atención Virtual 24/7</span>
                       </div>
                     </div>
                   </AnimatedGroup>
@@ -244,7 +247,8 @@ const Index = () => {
                               <MessageCircle className="h-8 w-8 text-white" />
                             </div>
                             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                              🚀 ¡Cuéntanos tu caso ahora!
+                              <Sparkles className="inline h-6 w-6 mr-2" />
+                              ¡Cuéntanos tu caso ahora!
                             </h2>
                             <p className="text-lg text-blue-600 dark:text-blue-400 font-semibold">
                               VitorIA te responderá al instante
@@ -254,10 +258,12 @@ const Index = () => {
                           <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="space-y-4">
                               <label htmlFor="consultation" className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                ✍️ Describe tu situación legal aquí
+                                <MessageCircle className="h-5 w-5" />
+                                Describe tu situación legal aquí
                               </label>
                               <p className="text-sm text-gray-600 dark:text-gray-400 font-medium bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border-l-4 border-blue-500">
-                                💡 <strong>Tip:</strong> Cuanto más detalles proporciones, mejor podrá ayudarte VitorIA
+                                <Zap className="inline h-4 w-4 mr-2" />
+                                <strong>Tip:</strong> Cuanto más detalles proporciones, mejor podrá ayudarte VitorIA
                               </p>
                               <div className="relative">
                                 <Textarea id="consultation" placeholder="Ejemplo: Tuve un accidente de tráfico la semana pasada y el otro conductor no tenía seguro. Qué opciones legales tengo para recuperar los gastos médicos y reparaciones" value={consultation} onChange={e => setConsultation(e.target.value)} className="min-h-40 text-base resize-none border-2 border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl font-medium bg-white/80 dark:bg-gray-900/80 shadow-inner dark:placeholder:text-opacity-30 placeholder:text-opacity-30 placeholder:text-gray-500 dark:placeholder:text-gray-400" required />
@@ -277,7 +283,8 @@ const Index = () => {
                                 </div>}
                             </Button>
                             <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
-                              🔒 Tu consulta es <strong>100% confidential</strong> y sin compromiso
+                              <Shield className="inline h-4 w-4 mr-2" />
+                              Tu consulta es <strong>100% confidencial</strong> y sin compromiso
                             </p>
                           </form>
                         </div>
@@ -307,7 +314,8 @@ const Index = () => {
               {/* Testimonials Section */}
               <div className="mb-20">
                 <div className="text-center mb-12">
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-center gap-3">
+                    <Users2 className="h-8 w-8" />
                     Lo que dicen nuestros clientes
                   </h2>
                   <p className="text-xl text-gray-600 dark:text-gray-300 font-medium max-w-2xl mx-auto">
@@ -323,7 +331,10 @@ const Index = () => {
 
               {/* Contact Section */}
               <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-3xl p-8 md:p-12 text-white text-center">
-                <h2 className="text-3xl md:text-4xl font-bold mb-6">¿Necesitas contacto directo?</h2>
+                <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center justify-center gap-3">
+                  <Phone className="h-8 w-8" />
+                  ¿Necesitas contacto directo?
+                </h2>
                 <p className="text-xl mb-8 opacity-90 font-medium">Estamos aquí para ayudarte en Valencia y toda España</p>
                 <div className="flex flex-wrap justify-center gap-8 text-lg font-medium">
                   <div className="flex items-center gap-2">

@@ -7,8 +7,6 @@ import {
   Scale,
   MessageCircle,
   Phone,
-  Award,
-  Heart,
 } from "lucide-react";
 
 export function FeaturesSectionWithHoverEffects() {
@@ -49,22 +47,10 @@ export function FeaturesSectionWithHoverEffects() {
         "Atención directa con nuestro equipo en Valencia para casos que requieren intervención humana.",
       icon: <Phone className="h-6 w-6" />,
     },
-    {
-      title: "Calidad Certificada",
-      description:
-        "Todos nuestros abogados están colegiados y especializados en diferentes áreas del derecho.",
-      icon: <Award className="h-6 w-6" />,
-    },
-    {
-      title: "Compromiso Total",
-      description: 
-        "Nos dedicamos completamente a resolver tus problemas legales con la máxima eficiencia.",
-      icon: <Heart className="h-6 w-6" />,
-    },
   ];
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 relative z-10 py-10 max-w-7xl mx-auto">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 relative z-10 py-10 max-w-7xl mx-auto">
       {features.map((feature, index) => (
         <Feature key={feature.title} {...feature} index={index} />
       ))}
@@ -87,14 +73,14 @@ const Feature = ({
     <div
       className={cn(
         "flex flex-col lg:border-r py-10 relative group/feature border-blue-200/30 dark:border-blue-500/30",
-        (index === 0 || index === 4) && "lg:border-l border-blue-200/30 dark:border-blue-500/30",
-        index < 4 && "lg:border-b border-blue-200/30 dark:border-blue-500/30"
+        (index === 0 || index === 3) && "lg:border-l border-blue-200/30 dark:border-blue-500/30",
+        index < 3 && "lg:border-b border-blue-200/30 dark:border-blue-500/30"
       )}
     >
-      {index < 4 && (
+      {index < 3 && (
         <div className="opacity-0 group-hover/feature:opacity-100 transition duration-200 absolute inset-0 h-full w-full bg-gradient-to-t from-blue-50/50 dark:from-blue-900/20 to-transparent pointer-events-none" />
       )}
-      {index >= 4 && (
+      {index >= 3 && (
         <div className="opacity-0 group-hover/feature:opacity-100 transition duration-200 absolute inset-0 h-full w-full bg-gradient-to-b from-blue-50/50 dark:from-blue-900/20 to-transparent pointer-events-none" />
       )}
       <div className="mb-4 relative z-10 px-10 text-blue-600 dark:text-blue-400">
