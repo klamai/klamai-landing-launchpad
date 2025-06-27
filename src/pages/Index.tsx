@@ -104,13 +104,13 @@ const Index = () => {
   }];
 
   const frequentQuestions = [
-    "¿Puedo despedir a un empleado por bajo rendimiento?",
-    "¿Qué hacer si mi casero no devuelve la fianza?",
-    "¿Cómo reclamar una herencia sin testamento?",
-    "¿Puedo anular un contrato firmado hace poco?",
-    "¿Qué hacer tras un accidente de tráfico?",
-    "¿Cómo solicitar la custodia de mis hijos?"
-  ];
+    "Quiero vender mi casa, cuál es el proceso legal?",
+    "Cómo proteger la propiedad intelectual de mi negocio?",
+    "Puedo modificar el acuerdo de custodia de mis hijos?",
+    "Qué hacer si recibo una demanda por accidente de tráfico?",
+    "Cómo resolver una disputa contractual con un proveedor?",
+    "Qué pasos seguir si quiero divorciarme?"
+];
 
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
@@ -288,7 +288,7 @@ const Index = () => {
                                 className="w-full border-2 border-blue-300 dark:border-blue-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 bg-white/80 dark:bg-gray-900/80 shadow-inner"
                               >
                                 <PromptInputTextarea 
-                                  placeholder="Ejemplo: Tuve un accidente de tráfico la semana pasada y el otro conductor no tenía seguro. ¿Qué opciones legales tengo para recuperar los gastos médicos y reparaciones?"
+                                  placeholder="Ejemplo: Tengo una propiedad en disputa con un familiar. Cuáles son mis opciones legales para resolver esto?"
                                   className="min-h-32 text-base font-medium placeholder:text-gray-500 dark:placeholder:text-gray-400 placeholder:opacity-70"
                                 />
                                 <PromptInputActions className="justify-end pt-2">
@@ -304,16 +304,7 @@ const Index = () => {
                                 {consultation.length}/500 caracteres
                               </div>
                             </div>
-                            
-                            <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
-                              <Shield className="inline h-4 w-4 mr-2" />
-                              Tu consulta es <strong>100% confidencial</strong> y sin compromiso
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Botón centrado fuera del cuadro */}
+                            {/* Botón centrado fuera del cuadro */}
                       <div className="mt-8 flex justify-center">
                         <ShimmerButton
                           onClick={handleSubmit}
@@ -340,11 +331,20 @@ const Index = () => {
                           )}
                         </ShimmerButton>
                       </div>
+                            <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
+                              <Shield className="inline h-4 w-4 mr-2" />
+                              Tu consulta es <strong>100% confidencial</strong> y sin compromiso
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      
 
                       {/* Frequent Questions */}
                       <div className="mt-8">
                         <h3 className="text-center text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                          Preguntas frecuentes
+                          Consultas frecuentes
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {frequentQuestions.map((question, index) => (
