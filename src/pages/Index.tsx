@@ -8,6 +8,7 @@ import { FooterSection } from "@/components/ui/footer-section";
 import { PromptInput, PromptInputAction, PromptInputActions, PromptInputTextarea } from "@/components/ui/prompt-input";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { ShimmerButton } from "@/components/ui/shimmer-button";
 
 const transitionVariants = {
   item: {
@@ -290,23 +291,31 @@ const Index = () => {
                                   placeholder="Ejemplo: Tuve un accidente de tráfico la semana pasada y el otro conductor no tenía seguro. ¿Qué opciones legales tengo para recuperar los gastos médicos y reparaciones?"
                                   className="min-h-32 text-base font-medium placeholder:text-gray-500 dark:placeholder:text-gray-400 placeholder:opacity-70"
                                 />
-                                <PromptInputActions className="justify-end">
+                                <PromptInputActions className="justify-end pt-2">
                                   <PromptInputAction
                                     tooltip={isSubmitting ? "Conectando con VitorIA..." : "Consultar con VitorIA GRATIS"}
                                   >
-                                    <Button
-                                      variant="default"
-                                      size="icon"
-                                      className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg"
+                                    <ShimmerButton
                                       onClick={handleSubmit}
                                       disabled={isSubmitting || !consultation.trim()}
+                                      background="linear-gradient(45deg, #2563eb, #06b6d4)"
+                                      shimmerColor="#ffffff"
+                                      shimmerDuration="2s"
+                                      borderRadius="50px"
+                                      className="h-12 px-6 text-white font-semibold shadow-lg hover:shadow-xl transition-shadow"
                                     >
                                       {isSubmitting ? (
-                                        <Square className="size-5 fill-current animate-pulse" />
+                                        <div className="flex items-center gap-2">
+                                          <Square className="size-4 fill-current animate-pulse" />
+                                          <span>Conectando...</span>
+                                        </div>
                                       ) : (
-                                        <ArrowUp className="size-5" />
+                                        <div className="flex items-center gap-2">
+                                          <ArrowUp className="size-4" />
+                                          <span>Consultar con VitorIA</span>
+                                        </div>
                                       )}
-                                    </Button>
+                                    </ShimmerButton>
                                   </PromptInputAction>
                                 </PromptInputActions>
                               </PromptInput>
