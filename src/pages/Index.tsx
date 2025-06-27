@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2, Shield } from "lucide-react";
+import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2, Shield, ArrowUp, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
 import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
 import { FooterSection } from "@/components/ui/footer-section";
+import { PromptInput, PromptInputAction, PromptInputActions, PromptInputTextarea } from "@/components/ui/prompt-input";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+
 const transitionVariants = {
   item: {
     hidden: {
@@ -27,6 +28,7 @@ const transitionVariants = {
     }
   }
 };
+
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
@@ -34,10 +36,12 @@ const Index = () => {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -45,8 +49,16 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+
+  const handleLogoClick = () => {
+    // If already on home page, scroll to top
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  const handleSubmit = async () => {
     if (!consultation.trim()) return;
     setIsSubmitting(true);
 
@@ -58,13 +70,15 @@ const Index = () => {
       navigate('/chat');
     }, 500);
   };
-  const handleLogoClick = () => {
-    // If already on home page, scroll to top
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+
+  const handleValueChange = (value: string) => {
+    setConsultation(value);
   };
+
+  const handleFrequentQuestion = (question: string) => {
+    setConsultation(question);
+  };
+
   const testimonials = [{
     name: "María González",
     role: "Empresaria",
@@ -87,6 +101,16 @@ const Index = () => {
     image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face",
     testimonial: "Como directora de empresa, valoro la rapidez y precisión. VitorIA superó mis expectativas y me ahorró tiempo y dinero en consultas legales."
   }];
+
+  const frequentQuestions = [
+    "¿Puedo despedir a un empleado por bajo rendimiento?",
+    "¿Qué hacer si mi casero no devuelve la fianza?",
+    "¿Cómo reclamar una herencia sin testamento?",
+    "¿Puedo anular un contrato firmado hace poco?",
+    "¿Qué hacer tras un accidente de tráfico?",
+    "¿Cómo solicitar la custodia de mis hijos?"
+  ];
+
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
@@ -199,7 +223,7 @@ const Index = () => {
                     </div>
                   </AnimatedGroup>
 
-                  {/* Consultation Form */}
+                  {/* New Consultation Form */}
                   <AnimatedGroup variants={{
                   container: {
                     visible: {
@@ -244,7 +268,7 @@ const Index = () => {
                             </p>
                           </div>
 
-                          <form onSubmit={handleSubmit} className="space-y-6">
+                          <div className="space-y-6">
                             <div className="space-y-4">
                               <label htmlFor="consultation" className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 <MessageCircle className="h-5 w-5" />
@@ -254,28 +278,67 @@ const Index = () => {
                                 <Zap className="inline h-4 w-4 mr-2" />
                                 <strong>Tip:</strong> Cuanto más detalles proporciones, mejor podrá ayudarte VitorIA
                               </p>
-                              <div className="relative">
-                                <Textarea id="consultation" placeholder="Ejemplo: Tuve un accidente de tráfico la semana pasada y el otro conductor no tenía seguro. Qué opciones legales tengo para recuperar los gastos médicos y reparaciones" value={consultation} onChange={e => setConsultation(e.target.value)} className="min-h-40 text-base resize-none border-2 border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl font-medium bg-white/80 dark:bg-gray-900/80 shadow-inner dark:placeholder:text-opacity-30 placeholder:text-opacity-30 placeholder:text-gray-500 dark:placeholder:text-gray-400" required />
-                                <div className="absolute bottom-3 right-3 text-xs text-gray-400">
-                                  {consultation.length}/500 caracteres
-                                </div>
+                              
+                              <PromptInput
+                                value={consultation}
+                                onValueChange={handleValueChange}
+                                isLoading={isSubmitting}
+                                onSubmit={handleSubmit}
+                                className="w-full border-2 border-blue-300 dark:border-blue-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 bg-white/80 dark:bg-gray-900/80 shadow-inner"
+                              >
+                                <PromptInputTextarea 
+                                  placeholder="Ejemplo: Tuve un accidente de tráfico la semana pasada y el otro conductor no tenía seguro. ¿Qué opciones legales tengo para recuperar los gastos médicos y reparaciones?"
+                                  className="min-h-32 text-base font-medium placeholder:text-gray-500 dark:placeholder:text-gray-400 placeholder:opacity-70"
+                                />
+                                <PromptInputActions className="justify-end">
+                                  <PromptInputAction
+                                    tooltip={isSubmitting ? "Conectando con VitorIA..." : "Consultar con VitorIA GRATIS"}
+                                  >
+                                    <Button
+                                      variant="default"
+                                      size="icon"
+                                      className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg"
+                                      onClick={handleSubmit}
+                                      disabled={isSubmitting || !consultation.trim()}
+                                    >
+                                      {isSubmitting ? (
+                                        <Square className="size-5 fill-current animate-pulse" />
+                                      ) : (
+                                        <ArrowUp className="size-5" />
+                                      )}
+                                    </Button>
+                                  </PromptInputAction>
+                                </PromptInputActions>
+                              </PromptInput>
+                              
+                              <div className="text-right text-xs text-gray-400">
+                                {consultation.length}/500 caracteres
                               </div>
                             </div>
-                            <Button type="submit" disabled={isSubmitting || !consultation.trim()} className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-6 px-8 rounded-xl text-lg sm:text-xl shadow-2xl transform transition-all duration-200 hover:scale-105 hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden">
-                              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                              {isSubmitting ? <div className="flex items-center justify-center gap-2 sm:gap-3 relative z-10">
-                                  <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-white"></div>
-                                  <span className="text-sm sm:text-base">Conectando con VitorIA...</span>
-                                </div> : <div className="flex items-center justify-center gap-2 sm:gap-3 relative z-10">
-                                  <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
-                                  <span className="text-sm sm:text-base">Consultar con VitorIA GRATIS</span>
-                                </div>}
-                            </Button>
+                            
                             <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
                               <Shield className="inline h-4 w-4 mr-2" />
                               Tu consulta es <strong>100% confidencial</strong> y sin compromiso
                             </p>
-                          </form>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Frequent Questions */}
+                      <div className="mt-8">
+                        <h3 className="text-center text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                          Preguntas frecuentes
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {frequentQuestions.map((question, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleFrequentQuestion(question)}
+                              className="text-left p-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-lg border border-blue-200/50 dark:border-blue-500/30 hover:bg-blue-50/80 dark:hover:bg-blue-900/40 hover:border-blue-300 dark:hover:border-blue-400 transition-all duration-200 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300"
+                            >
+                              {question}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -327,4 +390,5 @@ const Index = () => {
       </div>
     </div>;
 };
+
 export default Index;
