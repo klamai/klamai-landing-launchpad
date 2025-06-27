@@ -86,13 +86,13 @@ const Feature = ({
       <div className="mb-6 relative z-10 px-10 text-blue-600 dark:text-blue-400">
         {icon}
       </div>
-      <div className="text-xl font-bold mb-4 relative z-10 px-10">
+      <div className="text-2xl font-bold mb-6 relative z-10 px-10">
         <div className="absolute left-0 inset-y-0 h-6 group-hover/feature:h-8 w-1 rounded-tr-full rounded-br-full bg-blue-300/50 dark:bg-blue-700/50 group-hover/feature:bg-blue-500 transition-all duration-200 origin-center" />
         <span className="group-hover/feature:translate-x-2 transition duration-200 inline-block text-gray-900 dark:text-white">
           {title}
         </span>
       </div>
-      <p className="text-base text-gray-600 dark:text-gray-300 max-w-xs relative z-10 px-10 font-medium leading-relaxed">
+      <p className="text-lg text-gray-600 dark:text-gray-300 max-w-xs relative z-10 px-10 font-medium leading-relaxed">
         {description}
       </p>
     </div>
