@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
+import { Moon, Sun, Scale, Menu, X, Sidebar, Copyright } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Standard } from "@typebot.io/react";
 import { cn } from "@/lib/utils";
@@ -53,7 +53,7 @@ const Chat = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
-      <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
+      <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800 flex flex-col">
         {/* Animated Background */}
         <AnimatedBackground darkMode={darkMode} />
         
@@ -127,7 +127,7 @@ const Chat = () => {
         </header>
 
         {/* Main Content with Sidebar */}
-        <main className="pt-20 flex h-[calc(100vh-5rem)] relative z-10">
+        <main className="pt-20 flex flex-1 h-[calc(100vh-8rem)] relative z-10">
           {/* Sidebar */}
           <div className={cn(
             "fixed lg:relative inset-y-0 left-0 z-30 w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out pt-20 lg:pt-0",
@@ -166,6 +166,21 @@ const Chat = () => {
             </div>
           </div>
         </main>
+
+        {/* Footer */}
+        <footer className="relative z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700 py-3 px-4">
+          <div className="flex items-center justify-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-2">
+              <Scale className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <span className="font-semibold text-gray-900 dark:text-white">klamAI</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Copyright className="h-3 w-3" />
+              <span>2025</span>
+            </div>
+            <span>Asesoramiento jurídico con IA</span>
+          </div>
+        </footer>
       </div>
     </div>
   );
