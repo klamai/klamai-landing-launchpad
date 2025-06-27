@@ -171,7 +171,7 @@ const Chat = () => {
         <footer className="relative z-10 bg-gray-800 dark:bg-gray-900 text-white py-4 px-4">
           <div className="flex items-center justify-center text-sm">
             <p className="text-center">
-              Al enviar un mensaje a Alex, aceptas nuestras{" "}
+              Al enviar un mensaje a VitorIA, aceptas nuestras{" "}
               <Link 
                 to="/aviso-legal" 
                 className="text-blue-400 hover:text-blue-300 underline transition-colors"
