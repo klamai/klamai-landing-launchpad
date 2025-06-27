@@ -322,7 +322,10 @@ const Index = () => {
                           shimmerColor="#ffffff"
                           shimmerDuration="2s"
                           borderRadius="50px"
-                          className="h-14 px-8 text-white dark:text-white font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
+                          className={cn(
+                            "h-14 px-8 text-white dark:text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300",
+                            !consultation.trim() ? "opacity-50" : "opacity-100"
+                          )}
                         >
                           {isSubmitting ? (
                             <div className="flex items-center gap-3">
