@@ -1,12 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Standard } from "@typebot.io/react";
 import { cn } from "@/lib/utils";
-import ChatHistory from "@/components/ChatHistory";
-import KlamAIVerticalLeft from "@/components/KlamAIVerticalLeft";
-import KlamAIVerticalRight from "@/components/KlamAIVerticalRight";
 import { Link, useNavigate } from "react-router-dom";
+import ChatHistory from "@/components/ChatHistory";
 
 const Chat = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -53,24 +52,9 @@ const Chat = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
-      <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800 overflow-hidden">
-        
-        {/* Decorative Vertical Images - Only visible in dark mode */}
-        <KlamAIVerticalLeft 
-          className={cn(
-            "fixed left-4 bottom-0 z-0 transition-opacity duration-500 hidden lg:block",
-            darkMode ? "opacity-20" : "opacity-0"
-          )}
-        />
-        <KlamAIVerticalRight 
-          className={cn(
-            "fixed right-4 top-20 z-0 transition-opacity duration-500 hidden lg:block",
-            darkMode ? "opacity-20" : "opacity-0"
-          )}
-        />
-
+      <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
-        <header className="relative z-10">
+        <header>
           <nav data-state={menuState && 'active'} className="fixed z-20 w-full px-2 group">
             <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-white/80 dark:bg-gray-800/80 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
               <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
@@ -139,7 +123,7 @@ const Chat = () => {
         </header>
 
         {/* Main Content with Sidebar */}
-        <main className="pt-20 flex h-[calc(100vh-5rem)] relative z-10">
+        <main className="pt-20 flex h-[calc(100vh-5rem)]">
           {/* Sidebar */}
           <div className={cn(
             "fixed lg:relative inset-y-0 left-0 z-30 w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out pt-20 lg:pt-0",
