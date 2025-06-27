@@ -5,7 +5,7 @@ import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
 import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
 import { FooterSection } from "@/components/ui/footer-section";
-import { PromptInput, PromptInputAction, PromptInputActions, PromptInputTextarea } from "@/components/ui/prompt-input";
+import { PromptInput, PromptInputTextarea, PromptInputActions, PromptInputAction } from "@/components/ui/prompt-input";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
@@ -295,27 +295,7 @@ const Index = () => {
                                   <PromptInputAction
                                     tooltip={isSubmitting ? "Conectando con VitorIA..." : "Consultar con VitorIA GRATIS"}
                                   >
-                                    <ShimmerButton
-                                      onClick={handleSubmit}
-                                      disabled={isSubmitting || !consultation.trim()}
-                                      background="linear-gradient(45deg, #2563eb, #06b6d4)"
-                                      shimmerColor="#ffffff"
-                                      shimmerDuration="2s"
-                                      borderRadius="50px"
-                                      className="h-12 px-6 text-white font-semibold shadow-lg hover:shadow-xl transition-shadow"
-                                    >
-                                      {isSubmitting ? (
-                                        <div className="flex items-center gap-2">
-                                          <Square className="size-4 fill-current animate-pulse" />
-                                          <span>Conectando...</span>
-                                        </div>
-                                      ) : (
-                                        <div className="flex items-center gap-2">
-                                          <ArrowUp className="size-4" />
-                                          <span>Consultar con VitorIA</span>
-                                        </div>
-                                      )}
-                                    </ShimmerButton>
+                                    
                                   </PromptInputAction>
                                 </PromptInputActions>
                               </PromptInput>
@@ -331,6 +311,31 @@ const Index = () => {
                             </p>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Botón centrado fuera del cuadro */}
+                      <div className="mt-8 flex justify-center">
+                        <ShimmerButton
+                          onClick={handleSubmit}
+                          disabled={isSubmitting || !consultation.trim()}
+                          background="linear-gradient(45deg, #2563eb, #06b6d4)"
+                          shimmerColor="#ffffff"
+                          shimmerDuration="2s"
+                          borderRadius="50px"
+                          className="h-14 px-8 text-white dark:text-white font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
+                        >
+                          {isSubmitting ? (
+                            <div className="flex items-center gap-3">
+                              <Square className="size-5 fill-current animate-pulse" />
+                              <span>Conectando con VitorIA...</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <MessageCircle className="size-5" />
+                              <span>Consultar con VitorIA GRATIS</span>
+                            </div>
+                          )}
+                        </ShimmerButton>
                       </div>
 
                       {/* Frequent Questions */}
