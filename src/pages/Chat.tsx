@@ -127,7 +127,7 @@ const Chat = () => {
         </header>
 
         {/* Main Content with Sidebar */}
-        <main className="pt-20 flex flex-1 h-[calc(100vh-8rem)] relative z-10">
+        <main className="pt-20 flex flex-1 h-[calc(100vh-12rem)] relative z-10">
           {/* Sidebar */}
           <div className={cn(
             "fixed lg:relative inset-y-0 left-0 z-30 w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out pt-20 lg:pt-0",
@@ -167,18 +167,26 @@ const Chat = () => {
           </div>
         </main>
 
-        {/* Footer */}
-        <footer className="relative z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700 py-3 px-4">
-          <div className="flex items-center justify-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-            <div className="flex items-center gap-2">
-              <Scale className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <span className="font-semibold text-gray-900 dark:text-white">klamAI</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Copyright className="h-3 w-3" />
-              <span>2025</span>
-            </div>
-            <span>Asesoramiento jurídico con IA</span>
+        {/* Legal Footer */}
+        <footer className="relative z-10 bg-gray-800 dark:bg-gray-900 text-white py-4 px-4">
+          <div className="flex items-center justify-center text-sm">
+            <p className="text-center">
+              Al enviar un mensaje a Alex, aceptas nuestras{" "}
+              <Link 
+                to="/aviso-legal" 
+                className="text-blue-400 hover:text-blue-300 underline transition-colors"
+              >
+                condiciones
+              </Link>
+              {" "}y confirmas que has leído nuestra{" "}
+              <Link 
+                to="/politicas-privacidad" 
+                className="text-blue-400 hover:text-blue-300 underline transition-colors"
+              >
+                política de privacidad
+              </Link>
+              .
+            </p>
           </div>
         </footer>
       </div>
