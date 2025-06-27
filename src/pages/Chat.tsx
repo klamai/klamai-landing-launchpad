@@ -6,6 +6,7 @@ import { Standard } from "@typebot.io/react";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import ChatHistory from "@/components/ChatHistory";
+import AnimatedBackground from "@/components/AnimatedBackground";
 
 const Chat = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -53,6 +54,9 @@ const Chat = () => {
   return (
     <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
+        {/* Animated Background */}
+        <AnimatedBackground darkMode={darkMode} />
+        
         {/* Header */}
         <header>
           <nav data-state={menuState && 'active'} className="fixed z-20 w-full px-2 group">
@@ -123,10 +127,10 @@ const Chat = () => {
         </header>
 
         {/* Main Content with Sidebar */}
-        <main className="pt-20 flex h-[calc(100vh-5rem)]">
+        <main className="pt-20 flex h-[calc(100vh-5rem)] relative z-10">
           {/* Sidebar */}
           <div className={cn(
-            "fixed lg:relative inset-y-0 left-0 z-30 w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out pt-20 lg:pt-0",
+            "fixed lg:relative inset-y-0 left-0 z-30 w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out pt-20 lg:pt-0",
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
             !sidebarOpen && "lg:w-0 lg:border-r-0"
           )}>
@@ -147,7 +151,7 @@ const Chat = () => {
 
           {/* Chat Container */}
           <div className={cn(
-            "flex-1 transition-all duration-300",
+            "flex-1 transition-all duration-300 relative z-10",
             sidebarOpen ? "lg:ml-0" : "lg:ml-0"
           )}>
             <div className="h-full">
