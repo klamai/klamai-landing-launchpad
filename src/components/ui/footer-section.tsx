@@ -173,11 +173,11 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
             © 2025 KlamAI. Todos los derechos reservados. | Asesoramiento jurídico con IA en España
           </p>
           <nav className="flex gap-4 text-sm">
-            <a href="#" className="transition-colors hover:text-cyan-200 text-blue-100">
+            <a href="/politicas-privacidad" className="transition-colors hover:text-cyan-200 text-blue-100">
               Política de Privacidad
             </a>
-            <a href="#" className="transition-colors hover:text-cyan-200 text-blue-100">
-              Términos de Servicio
+            <a href="/aviso-legal" className="transition-colors hover:text-cyan-200 text-blue-100">
+              Aviso Legal
             </a>
             <a href="#" className="transition-colors hover:text-cyan-200 text-blue-100">
               Cookies
