@@ -9,6 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      casos: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          especialidad_id: number | null
+          estado: string
+          guia_abogado: string | null
+          id: string
+          motivo_consulta: string | null
+          resumen_caso: string | null
+          storage_path: string | null
+          transcripcion_chat: Json | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          especialidad_id?: number | null
+          estado?: string
+          guia_abogado?: string | null
+          id?: string
+          motivo_consulta?: string | null
+          resumen_caso?: string | null
+          storage_path?: string | null
+          transcripcion_chat?: Json | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          especialidad_id?: number | null
+          estado?: string
+          guia_abogado?: string | null
+          id?: string
+          motivo_consulta?: string | null
+          resumen_caso?: string | null
+          storage_path?: string | null
+          transcripcion_chat?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "casos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casos_especialidad_id_fkey"
+            columns: ["especialidad_id"]
+            isOneToOne: false
+            referencedRelation: "especialidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_history: {
         Row: {
           id: string
@@ -44,6 +98,21 @@ export type Database = {
           },
         ]
       }
+      especialidades: {
+        Row: {
+          id: number
+          nombre: string
+        }
+        Insert: {
+          id?: number
+          nombre: string
+        }
+        Update: {
+          id?: number
+          nombre?: string
+        }
+        Relationships: []
+      }
       Leads: {
         Row: {
           caso: string | null
@@ -61,6 +130,54 @@ export type Database = {
           id?: number
         }
         Relationships: []
+      }
+      pagos: {
+        Row: {
+          caso_id: string
+          created_at: string
+          estado: string
+          id: string
+          moneda: string
+          monto: number
+          stripe_payment_intent_id: string
+          usuario_id: string
+        }
+        Insert: {
+          caso_id: string
+          created_at?: string
+          estado: string
+          id?: string
+          moneda?: string
+          monto: number
+          stripe_payment_intent_id: string
+          usuario_id: string
+        }
+        Update: {
+          caso_id?: string
+          created_at?: string
+          estado?: string
+          id?: string
+          moneda?: string
+          monto?: number
+          stripe_payment_intent_id?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagos_caso_id_fkey"
+            columns: ["caso_id"]
+            isOneToOne: false
+            referencedRelation: "casos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_history: {
         Row: {
@@ -108,33 +225,42 @@ export type Database = {
       }
       profiles: {
         Row: {
+          apellido: string | null
           avatar_url: string | null
           created_at: string
-          email: string | null
+          email: string
           full_name: string | null
           id: string
+          nombre: string | null
           phone: string | null
           plan: string | null
+          stripe_customer_id: string | null
           updated_at: string
         }
         Insert: {
+          apellido?: string | null
           avatar_url?: string | null
           created_at?: string
-          email?: string | null
+          email: string
           full_name?: string | null
           id: string
+          nombre?: string | null
           phone?: string | null
           plan?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Update: {
+          apellido?: string | null
           avatar_url?: string | null
           created_at?: string
-          email?: string | null
+          email?: string
           full_name?: string | null
           id?: string
+          nombre?: string | null
           phone?: string | null
           plan?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Relationships: []
