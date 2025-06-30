@@ -11,39 +11,51 @@ export type Database = {
     Tables: {
       casos: {
         Row: {
+          canal_atencion: string | null
           cliente_id: string
-          created_at: string
+          compras_realizadas: number
+          costo_en_creditos: number
+          created_at: string | null
           especialidad_id: number | null
-          estado: string
+          estado: Database["public"]["Enums"]["caso_estado_enum"]
           guia_abogado: string | null
           id: string
+          limite_compras: number
           motivo_consulta: string | null
           resumen_caso: string | null
-          storage_path: string | null
+          tipo_lead: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
           transcripcion_chat: Json | null
         }
         Insert: {
+          canal_atencion?: string | null
           cliente_id: string
-          created_at?: string
+          compras_realizadas?: number
+          costo_en_creditos?: number
+          created_at?: string | null
           especialidad_id?: number | null
-          estado?: string
+          estado?: Database["public"]["Enums"]["caso_estado_enum"]
           guia_abogado?: string | null
           id?: string
+          limite_compras?: number
           motivo_consulta?: string | null
           resumen_caso?: string | null
-          storage_path?: string | null
+          tipo_lead?: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
           transcripcion_chat?: Json | null
         }
         Update: {
+          canal_atencion?: string | null
           cliente_id?: string
-          created_at?: string
+          compras_realizadas?: number
+          costo_en_creditos?: number
+          created_at?: string | null
           especialidad_id?: number | null
-          estado?: string
+          estado?: Database["public"]["Enums"]["caso_estado_enum"]
           guia_abogado?: string | null
           id?: string
+          limite_compras?: number
           motivo_consulta?: string | null
           resumen_caso?: string | null
-          storage_path?: string | null
+          tipo_lead?: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
           transcripcion_chat?: Json | null
         }
         Relationships: [
@@ -63,37 +75,41 @@ export type Database = {
           },
         ]
       }
-      chat_history: {
+      casos_comprados: {
         Row: {
+          abogado_id: string
+          caso_id: string
+          fecha_compra: string | null
           id: string
-          message: string
-          response: string | null
-          session_id: string
-          timestamp: string
-          user_id: string | null
+          precio_compra_creditos: number
         }
         Insert: {
+          abogado_id: string
+          caso_id: string
+          fecha_compra?: string | null
           id?: string
-          message: string
-          response?: string | null
-          session_id: string
-          timestamp?: string
-          user_id?: string | null
+          precio_compra_creditos: number
         }
         Update: {
+          abogado_id?: string
+          caso_id?: string
+          fecha_compra?: string | null
           id?: string
-          message?: string
-          response?: string | null
-          session_id?: string
-          timestamp?: string
-          user_id?: string | null
+          precio_compra_creditos?: number
         }
         Relationships: [
           {
-            foreignKeyName: "chat_history_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "casos_comprados_abogado_id_fkey"
+            columns: ["abogado_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casos_comprados_caso_id_fkey"
+            columns: ["caso_id"]
+            isOneToOne: false
+            referencedRelation: "casos"
             referencedColumns: ["id"]
           },
         ]
@@ -113,63 +129,41 @@ export type Database = {
         }
         Relationships: []
       }
-      Leads: {
-        Row: {
-          caso: string | null
-          created_at: string
-          id: number
-        }
-        Insert: {
-          caso?: string | null
-          created_at?: string
-          id?: number
-        }
-        Update: {
-          caso?: string | null
-          created_at?: string
-          id?: number
-        }
-        Relationships: []
-      }
       pagos: {
         Row: {
-          caso_id: string
-          created_at: string
-          estado: string
+          created_at: string | null
+          descripcion: string
+          estado: Database["public"]["Enums"]["pago_estado_enum"]
           id: string
+          metadata_pago: Json | null
           moneda: string
           monto: number
           stripe_payment_intent_id: string
           usuario_id: string
         }
         Insert: {
-          caso_id: string
-          created_at?: string
-          estado: string
+          created_at?: string | null
+          descripcion: string
+          estado: Database["public"]["Enums"]["pago_estado_enum"]
           id?: string
+          metadata_pago?: Json | null
           moneda?: string
           monto: number
           stripe_payment_intent_id: string
           usuario_id: string
         }
         Update: {
-          caso_id?: string
-          created_at?: string
-          estado?: string
+          created_at?: string | null
+          descripcion?: string
+          estado?: Database["public"]["Enums"]["pago_estado_enum"]
           id?: string
+          metadata_pago?: Json | null
           moneda?: string
           monto?: number
           stripe_payment_intent_id?: string
           usuario_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "pagos_caso_id_fkey"
-            columns: ["caso_id"]
-            isOneToOne: false
-            referencedRelation: "casos"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "pagos_usuario_id_fkey"
             columns: ["usuario_id"]
@@ -179,91 +173,197 @@ export type Database = {
           },
         ]
       }
-      payment_history: {
+      profiles: {
         Row: {
-          amount: number
-          created_at: string
-          currency: string | null
-          description: string | null
+          acepta_comunicacion: boolean
+          acepta_politicas: boolean
+          apellido: string
+          avatar_url: string | null
+          created_at: string | null
+          creditos_disponibles: number
+          email: string
+          especialidades: number[] | null
           id: string
-          payment_method: string | null
-          status: string
-          transaction_id: string | null
-          user_id: string | null
+          nif_cif: string | null
+          nombre: string
+          razon_social: string | null
+          role: Database["public"]["Enums"]["profile_role_enum"]
+          stripe_customer_id: string | null
+          telefono: string | null
+          tipo_perfil: Database["public"]["Enums"]["profile_type_enum"]
         }
         Insert: {
-          amount: number
-          created_at?: string
-          currency?: string | null
-          description?: string | null
-          id?: string
-          payment_method?: string | null
-          status: string
-          transaction_id?: string | null
-          user_id?: string | null
+          acepta_comunicacion?: boolean
+          acepta_politicas?: boolean
+          apellido: string
+          avatar_url?: string | null
+          created_at?: string | null
+          creditos_disponibles?: number
+          email: string
+          especialidades?: number[] | null
+          id: string
+          nif_cif?: string | null
+          nombre: string
+          razon_social?: string | null
+          role: Database["public"]["Enums"]["profile_role_enum"]
+          stripe_customer_id?: string | null
+          telefono?: string | null
+          tipo_perfil?: Database["public"]["Enums"]["profile_type_enum"]
         }
         Update: {
-          amount?: number
-          created_at?: string
-          currency?: string | null
-          description?: string | null
+          acepta_comunicacion?: boolean
+          acepta_politicas?: boolean
+          apellido?: string
+          avatar_url?: string | null
+          created_at?: string | null
+          creditos_disponibles?: number
+          email?: string
+          especialidades?: number[] | null
           id?: string
-          payment_method?: string | null
-          status?: string
-          transaction_id?: string | null
-          user_id?: string | null
+          nif_cif?: string | null
+          nombre?: string
+          razon_social?: string | null
+          role?: Database["public"]["Enums"]["profile_role_enum"]
+          stripe_customer_id?: string | null
+          telefono?: string | null
+          tipo_perfil?: Database["public"]["Enums"]["profile_type_enum"]
+        }
+        Relationships: []
+      }
+      suscripciones_abogados: {
+        Row: {
+          abogado_id: string
+          created_at: string | null
+          creditos_otorgados_ciclo: number
+          estado: Database["public"]["Enums"]["suscripcion_estado_enum"]
+          fecha_cancelacion: string | null
+          fecha_fin_ciclo: string
+          fecha_inicio_ciclo: string
+          id: string
+          stripe_subscription_id: string
+        }
+        Insert: {
+          abogado_id: string
+          created_at?: string | null
+          creditos_otorgados_ciclo: number
+          estado: Database["public"]["Enums"]["suscripcion_estado_enum"]
+          fecha_cancelacion?: string | null
+          fecha_fin_ciclo: string
+          fecha_inicio_ciclo: string
+          id?: string
+          stripe_subscription_id: string
+        }
+        Update: {
+          abogado_id?: string
+          created_at?: string | null
+          creditos_otorgados_ciclo?: number
+          estado?: Database["public"]["Enums"]["suscripcion_estado_enum"]
+          fecha_cancelacion?: string | null
+          fecha_fin_ciclo?: string
+          fecha_inicio_ciclo?: string
+          id?: string
+          stripe_subscription_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "payment_history_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "suscripciones_abogados_abogado_id_fkey"
+            columns: ["abogado_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      profiles: {
+      suscripciones_clientes: {
         Row: {
-          apellido: string | null
-          avatar_url: string | null
-          created_at: string
-          email: string
-          full_name: string | null
+          cliente_id: string
+          consultas_usadas_ciclo: number
+          created_at: string | null
+          estado: Database["public"]["Enums"]["suscripcion_estado_enum"]
+          fecha_cancelacion: string | null
+          fecha_fin_ciclo: string
+          fecha_inicio_ciclo: string
           id: string
-          nombre: string | null
-          phone: string | null
-          plan: string | null
-          stripe_customer_id: string | null
-          updated_at: string
+          limite_consultas_ciclo: number
+          stripe_subscription_id: string
         }
         Insert: {
-          apellido?: string | null
-          avatar_url?: string | null
-          created_at?: string
-          email: string
-          full_name?: string | null
-          id: string
-          nombre?: string | null
-          phone?: string | null
-          plan?: string | null
-          stripe_customer_id?: string | null
-          updated_at?: string
+          cliente_id: string
+          consultas_usadas_ciclo?: number
+          created_at?: string | null
+          estado: Database["public"]["Enums"]["suscripcion_estado_enum"]
+          fecha_cancelacion?: string | null
+          fecha_fin_ciclo: string
+          fecha_inicio_ciclo: string
+          id?: string
+          limite_consultas_ciclo: number
+          stripe_subscription_id: string
         }
         Update: {
-          apellido?: string | null
-          avatar_url?: string | null
-          created_at?: string
-          email?: string
-          full_name?: string | null
+          cliente_id?: string
+          consultas_usadas_ciclo?: number
+          created_at?: string | null
+          estado?: Database["public"]["Enums"]["suscripcion_estado_enum"]
+          fecha_cancelacion?: string | null
+          fecha_fin_ciclo?: string
+          fecha_inicio_ciclo?: string
           id?: string
-          nombre?: string | null
-          phone?: string | null
-          plan?: string | null
-          stripe_customer_id?: string | null
-          updated_at?: string
+          limite_consultas_ciclo?: number
+          stripe_subscription_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suscripciones_clientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transacciones_creditos: {
+        Row: {
+          abogado_id: string
+          cantidad: number
+          created_at: string | null
+          descripcion: string | null
+          id: string
+          referencia_id: string | null
+          saldo_anterior: number
+          saldo_posterior: number
+          tipo_transaccion: Database["public"]["Enums"]["transaccion_credito_tipo_enum"]
+        }
+        Insert: {
+          abogado_id: string
+          cantidad: number
+          created_at?: string | null
+          descripcion?: string | null
+          id?: string
+          referencia_id?: string | null
+          saldo_anterior: number
+          saldo_posterior: number
+          tipo_transaccion: Database["public"]["Enums"]["transaccion_credito_tipo_enum"]
+        }
+        Update: {
+          abogado_id?: string
+          cantidad?: number
+          created_at?: string | null
+          descripcion?: string | null
+          id?: string
+          referencia_id?: string | null
+          saldo_anterior?: number
+          saldo_posterior?: number
+          tipo_transaccion?: Database["public"]["Enums"]["transaccion_credito_tipo_enum"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transacciones_creditos_abogado_id_fkey"
+            columns: ["abogado_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -273,7 +373,21 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      caso_estado_enum:
+        | "borrador"
+        | "esperando_pago"
+        | "disponible"
+        | "agotado"
+        | "cerrado"
+      caso_tipo_lead_enum: "estandar" | "premium" | "urgente"
+      pago_estado_enum: "succeeded" | "processing" | "failed"
+      profile_role_enum: "cliente" | "abogado"
+      profile_type_enum: "individual" | "empresa"
+      suscripcion_estado_enum: "active" | "canceled" | "past_due" | "unpaid"
+      transaccion_credito_tipo_enum:
+        | "compra_paquete"
+        | "asignacion_suscripcion"
+        | "gasto_lead"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -388,6 +502,24 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      caso_estado_enum: [
+        "borrador",
+        "esperando_pago",
+        "disponible",
+        "agotado",
+        "cerrado",
+      ],
+      caso_tipo_lead_enum: ["estandar", "premium", "urgente"],
+      pago_estado_enum: ["succeeded", "processing", "failed"],
+      profile_role_enum: ["cliente", "abogado"],
+      profile_type_enum: ["individual", "empresa"],
+      suscripcion_estado_enum: ["active", "canceled", "past_due", "unpaid"],
+      transaccion_credito_tipo_enum: [
+        "compra_paquete",
+        "asignacion_suscripcion",
+        "gasto_lead",
+      ],
+    },
   },
 } as const

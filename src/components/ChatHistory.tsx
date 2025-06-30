@@ -7,22 +7,7 @@ import { Button } from "@/components/ui/button";
 import { History, MessageCircle, ChevronRight, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-
-interface Caso {
-  id: string;
-  cliente_id: string;
-  especialidad_id: number | null;
-  estado: string;
-  motivo_consulta: string | null;
-  resumen_caso: string | null;
-  guia_abogado: string | null;
-  transcripcion_chat: any;
-  storage_path: string | null;
-  created_at: string;
-  especialidades?: {
-    nombre: string;
-  };
-}
+import { Caso } from "@/types/database";
 
 interface ChatHistoryProps {
   onSelectSession?: (sessionId: string) => void;
@@ -76,7 +61,7 @@ const ChatHistory = ({ onSelectSession }: ChatHistoryProps) => {
     return grouped;
   };
 
-  const truncateText = (text: string | null, maxLength: number = 60) => {
+  const truncateText = (text: string | null | undefined, maxLength: number = 60) => {
     if (!text) return 'Sin descripción';
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
@@ -87,9 +72,11 @@ const ChatHistory = ({ onSelectSession }: ChatHistoryProps) => {
         return 'text-gray-500';
       case 'esperando_pago':
         return 'text-yellow-600';
-      case 'activo':
+      case 'disponible':
         return 'text-blue-600';
-      case 'completado':
+      case 'agotado':
+        return 'text-orange-600';
+      case 'cerrado':
         return 'text-green-600';
       default:
         return 'text-gray-500';
@@ -102,10 +89,12 @@ const ChatHistory = ({ onSelectSession }: ChatHistoryProps) => {
         return 'Borrador';
       case 'esperando_pago':
         return 'Esperando Pago';
-      case 'activo':
-        return 'Activo';
-      case 'completado':
-        return 'Completado';
+      case 'disponible':
+        return 'Disponible';
+      case 'agotado':
+        return 'Agotado';
+      case 'cerrado':
+        return 'Cerrado';
       default:
         return estado;
     }
@@ -183,6 +172,10 @@ const ChatHistory = ({ onSelectSession }: ChatHistoryProps) => {
                                 </div>
                               </>
                             )}
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <div className="text-xs text-muted-foreground">
+                              {caso.costo_en_creditos} créditos
+                            </div>
                           </div>
                           <div className={`text-xs font-medium mt-1 ${getStatusColor(caso.estado)}`}>
                             {getStatusText(caso.estado)}
