@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2, Shield, ArrowUp, Square, LogOut } from "lucide-react";
+import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2, Shield, ArrowUp, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
@@ -12,6 +12,7 @@ import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import SignOutButton from "@/components/SignOutButton";
 
 const transitionVariants = {
   item: {
@@ -73,7 +74,7 @@ const Index = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, signOut, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -213,15 +214,7 @@ const Index = () => {
                               Dashboard
                             </Button>
                           </Link>
-                          <Button 
-                            onClick={handleSignOut}
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200"
-                          >
-                            <LogOut className="h-4 w-4 mr-2" />
-                            Cerrar Sesión
-                          </Button>
+                          <SignOutButton />
                         </div>
                       ) : (
                         <>
@@ -253,15 +246,7 @@ const Index = () => {
                                 Dashboard
                               </Button>
                             </Link>
-                            <Button 
-                              onClick={handleSignOut} 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 w-full justify-center"
-                            >
-                              <LogOut className="h-4 w-4 mr-2" />
-                              Cerrar Sesión
-                            </Button>
+                            <SignOutButton className="w-full justify-center" />
                           </>
                         ) : (
                           <>
