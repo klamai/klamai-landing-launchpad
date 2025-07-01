@@ -23,6 +23,7 @@ export type Database = {
           email_borrador: string | null
           especialidad_id: number | null
           estado: Database["public"]["Enums"]["caso_estado_enum"]
+          fecha_ultimo_contacto: string | null
           guia_abogado: string | null
           id: string
           limite_compras: number
@@ -34,6 +35,7 @@ export type Database = {
           razon_social_borrador: string | null
           resumen_caso: string | null
           telefono_borrador: string | null
+          tiene_notificaciones_nuevas: boolean | null
           tipo_lead: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
           tipo_perfil_borrador:
             | Database["public"]["Enums"]["profile_type_enum"]
@@ -53,6 +55,7 @@ export type Database = {
           email_borrador?: string | null
           especialidad_id?: number | null
           estado?: Database["public"]["Enums"]["caso_estado_enum"]
+          fecha_ultimo_contacto?: string | null
           guia_abogado?: string | null
           id?: string
           limite_compras?: number
@@ -64,6 +67,7 @@ export type Database = {
           razon_social_borrador?: string | null
           resumen_caso?: string | null
           telefono_borrador?: string | null
+          tiene_notificaciones_nuevas?: boolean | null
           tipo_lead?: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
           tipo_perfil_borrador?:
             | Database["public"]["Enums"]["profile_type_enum"]
@@ -83,6 +87,7 @@ export type Database = {
           email_borrador?: string | null
           especialidad_id?: number | null
           estado?: Database["public"]["Enums"]["caso_estado_enum"]
+          fecha_ultimo_contacto?: string | null
           guia_abogado?: string | null
           id?: string
           limite_compras?: number
@@ -94,6 +99,7 @@ export type Database = {
           razon_social_borrador?: string | null
           resumen_caso?: string | null
           telefono_borrador?: string | null
+          tiene_notificaciones_nuevas?: boolean | null
           tipo_lead?: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
           tipo_perfil_borrador?:
             | Database["public"]["Enums"]["profile_type_enum"]
@@ -170,6 +176,41 @@ export type Database = {
           nombre?: string
         }
         Relationships: []
+      }
+      notificaciones: {
+        Row: {
+          created_at: string
+          id: string
+          leida: boolean
+          mensaje: string
+          url_destino: string | null
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leida?: boolean
+          mensaje: string
+          url_destino?: string | null
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leida?: boolean
+          mensaje?: string
+          url_destino?: string | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificaciones_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pagos: {
         Row: {

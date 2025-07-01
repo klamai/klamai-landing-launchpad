@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { SidebarDashboard, SidebarBody, SidebarLink, Logo, LogoIcon } from "@/components/ui/sidebar-dashboard";
 import { 
@@ -195,6 +194,10 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
       case "nueva-consulta":
         return <NuevaConsultaSection />;
       case "casos":
+        // Check if we're viewing a specific case
+        if (location.pathname.includes('/casos/') && location.pathname.split('/').length > 3) {
+          return <CaseDetailTabs />;
+        }
         return <MisCasosSection />;
       case "perfil":
         return <PerfilSection />;
@@ -337,20 +340,33 @@ const NuevaConsultaSection = () => (
   </motion.div>
 );
 
-const MisCasosSection = () => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="space-y-6"
-  >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mis Casos</h1>
-    <p className="text-gray-600 dark:text-gray-300">Gestiona todos tus casos legales desde aquí.</p>
-    <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <FolderOpen className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">No tienes casos activos</p>
-    </div>
-  </motion.div>
-);
+const MisCasosSection = () => {
+  const MisCasos = React.lazy(() => import("@/components/MisCasos"));
+  
+  return (
+    <React.Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <MisCasos />
+    </React.Suspense>
+  );
+};
+
+const CaseDetailTabs = () => {
+  const CaseDetail = React.lazy(() => import("@/components/CaseDetailTabs"));
+  
+  return (
+    <React.Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <CaseDetail />
+    </React.Suspense>
+  );
+};
 
 const PerfilSection = () => {
   const { user } = useAuth();
@@ -408,18 +424,18 @@ const FacturacionSection = () => (
   </motion.div>
 );
 
-const NotificacionesSection = () => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="space-y-6"
-  >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notificaciones</h1>
-    <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <Bell className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">No tienes notificaciones nuevas</p>
-    </div>
-  </motion.div>
-);
+const NotificacionesSection = () => {
+  const NotificationCenter = React.lazy(() => import("@/components/NotificationCenter"));
+  
+  return (
+    <React.Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <NotificationCenter />
+    </React.Suspense>
+  );
+};
 
 export default Dashboard;
