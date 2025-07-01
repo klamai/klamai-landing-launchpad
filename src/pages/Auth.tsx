@@ -209,7 +209,7 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate('/chat');
+        navigate('/dashboard'); // Cambiado de '/chat' a '/dashboard'
       }
     };
     checkUser();
@@ -260,7 +260,7 @@ const Auth = () => {
       });
 
       setTimeout(() => {
-        navigate('/chat');
+        navigate('/dashboard'); // Cambiado de '/chat' a '/dashboard'
       }, 1000);
 
     } catch (error: any) {
