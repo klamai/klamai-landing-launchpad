@@ -363,7 +363,8 @@ export function AnimatedAIChat() {
 
     return (
         <div className="h-full w-full flex flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white relative overflow-hidden">
-            <div className="absolute inset-0 w-full h-full overflow-hidden">
+            {/* Background animations with lower z-index */}
+            <div className="absolute inset-0 w-full h-full overflow-hidden z-0">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/5 dark:bg-blue-500/10 rounded-full mix-blend-normal filter blur-[128px] animate-pulse" />
                 <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full mix-blend-normal filter blur-[128px] animate-pulse delay-700" />
                 <div className="absolute top-1/4 right-1/3 w-64 h-64 bg-blue-600/5 dark:bg-blue-600/10 rounded-full mix-blend-normal filter blur-[96px] animate-pulse delay-1000" />
@@ -410,20 +411,31 @@ export function AnimatedAIChat() {
                                 </motion.p>
                             </div>
 
-                            <div className="flex flex-wrap items-center justify-center gap-2">
+                            {/* Command suggestion buttons with higher z-index and better positioning */}
+                            <div className="relative z-30 flex flex-wrap items-center justify-center gap-3">
                                 {commandSuggestions.map((suggestion, index) => (
                                     <motion.button
                                         key={suggestion.prefix}
                                         onClick={() => selectCommandSuggestion(index)}
-                                        className="flex items-center gap-2 px-3 py-2 bg-white/50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all relative group border border-gray-200/50 dark:border-gray-700/50"
+                                        className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all relative group border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md backdrop-blur-sm"
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.1 }}
+                                        whileHover={{ scale: 1.02, y: -2 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        style={{ zIndex: 40 }}
                                     >
-                                        {suggestion.icon}
-                                        <span>{suggestion.label}</span>
+                                        <div className="text-blue-600 dark:text-blue-400">
+                                            {suggestion.icon}
+                                        </div>
+                                        <span className="font-medium">{suggestion.label}</span>
                                         <motion.div
-                                            className="absolute inset-0 border border-blue-200 dark:border-blue-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="absolute inset-0 border-2 border-blue-200 dark:border-blue-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                                            initial={false}
+                                        />
+                                        {/* Subtle glow effect */}
+                                        <motion.div
+                                            className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-indigo-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
                                             initial={false}
                                         />
                                     </motion.button>
@@ -494,23 +506,25 @@ export function AnimatedAIChat() {
                 </div>
             )}
 
-            {/* Input Area */}
-            <div className="relative z-10 p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700">
+            {/* Input Area with highest z-index */}
+            <div className="relative z-50 p-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700">
                 <motion.div 
-                    className="relative backdrop-blur-2xl bg-white/80 dark:bg-gray-800/80 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-2xl"
+                    className="relative backdrop-blur-2xl bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl"
                     initial={{ scale: 0.98 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.1 }}
+                    style={{ zIndex: 60 }}
                 >
                     <AnimatePresence>
                         {showCommandPalette && (
                             <motion.div 
                                 ref={commandPaletteRef}
-                                className="absolute left-4 right-4 bottom-full mb-2 backdrop-blur-xl bg-white/95 dark:bg-gray-800/95 rounded-lg z-50 shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+                                className="absolute left-4 right-4 bottom-full mb-2 backdrop-blur-xl bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
                                 initial={{ opacity: 0, y: 5 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 5 }}
                                 transition={{ duration: 0.15 }}
+                                style={{ zIndex: 70 }}
                             >
                                 <div className="py-1">
                                     {commandSuggestions.map((suggestion, index) => (
@@ -693,6 +707,7 @@ export function AnimatedAIChat() {
                 </motion.div>
             </div>
 
+            {/* Mouse follower with lower z-index */}
             {inputFocused && (
                 <motion.div 
                     className="fixed w-[50rem] h-[50rem] rounded-full pointer-events-none z-0 opacity-[0.02] bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 blur-[96px]"
