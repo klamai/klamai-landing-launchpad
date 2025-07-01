@@ -11,93 +11,51 @@ export type Database = {
     Tables: {
       casos: {
         Row: {
-          acepto_politicas_inicial: boolean | null
-          apellido_borrador: string | null
           canal_atencion: string | null
-          ciudad_borrador: string | null
-          cliente_id: string | null
+          cliente_id: string
           compras_realizadas: number
           costo_en_creditos: number
           created_at: string | null
-          direccion_fiscal_borrador: string | null
-          email_borrador: string | null
           especialidad_id: number | null
           estado: Database["public"]["Enums"]["caso_estado_enum"]
           guia_abogado: string | null
           id: string
           limite_compras: number
           motivo_consulta: string | null
-          nif_cif_borrador: string | null
-          nombre_borrador: string | null
-          nombre_gerente_borrador: string | null
-          preferencia_horaria_contacto: string | null
-          razon_social_borrador: string | null
           resumen_caso: string | null
-          telefono_borrador: string | null
           tipo_lead: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
-          tipo_perfil_borrador:
-            | Database["public"]["Enums"]["profile_type_enum"]
-            | null
           transcripcion_chat: Json | null
         }
         Insert: {
-          acepto_politicas_inicial?: boolean | null
-          apellido_borrador?: string | null
           canal_atencion?: string | null
-          ciudad_borrador?: string | null
-          cliente_id?: string | null
+          cliente_id: string
           compras_realizadas?: number
           costo_en_creditos?: number
           created_at?: string | null
-          direccion_fiscal_borrador?: string | null
-          email_borrador?: string | null
           especialidad_id?: number | null
           estado?: Database["public"]["Enums"]["caso_estado_enum"]
           guia_abogado?: string | null
           id?: string
           limite_compras?: number
           motivo_consulta?: string | null
-          nif_cif_borrador?: string | null
-          nombre_borrador?: string | null
-          nombre_gerente_borrador?: string | null
-          preferencia_horaria_contacto?: string | null
-          razon_social_borrador?: string | null
           resumen_caso?: string | null
-          telefono_borrador?: string | null
           tipo_lead?: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
-          tipo_perfil_borrador?:
-            | Database["public"]["Enums"]["profile_type_enum"]
-            | null
           transcripcion_chat?: Json | null
         }
         Update: {
-          acepto_politicas_inicial?: boolean | null
-          apellido_borrador?: string | null
           canal_atencion?: string | null
-          ciudad_borrador?: string | null
-          cliente_id?: string | null
+          cliente_id?: string
           compras_realizadas?: number
           costo_en_creditos?: number
           created_at?: string | null
-          direccion_fiscal_borrador?: string | null
-          email_borrador?: string | null
           especialidad_id?: number | null
           estado?: Database["public"]["Enums"]["caso_estado_enum"]
           guia_abogado?: string | null
           id?: string
           limite_compras?: number
           motivo_consulta?: string | null
-          nif_cif_borrador?: string | null
-          nombre_borrador?: string | null
-          nombre_gerente_borrador?: string | null
-          preferencia_horaria_contacto?: string | null
-          razon_social_borrador?: string | null
           resumen_caso?: string | null
-          telefono_borrador?: string | null
           tipo_lead?: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
-          tipo_perfil_borrador?:
-            | Database["public"]["Enums"]["profile_type_enum"]
-            | null
           transcripcion_chat?: Json | null
         }
         Relationships: [

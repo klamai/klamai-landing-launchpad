@@ -1,23 +1,19 @@
 
 import { useState, useEffect } from "react";
-import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
+import { Moon, Sun, Scale, Menu, X, Sidebar, Copyright } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Standard } from "@typebot.io/react";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import UserMenu from "@/components/UserMenu";
 import ChatHistory from "@/components/ChatHistory";
 import AnimatedBackground from "@/components/AnimatedBackground";
 
 const Chat = () => {
-  const { user } = useAuth();
   const [darkMode, setDarkMode] = useState(false);
   const [menuState, setMenuState] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [userConsultation, setUserConsultation] = useState("");
-  const [casoId, setCasoId] = useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -35,20 +31,12 @@ const Chat = () => {
   }, []);
 
   useEffect(() => {
-    // Obtener el texto de consulta y caso_id guardados en localStorage
+    // Obtener el texto de consulta guardado en localStorage
     const savedConsultation = localStorage.getItem('userConsultation');
-    const savedCasoId = localStorage.getItem('caso_id');
-    
     if (savedConsultation) {
       setUserConsultation(savedConsultation);
       // Opcional: limpiar el localStorage después de usarlo
       localStorage.removeItem('userConsultation');
-    }
-    
-    if (savedCasoId) {
-      setCasoId(savedCasoId);
-      // Opcional: limpiar el localStorage después de usarlo
-      localStorage.removeItem('caso_id');
     }
   }, []);
 
@@ -114,44 +102,23 @@ const Chat = () => {
                   <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   </Button>
-                  
-                  {user ? (
-                    <UserMenu />
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Link to="/auth">
-                        <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700">
-                          Iniciar Sesión
-                        </Button>
-                      </Link>
-                      <Link to="/auth">
-                        <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
-                          Registrarse
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
+                  <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700">
+                    Login
+                  </Button>
+                  <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
+                    Sign Up
+                  </Button>
                 </div>
 
                 {/* Mobile menu */}
                 <div className="bg-background group-data-[state=active]:block hidden w-full p-4 rounded-2xl border shadow-lg mt-4 lg:hidden">
                   <div className="flex flex-col gap-3 w-full">
-                    {user ? (
-                      <UserMenu />
-                    ) : (
-                      <>
-                        <Link to="/auth">
-                          <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center">
-                            Iniciar Sesión
-                          </Button>
-                        </Link>
-                        <Link to="/auth">
-                          <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 w-full">
-                            Registrarse
-                          </Button>
-                        </Link>
-                      </>
-                    )}
+                    <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center">
+                      Login
+                    </Button>
+                    <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 w-full">
+                      Sign Up
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -189,12 +156,11 @@ const Chat = () => {
           )}>
             <div className="h-full">
               <Standard
-                typebot="klamai-test-supabase-wyqehpx"
+                typebot="open-ai-assistant-chat-30pe3ns"
                 apiHost="https://bot.autoiax.com"
                 style={{ width: "100%", height: "100%" }}
                 prefilledVariables={{
-                  "utm_value": userConsultation || "Hola, necesito asesoramiento legal",
-                  "caso_id": casoId || ""
+                  "utm_value": userConsultation || "Hola, necesito asesoramiento legal"
                 }}
               />
             </div>
