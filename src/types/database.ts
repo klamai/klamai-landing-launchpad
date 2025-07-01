@@ -37,6 +37,8 @@ export interface Caso {
   costo_en_creditos: number;
   compras_realizadas: number;
   limite_compras: number;
+  fecha_ultimo_contacto?: string;
+  tiene_notificaciones_nuevas?: boolean;
   created_at: string;
   especialidades?: {
     nombre: string;
@@ -97,5 +99,14 @@ export interface TransaccionCredito {
   referencia_id?: string;
   saldo_anterior: number;
   saldo_posterior: number;
+  created_at: string;
+}
+
+export interface Notificacion {
+  id: string;
+  usuario_id: string;
+  mensaje: string;
+  leida: boolean;
+  url_destino?: string;
   created_at: string;
 }
