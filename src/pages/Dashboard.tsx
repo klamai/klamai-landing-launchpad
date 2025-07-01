@@ -325,20 +325,19 @@ const DashboardSection = () => {
 };
 
 // Placeholder sections - these will be implemented later
-const NuevaConsultaSection = () => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="space-y-6"
-  >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Nueva Consulta</h1>
-    <p className="text-gray-600 dark:text-gray-300">Aquí podrás iniciar una nueva consulta legal.</p>
-    <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <MessageCirclePlus className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">Funcionalidad próximamente disponible</p>
-    </div>
-  </motion.div>
-);
+const NuevaConsultaSection = () => {
+  const NuevaConsulta = React.lazy(() => import("@/components/NuevaConsulta"));
+  
+  return (
+    <React.Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <NuevaConsulta />
+    </React.Suspense>
+  );
+};
 
 const MisCasosSection = () => {
   const MisCasos = React.lazy(() => import("@/components/MisCasos"));
