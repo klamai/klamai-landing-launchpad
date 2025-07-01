@@ -9,6 +9,8 @@ import { PromptInput, PromptInputTextarea, PromptInputActions, PromptInputAction
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const transitionVariants = {
   item: {
@@ -30,6 +32,38 @@ const transitionVariants = {
   }
 };
 
+const testimonials = [{
+  name: "María González",
+  role: "Empresaria",
+  company: "Valencia Tech",
+  rating: 5,
+  image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face",
+  testimonial: "VitorIA me ayudó a resolver un problema laboral complejo en minutos. El asesoramiento fue preciso y me conectó con el abogado perfecto para mi caso. ¡Increíble servicio!"
+}, {
+  name: "Carlos Martín",
+  role: "Autónomo",
+  company: "Madrid",
+  rating: 5,
+  image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=150&h=150&fit=crop&crop=face",
+  testimonial: "Necesitaba asesoramiento urgente sobre contratos y klamAI me dio respuestas inmediatas. La plataforma es intuitiva y los especialistas muy profesionales."
+}, {
+  name: "Ana Rodríguez",
+  role: "Directora",
+  company: "Barcelona Solutions",
+  rating: 5,
+  image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face",
+  testimonial: "Como directora de empresa, valoro la rapidez y precisión. VitorIA superó mis expectativas y me ahorró tiempo y dinero en consultas legales."
+}];
+
+const frequentQuestions = [
+  "Quiero vender mi casa, cuál es el proceso legal?",
+  "Cómo proteger la propiedad intelectual de mi negocio?",
+  "Puedo modificar el acuerdo de custodia de mis hijos?",
+  "Qué hacer si recibo una demanda por accidente de tráfico?",
+  "Cómo resolver una disputa contractual con un proveedor?",
+  "Qué pasos seguir si quiero divorciarme?"
+];
+
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
@@ -37,6 +71,7 @@ const Index = () => {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -63,13 +98,55 @@ const Index = () => {
     if (!consultation.trim()) return;
     setIsSubmitting(true);
 
-    // Guardar el texto de consulta en localStorage antes de redirigir
-    localStorage.setItem('userConsultation', consultation.trim());
+    try {
+      // 1. Crear caso borrador en Supabase
+      const { data, error } = await supabase.functions.invoke('crear-borrador-caso');
+      
+      if (error) {
+        console.error('Error al crear caso borrador:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo procesar tu consulta. Por favor, inténtalo de nuevo.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
-    // Redirect to chat page
-    setTimeout(() => {
-      navigate('/chat');
-    }, 500);
+      const casoId = data?.caso_id;
+      
+      if (!casoId) {
+        console.error('No se recibió caso_id de la función');
+        toast({
+          title: "Error",
+          description: "No se pudo procesar tu consulta. Por favor, inténtalo de nuevo.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 2. Guardar tanto la consulta como el caso_id en localStorage
+      localStorage.setItem('userConsultation', consultation.trim());
+      localStorage.setItem('casoId', casoId);
+
+      console.log('Caso creado con ID:', casoId);
+      console.log('Consulta guardada:', consultation.trim());
+
+      // 3. Redirigir al chat
+      setTimeout(() => {
+        navigate('/chat');
+      }, 500);
+
+    } catch (error) {
+      console.error('Error en handleSubmit:', error);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    }
   };
 
   const handleValueChange = (value: string) => {
@@ -79,38 +156,6 @@ const Index = () => {
   const handleFrequentQuestion = (question: string) => {
     setConsultation(question);
   };
-
-  const testimonials = [{
-    name: "María González",
-    role: "Empresaria",
-    company: "Valencia Tech",
-    rating: 5,
-    image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face",
-    testimonial: "VitorIA me ayudó a resolver un problema laboral complejo en minutos. El asesoramiento fue preciso y me conectó con el abogado perfecto para mi caso. ¡Increíble servicio!"
-  }, {
-    name: "Carlos Martín",
-    role: "Autónomo",
-    company: "Madrid",
-    rating: 5,
-    image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=150&h=150&fit=crop&crop=face",
-    testimonial: "Necesitaba asesoramiento urgente sobre contratos y klamAI me dio respuestas inmediatas. La plataforma es intuitiva y los especialistas muy profesionales."
-  }, {
-    name: "Ana Rodríguez",
-    role: "Directora",
-    company: "Barcelona Solutions",
-    rating: 5,
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face",
-    testimonial: "Como directora de empresa, valoro la rapidez y precisión. VitorIA superó mis expectativas y me ahorró tiempo y dinero en consultas legales."
-  }];
-
-  const frequentQuestions = [
-    "Quiero vender mi casa, cuál es el proceso legal?",
-    "Cómo proteger la propiedad intelectual de mi negocio?",
-    "Puedo modificar el acuerdo de custodia de mis hijos?",
-    "Qué hacer si recibo una demanda por accidente de tráfico?",
-    "Cómo resolver una disputa contractual con un proveedor?",
-    "Qué pasos seguir si quiero divorciarme?"
-];
 
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">

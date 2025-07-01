@@ -14,6 +14,7 @@ const Chat = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [userConsultation, setUserConsultation] = useState("");
+  const [casoId, setCasoId] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -31,13 +32,24 @@ const Chat = () => {
   }, []);
 
   useEffect(() => {
-    // Obtener el texto de consulta guardado en localStorage
+    // Obtener el texto de consulta y caso_id guardados en localStorage
     const savedConsultation = localStorage.getItem('userConsultation');
+    const savedCasoId = localStorage.getItem('casoId');
+    
     if (savedConsultation) {
       setUserConsultation(savedConsultation);
-      // Opcional: limpiar el localStorage después de usarlo
       localStorage.removeItem('userConsultation');
     }
+    
+    if (savedCasoId) {
+      setCasoId(savedCasoId);
+      localStorage.removeItem('casoId');
+    }
+
+    console.log('Datos recuperados del localStorage:', {
+      consultation: savedConsultation,
+      casoId: savedCasoId
+    });
   }, []);
 
   const handleLogoClick = () => {
@@ -156,11 +168,12 @@ const Chat = () => {
           )}>
             <div className="h-full">
               <Standard
-                typebot="open-ai-assistant-chat-30pe3ns"
+                typebot="klamai-test-supabase-wyqehpx"
                 apiHost="https://bot.autoiax.com"
                 style={{ width: "100%", height: "100%" }}
                 prefilledVariables={{
-                  "utm_value": userConsultation || "Hola, necesito asesoramiento legal"
+                  "utm_value": userConsultation || "Hola, necesito asesoramiento legal",
+                  "caso_id": casoId || ""
                 }}
               />
             </div>
