@@ -70,20 +70,22 @@ export const SidebarDashboard = ({
   );
 };
 
-export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
+export const SidebarBody = ({ className, children, ...props }: React.ComponentProps<"div">) => {
   return (
-    <>
-      <DesktopSidebar {...props} />
-      <MobileSidebar {...(props as React.ComponentProps<"div">)} />
-    </>
+    <div className={className} {...props}>
+      <DesktopSidebar>{children}</DesktopSidebar>
+      <MobileSidebar>{children}</MobileSidebar>
+    </div>
   );
 };
 
 export const DesktopSidebar = ({
   className,
   children,
-  ...props
-}: React.ComponentProps<typeof motion.div>) => {
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) => {
   const { open, setOpen, animate } = useSidebarDashboard();
   return (
     <motion.div
@@ -96,7 +98,6 @@ export const DesktopSidebar = ({
       }}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
-      {...props}
     >
       {children}
     </motion.div>
@@ -106,8 +107,10 @@ export const DesktopSidebar = ({
 export const MobileSidebar = ({
   className,
   children,
-  ...props
-}: React.ComponentProps<"div">) => {
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) => {
   const { open, setOpen } = useSidebarDashboard();
   return (
     <>
@@ -115,7 +118,6 @@ export const MobileSidebar = ({
         className={cn(
           "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-neutral-100 dark:bg-neutral-800 w-full"
         )}
-        {...props}
       >
         <div className="flex justify-end z-20 w-full">
           <Menu

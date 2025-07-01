@@ -27,6 +27,13 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/nueva-consulta" element={<Dashboard />} />
+            <Route path="/dashboard/casos" element={<Dashboard />} />
+            <Route path="/dashboard/casos/:casoId" element={<Dashboard />} />
+            <Route path="/dashboard/perfil" element={<Dashboard />} />
+            <Route path="/dashboard/configuracion" element={<Dashboard />} />
+            <Route path="/dashboard/facturacion" element={<Dashboard />} />
+            <Route path="/dashboard/notificaciones" element={<Dashboard />} />
             <Route path="/politicas-privacidad" element={<PrivacyPolicy />} />
             <Route path="/aviso-legal" element={<LegalNotice />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
