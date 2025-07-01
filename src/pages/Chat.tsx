@@ -1,12 +1,13 @@
-
 import { useState, useEffect } from "react";
-import { Moon, Sun, Scale, Menu, X, Sidebar, Copyright } from "lucide-react";
+import { Moon, Sun, Scale, Menu, X, Sidebar, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Standard } from "@typebot.io/react";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import ChatHistory from "@/components/ChatHistory";
 import AnimatedBackground from "@/components/AnimatedBackground";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const Chat = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -17,6 +18,8 @@ const Chat = () => {
   const [casoId, setCasoId] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user, signOut, loading } = useAuth();
+  const { toast } = useToast();
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -30,6 +33,13 @@ const Chat = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Verificar autenticación
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     // Obtener el texto de consulta y caso_id guardados en localStorage
@@ -57,11 +67,42 @@ const Chat = () => {
     window.location.href = '/';
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Sesión cerrada",
+        description: "Has cerrado sesión exitosamente.",
+      });
+      navigate('/');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Error al cerrar sesión: " + error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSelectSession = (sessionId: string) => {
     setSelectedSessionId(sessionId);
     // Aquí podrías cargar la conversación específica si es necesario
     console.log('Selected session:', sessionId);
   };
+
+  // Mostrar loader mientras se verifica la autenticación
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Si no hay usuario, no renderizar nada (se redirigirá)
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
@@ -114,22 +155,28 @@ const Chat = () => {
                   <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700">
-                    Login
-                  </Button>
-                  <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
-                    Sign Up
+                  <Button 
+                    onClick={handleSignOut}
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Cerrar Sesión
                   </Button>
                 </div>
 
                 {/* Mobile menu */}
                 <div className="bg-background group-data-[state=active]:block hidden w-full p-4 rounded-2xl border shadow-lg mt-4 lg:hidden">
                   <div className="flex flex-col gap-3 w-full">
-                    <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center">
-                      Login
-                    </Button>
-                    <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 w-full">
-                      Sign Up
+                    <Button 
+                      onClick={handleSignOut}
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 w-full justify-center"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Cerrar Sesión
                     </Button>
                   </div>
                 </div>

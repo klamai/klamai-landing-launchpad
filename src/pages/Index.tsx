@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2, Shield, ArrowUp, Square } from "lucide-react";
+import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2, Shield, ArrowUp, Square, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
@@ -7,10 +7,11 @@ import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section
 import { FooterSection } from "@/components/ui/footer-section";
 import { PromptInput, PromptInputTextarea, PromptInputActions, PromptInputAction } from "@/components/ui/prompt-input";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const transitionVariants = {
   item: {
@@ -72,6 +73,7 @@ const Index = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, signOut, loading } = useAuth();
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -92,6 +94,22 @@ const Index = () => {
       top: 0,
       behavior: 'smooth'
     });
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Sesión cerrada",
+        description: "Has cerrado sesión exitosamente.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Error al cerrar sesión: " + error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmit = async () => {
@@ -185,23 +203,82 @@ const Index = () => {
                   <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700">
-                    Login
-                  </Button>
-                  <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
-                    Sign Up
-                  </Button>
+                  
+                  {!loading && (
+                    <>
+                      {user ? (
+                        <div className="flex items-center gap-4">
+                          <Link to="/chat">
+                            <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200">
+                              Dashboard
+                            </Button>
+                          </Link>
+                          <Button 
+                            onClick={handleSignOut}
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200"
+                          >
+                            <LogOut className="h-4 w-4 mr-2" />
+                            Cerrar Sesión
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Link to="/auth">
+                            <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700">
+                              Iniciar Sesión
+                            </Button>
+                          </Link>
+                          <Link to="/auth">
+                            <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
+                              Registrarse
+                            </Button>
+                          </Link>
+                        </>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 {/* Mobile menu */}
                 <div className="bg-background group-data-[state=active]:block hidden w-full p-4 rounded-2xl border shadow-lg mt-4 lg:hidden">
                   <div className="flex flex-col gap-3 w-full">
-                    <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center">
-                      Login
-                    </Button>
-                    <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 w-full">
-                      Sign Up
-                    </Button>
+                    {!loading && (
+                      <>
+                        {user ? (
+                          <>
+                            <Link to="/chat">
+                              <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 w-full justify-center">
+                                Dashboard
+                              </Button>
+                            </Link>
+                            <Button 
+                              onClick={handleSignOut} 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 w-full justify-center"
+                            >
+                              <LogOut className="h-4 w-4 mr-2" />
+                              Cerrar Sesión
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Link to="/auth">
+                              <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center">
+                                Iniciar Sesión
+                              </Button>
+                            </Link>
+                            <Link to="/auth">
+                              <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 w-full">
+                                Registrarse
+                              </Button>
+                            </Link>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
