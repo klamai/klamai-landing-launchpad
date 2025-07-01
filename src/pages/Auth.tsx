@@ -48,13 +48,15 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        await signIn(formData.email, formData.password);
+        const { error } = await signIn(formData.email, formData.password);
+        if (error) throw error;
         toast({
           title: "¡Bienvenido de vuelta!",
           description: "Has iniciado sesión correctamente",
         });
       } else {
-        await signUp(formData.email, formData.password, formData.name);
+        const { error } = await signUp(formData.email, formData.password, formData.name);
+        if (error) throw error;
         toast({
           title: "¡Cuenta creada!",
           description: "Revisa tu email para confirmar tu cuenta",
