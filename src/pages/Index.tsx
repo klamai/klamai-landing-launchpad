@@ -97,22 +97,6 @@ const Index = () => {
     });
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Sesión cerrada",
-        description: "Has cerrado sesión exitosamente.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Error al cerrar sesión: " + error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleSubmit = async () => {
     if (!consultation.trim()) return;
     setIsSubmitting(true);
