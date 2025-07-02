@@ -28,10 +28,18 @@ const Dashboard = () => {
   const location = useLocation();
   const { toast } = useToast();
 
-  // Check for dark mode preference
+  // Initialize dark mode from localStorage
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark');
-    setDarkMode(isDark);
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme !== null) {
+      const isDark = savedTheme === 'true';
+      setDarkMode(isDark);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
   }, []);
 
   // Get active section from URL
@@ -55,8 +63,14 @@ const Dashboard = () => {
   }, [location.pathname]);
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem('darkMode', newDarkMode.toString());
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const handleSignOut = async () => {
