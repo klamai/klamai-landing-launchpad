@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Mail, Lock, User, Eye, EyeOff, Scale } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,11 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
 
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+
+  // Sync modal mode with prop changes
+  useEffect(() => {
+    setIsLogin(initialMode === 'login');
+  }, [initialMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
