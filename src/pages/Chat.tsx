@@ -1,235 +1,222 @@
-
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Mic, MicOff, Moon, Sun, Scale } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "@/hooks/useAuth";
-import { ChatMessage } from "@/components/ChatMessage";
+import { Standard } from "@typebot.io/react";
+import { cn } from "@/lib/utils";
+import { Link, useNavigate } from "react-router-dom";
 import ChatHistory from "@/components/ChatHistory";
-import { useAudioRecording } from "@/hooks/useAudioRecording";
-import { ChatResponseService } from "@/services/chatResponseService";
-
-interface Message {
-  id: string;
-  content: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-}
+import AnimatedBackground from "@/components/AnimatedBackground";
+import { useAuth } from "@/hooks/useAuth";
+import SignOutButton from "@/components/SignOutButton";
+import { useToast } from "@/hooks/use-toast";
 
 const Chat = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [menuState, setMenuState] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [userConsultation, setUserConsultation] = useState("");
+  const [casoId, setCasoId] = useState("");
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { isRecording, startRecording, stopRecording } = useAudioRecording();
-
-  // Check for dark mode preference from localStorage and system
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-      setDarkMode(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setDarkMode(false);
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
+  const { toast } = useToast();
 
   const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+    setDarkMode(!darkMode);
+    document.documentElement.classList.toggle('dark');
   };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input.trim() === "") return;
-
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      content: input,
-      text: input,
-      isUser: true,
-      timestamp: new Date(),
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
     };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-    setInput("");
-    setIsLoading(true);
-
-    try {
-      const response = await ChatResponseService.generateResponse(input);
-      const aiMessage: Message = {
-        id: Date.now().toString() + "-ai",
-        content: response.text || "No se pudo obtener una respuesta.",
-        text: response.text || "No se pudo obtener una respuesta.",
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages((prevMessages) => [...prevMessages, aiMessage]);
-    } catch (error) {
-      console.error("Error al obtener la respuesta del chat:", error);
-      const errorAiMessage: Message = {
-        id: Date.now().toString() + "-ai-error",
-        content: "Error al obtener la respuesta. Por favor, inténtalo de nuevo.",
-        text: "Error al obtener la respuesta. Por favor, inténtalo de nuevo.",
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages((prevMessages) => [...prevMessages, errorAiMessage]);
-    } finally {
-      setIsLoading(false);
+  // Verificar autenticación
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
     }
+  }, [user, loading, navigate]);
+
+  useEffect(() => {
+    // Obtener el texto de consulta y caso_id guardados en localStorage
+    const savedConsultation = localStorage.getItem('userConsultation');
+    const savedCasoId = localStorage.getItem('casoId');
+    
+    if (savedConsultation) {
+      setUserConsultation(savedConsultation);
+      localStorage.removeItem('userConsultation');
+    }
+    
+    if (savedCasoId) {
+      setCasoId(savedCasoId);
+      localStorage.removeItem('casoId');
+    }
+
+    console.log('Datos recuperados del localStorage:', {
+      consultation: savedConsultation,
+      casoId: savedCasoId
+    });
+  }, []);
+
+  const handleLogoClick = () => {
+    // Force a page reload when going back to home
+    window.location.href = '/';
   };
 
-  const handleMicClick = async () => {
-    if (isRecording) {
-      const audio = await stopRecording();
-      if (audio) {
-        // Aquí puedes enviar el audio a tu backend para la transcripción
-        console.log("Audio grabado:", audio);
-        // Simulación de respuesta del backend
-        setTimeout(() => {
-          const aiMessage: Message = {
-            id: Date.now().toString() + "-ai",
-            content: "Respuesta simulada a partir del audio grabado.",
-            text: "Respuesta simulada a partir del audio grabado.",
-            isUser: false,
-            timestamp: new Date(),
-          };
-          setMessages((prevMessages) => [...prevMessages, aiMessage]);
-        }, 1500);
-      }
-    } else {
-      startRecording();
-    }
+  const handleSelectSession = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    // Aquí podrías cargar la conversación específica si es necesario
+    console.log('Selected session:', sessionId);
   };
+
+  // Mostrar loader mientras se verifica la autenticación
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Si no hay usuario, no renderizar nada (se redirigirá)
+  if (!user) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="flex h-screen">
-        {/* Chat History Sidebar - Only show for authenticated users */}
-        {user && <ChatHistory />}
+    <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
+      <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800 flex flex-col">
+        {/* Animated Background */}
+        <AnimatedBackground darkMode={darkMode} />
         
-        {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <div className="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-4 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => navigate('/')}
-                className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <Scale className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="font-semibold text-gray-900 dark:text-white">klamAI</h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Asistente Legal IA</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleDarkMode}
-                className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </Button>
-              
-              {user ? (
-                <Button onClick={() => navigate('/dashboard')} size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                  Dashboard
-                </Button>
-              ) : (
-                <Button onClick={() => navigate('/auth')} size="sm" variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950">
-                  Iniciar Sesión
-                </Button>
-              )}
-            </div>
-          </div>
+        {/* Header */}
+        <header>
+          <nav data-state={menuState && 'active'} className="fixed z-20 w-full px-2 group">
+            <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-white/80 dark:bg-gray-800/80 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
+              <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
+                <div className="flex w-full justify-between lg:w-auto">
+                  <button 
+                    onClick={handleLogoClick}
+                    className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
+                  >
+                    <Scale className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">klamAI</span>
+                  </button>
 
-          {/* Messages Area */}
-          <div className="flex-1 p-4 overflow-y-auto">
-            <ScrollArea className="h-full">
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <ChatMessage key={message.id} message={message} />
-                ))}
-                {isLoading && (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 rounded-full bg-gray-500 animate-pulse"></div>
-                    <div className="w-3 h-3 rounded-full bg-gray-500 animate-pulse delay-100"></div>
-                    <div className="w-3 h-3 rounded-full bg-gray-500 animate-pulse delay-200"></div>
+                  <div className="flex items-center gap-4 lg:hidden">
+                    <Button 
+                      onClick={() => setSidebarOpen(!sidebarOpen)} 
+                      variant="outline" 
+                      size="icon" 
+                      className="rounded-full"
+                    >
+                      <Sidebar className="h-4 w-4" />
+                    </Button>
+                    <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
+                      {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                    </Button>
+                    <button onClick={() => setMenuState(!menuState)} aria-label={menuState == true ? 'Close Menu' : 'Open Menu'} className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5">
+                      <Menu className="group-data-[state=active]:rotate-180 group-data-[state=active]:scale-0 group-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
+                      <X className="group-data-[state=active]:rotate-0 group-data-[state=active]:scale-100 group-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
+                    </button>
                   </div>
-                )}
-                <div ref={messagesEndRef} />
+                </div>
+
+                <div className="hidden lg:flex items-center gap-4">
+                  <Button 
+                    onClick={() => setSidebarOpen(!sidebarOpen)} 
+                    variant="outline" 
+                    size="icon" 
+                    className="rounded-full"
+                  >
+                    <Sidebar className="h-4 w-4" />
+                  </Button>
+                  <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
+                    {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  </Button>
+                  <SignOutButton />
+                </div>
+
+                {/* Mobile menu */}
+                <div className="bg-background group-data-[state=active]:block hidden w-full p-4 rounded-2xl border shadow-lg mt-4 lg:hidden">
+                  <div className="flex flex-col gap-3 w-full">
+                    <SignOutButton className="w-full justify-center" />
+                  </div>
+                </div>
               </div>
-            </ScrollArea>
+            </div>
+          </nav>
+        </header>
+
+        {/* Main Content with Sidebar */}
+        <main className="pt-20 flex flex-1 h-[calc(100vh-12rem)] relative z-10">
+          {/* Sidebar */}
+          <div className={cn(
+            "fixed lg:relative inset-y-0 left-0 z-30 w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out pt-20 lg:pt-0",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+            !sidebarOpen && "lg:w-0 lg:border-r-0"
+          )}>
+            {sidebarOpen && (
+              <div className="h-full p-4">
+                <ChatHistory onSelectSession={handleSelectSession} />
+              </div>
+            )}
           </div>
 
-          {/* Input Area */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-            <form onSubmit={handleSubmit} className="relative flex items-center">
-              <Input
-                type="text"
-                placeholder="Escribe tu mensaje..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                className="pr-16 rounded-full"
-                disabled={isLoading}
+          {/* Overlay for mobile */}
+          {sidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
+          {/* Chat Container */}
+          <div className={cn(
+            "flex-1 transition-all duration-300 relative z-10",
+            sidebarOpen ? "lg:ml-0" : "lg:ml-0"
+          )}>
+            <div className="h-full">
+              <Standard
+                typebot="klamai-test-supabase-wyqehpx"
+                apiHost="https://bot.autoiax.com"
+                style={{ width: "100%", height: "100%" }}
+                prefilledVariables={{
+                  "utm_value": userConsultation || "Hola, necesito asesoramiento legal",
+                  "caso_id": casoId || ""
+                }}
               />
-              <div className="absolute right-2 flex items-center space-x-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleMicClick}
-                  disabled={isLoading}
-                >
-                  {isRecording ? <MicOff className="h-5 w-5 text-red-500" /> : <Mic className="h-5 w-5" />}
-                </Button>
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="icon"
-                  disabled={isLoading}
-                >
-                  <Send className="h-5 w-5" />
-                </Button>
-              </div>
-            </form>
+            </div>
           </div>
-        </div>
+        </main>
+
+        {/* Legal Footer */}
+        <footer className="relative z-10 bg-gray-800 dark:bg-gray-900 text-white py-4 px-4">
+          <div className="flex items-center justify-center text-sm">
+            <p className="text-center">
+              Al enviar un mensaje a VitorIA, aceptas nuestras{" "}
+              <Link 
+                to="/aviso-legal" 
+                className="text-blue-400 hover:text-blue-300 underline transition-colors"
+              >
+                condiciones
+              </Link>
+              {" "}y confirmas que has leído nuestra{" "}
+              <Link 
+                to="/politicas-privacidad" 
+                className="text-blue-400 hover:text-blue-300 underline transition-colors"
+              >
+                política de privacidad
+              </Link>
+              .
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
   );
