@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,9 +6,11 @@ import { Standard } from "@typebot.io/react";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import ChatHistory from "@/components/ChatHistory";
+import ChatHistoryAnonymous from "@/components/ChatHistoryAnonymous";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useAuth } from "@/hooks/useAuth";
 import SignOutButton from "@/components/SignOutButton";
+import AuthModal from "@/components/AuthModal";
 import { useToast } from "@/hooks/use-toast";
 
 const Chat = () => {
@@ -18,6 +21,7 @@ const Chat = () => {
   const [userConsultation, setUserConsultation] = useState("");
   const [casoId, setCasoId] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -55,33 +59,29 @@ const Chat = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Verificar autenticación
+  // Verificar que haya datos de consulta (protección alternativa para usuarios anónimos)
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    }
-  }, [user, loading, navigate]);
-
-  useEffect(() => {
-    // Obtener el texto de consulta y caso_id guardados en localStorage
     const savedConsultation = localStorage.getItem('userConsultation');
     const savedCasoId = localStorage.getItem('casoId');
     
-    if (savedConsultation) {
-      setUserConsultation(savedConsultation);
-      localStorage.removeItem('userConsultation');
+    if (!savedConsultation || !savedCasoId) {
+      // Si no hay datos de consulta, redirigir a la landing
+      navigate('/');
+      return;
     }
     
-    if (savedCasoId) {
-      setCasoId(savedCasoId);
-      localStorage.removeItem('casoId');
-    }
+    setUserConsultation(savedConsultation);
+    setCasoId(savedCasoId);
+    
+    // Limpiar después de usar
+    localStorage.removeItem('userConsultation');
+    localStorage.removeItem('casoId');
 
     console.log('Datos recuperados del localStorage:', {
       consultation: savedConsultation,
       casoId: savedCasoId
     });
-  }, []);
+  }, [navigate]);
 
   const handleLogoClick = () => {
     // Force a page reload when going back to home
@@ -90,22 +90,25 @@ const Chat = () => {
 
   const handleSelectSession = (sessionId: string) => {
     setSelectedSessionId(sessionId);
-    // Aquí podrías cargar la conversación específica si es necesario
     console.log('Selected session:', sessionId);
   };
 
-  // Mostrar loader mientras se verifica la autenticación
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    toast({
+      title: "¡Bienvenido!",
+      description: "Tu conversación ha sido guardada y ahora puedes acceder a tu historial.",
+    });
+    // El sidebar se actualizará automáticamente cuando cambie el estado de user
+  };
+
+  // Mostrar loader mientras se verifica la autenticación solo si es necesario
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
-  }
-
-  // Si no hay usuario, no renderizar nada (se redirigirá)
-  if (!user) {
-    return null;
   }
 
   return (
@@ -159,13 +162,55 @@ const Chat = () => {
                   <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   </Button>
-                  <SignOutButton />
+                  
+                  {/* Renderizar condicionalmente según el estado de autenticación */}
+                  {user ? (
+                    <SignOutButton />
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        onClick={() => setShowAuthModal(true)}
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200"
+                      >
+                        Iniciar Sesión
+                      </Button>
+                      <Button 
+                        onClick={() => setShowAuthModal(true)}
+                        size="sm" 
+                        className="bg-blue-600 text-white hover:bg-blue-700"
+                      >
+                        Registrarse
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Mobile menu */}
                 <div className="bg-background group-data-[state=active]:block hidden w-full p-4 rounded-2xl border shadow-lg mt-4 lg:hidden">
                   <div className="flex flex-col gap-3 w-full">
-                    <SignOutButton className="w-full justify-center" />
+                    {user ? (
+                      <SignOutButton className="w-full justify-center" />
+                    ) : (
+                      <>
+                        <Button 
+                          onClick={() => setShowAuthModal(true)}
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 w-full justify-center"
+                        >
+                          Iniciar Sesión
+                        </Button>
+                        <Button 
+                          onClick={() => setShowAuthModal(true)}
+                          size="sm" 
+                          className="bg-blue-600 text-white hover:bg-blue-700 w-full"
+                        >
+                          Registrarse
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -183,7 +228,12 @@ const Chat = () => {
           )}>
             {sidebarOpen && (
               <div className="h-full p-4">
-                <ChatHistory onSelectSession={handleSelectSession} />
+                {/* Renderizar sidebar según el estado de autenticación */}
+                {user ? (
+                  <ChatHistory onSelectSession={handleSelectSession} />
+                ) : (
+                  <ChatHistoryAnonymous onAuthClick={() => setShowAuthModal(true)} />
+                )}
               </div>
             )}
           </div>
@@ -237,6 +287,13 @@ const Chat = () => {
             </p>
           </div>
         </footer>
+
+        {/* Modal de Autenticación */}
+        <AuthModal 
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={handleAuthSuccess}
+        />
       </div>
     </div>
   );
