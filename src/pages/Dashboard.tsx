@@ -76,6 +76,15 @@ const Dashboard = () => {
     }
   };
 
+  // Function to handle navigation and close sidebar on mobile
+  const handleNavigation = (href: string) => {
+    navigate(href);
+    // Close sidebar on mobile after navigation
+    if (window.innerWidth < 768) { // md breakpoint
+      setOpen(false);
+    }
+  };
+
   const links = [
     {
       label: "Dashboard",
@@ -141,7 +150,11 @@ const Dashboard = () => {
               {open ? <Logo /> : <LogoIcon />}
               <div className="mt-8 flex flex-col gap-2">
                 {links.map((link, idx) => (
-                  <SidebarLink key={idx} link={link} />
+                  <SidebarLink 
+                    key={idx} 
+                    link={link} 
+                    onNavigate={handleNavigation}
+                  />
                 ))}
                 <SidebarLink 
                   link={{
@@ -176,6 +189,7 @@ const Dashboard = () => {
                     </div>
                   ),
                 }}
+                onNavigate={handleNavigation}
               />
             </div>
           </SidebarBody>
