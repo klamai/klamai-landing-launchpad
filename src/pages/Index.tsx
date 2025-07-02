@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { AnimatedBackground } from "@/components/AnimatedBackground";
-import { FeatureSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
-import { TestimonialCard } from "@/components/ui/testimonial-card";
+import AnimatedBackground from "@/components/AnimatedBackground";
+import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
+import { Testimonial } from "@/components/ui/testimonial-card";
 import { FooterSection } from "@/components/ui/footer-section";
 import { Moon, Sun, MessageCircle, Scale, Users, Shield, Zap, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -64,7 +65,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden">
-      <AnimatedBackground />
+      <AnimatedBackground darkMode={darkMode} />
       
       {/* Header */}
       <header className="relative z-10 px-4 py-6">
@@ -158,46 +159,7 @@ const Index = () => {
               Descubre cómo klamAI puede ayudarte en tus necesidades legales.
             </p>
           </motion.div>
-          <FeatureSectionWithHoverEffects
-            features={[
-              {
-                title: "Respuestas Instantáneas",
-                description:
-                  "Obtén respuestas rápidas y precisas a tus preguntas legales.",
-                icon: MessageCircle,
-              },
-              {
-                title: "Análisis de Documentos",
-                description:
-                  "Sube tus documentos y obtén un análisis detallado al instante.",
-                icon: Scale,
-              },
-              {
-                title: "Soporte Personalizado",
-                description:
-                  "Recibe asesoramiento legal adaptado a tu situación específica.",
-                icon: Users,
-              },
-              {
-                title: "Privacidad Garantizada",
-                description:
-                  "Tus datos están seguros y protegidos con la más alta seguridad.",
-                icon: Shield,
-              },
-              {
-                title: "Disponible 24/7",
-                description:
-                  "Accede a klamAI en cualquier momento y desde cualquier lugar.",
-                icon: Zap,
-              },
-              {
-                title: "Resultados Confiables",
-                description:
-                  "Confía en la precisión y veracidad de la información proporcionada.",
-                icon: CheckCircle,
-              },
-            ]}
-          />
+          <FeaturesSectionWithHoverEffects />
         </div>
       </section>
 
@@ -216,16 +178,19 @@ const Index = () => {
             {[
               {
                 name: "Laura M.",
+                role: "Cliente",
                 testimonial:
                   "klamAI me ha ayudado a entender mejor mis derechos y opciones legales. ¡Muy recomendable!",
               },
               {
                 name: "Carlos P.",
+                role: "Cliente",
                 testimonial:
                   "La precisión y rapidez de klamAI son impresionantes. ¡Una herramienta indispensable!",
               },
               {
                 name: "Sofia R.",
+                role: "Cliente",
                 testimonial:
                   "Gracias a klamAI, pude resolver mis dudas legales de forma fácil y rápida. ¡Excelente servicio!",
               },
@@ -236,7 +201,7 @@ const Index = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 + index * 0.2 }}
               >
-                <TestimonialCard {...testimonial} />
+                <Testimonial {...testimonial} />
               </motion.div>
             ))}
           </div>

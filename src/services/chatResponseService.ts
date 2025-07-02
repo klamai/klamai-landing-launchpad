@@ -59,3 +59,9 @@ export class ChatResponseService {
     };
   }
 }
+
+// Export the function for backward compatibility
+export const getChatResponse = async (message: string, command?: string): Promise<string> => {
+  const response = await ChatResponseService.generateResponse(message, command);
+  return response.text;
+};

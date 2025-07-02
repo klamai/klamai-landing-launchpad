@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +9,14 @@ import { ArrowLeft, Send, Mic, MicOff, Moon, Sun, Scale } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { ChatMessage } from "@/components/ChatMessage";
-import { ChatHistory } from "@/components/ChatHistory";
+import ChatHistory from "@/components/ChatHistory";
 import { useAudioRecording } from "@/hooks/useAudioRecording";
-import { getChatResponse } from "@/services/chatResponseService";
+import { ChatResponseService } from "@/services/chatResponseService";
 
 interface Message {
   id: string;
   content: string;
+  text: string;
   isUser: boolean;
   timestamp: Date;
 }
@@ -67,6 +69,7 @@ const Chat = () => {
     const newMessage: Message = {
       id: Date.now().toString(),
       content: input,
+      text: input,
       isUser: true,
       timestamp: new Date(),
     };
@@ -76,10 +79,11 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      const response = await getChatResponse(input);
+      const response = await ChatResponseService.generateResponse(input);
       const aiMessage: Message = {
         id: Date.now().toString() + "-ai",
-        content: response || "No se pudo obtener una respuesta.",
+        content: response.text || "No se pudo obtener una respuesta.",
+        text: response.text || "No se pudo obtener una respuesta.",
         isUser: false,
         timestamp: new Date(),
       };
@@ -89,6 +93,7 @@ const Chat = () => {
       const errorAiMessage: Message = {
         id: Date.now().toString() + "-ai-error",
         content: "Error al obtener la respuesta. Por favor, inténtalo de nuevo.",
+        text: "Error al obtener la respuesta. Por favor, inténtalo de nuevo.",
         isUser: false,
         timestamp: new Date(),
       };
@@ -109,6 +114,7 @@ const Chat = () => {
           const aiMessage: Message = {
             id: Date.now().toString() + "-ai",
             content: "Respuesta simulada a partir del audio grabado.",
+            text: "Respuesta simulada a partir del audio grabado.",
             isUser: false,
             timestamp: new Date(),
           };

@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 export interface Message {
   id: string;
+  content: string;
   text: string;
   isUser: boolean;
   timestamp: Date;
@@ -22,7 +23,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLatest = fa
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(message.text);
+    await navigator.clipboard.writeText(message.text || message.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -34,12 +35,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLatest = fa
     });
   };
 
+  const messageText = message.text || message.content;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`flex gap-3 ${message.isUser ? 'justify-end' : 'justify-start'} mb-6`}
+      className={`flex gap-3 ${message.isUser ? 'justify-end' : 'justify-start'} mb-6 group`}
     >
       {!message.isUser && (
         <div className="flex-shrink-0">
@@ -66,7 +69,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLatest = fa
           )}
           
           <p className="text-sm leading-relaxed whitespace-pre-wrap">
-            {message.text}
+            {messageText}
           </p>
           
           {!message.isUser && (
