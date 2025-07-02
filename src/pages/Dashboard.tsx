@@ -21,17 +21,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Dashboard = () => {
   const [open, setOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Inicializar desde localStorage o sistema
+    const saved = localStorage.getItem('darkMode');
+    if (saved !== null) {
+      return JSON.parse(saved);
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const [activeSection, setActiveSection] = useState("dashboard");
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
 
-  // Check for dark mode preference
+  // Aplicar tema inicial
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark');
-    setDarkMode(isDark);
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, []);
 
   // Get active section from URL
@@ -55,8 +65,16 @@ const Dashboard = () => {
   }, [location.pathname]);
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    // Guardar en localStorage
+    localStorage.setItem('darkMode', JSON.stringify(newDarkMode));
+    // Aplicar inmediatamente
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const handleSignOut = async () => {
@@ -73,6 +91,15 @@ const Dashboard = () => {
         description: "Error al cerrar sesión",
         variant: "destructive",
       });
+    }
+  };
+
+  // Función para manejar la navegación y cerrar sidebar en mobile
+  const handleLinkClick = (href: string) => {
+    navigate(href);
+    // Cerrar sidebar en mobile después de hacer click
+    if (window.innerWidth < 768) {
+      setOpen(false);
     }
   };
 
@@ -141,7 +168,11 @@ const Dashboard = () => {
               {open ? <Logo /> : <LogoIcon />}
               <div className="mt-8 flex flex-col gap-2">
                 {links.map((link, idx) => (
-                  <SidebarLink key={idx} link={link} />
+                  <SidebarLink 
+                    key={idx} 
+                    link={link} 
+                    onClick={() => handleLinkClick(link.href)}
+                  />
                 ))}
                 <SidebarLink 
                   link={{
@@ -176,6 +207,7 @@ const Dashboard = () => {
                     </div>
                   ),
                 }}
+                onClick={() => handleLinkClick("/dashboard/perfil")}
               />
             </div>
           </SidebarBody>

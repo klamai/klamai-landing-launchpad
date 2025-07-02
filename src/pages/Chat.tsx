@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,14 @@ import SignOutButton from "@/components/SignOutButton";
 import { useToast } from "@/hooks/use-toast";
 
 const Chat = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Inicializar desde localStorage o sistema
+    const saved = localStorage.getItem('darkMode');
+    if (saved !== null) {
+      return JSON.parse(saved);
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const [menuState, setMenuState] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -23,9 +31,26 @@ const Chat = () => {
   const { toast } = useToast();
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    // Guardar en localStorage
+    localStorage.setItem('darkMode', JSON.stringify(newDarkMode));
+    // Aplicar inmediatamente
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
+
+  // Aplicar tema inicial
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,12 +60,18 @@ const Chat = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Verificar autenticación
+  // Permitir acceso libre a /chat para usuarios con consulta
   useEffect(() => {
-    if (!loading && !user) {
+    // Verificar si el usuario viene con una consulta desde la landing
+    const hasConsultation = localStorage.getItem('userConsultation') || 
+                           sessionStorage.getItem('userConsultation') ||
+                           userConsultation;
+    
+    // Si no hay usuario autenticado Y no hay consulta, redirigir a auth
+    if (!loading && !user && !hasConsultation) {
       navigate('/auth');
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, userConsultation]);
 
   useEffect(() => {
     // Obtener el texto de consulta y caso_id guardados en localStorage
@@ -83,11 +114,6 @@ const Chat = () => {
     );
   }
 
-  // Si no hay usuario, no renderizar nada (se redirigirá)
-  if (!user) {
-    return null;
-  }
-
   return (
     <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800 flex flex-col">
@@ -109,14 +135,16 @@ const Chat = () => {
                   </button>
 
                   <div className="flex items-center gap-4 lg:hidden">
-                    <Button 
-                      onClick={() => setSidebarOpen(!sidebarOpen)} 
-                      variant="outline" 
-                      size="icon" 
-                      className="rounded-full"
-                    >
-                      <Sidebar className="h-4 w-4" />
-                    </Button>
+                    {user && (
+                      <Button 
+                        onClick={() => setSidebarOpen(!sidebarOpen)} 
+                        variant="outline" 
+                        size="icon" 
+                        className="rounded-full"
+                      >
+                        <Sidebar className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
                       {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                     </Button>
@@ -128,24 +156,26 @@ const Chat = () => {
                 </div>
 
                 <div className="hidden lg:flex items-center gap-4">
-                  <Button 
-                    onClick={() => setSidebarOpen(!sidebarOpen)} 
-                    variant="outline" 
-                    size="icon" 
-                    className="rounded-full"
-                  >
-                    <Sidebar className="h-4 w-4" />
-                  </Button>
+                  {user && (
+                    <Button 
+                      onClick={() => setSidebarOpen(!sidebarOpen)} 
+                      variant="outline" 
+                      size="icon" 
+                      className="rounded-full"
+                    >
+                      <Sidebar className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   </Button>
-                  <SignOutButton />
+                  {user && <SignOutButton />}
                 </div>
 
                 {/* Mobile menu */}
                 <div className="bg-background group-data-[state=active]:block hidden w-full p-4 rounded-2xl border shadow-lg mt-4 lg:hidden">
                   <div className="flex flex-col gap-3 w-full">
-                    <SignOutButton className="w-full justify-center" />
+                    {user && <SignOutButton className="w-full justify-center" />}
                   </div>
                 </div>
               </div>
@@ -155,21 +185,23 @@ const Chat = () => {
 
         {/* Main Content with Sidebar */}
         <main className="pt-20 flex flex-1 h-[calc(100vh-12rem)] relative z-10">
-          {/* Sidebar */}
-          <div className={cn(
-            "fixed lg:relative inset-y-0 left-0 z-30 w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out pt-20 lg:pt-0",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-            !sidebarOpen && "lg:w-0 lg:border-r-0"
-          )}>
-            {sidebarOpen && (
-              <div className="h-full p-4">
-                <ChatHistory onSelectSession={handleSelectSession} />
-              </div>
-            )}
-          </div>
+          {/* Sidebar - Solo mostrar si hay usuario autenticado */}
+          {user && (
+            <div className={cn(
+              "fixed lg:relative inset-y-0 left-0 z-30 w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out pt-20 lg:pt-0",
+              sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+              !sidebarOpen && "lg:w-0 lg:border-r-0"
+            )}>
+              {sidebarOpen && (
+                <div className="h-full p-4">
+                  <ChatHistory onSelectSession={handleSelectSession} />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Overlay for mobile */}
-          {sidebarOpen && (
+          {sidebarOpen && user && (
             <div 
               className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
               onClick={() => setSidebarOpen(false)}
@@ -179,7 +211,7 @@ const Chat = () => {
           {/* Chat Container */}
           <div className={cn(
             "flex-1 transition-all duration-300 relative z-10",
-            sidebarOpen ? "lg:ml-0" : "lg:ml-0"
+            user && sidebarOpen ? "lg:ml-0" : "lg:ml-0"
           )}>
             <div className="h-full">
               <Standard
