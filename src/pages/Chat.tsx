@@ -137,15 +137,9 @@ const Chat = () => {
                       onClick={() => setSidebarOpen(!sidebarOpen)} 
                       variant="outline" 
                       size="icon" 
-                      className={cn(
-                        "rounded-full transition-all duration-300 relative",
-                        !user && "bg-gradient-to-r from-blue-500 to-purple-500 border-blue-500 text-white animate-pulse shadow-lg"
-                      )}
+                      className="rounded-full"
                     >
                       <Sidebar className="h-4 w-4" />
-                      {!user && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
-                      )}
                     </Button>
                     <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
                       {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -162,15 +156,9 @@ const Chat = () => {
                     onClick={() => setSidebarOpen(!sidebarOpen)} 
                     variant="outline" 
                     size="icon" 
-                    className={cn(
-                      "rounded-full transition-all duration-300 relative",
-                      !user && "bg-gradient-to-r from-blue-500 to-purple-500 border-blue-500 text-white animate-pulse shadow-lg hover:shadow-xl"
-                    )}
+                    className="rounded-full"
                   >
                     <Sidebar className="h-4 w-4" />
-                    {!user && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
-                    )}
                   </Button>
                   <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -192,7 +180,7 @@ const Chat = () => {
                       <Button 
                         onClick={() => setShowAuthModal(true)}
                         size="sm" 
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                        className="bg-blue-600 text-white hover:bg-blue-700"
                       >
                         Registrarse
                       </Button>
@@ -218,7 +206,7 @@ const Chat = () => {
                         <Button 
                           onClick={() => setShowAuthModal(true)}
                           size="sm" 
-                          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 w-full shadow-lg"
+                          className="bg-blue-600 text-white hover:bg-blue-700 w-full"
                         >
                           Registrarse
                         </Button>
