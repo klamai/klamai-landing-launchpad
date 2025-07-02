@@ -213,7 +213,7 @@ const Index = () => {
                     <>
                       {user ? (
                         <div className="flex items-center gap-4">
-                          <Link to="/chat">
+                          <Link to="/dashboard">
                             <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200">
                               Dashboard
                             </Button>
@@ -245,7 +245,7 @@ const Index = () => {
                       <>
                         {user ? (
                           <>
-                            <Link to="/chat">
+                            <Link to="/dashboard">
                               <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 w-full justify-center">
                                 Dashboard
                               </Button>

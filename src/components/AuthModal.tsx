@@ -1,11 +1,13 @@
 
 import { useState } from "react";
-import { X, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { X, Mail, Lock, User, Eye, EyeOff, Scale } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -91,6 +93,34 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al conectar con Google",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
@@ -100,15 +130,42 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-background border-muted">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-blue-600" />
-            {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+          <DialogTitle className="flex flex-col items-center gap-4 text-center">
+            <div className="flex items-center gap-2">
+              <Scale className="h-6 w-6 text-primary" />
+              <span className="text-xl font-bold tracking-tight">klamAI</span>
+            </div>
+            <h2 className="text-2xl font-semibold">
+              {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+            </h2>
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-6">
+          <Button 
+            onClick={handleGoogleSignIn}
+            variant="outline" 
+            className="w-full"
+            disabled={isLoading}
+          >
+            <FcGoogle className="mr-2 h-5 w-5" />
+            {isLogin ? 'Continuar con Google' : 'Registrarse con Google'}
+          </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-muted" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                O continúa con email
+              </span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div className="space-y-2">
               <Label htmlFor="name">Nombre completo</Label>
@@ -184,19 +241,20 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
             </div>
           )}
 
-          <Button 
-            type="submit" 
-            className="w-full bg-blue-600 hover:bg-blue-700"
-            disabled={isLoading}
-          >
-            {isLoading ? "Procesando..." : (isLogin ? "Iniciar Sesión" : "Crear Cuenta")}
-          </Button>
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? "Procesando..." : (isLogin ? "Iniciar Sesión" : "Crear Cuenta")}
+            </Button>
+          </form>
 
           <div className="text-center">
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-blue-600 hover:text-blue-500 hover:underline"
+              className="text-sm text-primary hover:text-primary/80 hover:underline"
             >
               {isLogin 
                 ? "¿No tienes cuenta? Créala aquí" 
@@ -204,10 +262,10 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
             </button>
           </div>
 
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             Tu conversación actual se guardará automáticamente una vez que te registres o inicies sesión.
           </p>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
