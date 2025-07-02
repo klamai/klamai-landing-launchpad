@@ -22,6 +22,7 @@ const Chat = () => {
   const [casoId, setCasoId] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -232,7 +233,10 @@ const Chat = () => {
                 {user ? (
                   <ChatHistory onSelectSession={handleSelectSession} />
                 ) : (
-                  <ChatHistoryAnonymous onAuthClick={() => setShowAuthModal(true)} />
+                  <ChatHistoryAnonymous onAuthClick={(mode) => {
+                    setAuthModalMode(mode);
+                    setShowAuthModal(true);
+                  }} />
                 )}
               </div>
             )}
@@ -293,6 +297,7 @@ const Chat = () => {
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
           onSuccess={handleAuthSuccess}
+          initialMode={authModalMode}
         />
       </div>
     </div>
