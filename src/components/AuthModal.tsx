@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { X, Mail, Lock, User, Eye, EyeOff, Scale } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
@@ -155,24 +154,24 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto bg-gray-900 text-white border border-gray-700">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 shadow-2xl">
         <DialogHeader className="space-y-3 pb-4">
           <DialogTitle className="flex flex-col items-center gap-3 text-center">
             <div className="flex items-center gap-2">
-              <Scale className="h-6 w-6 text-blue-500" />
-              <span className="text-xl font-bold">klamAI</span>
+              <Scale className="h-6 w-6 text-blue-600" />
+              <span className="text-xl font-bold text-gray-900 dark:text-white">klamAI</span>
             </div>
             <div className="space-y-1">
-              <h2 className="text-xl font-bold">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 {isLogin ? 'Bienvenido de vuelta' : 'Regístrate para asegurar tu consulta'}
               </h2>
               {!isLogin && (
-                <p className="text-sm text-gray-400 max-w-sm mx-auto">
+                <p className="text-sm text-gray-600 dark:text-gray-300 max-w-sm mx-auto">
                   Crea una cuenta para guardar tu conversación de forma segura y acceder a tu historial cuando quieras.
                 </p>
               )}
               {isLogin && (
-                <p className="text-sm text-gray-400 max-w-sm mx-auto">
+                <p className="text-sm text-gray-600 dark:text-gray-300 max-w-sm mx-auto">
                   Inicia sesión para acceder a tu historial de consultas.
                 </p>
               )}
@@ -184,7 +183,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
           <Button 
             onClick={handleGoogleSignIn}
             variant="outline" 
-            className="w-full bg-gray-800 border-gray-600 hover:bg-gray-700 text-white"
+            className="w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
             disabled={isLoading}
           >
             <FcGoogle className="mr-2 h-4 w-4" />
@@ -193,10 +192,10 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-600" />
+              <span className="w-full border-t border-gray-300 dark:border-gray-500" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-gray-900 px-2 text-gray-400">
+              <span className="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">
                 O continúa con email
               </span>
             </div>
@@ -205,7 +204,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
           <form onSubmit={handleSubmit} className="space-y-3">
             {!isLogin && (
               <div className="space-y-1">
-                <Label htmlFor="name" className="text-gray-300 text-sm">Nombre completo</Label>
+                <Label htmlFor="name" className="text-gray-700 dark:text-gray-300 text-sm">Nombre completo</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
@@ -213,7 +212,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
                     name="name"
                     type="text"
                     placeholder="Tu nombre completo"
-                    className="pl-9 bg-gray-800 border-gray-600 text-white text-sm h-9"
+                    className="pl-9 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm h-9 focus:border-blue-500 focus:ring-blue-500"
                     value={formData.name}
                     onChange={handleInputChange}
                     required
@@ -223,7 +222,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
             )}
 
             <div className="space-y-1">
-              <Label htmlFor="email" className="text-gray-300 text-sm">Email</Label>
+              <Label htmlFor="email" className="text-gray-700 dark:text-gray-300 text-sm">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
@@ -231,7 +230,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
                   name="email"
                   type="email"
                   placeholder="tu@email.com"
-                  className="pl-9 bg-gray-800 border-gray-600 text-white text-sm h-9"
+                  className="pl-9 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm h-9 focus:border-blue-500 focus:ring-blue-500"
                   value={formData.email}
                   onChange={handleInputChange}
                   required
@@ -240,7 +239,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="password" className="text-gray-300 text-sm">Contraseña</Label>
+              <Label htmlFor="password" className="text-gray-700 dark:text-gray-300 text-sm">Contraseña</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
@@ -248,7 +247,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Tu contraseña"
-                  className="pl-9 pr-9 bg-gray-800 border-gray-600 text-white text-sm h-9"
+                  className="pl-9 pr-9 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm h-9 focus:border-blue-500 focus:ring-blue-500"
                   value={formData.password}
                   onChange={handleInputChange}
                   required
@@ -256,7 +255,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 h-4 w-4 text-gray-500 hover:text-gray-300"
+                  className="absolute right-3 top-2.5 h-4 w-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
                 </button>
@@ -265,7 +264,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
 
             {!isLogin && (
               <div className="space-y-1">
-                <Label htmlFor="confirmPassword" className="text-gray-300 text-sm">Confirmar contraseña</Label>
+                <Label htmlFor="confirmPassword" className="text-gray-700 dark:text-gray-300 text-sm">Confirmar contraseña</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
@@ -273,7 +272,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
                     name="confirmPassword"
                     type={showPassword ? "text" : "password"}
                     placeholder="Confirma tu contraseña"
-                    className="pl-9 bg-gray-800 border-gray-600 text-white text-sm h-9"
+                    className="pl-9 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm h-9 focus:border-blue-500 focus:ring-blue-500"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
@@ -283,7 +282,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
             )}
 
             {!isLogin && (
-              <div className="flex items-start space-x-2 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+              <div className="flex items-start space-x-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
                 <Checkbox
                   id="terms"
                   checked={acceptTerms}
@@ -293,15 +292,15 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
                 <div className="text-xs leading-relaxed">
                   <label
                     htmlFor="terms"
-                    className="text-gray-300 cursor-pointer"
+                    className="text-gray-700 dark:text-gray-300 cursor-pointer"
                   >
                     Acepto los términos y condiciones
                   </label>
-                  <p className="text-gray-500 mt-1">
+                  <p className="text-gray-500 dark:text-gray-400 mt-1">
                     Al registrarte, aceptas nuestros{" "}
                     <Link 
                       to="/aviso-legal" 
-                      className="text-blue-400 hover:text-blue-300 underline"
+                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
                       target="_blank"
                     >
                       términos y condiciones
@@ -309,7 +308,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
                     {" "}y{" "}
                     <Link 
                       to="/politicas-privacidad" 
-                      className="text-blue-400 hover:text-blue-300 underline"
+                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
                       target="_blank"
                     >
                       política de privacidad
@@ -322,7 +321,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
 
             <Button 
               type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg h-9"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg h-9 transition-colors"
               disabled={isLoading || (!isLogin && !acceptTerms)}
             >
               {isLoading ? (
@@ -340,7 +339,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
+              className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
             >
               {isLogin 
                 ? "¿No tienes cuenta? Créala aquí" 
@@ -348,8 +347,8 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
             </button>
           </div>
 
-          <div className="bg-green-900/20 border border-green-800 p-2 rounded-lg">
-            <p className="text-xs text-green-400 text-center">
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-2 rounded-lg">
+            <p className="text-xs text-green-700 dark:text-green-400 text-center">
               <strong>🔒 Seguridad garantizada:</strong> Tu conversación actual se guardará automáticamente una vez que te registres o inicies sesión.
             </p>
           </div>
