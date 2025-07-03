@@ -84,6 +84,35 @@ const Chat = () => {
     });
   }, [navigate]);
 
+  // Secure communication with Typebot
+  useEffect(() => {
+    const handleTypebotMessage = (event: MessageEvent) => {
+      // Validate message structure
+      if (!event.data || typeof event.data !== 'object') {
+        console.log('Invalid message format received');
+        return;
+      }
+
+      const { type, mode } = event.data;
+
+      // Validate message type and mode
+      if (type === 'SHOW_AUTH_MODAL' && (mode === 'login' || mode === 'signup')) {
+        console.log('Valid auth modal request received:', { type, mode });
+        setAuthModalMode(mode);
+        setShowAuthModal(true);
+      } else {
+        console.log('Unknown message type or invalid mode:', { type, mode });
+      }
+    };
+
+    // Add message listener for Typebot communication
+    window.addEventListener('message', handleTypebotMessage);
+
+    return () => {
+      window.removeEventListener('message', handleTypebotMessage);
+    };
+  }, []);
+
   const handleLogoClick = () => {
     // Force a page reload when going back to home
     window.location.href = '/';
@@ -100,7 +129,23 @@ const Chat = () => {
       title: "¡Bienvenido!",
       description: "Tu conversación ha sido guardada y ahora puedes acceder a tu historial.",
     });
-    // El sidebar se actualizará automáticamente cuando cambie el estado de user
+
+    // Send success message back to Typebot
+    const successMessage = {
+      type: 'AUTH_SUCCESS',
+      user: user ? {
+        email: user.email,
+        id: user.id,
+        authenticated: true
+      } : null
+    };
+
+    // Send message to Typebot iframe
+    const typebotIframe = document.querySelector('iframe');
+    if (typebotIframe && typebotIframe.contentWindow) {
+      typebotIframe.contentWindow.postMessage(successMessage, '*');
+      console.log('Auth success message sent to Typebot:', successMessage);
+    }
   };
 
   // Mostrar loader mientras se verifica la autenticación solo si es necesario
