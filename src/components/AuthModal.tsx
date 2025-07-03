@@ -155,24 +155,24 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800 border-2 border-blue-100 dark:border-blue-800/50 shadow-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex flex-col items-center gap-4 text-center">
-            <div className="flex items-center gap-3 p-3 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
-              <Scale className="h-8 w-8 text-white" />
-              <span className="text-2xl font-bold tracking-tight text-white">klamAI</span>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto bg-gray-900 text-white border border-gray-700">
+        <DialogHeader className="space-y-3 pb-4">
+          <DialogTitle className="flex flex-col items-center gap-3 text-center">
+            <div className="flex items-center gap-2">
+              <Scale className="h-6 w-6 text-blue-500" />
+              <span className="text-xl font-bold">klamAI</span>
             </div>
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold">
                 {isLogin ? 'Bienvenido de vuelta' : 'Regístrate para asegurar tu consulta'}
               </h2>
               {!isLogin && (
-                <p className="text-sm text-gray-600 dark:text-gray-300 max-w-sm mx-auto leading-relaxed">
+                <p className="text-sm text-gray-400 max-w-sm mx-auto">
                   Crea una cuenta para guardar tu conversación de forma segura y acceder a tu historial cuando quieras.
                 </p>
               )}
               {isLogin && (
-                <p className="text-sm text-gray-600 dark:text-gray-300 max-w-sm mx-auto leading-relaxed">
+                <p className="text-sm text-gray-400 max-w-sm mx-auto">
                   Inicia sesión para acceder a tu historial de consultas.
                 </p>
               )}
@@ -180,40 +180,40 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 px-2">
+        <div className="space-y-4 px-1">
           <Button 
             onClick={handleGoogleSignIn}
             variant="outline" 
-            className="w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all duration-200"
+            className="w-full bg-gray-800 border-gray-600 hover:bg-gray-700 text-white"
             disabled={isLoading}
           >
-            <FcGoogle className="mr-2 h-5 w-5" />
+            <FcGoogle className="mr-2 h-4 w-4" />
             {isLogin ? 'Continuar con Google' : 'Registrarse con Google'}
           </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-200 dark:border-gray-600" />
+              <span className="w-full border-t border-gray-600" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-gradient-to-r from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800 px-3 text-gray-500 dark:text-gray-400 font-medium">
+              <span className="bg-gray-900 px-2 text-gray-400">
                 O continúa con email
               </span>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-700 dark:text-gray-200 font-medium">Nombre completo</Label>
+              <div className="space-y-1">
+                <Label htmlFor="name" className="text-gray-300 text-sm">Nombre completo</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
                     id="name"
                     name="name"
                     type="text"
                     placeholder="Tu nombre completo"
-                    className="pl-10 border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-lg bg-white dark:bg-gray-800"
+                    className="pl-9 bg-gray-800 border-gray-600 text-white text-sm h-9"
                     value={formData.name}
                     onChange={handleInputChange}
                     required
@@ -222,16 +222,16 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700 dark:text-gray-200 font-medium">Email</Label>
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-gray-300 text-sm">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   placeholder="tu@email.com"
-                  className="pl-10 border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-lg bg-white dark:bg-gray-800"
+                  className="pl-9 bg-gray-800 border-gray-600 text-white text-sm h-9"
                   value={formData.email}
                   onChange={handleInputChange}
                   required
@@ -239,16 +239,16 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700 dark:text-gray-200 font-medium">Contraseña</Label>
+            <div className="space-y-1">
+              <Label htmlFor="password" className="text-gray-300 text-sm">Contraseña</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Tu contraseña"
-                  className="pl-10 pr-10 border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-lg bg-white dark:bg-gray-800"
+                  className="pl-9 pr-9 bg-gray-800 border-gray-600 text-white text-sm h-9"
                   value={formData.password}
                   onChange={handleInputChange}
                   required
@@ -256,7 +256,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                  className="absolute right-3 top-2.5 h-4 w-4 text-gray-500 hover:text-gray-300"
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
                 </button>
@@ -264,16 +264,16 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
             </div>
 
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-gray-700 dark:text-gray-200 font-medium">Confirmar contraseña</Label>
+              <div className="space-y-1">
+                <Label htmlFor="confirmPassword" className="text-gray-300 text-sm">Confirmar contraseña</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
                     type={showPassword ? "text" : "password"}
                     placeholder="Confirma tu contraseña"
-                    className="pl-10 border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-lg bg-white dark:bg-gray-800"
+                    className="pl-9 bg-gray-800 border-gray-600 text-white text-sm h-9"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
@@ -283,25 +283,25 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
             )}
 
             {!isLogin && (
-              <div className="flex items-start space-x-3 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-start space-x-2 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
                 <Checkbox
                   id="terms"
                   checked={acceptTerms}
                   onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
-                  className="mt-1"
+                  className="mt-0.5"
                 />
-                <div className="grid gap-1.5 leading-none">
+                <div className="text-xs leading-relaxed">
                   <label
                     htmlFor="terms"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-200 cursor-pointer"
+                    className="text-gray-300 cursor-pointer"
                   >
                     Acepto los términos y condiciones
                   </label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-gray-500 mt-1">
                     Al registrarte, aceptas nuestros{" "}
                     <Link 
                       to="/aviso-legal" 
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline font-medium"
+                      className="text-blue-400 hover:text-blue-300 underline"
                       target="_blank"
                     >
                       términos y condiciones
@@ -309,7 +309,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
                     {" "}y{" "}
                     <Link 
                       to="/politicas-privacidad" 
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline font-medium"
+                      className="text-blue-400 hover:text-blue-300 underline"
                       target="_blank"
                     >
                       política de privacidad
@@ -322,7 +322,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
 
             <Button 
               type="submit" 
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg h-9"
               disabled={isLoading || (!isLogin && !acceptTerms)}
             >
               {isLoading ? (
@@ -340,7 +340,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline font-medium transition-colors"
+              className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
             >
               {isLogin 
                 ? "¿No tienes cuenta? Créala aquí" 
@@ -348,8 +348,8 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
             </button>
           </div>
 
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50 p-3 rounded-lg border border-green-200 dark:border-green-800">
-            <p className="text-xs text-green-700 dark:text-green-300 text-center leading-relaxed">
+          <div className="bg-green-900/20 border border-green-800 p-2 rounded-lg">
+            <p className="text-xs text-green-400 text-center">
               <strong>🔒 Seguridad garantizada:</strong> Tu conversación actual se guardará automáticamente una vez que te registres o inicies sesión.
             </p>
           </div>
