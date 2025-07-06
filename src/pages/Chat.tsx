@@ -10,7 +10,7 @@ import AnimatedBackground from "@/components/AnimatedBackground";
 import { useAuth } from "@/hooks/useAuth";
 import SignOutButton from "@/components/SignOutButton";
 import AuthModal from "@/components/AuthModal";
-import PricingModal from "@/components/PricingModal";
+import { PricingModal } from "@/components/PricingModal";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 

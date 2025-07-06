@@ -1,4 +1,3 @@
-
 export interface Especialidad {
   id: number;
   nombre: string;
@@ -27,7 +26,7 @@ export interface Caso {
   id: string;
   cliente_id: string;
   especialidad_id?: number;
-  estado: 'borrador' | 'esperando_pago' | 'disponible' | 'agotado' | 'cerrado';
+  estado: 'borrador' | 'esperando_pago' | 'disponible' | 'agotado' | 'cerrado' | 'listo_para_propuesta';
   tipo_lead?: 'estandar' | 'premium' | 'urgente';
   motivo_consulta?: string;
   resumen_caso?: string;
