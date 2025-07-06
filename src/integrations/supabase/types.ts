@@ -32,8 +32,6 @@ export type Database = {
           nombre_borrador: string | null
           nombre_gerente_borrador: string | null
           preferencia_horaria_contacto: string | null
-          propuesta_cliente: string | null
-          propuesta_estructurada: Json | null
           razon_social_borrador: string | null
           resumen_caso: string | null
           telefono_borrador: string | null
@@ -43,7 +41,6 @@ export type Database = {
             | Database["public"]["Enums"]["profile_type_enum"]
             | null
           transcripcion_chat: Json | null
-          valor_estimado: string | null
         }
         Insert: {
           acepto_politicas_inicial?: boolean | null
@@ -67,8 +64,6 @@ export type Database = {
           nombre_borrador?: string | null
           nombre_gerente_borrador?: string | null
           preferencia_horaria_contacto?: string | null
-          propuesta_cliente?: string | null
-          propuesta_estructurada?: Json | null
           razon_social_borrador?: string | null
           resumen_caso?: string | null
           telefono_borrador?: string | null
@@ -78,7 +73,6 @@ export type Database = {
             | Database["public"]["Enums"]["profile_type_enum"]
             | null
           transcripcion_chat?: Json | null
-          valor_estimado?: string | null
         }
         Update: {
           acepto_politicas_inicial?: boolean | null
@@ -102,8 +96,6 @@ export type Database = {
           nombre_borrador?: string | null
           nombre_gerente_borrador?: string | null
           preferencia_horaria_contacto?: string | null
-          propuesta_cliente?: string | null
-          propuesta_estructurada?: Json | null
           razon_social_borrador?: string | null
           resumen_caso?: string | null
           telefono_borrador?: string | null
@@ -113,7 +105,6 @@ export type Database = {
             | Database["public"]["Enums"]["profile_type_enum"]
             | null
           transcripcion_chat?: Json | null
-          valor_estimado?: string | null
         }
         Relationships: [
           {
@@ -471,7 +462,6 @@ export type Database = {
         | "disponible"
         | "agotado"
         | "cerrado"
-        | "listo_para_propuesta"
       caso_tipo_lead_enum: "estandar" | "premium" | "urgente"
       pago_estado_enum: "succeeded" | "processing" | "failed"
       profile_role_enum: "cliente" | "abogado"
@@ -602,7 +592,6 @@ export const Constants = {
         "disponible",
         "agotado",
         "cerrado",
-        "listo_para_propuesta",
       ],
       caso_tipo_lead_enum: ["estandar", "premium", "urgente"],
       pago_estado_enum: ["succeeded", "processing", "failed"],
