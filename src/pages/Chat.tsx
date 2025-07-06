@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,7 @@ import AnimatedBackground from "@/components/AnimatedBackground";
 import { useAuth } from "@/hooks/useAuth";
 import SignOutButton from "@/components/SignOutButton";
 import AuthModal from "@/components/AuthModal";
-import { PricingModal } from "@/components/PricingModal";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const Chat = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -24,8 +23,6 @@ const Chat = () => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
-  const [showPricingModal, setShowPricingModal] = useState(false);
-  const [showTypebot, setShowTypebot] = useState(true);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -86,96 +83,6 @@ const Chat = () => {
       casoId: savedCasoId
     });
   }, [navigate]);
-
-  // Supabase Realtime para detectar cuando el caso esté listo para propuesta
-  useEffect(() => {
-    if (!casoId) {
-      console.log('No hay casoId, no configurando Realtime');
-      return;
-    }
-
-    console.log('Configurando Realtime para caso:', casoId);
-
-    // Crear canal único para este caso
-    const channelName = `caso-updates-${casoId}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'casos',
-          filter: `id=eq.${casoId}`
-        },
-        (payload) => {
-          console.log('🔄 Cambio detectado en Realtime:', payload);
-          console.log('Datos anteriores:', payload.old);
-          console.log('Datos nuevos:', payload.new);
-          
-          const newRecord = payload.new as any;
-          const oldRecord = payload.old as any;
-          
-          // Verificar si el estado cambió específicamente a listo_para_propuesta
-          if (oldRecord?.estado !== newRecord?.estado && newRecord?.estado === 'listo_para_propuesta') {
-            console.log('✅ Estado cambió a listo_para_propuesta! Mostrando modal...');
-            setShowTypebot(false);
-            setShowPricingModal(true);
-            
-            toast({
-              title: "¡Tu análisis está listo!",
-              description: "Hemos preparado una propuesta personalizada para tu caso.",
-            });
-          } else {
-            console.log('ℹ️ Cambio detectado pero no es el estado esperado:', {
-              estadoAnterior: oldRecord?.estado,
-              estadoNuevo: newRecord?.estado
-            });
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('📡 Estado de suscripción Realtime:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Suscripción Realtime activa para caso:', casoId);
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Error en canal Realtime');
-        }
-      });
-
-    // Verificar estado actual del caso al montar el componente
-    const checkCurrentCaseStatus = async () => {
-      try {
-        console.log('🔍 Verificando estado actual del caso...');
-        const { data, error } = await supabase
-          .from('casos')
-          .select('estado')
-          .eq('id', casoId)
-          .single();
-
-        if (error) {
-          console.error('Error al verificar estado del caso:', error);
-          return;
-        }
-
-        console.log('📋 Estado actual del caso:', data?.estado);
-        if (data?.estado === 'listo_para_propuesta') {
-          console.log('🎯 El caso ya está listo para propuesta, mostrando modal...');
-          setShowTypebot(false);
-          setShowPricingModal(true);
-        }
-      } catch (error) {
-        console.error('Error al verificar estado del caso:', error);
-      }
-    };
-
-    checkCurrentCaseStatus();
-
-    return () => {
-      console.log('🧹 Limpiando suscripción Realtime para canal:', channelName);
-      supabase.removeChannel(channel);
-    };
-  }, [casoId, toast]);
 
   // Secure communication with Typebot
   useEffect(() => {
@@ -239,51 +146,6 @@ const Chat = () => {
       typebotIframe.contentWindow.postMessage(successMessage, '*');
       console.log('Auth success message sent to Typebot:', successMessage);
     }
-  };
-
-  const handleSelectPlan = async (planType: 'one-time' | 'subscription', isYearly?: boolean) => {
-    try {
-      console.log('Procesando selección de plan:', { planType, isYearly, casoId });
-      
-      const functionName = planType === 'one-time' ? 'create-one-time-payment' : 'create-subscription';
-      const payload = planType === 'subscription' 
-        ? { casoId, isYearly } 
-        : { casoId };
-
-      const { data, error } = await supabase.functions.invoke(functionName, {
-        body: payload
-      });
-
-      if (error) {
-        console.error('Error al crear sesión de pago:', error);
-        toast({
-          title: "Error",
-          description: "No se pudo procesar el pago. Inténtalo de nuevo.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (data?.checkout_url) {
-        console.log('Redirigiendo a Stripe Checkout:', data.checkout_url);
-        window.location.href = data.checkout_url;
-      } else {
-        throw new Error('No se recibió URL de checkout');
-      }
-
-    } catch (error) {
-      console.error('Error procesando pago:', error);
-      toast({
-        title: "Error",
-        description: "Hubo un problema al procesar tu solicitud.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const closePricingModal = () => {
-    setShowPricingModal(false);
-    setShowTypebot(true);
   };
 
   // Mostrar loader mientras se verifica la autenticación solo si es necesario
@@ -439,17 +301,15 @@ const Chat = () => {
             sidebarOpen ? "lg:ml-0" : "lg:ml-0"
           )}>
             <div className="h-full">
-              {showTypebot && (
-                <Standard
-                  typebot="klamai-test-supabase-wyqehpx"
-                  apiHost="https://bot.autoiax.com"
-                  style={{ width: "100%", height: "100%" }}
-                  prefilledVariables={{
-                    "utm_value": userConsultation || "Hola, necesito asesoramiento legal",
-                    "caso_id": casoId || ""
-                  }}
-                />
-              )}
+              <Standard
+                typebot="klamai-test-supabase-wyqehpx"
+                apiHost="https://bot.autoiax.com"
+                style={{ width: "100%", height: "100%" }}
+                prefilledVariables={{
+                  "utm_value": userConsultation || "Hola, necesito asesoramiento legal",
+                  "caso_id": casoId || ""
+                }}
+              />
             </div>
           </div>
         </main>
@@ -483,14 +343,6 @@ const Chat = () => {
           onClose={() => setShowAuthModal(false)}
           onSuccess={handleAuthSuccess}
           initialMode={authModalMode}
-        />
-
-        {/* Modal de Pricing */}
-        <PricingModal
-          isOpen={showPricingModal}
-          onClose={closePricingModal}
-          onSelectPlan={handleSelectPlan}
-          casoId={casoId}
         />
       </div>
     </div>
