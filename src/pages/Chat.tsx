@@ -89,12 +89,17 @@ const Chat = () => {
 
   // Supabase Realtime para detectar cuando el caso esté listo para propuesta
   useEffect(() => {
-    if (!casoId) return;
+    if (!casoId) {
+      console.log('No hay casoId, no configurando Realtime');
+      return;
+    }
 
     console.log('Configurando Realtime para caso:', casoId);
 
+    // Crear canal único para este caso
+    const channelName = `caso-updates-${casoId}`;
     const channel = supabase
-      .channel('caso-updates')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -104,11 +109,16 @@ const Chat = () => {
           filter: `id=eq.${casoId}`
         },
         (payload) => {
-          console.log('Cambio detectado en caso:', payload);
+          console.log('🔄 Cambio detectado en Realtime:', payload);
+          console.log('Datos anteriores:', payload.old);
+          console.log('Datos nuevos:', payload.new);
           
           const newRecord = payload.new as any;
-          if (newRecord?.estado === 'listo_para_propuesta') {
-            console.log('¡Caso listo para propuesta! Mostrando modal de pricing...');
+          const oldRecord = payload.old as any;
+          
+          // Verificar si el estado cambió específicamente a listo_para_propuesta
+          if (oldRecord?.estado !== newRecord?.estado && newRecord?.estado === 'listo_para_propuesta') {
+            console.log('✅ Estado cambió a listo_para_propuesta! Mostrando modal...');
             setShowTypebot(false);
             setShowPricingModal(true);
             
@@ -116,15 +126,53 @@ const Chat = () => {
               title: "¡Tu análisis está listo!",
               description: "Hemos preparado una propuesta personalizada para tu caso.",
             });
+          } else {
+            console.log('ℹ️ Cambio detectado pero no es el estado esperado:', {
+              estadoAnterior: oldRecord?.estado,
+              estadoNuevo: newRecord?.estado
+            });
           }
         }
       )
       .subscribe((status) => {
-        console.log('Estado de suscripción Realtime:', status);
+        console.log('📡 Estado de suscripción Realtime:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Suscripción Realtime activa para caso:', casoId);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Error en canal Realtime');
+        }
       });
 
+    // Verificar estado actual del caso al montar el componente
+    const checkCurrentCaseStatus = async () => {
+      try {
+        console.log('🔍 Verificando estado actual del caso...');
+        const { data, error } = await supabase
+          .from('casos')
+          .select('estado')
+          .eq('id', casoId)
+          .single();
+
+        if (error) {
+          console.error('Error al verificar estado del caso:', error);
+          return;
+        }
+
+        console.log('📋 Estado actual del caso:', data?.estado);
+        if (data?.estado === 'listo_para_propuesta') {
+          console.log('🎯 El caso ya está listo para propuesta, mostrando modal...');
+          setShowTypebot(false);
+          setShowPricingModal(true);
+        }
+      } catch (error) {
+        console.error('Error al verificar estado del caso:', error);
+      }
+    };
+
+    checkCurrentCaseStatus();
+
     return () => {
-      console.log('Limpiando suscripción Realtime');
+      console.log('🧹 Limpiando suscripción Realtime para canal:', channelName);
       supabase.removeChannel(channel);
     };
   }, [casoId, toast]);
@@ -254,7 +302,6 @@ const Chat = () => {
         <AnimatedBackground darkMode={darkMode} />
         
         {/* Header */}
-        
         <header>
           <nav data-state={menuState && 'active'} className="fixed z-20 w-full px-2 group">
             <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-white/80 dark:bg-gray-800/80 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
