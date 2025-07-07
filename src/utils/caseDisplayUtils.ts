@@ -50,12 +50,12 @@ export const filterCaseForClient = (caso: Caso): Caso => {
   const filteredCase: Caso = {
     ...caso,
     // Remover campos sensibles para clientes
-    guia_abogado: undefined,
-    propuesta_estructurada: undefined,
-    resumen_caso: undefined,
-    transcripcion_chat: undefined,
-    propuesta_cliente: undefined,
-    valor_estimado: undefined
+    guia_abogado: null,
+    propuesta_estructurada: null,
+    resumen_caso: null,
+    transcripcion_chat: null,
+    propuesta_cliente: null,
+    valor_estimado: null
   };
 
   return filteredCase;
