@@ -250,50 +250,84 @@ const Chat = () => {
   const handleAuthSuccessWithCaseData = async () => {
     setShowAuthModal(false);
     
-    // Si es un nuevo usuario, copiar datos del caso al perfil
+    // Si hay un usuario y caso, verificar si necesitamos transferir datos
     if (user && casoId) {
       try {
-        // Obtener datos del caso
-        const { data: casoData, error: casoError } = await supabase
-          .from('casos')
-          .select('nombre_borrador, apellido_borrador, email_borrador, telefono_borrador, razon_social_borrador, nif_cif_borrador, tipo_perfil_borrador')
-          .eq('id', casoId)
+        // Verificar si es un perfil nuevo (sin datos previos)
+        const { data: existingProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('nombre, apellido, email, telefono')
+          .eq('id', user.id)
           .maybeSingle();
 
-        if (casoError) {
-          console.error('Error fetching case data:', casoError);
-        } else if (casoData) {
-          // Actualizar perfil con datos del caso
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({
+        if (profileError) {
+          console.error('Error checking existing profile:', profileError);
+          return;
+        }
+
+        // Solo transferir datos si el perfil está vacío o es nuevo
+        const isNewProfile = !existingProfile || 
+          (!existingProfile.nombre && !existingProfile.apellido);
+
+        if (isNewProfile) {
+          // Obtener todos los datos borrador del caso
+          const { data: casoData, error: casoError } = await supabase
+            .from('casos')
+            .select(`
+              nombre_borrador, apellido_borrador, email_borrador, telefono_borrador, 
+              razon_social_borrador, nif_cif_borrador, tipo_perfil_borrador,
+              ciudad_borrador, direccion_fiscal_borrador, nombre_gerente_borrador
+            `)
+            .eq('id', casoId)
+            .maybeSingle();
+
+          if (casoError) {
+            console.error('Error fetching case data:', casoError);
+          } else if (casoData) {
+            console.log('Transferring case data to profile:', casoData);
+            
+            // Preparar datos para actualizar, usando valores del caso o fallbacks
+            const profileUpdate = {
               nombre: casoData.nombre_borrador || user.user_metadata?.nombre || '',
               apellido: casoData.apellido_borrador || user.user_metadata?.apellido || '',
+              email: casoData.email_borrador || user.email || '',
               telefono: casoData.telefono_borrador || null,
               razon_social: casoData.razon_social_borrador || null,
               nif_cif: casoData.nif_cif_borrador || null,
-              tipo_perfil: casoData.tipo_perfil_borrador || 'individual'
-            })
-            .eq('id', user.id);
+              tipo_perfil: casoData.tipo_perfil_borrador || 'individual',
+              ciudad: casoData.ciudad_borrador || null,
+              direccion_fiscal: casoData.direccion_fiscal_borrador || null,
+              nombre_gerente: casoData.nombre_gerente_borrador || null
+            };
 
-          if (updateError) {
-            console.error('Error updating profile:', updateError);
-          } else {
-            console.log('Profile updated with case data');
+            // Actualizar perfil con todos los datos disponibles
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update(profileUpdate)
+              .eq('id', user.id);
+
+            if (updateError) {
+              console.error('Error updating profile:', updateError);
+            } else {
+              console.log('Profile updated successfully with case data');
+            }
           }
-
-          // Asociar el caso con el usuario
-          const { error: linkError } = await supabase
-            .from('casos')
-            .update({ cliente_id: user.id })
-            .eq('id', casoId);
-
-          if (linkError) {
-            console.error('Error linking case to user:', linkError);
-          } else {
-            console.log('Case linked to user');
-          }
+        } else {
+          console.log('Profile already has data, skipping transfer');
         }
+
+        // Siempre asociar el caso con el usuario si no está ya asociado
+        const { error: linkError } = await supabase
+          .from('casos')
+          .update({ cliente_id: user.id })
+          .eq('id', casoId);
+
+        if (linkError) {
+          console.error('Error linking case to user:', linkError);
+        } else {
+          console.log('Case linked to user');
+        }
+        
       } catch (error) {
         console.error('Error in data transfer:', error);
       }

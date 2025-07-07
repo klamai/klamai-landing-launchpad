@@ -276,13 +276,16 @@ export type Database = {
           acepta_politicas: boolean
           apellido: string
           avatar_url: string | null
+          ciudad: string | null
           created_at: string | null
           creditos_disponibles: number
+          direccion_fiscal: string | null
           email: string
           especialidades: number[] | null
           id: string
           nif_cif: string | null
           nombre: string
+          nombre_gerente: string | null
           razon_social: string | null
           role: Database["public"]["Enums"]["profile_role_enum"]
           stripe_customer_id: string | null
@@ -294,13 +297,16 @@ export type Database = {
           acepta_politicas?: boolean
           apellido: string
           avatar_url?: string | null
+          ciudad?: string | null
           created_at?: string | null
           creditos_disponibles?: number
+          direccion_fiscal?: string | null
           email: string
           especialidades?: number[] | null
           id: string
           nif_cif?: string | null
           nombre: string
+          nombre_gerente?: string | null
           razon_social?: string | null
           role: Database["public"]["Enums"]["profile_role_enum"]
           stripe_customer_id?: string | null
@@ -312,13 +318,16 @@ export type Database = {
           acepta_politicas?: boolean
           apellido?: string
           avatar_url?: string | null
+          ciudad?: string | null
           created_at?: string | null
           creditos_disponibles?: number
+          direccion_fiscal?: string | null
           email?: string
           especialidades?: number[] | null
           id?: string
           nif_cif?: string | null
           nombre?: string
+          nombre_gerente?: string | null
           razon_social?: string | null
           role?: Database["public"]["Enums"]["profile_role_enum"]
           stripe_customer_id?: string | null
