@@ -27,6 +27,7 @@ const Chat = () => {
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
   const [showProposal, setShowProposal] = useState(false);
   const [proposalData, setProposalData] = useState<any>(null);
+  const [showPaymentButton, setShowPaymentButton] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -119,6 +120,7 @@ const Chat = () => {
         console.log('Case is ready for proposal! Showing modal...');
         setProposalData(data.propuesta_estructurada);
         setShowProposal(true);
+        setShowPaymentButton(false);
         
         toast({
           title: "¡Tu propuesta está lista!",
@@ -238,11 +240,68 @@ const Chat = () => {
     console.log('Selected session:', sessionId);
   };
 
-  const handleAuthSuccess = () => {
+  // Manejar cierre del modal de propuesta
+  const handleProposalClose = () => {
+    setShowProposal(false);
+    setShowPaymentButton(true);
+  };
+
+  // Manejar éxito de autenticación y copia de datos del caso
+  const handleAuthSuccessWithCaseData = async () => {
     setShowAuthModal(false);
+    
+    // Si es un nuevo usuario, copiar datos del caso al perfil
+    if (user && casoId) {
+      try {
+        // Obtener datos del caso
+        const { data: casoData, error: casoError } = await supabase
+          .from('casos')
+          .select('nombre_borrador, apellido_borrador, email_borrador, telefono_borrador, razon_social_borrador, nif_cif_borrador, tipo_perfil_borrador')
+          .eq('id', casoId)
+          .maybeSingle();
+
+        if (casoError) {
+          console.error('Error fetching case data:', casoError);
+        } else if (casoData) {
+          // Actualizar perfil con datos del caso
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              nombre: casoData.nombre_borrador || user.user_metadata?.nombre || '',
+              apellido: casoData.apellido_borrador || user.user_metadata?.apellido || '',
+              telefono: casoData.telefono_borrador || null,
+              razon_social: casoData.razon_social_borrador || null,
+              nif_cif: casoData.nif_cif_borrador || null,
+              tipo_perfil: casoData.tipo_perfil_borrador || 'individual'
+            })
+            .eq('id', user.id);
+
+          if (updateError) {
+            console.error('Error updating profile:', updateError);
+          } else {
+            console.log('Profile updated with case data');
+          }
+
+          // Asociar el caso con el usuario
+          const { error: linkError } = await supabase
+            .from('casos')
+            .update({ cliente_id: user.id })
+            .eq('id', casoId);
+
+          if (linkError) {
+            console.error('Error linking case to user:', linkError);
+          } else {
+            console.log('Case linked to user');
+          }
+        }
+      } catch (error) {
+        console.error('Error in data transfer:', error);
+      }
+    }
+
     toast({
       title: "¡Bienvenido!",
-      description: "Tu conversación ha sido guardada y ahora puedes acceder a tu historial.",
+      description: "Tu conversación ha sido guardada y tus datos han sido actualizados.",
     });
 
     const successMessage = {
@@ -267,11 +326,6 @@ const Chat = () => {
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
-  }
-
-  // Mostrar la propuesta si está disponible
-  if (showProposal && proposalData) {
-    return <ProposalDisplay proposalData={proposalData} casoId={casoId} />;
   }
 
   return (
@@ -414,7 +468,7 @@ const Chat = () => {
             "flex-1 transition-all duration-300 relative z-10",
             sidebarOpen ? "lg:ml-0" : "lg:ml-0"
           )}>
-            <div className="h-full">
+            <div className="h-full relative">
               <Standard
                 typebot="klamai-test-supabase-wyqehpx"
                 apiHost="https://bot.autoiax.com"
@@ -424,6 +478,19 @@ const Chat = () => {
                   "caso_id": casoId || ""
                 }}
               />
+              
+              {/* Botón flotante para continuar con planes */}
+              {showPaymentButton && (
+                <div className="absolute bottom-4 right-4 z-20">
+                  <Button 
+                    onClick={() => setShowProposal(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white shadow-lg animate-pulse"
+                    size="lg"
+                  >
+                    Ver Planes de Asesoría
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </main>
@@ -455,9 +522,19 @@ const Chat = () => {
         <AuthModal 
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
-          onSuccess={handleAuthSuccess}
+          onSuccess={handleAuthSuccessWithCaseData}
           initialMode={authModalMode}
         />
+
+        {/* Modal de Propuesta */}
+        {showProposal && proposalData && (
+          <ProposalDisplay 
+            proposalData={proposalData} 
+            casoId={casoId}
+            isModal={true}
+            onClose={handleProposalClose}
+          />
+        )}
       </div>
     </div>
   );

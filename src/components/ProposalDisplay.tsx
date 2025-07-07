@@ -1,12 +1,13 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Clock, Star, ArrowRight } from 'lucide-react';
+import { Check, Clock, Star, ArrowRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import AuthModal from '@/components/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface ProposalData {
   etiqueta_caso: string;
@@ -17,9 +18,11 @@ interface ProposalData {
 interface ProposalDisplayProps {
   proposalData: ProposalData;
   casoId: string;
+  isModal?: boolean;
+  onClose?: () => void;
 }
 
-const ProposalDisplay = ({ proposalData, casoId }: ProposalDisplayProps) => {
+const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: ProposalDisplayProps) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('signup');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -111,8 +114,29 @@ const ProposalDisplay = ({ proposalData, casoId }: ProposalDisplayProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className={cn(
+      isModal 
+        ? "fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" 
+        : "min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800 p-4"
+    )}>
+      <div className={cn(
+        "max-w-4xl mx-auto",
+        isModal && "bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto p-6 w-full max-w-6xl"
+      )}>
+        {/* Botón de cerrar para modal */}
+        {isModal && onClose && (
+          <div className="flex justify-end mb-4">
+            <Button
+              onClick={onClose}
+              variant="ghost"
+              size="icon"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        )}
+
         {/* Header personalizado */}
         <motion.div 
           className="text-center mb-12"
