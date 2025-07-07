@@ -276,57 +276,27 @@ const Index = () => {
                       Recibe asesoramiento jurídico
                       <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"> de especialistas</span>
                     </h1>
-                    <p className="mx-auto mt-6 max-w-2xl text-balance text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
-                      Resuelve tus consultas legales con <span className="font-semibold text-blue-700 dark:text-blue-300">VitorIA</span>, nuestro asistente inteligente, y conecta con abogados especialistas. Rápido, seguro y eficiente.
-                    </p>
-                    <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400 font-medium mt-4">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>Valencia, España</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span>Atención Virtual 24/7</span>
-                      </div>
-                    </div>
-                  </AnimatedGroup>
 
-                  {/* Modern Google-style Search Bar - Principal */}
-                  <AnimatedGroup variants={{
-                  container: {
-                    visible: {
-                      transition: {
-                        staggerChildren: 0.05,
-                        delayChildren: 0.3
-                      }
-                    }
-                  },
-                  item: {
-                    hidden: {
-                      opacity: 0,
-                      filter: 'blur(6px)',
-                      y: 8
-                    },
-                    visible: {
-                      opacity: 1,
-                      filter: 'blur(0px)',
-                      y: 0,
-                      transition: {
-                        type: 'spring' as const,
-                        bounce: 0.2,
-                        duration: 0.8
-                      }
-                    }
-                  }
-                }} className="mt-8 sm:mt-12">
-                    <div className="max-w-4xl mx-auto px-4 sm:px-0">
-                      {/* Main Search Bar */}
+                    {/* Modern Google-style Search Bar - Principal - MOVED UP */}
+                    <div className="mt-8 sm:mt-12 max-w-4xl mx-auto px-4 sm:px-0">
+                      {/* Main Search Bar with Enhanced Effects */}
                       <div className="relative group">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-                        <div className="relative bg-white dark:bg-gray-900 rounded-full shadow-2xl border border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-all duration-300 group-hover:border-blue-300 dark:group-hover:border-blue-600">
+                        {/* Floating particles background */}
+                        <div className="absolute -inset-4 opacity-30">
+                          <div className="absolute top-2 left-4 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                          <div className="absolute top-8 right-8 w-1 h-1 bg-cyan-400 rounded-full animate-ping" style={{animationDelay: '0.5s'}}></div>
+                          <div className="absolute bottom-4 left-12 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+                          <div className="absolute bottom-8 right-4 w-1 h-1 bg-blue-300 rounded-full animate-ping" style={{animationDelay: '1.5s'}}></div>
+                        </div>
+                        
+                        {/* Gradient breathing border */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-500 animate-pulse"></div>
+                        <div className="absolute -inset-2 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 rounded-full blur-sm opacity-10 group-hover:opacity-20 transition duration-700" style={{animation: 'pulse 3s ease-in-out infinite'}}></div>
+                        
+                        <div className="relative bg-white dark:bg-gray-900 rounded-full shadow-2xl border border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-all duration-500 group-hover:border-blue-300 dark:group-hover:border-blue-600 group-hover:scale-[1.02]">
                           <div className="flex items-center p-1.5 sm:p-2">
                             <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-blue-600 dark:text-blue-400 ml-1 sm:ml-2 flex-shrink-0">
-                              <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
+                              <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 group-hover:scale-110 transition-transform duration-300" />
                             </div>
                             <input
                               type="text"
@@ -351,7 +321,7 @@ const Index = () => {
                               <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || !consultation.trim()}
-                                className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                                className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110 group-hover:shadow-blue-500/25"
                               >
                                 {isSubmitting ? (
                                   <Square className="h-4 w-4 sm:h-5 sm:w-5 animate-pulse" />
@@ -364,32 +334,41 @@ const Index = () => {
                         </div>
                       </div>
 
-                      {/* Subtitle and Status */}
+                      {/* AI Status and Character Count - Enhanced */}
                       <div className="text-center mt-4 sm:mt-6 space-y-2 sm:space-y-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-full border border-blue-200 dark:border-blue-700">
+                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">VitorIA está activa</span>
+                          </div>
+                        </div>
                         <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg">
-                          <Sparkles className="inline h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600 dark:text-blue-400" />
-                          VitorIA te responderá al instante
+                          <Sparkles className="inline h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600 dark:text-blue-400 animate-pulse" />
+                          Respuesta instantánea e inteligente
                         </p>
                         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                           <Shield className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           100% confidencial y sin compromiso
                         </p>
                         {consultation.trim() && (
-                          <div className="sm:hidden text-xs text-gray-400">
+                          <div className="sm:hidden text-xs text-gray-400 animate-fade-in">
                             {consultation.length}/500 caracteres
                           </div>
                         )}
                       </div>
 
-                      {/* Quick suggestions - Responsive */}
+                      {/* Quick suggestions - Enhanced */}
                       <div className="mt-6 sm:mt-8">
-                        <p className="text-center text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4">Consultas populares:</p>
+                        <p className="text-center text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4 flex items-center justify-center gap-2">
+                          <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" />
+                          Consultas populares:
+                        </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                           {frequentQuestions.slice(0, 4).map((question, index) => (
                             <button
                               key={index}
                               onClick={() => setConsultation(question)}
-                              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 text-left sm:text-center"
+                              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 text-left sm:text-center hover:scale-105 hover:shadow-md"
                             >
                               {question.length > (window.innerWidth < 640 ? 40 : 50) ? 
                                 question.slice(0, window.innerWidth < 640 ? 40 : 50) + '...' : 
@@ -399,7 +378,22 @@ const Index = () => {
                         </div>
                       </div>
                     </div>
+
+                    <p className="mx-auto mt-8 max-w-2xl text-balance text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                      Resuelve tus consultas legales con <span className="font-semibold text-blue-700 dark:text-blue-300">VitorIA</span>, nuestro asistente inteligente, y conecta con abogados especialistas. Rápido, seguro y eficiente.
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400 font-medium mt-4">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        <span>Valencia, España</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>Atención Virtual 24/7</span>
+                      </div>
+                    </div>
                   </AnimatedGroup>
+
                 </div>
               </div>
             </div>
