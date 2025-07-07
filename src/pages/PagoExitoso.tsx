@@ -1,32 +1,69 @@
+
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, ArrowRight, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const PagoExitoso = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
   const casoId = searchParams.get('caso_id');
   const { user } = useAuth();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [casoActualizado, setCasoActualizado] = useState(false);
 
   useEffect(() => {
-    // Simular verificación del pago
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
+    verificarEstadoCaso();
   }, []);
+
+  const verificarEstadoCaso = async () => {
+    if (!casoId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Verificar el estado del caso
+      const { data: caso, error } = await supabase
+        .from('casos')
+        .select('estado')
+        .eq('id', casoId)
+        .single();
+
+      if (error) {
+        console.error('Error verificando caso:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo verificar el estado del caso",
+          variant: "destructive"
+        });
+      } else if (caso) {
+        setCasoActualizado(caso.estado === 'disponible');
+        if (caso.estado === 'disponible') {
+          toast({
+            title: "¡Caso activado!",
+            description: "Tu caso ha sido procesado y está disponible para los abogados.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 dark:from-gray-900 dark:via-green-950 dark:to-gray-800 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600 dark:text-gray-300">Verificando tu pago...</p>
+          <p className="text-lg text-gray-600 dark:text-gray-300">Verificando tu pago y actualizando el caso...</p>
         </div>
       </div>
     );
@@ -44,8 +81,11 @@ const PagoExitoso = () => {
         </h1>
         
         <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-          Tu pago ha sido procesado correctamente. En breve recibirás un email de confirmación 
-          y un abogado especializado se pondrá en contacto contigo.
+          Tu pago ha sido procesado correctamente. 
+          {casoActualizado 
+            ? " Tu caso ha sido activado y está disponible para los abogados especializados."
+            : " En breve tu caso será activado y procesado por nuestro sistema."
+          }
         </p>
 
         {sessionId && (
@@ -53,6 +93,11 @@ const PagoExitoso = () => {
             <p className="text-sm text-gray-500 dark:text-gray-400">
               ID de transacción: <span className="font-mono">{sessionId.slice(0, 20)}...</span>
             </p>
+            {casoId && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                ID del caso: <span className="font-mono">{casoId.slice(0, 8)}...</span>
+              </p>
+            )}
           </div>
         )}
 
@@ -63,15 +108,22 @@ const PagoExitoso = () => {
           <ul className="text-left space-y-2 text-gray-600 dark:text-gray-300">
             <li className="flex items-start">
               <span className="text-green-500 mr-2">•</span>
-              Recibirás un email de confirmación en los próximos minutos
+              {casoActualizado 
+                ? "Tu caso ya está disponible en el marketplace de abogados"
+                : "Recibirás un email de confirmación en los próximos minutos"
+              }
             </li>
             <li className="flex items-start">
               <span className="text-green-500 mr-2">•</span>
-              Un abogado especializado revisará tu caso
+              Los abogados especializados pueden revisar tu caso
             </li>
             <li className="flex items-start">
               <span className="text-green-500 mr-2">•</span>
               Te contactaremos en un plazo máximo de 24 horas
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-500 mr-2">•</span>
+              Puedes seguir el progreso desde tu dashboard
             </li>
           </ul>
         </div>

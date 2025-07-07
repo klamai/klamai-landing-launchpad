@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,9 +24,11 @@ import { useCasesByRole } from "@/hooks/useCasesByRole";
 import { useAuth } from "@/hooks/useAuth";
 import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
 import { Caso } from "@/types/database";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 const MisCasos = () => {
   const { casos, loading } = useCasesByRole();
+  const { totalCasos, casosActivos, casosCerrados, casosEsperandoPago, loading: statsLoading } = useDashboardStats();
   const [filteredCasos, setFilteredCasos] = useState<Caso[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("todos");
@@ -163,27 +164,27 @@ const MisCasos = () => {
         {[
           { 
             title: "Total de Casos", 
-            value: casos.length.toString(), 
+            value: statsLoading ? "..." : totalCasos.toString(), 
             color: "bg-blue-500",
             textColor: "text-blue-600"
           },
           { 
             title: "Casos Activos", 
-            value: casos.filter(c => ['disponible', 'esperando_pago'].includes(c.estado)).length.toString(), 
+            value: statsLoading ? "..." : casosActivos.toString(), 
             color: "bg-green-500",
             textColor: "text-green-600"
           },
           { 
             title: "Casos Cerrados", 
-            value: casos.filter(c => c.estado === 'cerrado').length.toString(), 
+            value: statsLoading ? "..." : casosCerrados.toString(), 
             color: "bg-purple-500",
             textColor: "text-purple-600"
           },
           { 
             title: userRole === 'cliente' ? "Pendientes de Pago" : "Casos Disponibles", 
-            value: userRole === 'cliente' 
-              ? casos.filter(c => c.estado === 'esperando_pago').length.toString()
-              : casos.filter(c => c.estado === 'disponible').length.toString(), 
+            value: statsLoading ? "..." : (userRole === 'cliente' 
+              ? casosEsperandoPago.toString()
+              : casos.filter(c => c.estado === 'disponible').length.toString()), 
             color: "bg-orange-500",
             textColor: "text-orange-600"
           }
