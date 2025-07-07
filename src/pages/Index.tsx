@@ -272,14 +272,14 @@ const Index = () => {
                 }}>
                     
                 
-                    <h1 className="mt-8 max-w-4xl mx-auto text-balance text-5xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
+                    <h1 className="mt-8 max-w-4xl mx-auto text-balance text-4xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
                       Recibe asesoramiento jurídico
                       <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"> de especialistas</span>
                     </h1>
-                    <p className="mx-auto mt-8 max-w-2xl text-balance text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                    <p className="mx-auto mt-6 max-w-2xl text-balance text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
                       Resuelve tus consultas legales con <span className="font-semibold text-blue-700 dark:text-blue-300">VitorIA</span>, nuestro asistente inteligente, y conecta con abogados especialistas. Rápido, seguro y eficiente.
                     </p>
-                    <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400 font-medium mt-6">
+                    <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400 font-medium mt-4">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4" />
                         <span>Valencia, España</span>
@@ -291,7 +291,7 @@ const Index = () => {
                     </div>
                   </AnimatedGroup>
 
-                  {/* Modern Google-style Search Bar */}
+                  {/* Modern Google-style Search Bar - Principal */}
                   <AnimatedGroup variants={{
                   container: {
                     visible: {
@@ -318,15 +318,15 @@ const Index = () => {
                       }
                     }
                   }
-                }} className="mt-16">
-                    <div className="max-w-4xl mx-auto">
+                }} className="mt-8 sm:mt-12">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-0">
                       {/* Main Search Bar */}
                       <div className="relative group">
                         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
                         <div className="relative bg-white dark:bg-gray-900 rounded-full shadow-2xl border border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-all duration-300 group-hover:border-blue-300 dark:group-hover:border-blue-600">
-                          <div className="flex items-center p-2">
-                            <div className="flex items-center justify-center w-12 h-12 text-blue-600 dark:text-blue-400 ml-2">
-                              <MessageCircle className="h-6 w-6" />
+                          <div className="flex items-center p-1.5 sm:p-2">
+                            <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-blue-600 dark:text-blue-400 ml-1 sm:ml-2 flex-shrink-0">
+                              <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
                             </div>
                             <input
                               type="text"
@@ -338,25 +338,25 @@ const Index = () => {
                                   handleSubmit();
                                 }
                               }}
-                              placeholder="Describe tu situación legal - Ej: Tengo una disputa contractual..."
-                              className="flex-1 px-4 py-4 text-lg bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                              placeholder="Describe tu situación legal aquí..."
+                              className="flex-1 px-2 sm:px-4 py-3 sm:py-4 text-base sm:text-lg bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 min-w-0"
                               disabled={isSubmitting}
                             />
-                            <div className="flex items-center gap-2 mr-2">
+                            <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-2 flex-shrink-0">
                               {consultation.trim() && (
-                                <div className="text-xs text-gray-400 mr-2">
+                                <div className="hidden sm:block text-xs text-gray-400">
                                   {consultation.length}/500
                                 </div>
                               )}
                               <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || !consultation.trim()}
-                                className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                                className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
                               >
                                 {isSubmitting ? (
-                                  <Square className="h-5 w-5 animate-pulse" />
+                                  <Square className="h-4 w-4 sm:h-5 sm:w-5 animate-pulse" />
                                 ) : (
-                                  <ArrowRight className="h-5 w-5" />
+                                  <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
                                 )}
                               </button>
                             </div>
@@ -364,29 +364,36 @@ const Index = () => {
                         </div>
                       </div>
 
-                      {/* Subtitle */}
-                      <div className="text-center mt-6">
-                        <p className="text-gray-600 dark:text-gray-300 text-lg">
-                          <Sparkles className="inline h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
+                      {/* Subtitle and Status */}
+                      <div className="text-center mt-4 sm:mt-6 space-y-2 sm:space-y-3">
+                        <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg">
+                          <Sparkles className="inline h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600 dark:text-blue-400" />
                           VitorIA te responderá al instante
                         </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                          <Shield className="inline h-4 w-4 mr-1" />
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                          <Shield className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           100% confidencial y sin compromiso
                         </p>
+                        {consultation.trim() && (
+                          <div className="sm:hidden text-xs text-gray-400">
+                            {consultation.length}/500 caracteres
+                          </div>
+                        )}
                       </div>
 
-                      {/* Quick suggestions */}
-                      <div className="mt-8">
-                        <p className="text-center text-gray-600 dark:text-gray-400 text-sm mb-4">Consultas populares:</p>
-                        <div className="flex flex-wrap justify-center gap-3">
+                      {/* Quick suggestions - Responsive */}
+                      <div className="mt-6 sm:mt-8">
+                        <p className="text-center text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4">Consultas populares:</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                           {frequentQuestions.slice(0, 4).map((question, index) => (
                             <button
                               key={index}
                               onClick={() => setConsultation(question)}
-                              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600"
+                              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 text-left sm:text-center"
                             >
-                              {question.length > 50 ? question.slice(0, 50) + '...' : question}
+                              {question.length > (window.innerWidth < 640 ? 40 : 50) ? 
+                                question.slice(0, window.innerWidth < 640 ? 40 : 50) + '...' : 
+                                question}
                             </button>
                           ))}
                         </div>
