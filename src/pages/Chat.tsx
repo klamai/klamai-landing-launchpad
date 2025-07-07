@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,7 @@ const Chat = () => {
   const [showProposal, setShowProposal] = useState(false);
   const [proposalData, setProposalData] = useState<any>(null);
   const [showPaymentButton, setShowPaymentButton] = useState(false);
+  const [caseLinked, setCaseLinked] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -86,6 +86,68 @@ const Chat = () => {
       casoId: savedCasoId
     });
   }, [navigate]);
+
+  // Función para vincular caso con usuario autenticado
+  const linkCaseToUser = async (userId: string, caseId: string) => {
+    if (!userId || !caseId || caseLinked) {
+      console.log('Skipping case linking:', { userId: !!userId, caseId: !!caseId, caseLinked });
+      return;
+    }
+
+    try {
+      console.log('Linking case to user:', { userId, caseId });
+      
+      // Verificar si el caso ya está vinculado
+      const { data: existingCase, error: checkError } = await supabase
+        .from('casos')
+        .select('cliente_id')
+        .eq('id', caseId)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking existing case:', checkError);
+        return;
+      }
+
+      if (existingCase?.cliente_id === userId) {
+        console.log('Case already linked to this user');
+        setCaseLinked(true);
+        return;
+      }
+
+      // Vincular el caso con el usuario
+      const { error: linkError } = await supabase
+        .from('casos')
+        .update({ cliente_id: userId })
+        .eq('id', caseId);
+
+      if (linkError) {
+        console.error('Error linking case to user:', linkError);
+        toast({
+          title: "Error",
+          description: "Hubo un error al vincular el caso con tu perfil.",
+          variant: "destructive"
+        });
+      } else {
+        console.log('Case linked to user successfully');
+        setCaseLinked(true);
+        toast({
+          title: "¡Caso vinculado!",
+          description: "Tu caso ha sido asociado con tu perfil correctamente.",
+        });
+      }
+    } catch (error) {
+      console.error('Error in linkCaseToUser:', error);
+    }
+  };
+
+  // Vincular caso cuando el usuario ya está autenticado desde el inicio
+  useEffect(() => {
+    if (user && casoId && !loading && !caseLinked) {
+      console.log('User is already authenticated, linking case:', { userId: user.id, casoId });
+      linkCaseToUser(user.id, casoId);
+    }
+  }, [user, casoId, loading, caseLinked]);
 
   // Función para verificar el estado del caso
   const checkCaseStatus = async (caseId: string) => {
@@ -247,6 +309,102 @@ const Chat = () => {
     setShowPaymentButton(true);
   };
 
+  // Función mejorada para transferir datos del caso al perfil
+  const transferCaseDataToProfile = async (userId: string, caseId: string) => {
+    try {
+      console.log('Starting data transfer process for user:', userId, 'case:', caseId);
+      
+      // Verificar si es un perfil nuevo (sin datos previos)
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('nombre, apellido, email, telefono')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Error checking existing profile:', profileError);
+        return;
+      }
+
+      console.log('Existing profile:', existingProfile);
+
+      // Solo transferir datos si el perfil está vacío o es nuevo
+      const isNewProfile = !existingProfile || 
+        (!existingProfile.nombre && !existingProfile.apellido) ||
+        existingProfile.nombre === '' || existingProfile.apellido === '';
+
+      console.log('Is new profile?', isNewProfile);
+
+      if (isNewProfile) {
+        // Obtener todos los datos borrador del caso
+        const { data: casoData, error: casoError } = await supabase
+          .from('casos')
+          .select(`
+            nombre_borrador, apellido_borrador, email_borrador, telefono_borrador, 
+            razon_social_borrador, nif_cif_borrador, tipo_perfil_borrador,
+            ciudad_borrador, direccion_fiscal_borrador, nombre_gerente_borrador
+          `)
+          .eq('id', caseId)
+          .maybeSingle();
+
+        if (casoError) {
+          console.error('Error fetching case data:', casoError);
+        } else if (casoData) {
+          console.log('Case data to transfer:', casoData);
+          
+          // Obtener datos del usuario autenticado
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+          
+          // Preparar datos para actualizar, usando valores del caso o fallbacks
+          const profileUpdate = {
+            nombre: casoData.nombre_borrador || currentUser?.user_metadata?.nombre || '',
+            apellido: casoData.apellido_borrador || currentUser?.user_metadata?.apellido || '',
+            email: casoData.email_borrador || currentUser?.email || '',
+            telefono: casoData.telefono_borrador || null,
+            razon_social: casoData.razon_social_borrador || null,
+            nif_cif: casoData.nif_cif_borrador || null,
+            tipo_perfil: casoData.tipo_perfil_borrador || 'individual',
+            ciudad: casoData.ciudad_borrador || null,
+            direccion_fiscal: casoData.direccion_fiscal_borrador || null,
+            nombre_gerente: casoData.nombre_gerente_borrador || null
+          };
+
+          console.log('Profile update data:', profileUpdate);
+
+          // Actualizar perfil con todos los datos disponibles
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update(profileUpdate)
+            .eq('id', userId);
+
+          if (updateError) {
+            console.error('Error updating profile:', updateError);
+            toast({
+              title: "Error",
+              description: "Hubo un error al guardar tus datos. Por favor, actualízalos manualmente en tu perfil.",
+              variant: "destructive"
+            });
+          } else {
+            console.log('Profile updated successfully with case data');
+            toast({
+              title: "¡Datos guardados!",
+              description: "Tus datos han sido transferidos correctamente a tu perfil.",
+            });
+          }
+        }
+      } else {
+        console.log('Profile already has data, skipping transfer');
+      }
+    } catch (error) {
+      console.error('Error in transferCaseDataToProfile:', error);
+      toast({
+        title: "Error",
+        description: "Hubo un error al procesar tus datos. Por favor, revisa tu perfil.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Manejar éxito de autenticación y copia de datos del caso
   const handleAuthSuccessWithCaseData = async () => {
     console.log('Starting handleAuthSuccessWithCaseData process...');
@@ -261,115 +419,18 @@ const Chat = () => {
       console.log('Current user from auth:', currentUser?.id);
       
       if (currentUser && casoId) {
-        try {
-          console.log('Starting data transfer process for user:', currentUser.id, 'case:', casoId);
-          
-          // Verificar si es un perfil nuevo (sin datos previos)
-          const { data: existingProfile, error: profileError } = await supabase
-            .from('profiles')
-            .select('nombre, apellido, email, telefono')
-            .eq('id', currentUser.id)
-            .maybeSingle();
-
-          if (profileError) {
-            console.error('Error checking existing profile:', profileError);
-            return;
-          }
-
-          console.log('Existing profile:', existingProfile);
-
-          // Solo transferir datos si el perfil está vacío o es nuevo
-          const isNewProfile = !existingProfile || 
-            (!existingProfile.nombre && !existingProfile.apellido) ||
-            existingProfile.nombre === '' || existingProfile.apellido === '';
-
-          console.log('Is new profile?', isNewProfile);
-
-          if (isNewProfile) {
-            // Obtener todos los datos borrador del caso
-            const { data: casoData, error: casoError } = await supabase
-              .from('casos')
-              .select(`
-                nombre_borrador, apellido_borrador, email_borrador, telefono_borrador, 
-                razon_social_borrador, nif_cif_borrador, tipo_perfil_borrador,
-                ciudad_borrador, direccion_fiscal_borrador, nombre_gerente_borrador
-              `)
-              .eq('id', casoId)
-              .maybeSingle();
-
-            if (casoError) {
-              console.error('Error fetching case data:', casoError);
-            } else if (casoData) {
-              console.log('Case data to transfer:', casoData);
-              
-              // Preparar datos para actualizar, usando valores del caso o fallbacks
-              const profileUpdate = {
-                nombre: casoData.nombre_borrador || currentUser.user_metadata?.nombre || '',
-                apellido: casoData.apellido_borrador || currentUser.user_metadata?.apellido || '',
-                email: casoData.email_borrador || currentUser.email || '',
-                telefono: casoData.telefono_borrador || null,
-                razon_social: casoData.razon_social_borrador || null,
-                nif_cif: casoData.nif_cif_borrador || null,
-                tipo_perfil: casoData.tipo_perfil_borrador || 'individual',
-                ciudad: casoData.ciudad_borrador || null,
-                direccion_fiscal: casoData.direccion_fiscal_borrador || null,
-                nombre_gerente: casoData.nombre_gerente_borrador || null
-              };
-
-              console.log('Profile update data:', profileUpdate);
-
-              // Actualizar perfil con todos los datos disponibles
-              const { error: updateError } = await supabase
-                .from('profiles')
-                .update(profileUpdate)
-                .eq('id', currentUser.id);
-
-              if (updateError) {
-                console.error('Error updating profile:', updateError);
-                toast({
-                  title: "Error",
-                  description: "Hubo un error al guardar tus datos. Por favor, actualízalos manualmente en tu perfil.",
-                  variant: "destructive"
-                });
-              } else {
-                console.log('Profile updated successfully with case data');
-                toast({
-                  title: "¡Datos guardados!",
-                  description: "Tus datos han sido transferidos correctamente a tu perfil.",
-                });
-              }
-            }
-          } else {
-            console.log('Profile already has data, skipping transfer');
-          }
-
-          // Siempre asociar el caso con el usuario si no está ya asociado
-          const { error: linkError } = await supabase
-            .from('casos')
-            .update({ cliente_id: currentUser.id })
-            .eq('id', casoId);
-
-          if (linkError) {
-            console.error('Error linking case to user:', linkError);
-          } else {
-            console.log('Case linked to user successfully');
-          }
-          
-        } catch (error) {
-          console.error('Error in data transfer:', error);
-          toast({
-            title: "Error",
-            description: "Hubo un error al procesar tus datos. Por favor, revisa tu perfil.",
-            variant: "destructive"
-          });
-        }
+        // Transferir datos del caso al perfil
+        await transferCaseDataToProfile(currentUser.id, casoId);
+        
+        // Vincular el caso con el usuario
+        await linkCaseToUser(currentUser.id, casoId);
       } else {
         console.log('No user or case ID available for data transfer');
       }
 
       toast({
         title: "¡Bienvenido!",
-        description: "Tu conversación ha sido guardada.",
+        description: "Tu conversación ha sido guardada y vinculada a tu perfil.",
       });
 
       const successMessage = {
