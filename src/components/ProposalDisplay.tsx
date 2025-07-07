@@ -8,6 +8,7 @@ import AuthModal from '@/components/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProposalData {
   etiqueta_caso: string;
@@ -83,12 +84,37 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
   };
 
   const handlePayment = async (planId: string) => {
-    // TODO: Implementar lógica de pago con Stripe
-    console.log('Iniciando pago para plan:', planId);
-    toast({
-      title: "Procesando pago",
-      description: "Redirigiendo a la pasarela de pago...",
-    });
+    try {
+      toast({
+        title: "Procesando pago",
+        description: "Creando sesión de pago...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
+        body: {
+          plan_id: planId,
+          caso_id: casoId
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.url) {
+        // Redirigir a Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No se recibió URL de pago');
+      }
+    } catch (error) {
+      console.error('Error al crear sesión de pago:', error);
+      toast({
+        title: "Error en el pago",
+        description: error instanceof Error ? error.message : "Error al procesar el pago. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
+    }
   };
 
   const sendProgressSummary = async () => {

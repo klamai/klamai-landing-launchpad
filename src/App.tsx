@@ -11,6 +11,8 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import LegalNotice from "./pages/LegalNotice";
+import PagoExitoso from "./pages/PagoExitoso";
+import PagoCancelado from "./pages/PagoCancelado";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +38,8 @@ const App = () => (
             <Route path="/dashboard/notificaciones" element={<Dashboard />} />
             <Route path="/politicas-privacidad" element={<PrivacyPolicy />} />
             <Route path="/aviso-legal" element={<LegalNotice />} />
+            <Route path="/pago-exitoso" element={<PagoExitoso />} />
+            <Route path="/pago-cancelado" element={<PagoCancelado />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
