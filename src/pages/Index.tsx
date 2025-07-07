@@ -334,31 +334,8 @@ const Index = () => {
                         </div>
                       </div>
 
-                      {/* AI Status and Character Count - Enhanced */}
-                      <div className="text-center mt-4 sm:mt-6 space-y-2 sm:space-y-3">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-full border border-blue-200 dark:border-blue-700">
-                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">VitorIA está activa</span>
-                          </div>
-                        </div>
-                        <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg">
-                          <Sparkles className="inline h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600 dark:text-blue-400 animate-pulse" />
-                          Respuesta instantánea e inteligente
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                          <Shield className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          100% confidencial y sin compromiso
-                        </p>
-                        {consultation.trim() && (
-                          <div className="sm:hidden text-xs text-gray-400 animate-fade-in">
-                            {consultation.length}/500 caracteres
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Quick suggestions - Enhanced */}
-                      <div className="mt-6 sm:mt-8">
+                      {/* Quick suggestions - Enhanced - MOVED CLOSER TO INPUT */}
+                      <div className="mt-4 sm:mt-6">
                         <p className="text-center text-gray-600 dark:text-gray-400 text-sm sm:text-base mb-4 sm:mb-6 flex items-center justify-center gap-2">
                           <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
                           Consultas populares:
@@ -376,6 +353,29 @@ const Index = () => {
                             </button>
                           ))}
                         </div>
+                      </div>
+
+                      {/* AI Status and Character Count - Enhanced - MOVED AFTER SUGGESTIONS */}
+                      <div className="text-center mt-6 sm:mt-8 space-y-2 sm:space-y-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-full border border-blue-200 dark:border-blue-700">
+                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">VitorIA está activo</span>
+                          </div>
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg">
+                          <Sparkles className="inline h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600 dark:text-blue-400 animate-pulse" />
+                          Respuesta instantánea e inteligente
+                        </p>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                          <Shield className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          100% confidencial y sin compromiso
+                        </p>
+                        {consultation.trim() && (
+                          <div className="sm:hidden text-xs text-gray-400 animate-fade-in">
+                            {consultation.length}/500 caracteres
+                          </div>
+                        )}
                       </div>
                     </div>
 
