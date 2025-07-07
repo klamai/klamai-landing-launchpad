@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Clock, Star, ArrowRight, X } from 'lucide-react';
@@ -34,7 +33,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     {
       id: 'consulta-estrategica',
       name: 'Consulta Estratégica',
-      price: '49€',
+      price: '37,50€',
       description: 'Análisis completo de tu caso con plan de acción',
       features: [
         'Análisis detallado del caso',
@@ -48,7 +47,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     {
       id: 'plan-asesoria',
       name: 'Plan Asesoría Mensual',
-      price: '149€/mes',
+      price: '19,90€/mes',
       description: 'Acompañamiento legal completo durante todo el proceso',
       features: [
         'Todo lo de Consulta Estratégica',
