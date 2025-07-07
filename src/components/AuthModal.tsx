@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { X, Mail, Lock, User, Eye, EyeOff, Scale } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
@@ -125,24 +126,33 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
       // Construir URL de redirección con contexto
       let redirectUrl = `${window.location.origin}/dashboard`;
       if (planId && casoId) {
-        redirectUrl = `${window.location.origin}/auth-callback?planId=${planId}&casoId=${casoId}`;
+        redirectUrl = `${window.location.origin}/auth-callback?planId=${encodeURIComponent(planId)}&casoId=${encodeURIComponent(casoId)}`;
+        console.log('AuthModal - Configurando redirección de Google a:', redirectUrl);
       }
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl
+          redirectTo: redirectUrl,
+          queryParams: planId && casoId ? {
+            planId,
+            casoId
+          } : undefined
         }
       });
       
       if (error) {
+        console.error('AuthModal - Error en Google OAuth:', error);
         toast({
           title: "Error",
           description: error.message,
           variant: "destructive",
         });
+      } else {
+        console.log('AuthModal - Google OAuth iniciado exitosamente');
       }
     } catch (error: any) {
+      console.error('AuthModal - Error inesperado en Google OAuth:', error);
       toast({
         title: "Error",
         description: error.message || "Error al conectar con Google",
