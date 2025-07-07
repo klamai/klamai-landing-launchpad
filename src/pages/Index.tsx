@@ -359,19 +359,19 @@ const Index = () => {
 
                       {/* Quick suggestions - Enhanced */}
                       <div className="mt-6 sm:mt-8">
-                        <p className="text-center text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4 flex items-center justify-center gap-2">
-                          <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" />
+                        <p className="text-center text-gray-600 dark:text-gray-400 text-sm sm:text-base mb-4 sm:mb-6 flex items-center justify-center gap-2">
+                          <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
                           Consultas populares:
                         </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                           {frequentQuestions.slice(0, 4).map((question, index) => (
                             <button
                               key={index}
                               onClick={() => setConsultation(question)}
-                              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 text-left sm:text-center hover:scale-105 hover:shadow-md"
+                              className="px-5 sm:px-6 py-4 sm:py-5 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl text-sm sm:text-base text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 text-left hover:scale-105 hover:shadow-lg min-h-[48px] sm:min-h-[56px]"
                             >
-                              {question.length > (window.innerWidth < 640 ? 40 : 50) ? 
-                                question.slice(0, window.innerWidth < 640 ? 40 : 50) + '...' : 
+                              {question.length > (window.innerWidth < 640 ? 45 : 60) ? 
+                                question.slice(0, window.innerWidth < 640 ? 45 : 60) + '...' : 
                                 question}
                             </button>
                           ))}
