@@ -92,11 +92,16 @@ const Chat = () => {
     
     try {
       console.log('Checking case status for ID:', caseId);
+      console.log('Current auth state:', { 
+        user: user?.id, 
+        isAuthenticated: !!user 
+      });
+      
       const { data, error } = await supabase
         .from('casos')
         .select('estado, propuesta_estructurada')
         .eq('id', caseId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error checking case status:', error);
@@ -105,7 +110,12 @@ const Chat = () => {
 
       console.log('Current case data:', data);
 
-      if (data && data.estado === 'listo_para_propuesta' && data.propuesta_estructurada) {
+      if (!data) {
+        console.log('No case found with ID:', caseId);
+        return;
+      }
+
+      if (data.estado === 'listo_para_propuesta' && data.propuesta_estructurada) {
         console.log('Case is ready for proposal! Showing modal...');
         setProposalData(data.propuesta_estructurada);
         setShowProposal(true);
@@ -113,6 +123,11 @@ const Chat = () => {
         toast({
           title: "¡Tu propuesta está lista!",
           description: "Hemos preparado una propuesta personalizada para tu caso.",
+        });
+      } else {
+        console.log('Case not ready for proposal:', {
+          estado: data.estado,
+          hasPropuesta: !!data.propuesta_estructurada
         });
       }
     } catch (error) {
