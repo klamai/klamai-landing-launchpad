@@ -275,6 +275,8 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
         onClose={() => setShowAuthModal(false)}
         onSuccess={handleAuthSuccess}
         initialMode={authModalMode}
+        planId={selectedPlan}
+        casoId={casoId}
       />
     </div>
   );

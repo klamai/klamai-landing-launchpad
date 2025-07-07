@@ -21,9 +21,11 @@ interface AuthModalProps {
   onClose: () => void;
   onSuccess: () => void;
   initialMode?: 'login' | 'signup';
+  planId?: string;
+  casoId?: string;
 }
 
-const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthModalProps) => {
+const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, casoId }: AuthModalProps) => {
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -120,10 +122,16 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthMo
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
+      // Construir URL de redirección con contexto
+      let redirectUrl = `${window.location.origin}/dashboard`;
+      if (planId && casoId) {
+        redirectUrl = `${window.location.origin}/auth-callback?planId=${planId}&casoId=${casoId}`;
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: redirectUrl
         }
       });
       
