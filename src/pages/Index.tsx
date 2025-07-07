@@ -291,7 +291,7 @@ const Index = () => {
                     </div>
                   </AnimatedGroup>
 
-                  {/* New Consultation Form */}
+                  {/* Modern Google-style Search Bar */}
                   <AnimatedGroup variants={{
                   container: {
                     visible: {
@@ -318,79 +318,77 @@ const Index = () => {
                       }
                     }
                   }
-                }} className="mt-12">
-                    <div className="max-w-2xl mx-auto">
-                      <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-2 border-blue-200 dark:border-blue-500/30 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/20 animate-pulse"></div>
-                        <div className="relative z-10">
-                          <div className="text-center mb-8">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mb-4 animate-bounce">
-                              <MessageCircle className="h-8 w-8 text-white" />
+                }} className="mt-16">
+                    <div className="max-w-4xl mx-auto">
+                      {/* Main Search Bar */}
+                      <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
+                        <div className="relative bg-white dark:bg-gray-900 rounded-full shadow-2xl border border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-all duration-300 group-hover:border-blue-300 dark:group-hover:border-blue-600">
+                          <div className="flex items-center p-2">
+                            <div className="flex items-center justify-center w-12 h-12 text-blue-600 dark:text-blue-400 ml-2">
+                              <MessageCircle className="h-6 w-6" />
                             </div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                              <Sparkles className="inline h-6 w-6 mr-2" />
-                              ¡Cuéntanos tu caso ahora!
-                            </h2>
-                            <p className="text-lg text-blue-600 dark:text-blue-400 font-semibold">
-                              VitorIA te responderá al instante
-                            </p>
-                          </div>
-
-                          <div className="space-y-6">
-                            <div className="space-y-4">
-                              <label htmlFor="consultation" className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                <MessageCircle className="h-5 w-5" />
-                                Describe tu situación legal aquí
-                              </label>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border-l-4 border-blue-500">
-                                <Zap className="inline h-4 w-4 mr-2" />
-                                <strong>Tip:</strong> Cuanto más detalles proporciones, mejor podrá ayudarte VitorIA
-                              </p>
-                              
-                              <PromptInput value={consultation} onValueChange={handleValueChange} isLoading={isSubmitting} onSubmit={handleSubmit} className="w-full border-2 border-blue-300 dark:border-blue-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 bg-white/80 dark:bg-gray-900/80 shadow-inner">
-                                <PromptInputTextarea placeholder="Ejemplo: Tengo una propiedad en disputa con un familiar. Cuáles son mis opciones legales para resolver esto?" className="min-h-32 text-base font-medium placeholder:text-gray-500 dark:placeholder:text-gray-400 placeholder:opacity-70" />
-                                <PromptInputActions className="justify-end pt-2">
-                                  <PromptInputAction tooltip={isSubmitting ? "Conectando con VitorIA..." : "Consultar con VitorIA GRATIS"}>
-                                    
-                                  </PromptInputAction>
-                                </PromptInputActions>
-                              </PromptInput>
-                              
-                              <div className="text-right text-xs text-gray-400">
-                                {consultation.length}/500 caracteres
-                              </div>
+                            <input
+                              type="text"
+                              value={consultation}
+                              onChange={(e) => setConsultation(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSubmit();
+                                }
+                              }}
+                              placeholder="Describe tu situación legal - Ej: Tengo una disputa contractual..."
+                              className="flex-1 px-4 py-4 text-lg bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                              disabled={isSubmitting}
+                            />
+                            <div className="flex items-center gap-2 mr-2">
+                              {consultation.trim() && (
+                                <div className="text-xs text-gray-400 mr-2">
+                                  {consultation.length}/500
+                                </div>
+                              )}
+                              <button
+                                onClick={handleSubmit}
+                                disabled={isSubmitting || !consultation.trim()}
+                                className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                              >
+                                {isSubmitting ? (
+                                  <Square className="h-5 w-5 animate-pulse" />
+                                ) : (
+                                  <ArrowRight className="h-5 w-5" />
+                                )}
+                              </button>
                             </div>
-                            {/* Botón centrado fuera del cuadro */}
-                      <div className="mt-8 flex justify-center">
-                        <ShimmerButton onClick={handleSubmit} disabled={isSubmitting || !consultation.trim()} background="linear-gradient(45deg, #2563eb, #06b6d4)" shimmerColor="#ffffff" shimmerDuration="2s" borderRadius="50px" className={cn("h-14 px-8 text-white dark:text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300", !consultation.trim() ? "opacity-50" : "opacity-100")}>
-                          {isSubmitting ? <div className="flex items-center gap-3">
-                              <Square className="size-5 fill-current animate-pulse" />
-                              <span>Conectando con VitorIA...</span>
-                            </div> : <div className="flex items-center gap-3">
-                              <MessageCircle className="size-5" />
-                              <span>Consultar con VitorIA GRATIS</span>
-                            </div>}
-                        </ShimmerButton>
-                      </div>
-                            <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
-                              <Shield className="inline h-4 w-4 mr-2" />
-                              Tu consulta es <strong>100% confidencial</strong> y sin compromiso
-                            </p>
                           </div>
                         </div>
                       </div>
 
-                      
+                      {/* Subtitle */}
+                      <div className="text-center mt-6">
+                        <p className="text-gray-600 dark:text-gray-300 text-lg">
+                          <Sparkles className="inline h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
+                          VitorIA te responderá al instante
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                          <Shield className="inline h-4 w-4 mr-1" />
+                          100% confidencial y sin compromiso
+                        </p>
+                      </div>
 
-                      {/* Frequent Questions */}
+                      {/* Quick suggestions */}
                       <div className="mt-8">
-                        <h3 className="text-center text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                          Consultas frecuentes
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {frequentQuestions.map((question, index) => <button key={index} onClick={() => handleFrequentQuestion(question)} className="text-left p-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-lg border border-blue-200/50 dark:border-blue-500/30 hover:bg-blue-50/80 dark:hover:bg-blue-900/40 hover:border-blue-300 dark:hover:border-blue-400 transition-all duration-200 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300">
-                              {question}
-                            </button>)}
+                        <p className="text-center text-gray-600 dark:text-gray-400 text-sm mb-4">Consultas populares:</p>
+                        <div className="flex flex-wrap justify-center gap-3">
+                          {frequentQuestions.slice(0, 4).map((question, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setConsultation(question)}
+                              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600"
+                            >
+                              {question.length > 50 ? question.slice(0, 50) + '...' : question}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </div>
