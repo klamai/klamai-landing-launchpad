@@ -141,10 +141,12 @@ const Chat = () => {
   useEffect(() => {
     if (casoId) {
       console.log('Setting up initial case status check for:', casoId);
+      console.log('Current showProposal state:', showProposal);
+      console.log('Current proposalData state:', proposalData);
       // Verificar inmediatamente
       checkCaseStatus(casoId);
     }
-  }, [casoId]);
+  }, [casoId, showProposal, proposalData]);
 
   // Realtime subscription para detectar cambios de estado
   useEffect(() => {
