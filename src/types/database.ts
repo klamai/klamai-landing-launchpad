@@ -27,12 +27,13 @@ export interface Caso {
   id: string;
   cliente_id: string;
   especialidad_id?: number;
-  estado: 'borrador' | 'esperando_pago' | 'disponible' | 'agotado' | 'cerrado';
+  estado: 'borrador' | 'esperando_pago' | 'disponible' | 'agotado' | 'cerrado' | 'listo_para_propuesta';
   tipo_lead?: 'estandar' | 'premium' | 'urgente';
   motivo_consulta?: string;
   resumen_caso?: string;
   guia_abogado?: string;
   transcripcion_chat?: any;
+  propuesta_estructurada?: any;
   canal_atencion: string;
   costo_en_creditos: number;
   compras_realizadas: number;
