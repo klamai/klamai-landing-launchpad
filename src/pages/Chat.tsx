@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,10 +7,12 @@ import { Link, useNavigate } from "react-router-dom";
 import ChatHistory from "@/components/ChatHistory";
 import ChatHistoryAnonymous from "@/components/ChatHistoryAnonymous";
 import AnimatedBackground from "@/components/AnimatedBackground";
+import ProposalDisplay from "@/components/ProposalDisplay";
 import { useAuth } from "@/hooks/useAuth";
 import SignOutButton from "@/components/SignOutButton";
 import AuthModal from "@/components/AuthModal";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Chat = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -23,6 +24,8 @@ const Chat = () => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
+  const [showProposal, setShowProposal] = useState(false);
+  const [proposalData, setProposalData] = useState<any>(null);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -60,13 +63,12 @@ const Chat = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Verificar que haya datos de consulta (protección alternativa para usuarios anónimos)
+  // Verificar que haya datos de consulta
   useEffect(() => {
     const savedConsultation = localStorage.getItem('userConsultation');
     const savedCasoId = localStorage.getItem('casoId');
     
     if (!savedConsultation || !savedCasoId) {
-      // Si no hay datos de consulta, redirigir a la landing
       navigate('/');
       return;
     }
@@ -74,7 +76,6 @@ const Chat = () => {
     setUserConsultation(savedConsultation);
     setCasoId(savedCasoId);
     
-    // Limpiar después de usar
     localStorage.removeItem('userConsultation');
     localStorage.removeItem('casoId');
 
@@ -84,10 +85,49 @@ const Chat = () => {
     });
   }, [navigate]);
 
+  // Realtime subscription para detectar cambios de estado
+  useEffect(() => {
+    if (!casoId) return;
+
+    console.log('Setting up realtime subscription for caso:', casoId);
+
+    const channel = supabase
+      .channel('caso-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'casos',
+          filter: `id=eq.${casoId}`
+        },
+        (payload) => {
+          console.log('Caso updated:', payload);
+          const newCaso = payload.new;
+          
+          if (newCaso.estado === 'listo_para_propuesta' && newCaso.propuesta_estructurada) {
+            console.log('Showing proposal with data:', newCaso.propuesta_estructurada);
+            setProposalData(newCaso.propuesta_estructurada);
+            setShowProposal(true);
+            
+            toast({
+              title: "¡Tu propuesta está lista!",
+              description: "Hemos preparado una propuesta personalizada para tu caso.",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [casoId, toast]);
+
   // Secure communication with Typebot
   useEffect(() => {
     const handleTypebotMessage = (event: MessageEvent) => {
-      // Validate message structure
       if (!event.data || typeof event.data !== 'object') {
         console.log('Invalid message format received');
         return;
@@ -95,7 +135,6 @@ const Chat = () => {
 
       const { type, mode } = event.data;
 
-      // Validate message type and mode
       if (type === 'SHOW_AUTH_MODAL' && (mode === 'login' || mode === 'signup')) {
         console.log('Valid auth modal request received:', { type, mode });
         setAuthModalMode(mode);
@@ -105,7 +144,6 @@ const Chat = () => {
       }
     };
 
-    // Add message listener for Typebot communication
     window.addEventListener('message', handleTypebotMessage);
 
     return () => {
@@ -114,7 +152,6 @@ const Chat = () => {
   }, []);
 
   const handleLogoClick = () => {
-    // Force a page reload when going back to home
     window.location.href = '/';
   };
 
@@ -130,7 +167,6 @@ const Chat = () => {
       description: "Tu conversación ha sido guardada y ahora puedes acceder a tu historial.",
     });
 
-    // Send success message back to Typebot
     const successMessage = {
       type: 'AUTH_SUCCESS',
       user: user ? {
@@ -140,7 +176,6 @@ const Chat = () => {
       } : null
     };
 
-    // Send message to Typebot iframe
     const typebotIframe = document.querySelector('iframe');
     if (typebotIframe && typebotIframe.contentWindow) {
       typebotIframe.contentWindow.postMessage(successMessage, '*');
@@ -148,7 +183,6 @@ const Chat = () => {
     }
   };
 
-  // Mostrar loader mientras se verifica la autenticación solo si es necesario
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -157,10 +191,14 @@ const Chat = () => {
     );
   }
 
+  // Mostrar la propuesta si está disponible
+  if (showProposal && proposalData) {
+    return <ProposalDisplay proposalData={proposalData} casoId={casoId} />;
+  }
+
   return (
     <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800 flex flex-col">
-        {/* Animated Background */}
         <AnimatedBackground darkMode={darkMode} />
         
         {/* Header */}
@@ -209,7 +247,6 @@ const Chat = () => {
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   </Button>
                   
-                  {/* Renderizar condicionalmente según el estado de autenticación */}
                   {user ? (
                     <SignOutButton />
                   ) : (
@@ -274,7 +311,6 @@ const Chat = () => {
           )}>
             {sidebarOpen && (
               <div className="h-full p-4">
-                {/* Renderizar sidebar según el estado de autenticación */}
                 {user ? (
                   <ChatHistory onSelectSession={handleSelectSession} />
                 ) : (
