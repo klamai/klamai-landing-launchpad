@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,49 @@ const Chat = () => {
     });
   }, [navigate]);
 
+  // Función para verificar el estado del caso
+  const checkCaseStatus = async (caseId: string) => {
+    if (!caseId) return;
+    
+    try {
+      console.log('Checking case status for ID:', caseId);
+      const { data, error } = await supabase
+        .from('casos')
+        .select('estado, propuesta_estructurada')
+        .eq('id', caseId)
+        .single();
+
+      if (error) {
+        console.error('Error checking case status:', error);
+        return;
+      }
+
+      console.log('Current case data:', data);
+
+      if (data && data.estado === 'listo_para_propuesta' && data.propuesta_estructurada) {
+        console.log('Case is ready for proposal! Showing modal...');
+        setProposalData(data.propuesta_estructurada);
+        setShowProposal(true);
+        
+        toast({
+          title: "¡Tu propuesta está lista!",
+          description: "Hemos preparado una propuesta personalizada para tu caso.",
+        });
+      }
+    } catch (error) {
+      console.error('Error in checkCaseStatus:', error);
+    }
+  };
+
+  // Verificación inicial del estado del caso
+  useEffect(() => {
+    if (casoId) {
+      console.log('Setting up initial case status check for:', casoId);
+      // Verificar inmediatamente
+      checkCaseStatus(casoId);
+    }
+  }, [casoId]);
+
   // Realtime subscription para detectar cambios de estado
   useEffect(() => {
     if (!casoId) return;
@@ -102,11 +146,11 @@ const Chat = () => {
           filter: `id=eq.${casoId}`
         },
         (payload) => {
-          console.log('Caso updated:', payload);
+          console.log('Realtime: Caso updated via realtime:', payload);
           const newCaso = payload.new;
           
-          if (newCaso.estado === 'listo_para_propuesta' && newCaso.propuesta_estructurada) {
-            console.log('Showing proposal with data:', newCaso.propuesta_estructurada);
+          if (newCaso && newCaso.estado === 'listo_para_propuesta' && newCaso.propuesta_estructurada) {
+            console.log('Realtime: Showing proposal with data:', newCaso.propuesta_estructurada);
             setProposalData(newCaso.propuesta_estructurada);
             setShowProposal(true);
             
@@ -117,13 +161,32 @@ const Chat = () => {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
 
     return () => {
       console.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [casoId, toast]);
+
+  // Polling fallback - verificar cada 30 segundos como respaldo
+  useEffect(() => {
+    if (!casoId || showProposal) return;
+
+    console.log('Setting up polling fallback for case:', casoId);
+    
+    const pollingInterval = setInterval(() => {
+      console.log('Polling: Checking case status...');
+      checkCaseStatus(casoId);
+    }, 30000); // Cada 30 segundos
+
+    return () => {
+      console.log('Cleaning up polling interval');
+      clearInterval(pollingInterval);
+    };
+  }, [casoId, showProposal]);
 
   // Secure communication with Typebot
   useEffect(() => {
