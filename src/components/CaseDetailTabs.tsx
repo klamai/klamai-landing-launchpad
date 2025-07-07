@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,26 +18,44 @@ import {
   User,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Caso, Pago } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
 
 const CaseDetailTabs = () => {
   const { casoId } = useParams();
   const [caso, setCaso] = useState<Caso | null>(null);
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<'cliente' | 'abogado' | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (casoId) {
+    if (casoId && user) {
+      fetchUserRole();
       fetchCasoDetails();
       fetchPagos();
     }
-  }, [casoId]);
+  }, [casoId, user]);
+
+  const fetchUserRole = async () => {
+    if (!user) return;
+    
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    
+    setUserRole(profile?.role || null);
+  };
 
   const fetchCasoDetails = async () => {
     try {
@@ -107,30 +124,42 @@ const CaseDetailTabs = () => {
   };
 
   const getStatusText = (estado: string) => {
-    switch (estado) {
-      case 'borrador':
-        return 'Borrador';
-      case 'esperando_pago':
-        return 'Esperando Pago';
-      case 'disponible':
-        return 'Disponible';
-      case 'agotado':
-        return 'Agotado';
-      case 'cerrado':
-        return 'Cerrado';
-      default:
-        return estado;
+    if (userRole === 'cliente') {
+      return getClientFriendlyStatus(estado);
+    } else if (userRole === 'abogado') {
+      return getLawyerStatus(estado);
     }
+    return estado;
   };
 
   const getTimelineSteps = (estado: string) => {
-    const steps = [
-      { id: 'creado', label: 'Caso Creado', completed: true },
-      { id: 'esperando_pago', label: 'Esperando Pago', completed: estado !== 'borrador' },
-      { id: 'disponible', label: 'Disponible para Abogados', completed: ['disponible', 'agotado', 'cerrado'].includes(estado) },
-      { id: 'cerrado', label: 'Caso Cerrado', completed: estado === 'cerrado' }
-    ];
-    return steps;
+    if (userRole === 'cliente') {
+      // Timeline simplificado para clientes
+      const steps = [
+        { id: 'creado', label: 'Consulta Creada', completed: true },
+        { id: 'esperando_pago', label: 'Pendiente de Pago', completed: estado !== 'borrador' },
+        { id: 'disponible', label: 'En Revisión', completed: ['disponible', 'agotado', 'cerrado'].includes(estado) },
+        { id: 'cerrado', label: 'Finalizado', completed: estado === 'cerrado' }
+      ];
+      return steps;
+    } else {
+      // Timeline completo para abogados
+      const steps = [
+        { id: 'creado', label: 'Caso Creado', completed: true },
+        { id: 'esperando_pago', label: 'Esperando Pago', completed: estado !== 'borrador' },
+        { id: 'disponible', label: 'Disponible para Abogados', completed: ['disponible', 'agotado', 'cerrado', 'listo_para_propuesta'].includes(estado) },
+        { id: 'listo_para_propuesta', label: 'Listo para Propuesta', completed: ['listo_para_propuesta', 'cerrado'].includes(estado) },
+        { id: 'cerrado', label: 'Caso Cerrado', completed: estado === 'cerrado' }
+      ];
+      return steps;
+    }
+  };
+
+  const shouldShowField = (fieldName: string) => {
+    if (userRole === 'abogado') return true;
+    
+    const lawyerOnlyFields = ['guia_abogado', 'propuesta_estructurada', 'transcripcion_chat', 'propuesta_cliente', 'valor_estimado'];
+    return !lawyerOnlyFields.includes(fieldName);
   };
 
   if (loading) {
@@ -171,9 +200,17 @@ const CaseDetailTabs = () => {
               {caso.motivo_consulta || 'Sin descripción disponible'}
             </p>
           </div>
-          <Badge className={getStatusColor(caso.estado)}>
-            {getStatusText(caso.estado)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge className={getStatusColor(caso.estado)}>
+              {getStatusText(caso.estado)}
+            </Badge>
+            {userRole === 'abogado' && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3" />
+                Vista Abogado
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -235,7 +272,7 @@ const CaseDetailTabs = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-blue-600" />
-                  Resumen del Caso
+                  {userRole === 'abogado' ? 'Análisis Completo del Caso' : 'Resumen del Caso'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -243,16 +280,52 @@ const CaseDetailTabs = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Descripción:</p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {caso.resumen_caso || 'El resumen será generado cuando el caso sea procesado por nuestros expertos.'}
+                      {caso.motivo_consulta || 'Sin descripción disponible'}
                     </p>
                   </div>
-                  {caso.guia_abogado && (
+                  
+                  {shouldShowField('resumen_caso') && caso.resumen_caso && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Análisis del Caso:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {caso.resumen_caso}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {shouldShowField('guia_abogado') && caso.guia_abogado && (
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Guía para Abogados:</p>
                       <p className="text-sm text-gray-600 dark:text-gray-300">
                         {caso.guia_abogado}
                       </p>
                     </div>
+                  )}
+                  
+                  {shouldShowField('propuesta_cliente') && caso.propuesta_cliente && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Propuesta del Cliente:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {caso.propuesta_cliente}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {shouldShowField('valor_estimado') && caso.valor_estimado && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Valor Estimado:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {caso.valor_estimado}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {!shouldShowField('resumen_caso') && !caso.resumen_caso && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {userRole === 'cliente' 
+                        ? 'Tu caso está siendo analizado por nuestros expertos.'
+                        : 'El análisis será generado cuando el caso sea procesado por nuestros expertos.'}
+                    </p>
                   )}
                 </div>
               </CardContent>

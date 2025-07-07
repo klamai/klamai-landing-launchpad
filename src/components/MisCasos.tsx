@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,47 +20,39 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Caso } from "@/types/database";
+import { useCasesByRole } from "@/hooks/useCasesByRole";
+import { useAuth } from "@/hooks/useAuth";
+import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
 
 const MisCasos = () => {
-  const [casos, setCasos] = useState<Caso[]>([]);
+  const { casos, loading } = useCasesByRole();
   const [filteredCasos, setFilteredCasos] = useState<Caso[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("todos");
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [userRole, setUserRole] = useState<'cliente' | 'abogado' | null>(null);
 
+  // Obtener el rol del usuario
   useEffect(() => {
-    fetchCasos();
-  }, []);
+    const fetchUserRole = async () => {
+      if (!user) return;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      setUserRole(profile?.role || null);
+    };
+
+    fetchUserRole();
+  }, [user]);
 
   useEffect(() => {
     filterCasos();
   }, [casos, searchTerm, filterStatus]);
-
-  const fetchCasos = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('casos')
-        .select(`
-          *,
-          especialidades (
-            nombre
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching casos:', error);
-        return;
-      }
-
-      setCasos(data || []);
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filterCasos = () => {
     let filtered = casos;
@@ -92,26 +83,20 @@ const MisCasos = () => {
         return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'cerrado':
         return 'bg-green-100 text-green-800 border-green-200';
+      case 'listo_para_propuesta':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getStatusText = (estado: string) => {
-    switch (estado) {
-      case 'borrador':
-        return 'Borrador';
-      case 'esperando_pago':
-        return 'Esperando Pago';
-      case 'disponible':
-        return 'Disponible';
-      case 'agotado':
-        return 'Agotado';
-      case 'cerrado':
-        return 'Cerrado';
-      default:
-        return estado;
+    if (userRole === 'cliente') {
+      return getClientFriendlyStatus(estado);
+    } else if (userRole === 'abogado') {
+      return getLawyerStatus(estado);
     }
+    return estado;
   };
 
   const getStatusIcon = (estado: string) => {
@@ -126,6 +111,8 @@ const MisCasos = () => {
         return <AlertCircle className="h-4 w-4" />;
       case 'cerrado':
         return <CheckCircle className="h-4 w-4" />;
+      case 'listo_para_propuesta':
+        return <Clock className="h-4 w-4" />;
       default:
         return <Clock className="h-4 w-4" />;
     }
@@ -154,10 +141,13 @@ const MisCasos = () => {
     >
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Mis Casos
+          {userRole === 'abogado' ? 'Casos Disponibles' : 'Mis Casos'}
         </h1>
         <p className="text-gray-600 dark:text-gray-300">
-          Gestiona y monitorea todos tus casos legales
+          {userRole === 'abogado' 
+            ? 'Casos disponibles para comprar y casos que has adquirido'
+            : 'Gestiona y monitorea todos tus casos legales'
+          }
         </p>
       </div>
 
@@ -251,11 +241,13 @@ const MisCasos = () => {
             </h3>
             <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
               {casos.length === 0 
-                ? "Inicia tu primera consulta legal para ver tus casos aquí"
+                ? (userRole === 'abogado' 
+                    ? "No hay casos disponibles en este momento"
+                    : "Inicia tu primera consulta legal para ver tus casos aquí")
                 : "Intenta con otros términos de búsqueda o filtros"
               }
             </p>
-            {casos.length === 0 && (
+            {casos.length === 0 && userRole === 'cliente' && (
               <Button onClick={() => navigate('/dashboard/nueva-consulta')}>
                 Iniciar Nueva Consulta
               </Button>
@@ -317,7 +309,7 @@ const MisCasos = () => {
                         className="flex items-center gap-2"
                       >
                         <Eye className="h-4 w-4" />
-                        Ver Detalle
+                        {userRole === 'abogado' ? 'Ver/Comprar' : 'Ver Detalle'}
                       </Button>
                     </div>
                   </div>
