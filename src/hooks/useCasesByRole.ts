@@ -3,46 +3,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { filterCaseForClient } from '@/utils/caseDisplayUtils';
-
-interface CasoWithEspecialidad {
-  id: string;
-  cliente_id: string | null;
-  especialidad_id: number | null;
-  estado: 'borrador' | 'esperando_pago' | 'disponible' | 'agotado' | 'cerrado' | 'listo_para_propuesta';
-  tipo_lead: 'estandar' | 'premium' | 'urgente' | null;
-  motivo_consulta: string | null;
-  resumen_caso: string | null;
-  guia_abogado: string | null;
-  transcripcion_chat: any;
-  propuesta_estructurada: any;
-  propuesta_cliente: string | null;
-  valor_estimado: string | null;
-  canal_atencion: string;
-  costo_en_creditos: number;
-  compras_realizadas: number;
-  limite_compras: number;
-  fecha_ultimo_contacto: string | null;
-  tiene_notificaciones_nuevas: boolean | null;
-  acepto_politicas_inicial: boolean | null;
-  tipo_perfil_borrador: 'individual' | 'empresa' | null;
-  nombre_borrador: string | null;
-  apellido_borrador: string | null;
-  email_borrador: string | null;
-  telefono_borrador: string | null;
-  ciudad_borrador: string | null;
-  razon_social_borrador: string | null;
-  nif_cif_borrador: string | null;
-  direccion_fiscal_borrador: string | null;
-  nombre_gerente_borrador: string | null;
-  preferencia_horaria_contacto: string | null;
-  created_at: string;
-  especialidades?: {
-    nombre: string;
-  };
-}
+import { Caso } from '@/types/database';
 
 export const useCasesByRole = () => {
-  const [casos, setCasos] = useState<CasoWithEspecialidad[]>([]);
+  const [casos, setCasos] = useState<Caso[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -113,15 +77,15 @@ export const useCasesByRole = () => {
         return;
       }
 
-      // Filtrar campos según el rol
-      let processedCasos = data || [];
+      // Convertir los datos a la estructura esperada
+      let processedCasos: Caso[] = (data || []).map(caso => ({
+        ...caso,
+        especialidades: caso.especialidades || undefined
+      }));
       
       if (profile.role === 'cliente') {
         // Para clientes, filtrar campos sensibles
-        processedCasos = processedCasos.map(caso => filterCaseForClient({
-          ...caso,
-          especialidades: caso.especialidades || undefined
-        }));
+        processedCasos = processedCasos.map(caso => filterCaseForClient(caso));
       }
 
       setCasos(processedCasos);

@@ -24,10 +24,11 @@ import { es } from "date-fns/locale";
 import { useCasesByRole } from "@/hooks/useCasesByRole";
 import { useAuth } from "@/hooks/useAuth";
 import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
+import { Caso } from "@/types/database";
 
 const MisCasos = () => {
   const { casos, loading } = useCasesByRole();
-  const [filteredCasos, setFilteredCasos] = useState<any[]>([]);
+  const [filteredCasos, setFilteredCasos] = useState<Caso[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("todos");
   const { user } = useAuth();
@@ -145,7 +146,9 @@ const MisCasos = () => {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {userRole === 'abogado' ? 'Casos Disponibles' : 'Mis Casos'}
           </h1>
-          <Shield className="h-5 w-5 text-green-600" title="Datos protegidos por RLS" />
+          <div title="Datos protegidos por RLS">
+            <Shield className="h-5 w-5 text-green-600" />
+          </div>
         </div>
         <p className="text-gray-600 dark:text-gray-300">
           {userRole === 'abogado' 
@@ -287,7 +290,9 @@ const MisCasos = () => {
                           <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                         )}
                         {userRole === 'cliente' && (
-                          <Shield className="h-4 w-4 text-green-600" title="Tu información está protegida" />
+                          <div title="Tu información está protegida">
+                            <Shield className="h-4 w-4 text-green-600" />
+                          </div>
                         )}
                       </div>
                       
