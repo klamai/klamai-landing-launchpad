@@ -13,7 +13,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import SignOutButton from "@/components/SignOutButton";
-
 const transitionVariants = {
   item: {
     hidden: {
@@ -33,7 +32,6 @@ const transitionVariants = {
     }
   }
 };
-
 const testimonials = [{
   name: "María González",
   role: "Empresaria",
@@ -56,16 +54,7 @@ const testimonials = [{
   image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face",
   testimonial: "Como directora de empresa, valoro la rapidez y precisión. VitorIA superó mis expectativas y me ahorró tiempo y dinero en consultas legales."
 }];
-
-const frequentQuestions = [
-  "Quiero vender mi casa, cuál es el proceso legal?",
-  "Cómo proteger la propiedad intelectual de mi negocio?",
-  "Puedo modificar el acuerdo de custodia de mis hijos?",
-  "Qué hacer si recibo una demanda por accidente de tráfico?",
-  "Cómo resolver una disputa contractual con un proveedor?",
-  "Qué pasos seguir si quiero divorciarme?"
-];
-
+const frequentQuestions = ["Quiero vender mi casa, cuál es el proceso legal?", "Cómo proteger la propiedad intelectual de mi negocio?", "Puedo modificar el acuerdo de custodia de mis hijos?", "Qué hacer si recibo una demanda por accidente de tráfico?", "Cómo resolver una disputa contractual con un proveedor?", "Qué pasos seguir si quiero divorciarme?"];
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
@@ -73,8 +62,13 @@ const Index = () => {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const {
+    toast
+  } = useToast();
+  const {
+    user,
+    loading
+  } = useAuth();
 
   // Initialize dark mode from localStorage
   useEffect(() => {
@@ -89,7 +83,6 @@ const Index = () => {
       }
     }
   }, []);
-
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
@@ -100,7 +93,6 @@ const Index = () => {
       document.documentElement.classList.remove('dark');
     }
   };
-
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -108,7 +100,6 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
   const handleLogoClick = () => {
     // If already on home page, scroll to top
     window.scrollTo({
@@ -116,34 +107,32 @@ const Index = () => {
       behavior: 'smooth'
     });
   };
-
   const handleSubmit = async () => {
     if (!consultation.trim()) return;
     setIsSubmitting(true);
-
     try {
       // 1. Crear caso borrador en Supabase
-      const { data, error } = await supabase.functions.invoke('crear-borrador-caso');
-      
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('crear-borrador-caso');
       if (error) {
         console.error('Error al crear caso borrador:', error);
         toast({
           title: "Error",
           description: "No se pudo procesar tu consulta. Por favor, inténtalo de nuevo.",
-          variant: "destructive",
+          variant: "destructive"
         });
         setIsSubmitting(false);
         return;
       }
-
       const casoId = data?.caso_id;
-      
       if (!casoId) {
         console.error('No se recibió caso_id de la función');
         toast({
           title: "Error",
           description: "No se pudo procesar tu consulta. Por favor, inténtalo de nuevo.",
-          variant: "destructive",
+          variant: "destructive"
         });
         setIsSubmitting(false);
         return;
@@ -152,7 +141,6 @@ const Index = () => {
       // 2. Guardar tanto la consulta como el caso_id en localStorage
       localStorage.setItem('userConsultation', consultation.trim());
       localStorage.setItem('casoId', casoId);
-
       console.log('Caso creado con ID:', casoId);
       console.log('Consulta guardada:', consultation.trim());
 
@@ -160,26 +148,22 @@ const Index = () => {
       setTimeout(() => {
         navigate('/chat');
       }, 500);
-
     } catch (error) {
       console.error('Error en handleSubmit:', error);
       toast({
         title: "Error",
         description: "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.",
-        variant: "destructive",
+        variant: "destructive"
       });
       setIsSubmitting(false);
     }
   };
-
   const handleValueChange = (value: string) => {
     setConsultation(value);
   };
-
   const handleFrequentQuestion = (question: string) => {
     setConsultation(question);
   };
-
   return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
@@ -209,19 +193,15 @@ const Index = () => {
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   </Button>
                   
-                  {!loading && (
-                    <>
-                      {user ? (
-                        <div className="flex items-center gap-4">
+                  {!loading && <>
+                      {user ? <div className="flex items-center gap-4">
                           <Link to="/dashboard">
                             <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200">
                               Dashboard
                             </Button>
                           </Link>
                           <SignOutButton />
-                        </div>
-                      ) : (
-                        <>
+                        </div> : <>
                           <Link to="/auth">
                             <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700">
                               Iniciar Sesión
@@ -232,28 +212,22 @@ const Index = () => {
                               Registrarse
                             </Button>
                           </Link>
-                        </>
-                      )}
-                    </>
-                  )}
+                        </>}
+                    </>}
                 </div>
 
                 {/* Mobile menu */}
                 <div className="bg-background group-data-[state=active]:block hidden w-full p-4 rounded-2xl border shadow-lg mt-4 lg:hidden">
                   <div className="flex flex-col gap-3 w-full">
-                    {!loading && (
-                      <>
-                        {user ? (
-                          <>
+                    {!loading && <>
+                        {user ? <>
                             <Link to="/dashboard">
                               <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 w-full justify-center">
                                 Dashboard
                               </Button>
                             </Link>
                             <SignOutButton className="w-full justify-center" />
-                          </>
-                        ) : (
-                          <>
+                          </> : <>
                             <Link to="/auth">
                               <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center">
                                 Iniciar Sesión
@@ -264,10 +238,8 @@ const Index = () => {
                                 Registrarse
                               </Button>
                             </Link>
-                          </>
-                        )}
-                      </>
-                    )}
+                          </>}
+                      </>}
                   </div>
                 </div>
               </div>
@@ -298,23 +270,7 @@ const Index = () => {
                   },
                   item: transitionVariants.item
                 }}>
-                    <div className="hover:bg-background dark:hover:border-t-border bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-black/5 transition-all duration-300 dark:border-t-white/5 dark:shadow-zinc-950">
-                      <span className="text-foreground text-sm">
-                        <Sparkles className="inline h-4 w-4 mr-2" />
-                        Tecnología IA Avanzada para Asesoramiento Legal
-                      </span>
-                      <span className="dark:border-background block h-4 w-0.5 border-l bg-white dark:bg-zinc-700"></span>
-                      <div className="bg-background group-hover:bg-muted size-6 overflow-hidden rounded-full duration-500">
-                        <div className="flex w-12 -translate-x-1/2 duration-500 ease-in-out group-hover:translate-x-0">
-                          <span className="flex size-6">
-                            <ArrowRight className="m-auto size-3" />
-                          </span>
-                          <span className="flex size-6">
-                            <ArrowRight className="m-auto size-3" />
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    
                 
                     <h1 className="mt-8 max-w-4xl mx-auto text-balance text-5xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
                       Recibe asesoramiento jurídico
@@ -391,21 +347,10 @@ const Index = () => {
                                 <strong>Tip:</strong> Cuanto más detalles proporciones, mejor podrá ayudarte VitorIA
                               </p>
                               
-                              <PromptInput
-                                value={consultation}
-                                onValueChange={handleValueChange}
-                                isLoading={isSubmitting}
-                                onSubmit={handleSubmit}
-                                className="w-full border-2 border-blue-300 dark:border-blue-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 bg-white/80 dark:bg-gray-900/80 shadow-inner"
-                              >
-                                <PromptInputTextarea 
-                                  placeholder="Ejemplo: Tengo una propiedad en disputa con un familiar. Cuáles son mis opciones legales para resolver esto?"
-                                  className="min-h-32 text-base font-medium placeholder:text-gray-500 dark:placeholder:text-gray-400 placeholder:opacity-70"
-                                />
+                              <PromptInput value={consultation} onValueChange={handleValueChange} isLoading={isSubmitting} onSubmit={handleSubmit} className="w-full border-2 border-blue-300 dark:border-blue-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 bg-white/80 dark:bg-gray-900/80 shadow-inner">
+                                <PromptInputTextarea placeholder="Ejemplo: Tengo una propiedad en disputa con un familiar. Cuáles son mis opciones legales para resolver esto?" className="min-h-32 text-base font-medium placeholder:text-gray-500 dark:placeholder:text-gray-400 placeholder:opacity-70" />
                                 <PromptInputActions className="justify-end pt-2">
-                                  <PromptInputAction
-                                    tooltip={isSubmitting ? "Conectando con VitorIA..." : "Consultar con VitorIA GRATIS"}
-                                  >
+                                  <PromptInputAction tooltip={isSubmitting ? "Conectando con VitorIA..." : "Consultar con VitorIA GRATIS"}>
                                     
                                   </PromptInputAction>
                                 </PromptInputActions>
@@ -417,29 +362,14 @@ const Index = () => {
                             </div>
                             {/* Botón centrado fuera del cuadro */}
                       <div className="mt-8 flex justify-center">
-                        <ShimmerButton
-                          onClick={handleSubmit}
-                          disabled={isSubmitting || !consultation.trim()}
-                          background="linear-gradient(45deg, #2563eb, #06b6d4)"
-                          shimmerColor="#ffffff"
-                          shimmerDuration="2s"
-                          borderRadius="50px"
-                          className={cn(
-                            "h-14 px-8 text-white dark:text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300",
-                            !consultation.trim() ? "opacity-50" : "opacity-100"
-                          )}
-                        >
-                          {isSubmitting ? (
-                            <div className="flex items-center gap-3">
+                        <ShimmerButton onClick={handleSubmit} disabled={isSubmitting || !consultation.trim()} background="linear-gradient(45deg, #2563eb, #06b6d4)" shimmerColor="#ffffff" shimmerDuration="2s" borderRadius="50px" className={cn("h-14 px-8 text-white dark:text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300", !consultation.trim() ? "opacity-50" : "opacity-100")}>
+                          {isSubmitting ? <div className="flex items-center gap-3">
                               <Square className="size-5 fill-current animate-pulse" />
                               <span>Conectando con VitorIA...</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-3">
+                            </div> : <div className="flex items-center gap-3">
                               <MessageCircle className="size-5" />
                               <span>Consultar con VitorIA GRATIS</span>
-                            </div>
-                          )}
+                            </div>}
                         </ShimmerButton>
                       </div>
                             <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
@@ -458,15 +388,9 @@ const Index = () => {
                           Consultas frecuentes
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {frequentQuestions.map((question, index) => (
-                            <button
-                              key={index}
-                              onClick={() => handleFrequentQuestion(question)}
-                              className="text-left p-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-lg border border-blue-200/50 dark:border-blue-500/30 hover:bg-blue-50/80 dark:hover:bg-blue-900/40 hover:border-blue-300 dark:hover:border-blue-400 transition-all duration-200 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300"
-                            >
+                          {frequentQuestions.map((question, index) => <button key={index} onClick={() => handleFrequentQuestion(question)} className="text-left p-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-lg border border-blue-200/50 dark:border-blue-500/30 hover:bg-blue-50/80 dark:hover:bg-blue-900/40 hover:border-blue-300 dark:hover:border-blue-400 transition-all duration-200 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300">
                               {question}
-                            </button>
-                          ))}
+                            </button>)}
                         </div>
                       </div>
                     </div>
@@ -518,5 +442,4 @@ const Index = () => {
       </div>
     </div>;
 };
-
 export default Index;
