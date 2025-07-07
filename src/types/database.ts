@@ -34,12 +34,26 @@ export interface Caso {
   guia_abogado?: string;
   transcripcion_chat?: any;
   propuesta_estructurada?: any;
+  propuesta_cliente?: string;
+  valor_estimado?: string;
   canal_atencion: string;
   costo_en_creditos: number;
   compras_realizadas: number;
   limite_compras: number;
   fecha_ultimo_contacto?: string;
   tiene_notificaciones_nuevas?: boolean;
+  acepto_politicas_inicial?: boolean;
+  tipo_perfil_borrador?: 'individual' | 'empresa';
+  nombre_borrador?: string;
+  apellido_borrador?: string;
+  email_borrador?: string;
+  telefono_borrador?: string;
+  ciudad_borrador?: string;
+  razon_social_borrador?: string;
+  nif_cif_borrador?: string;
+  direccion_fiscal_borrador?: string;
+  nombre_gerente_borrador?: string;
+  preferencia_horaria_contacto?: string;
   created_at: string;
   especialidades?: {
     nombre: string;

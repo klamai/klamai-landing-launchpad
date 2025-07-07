@@ -56,14 +56,10 @@ export const useCasesByRole = () => {
       
       if (profile?.role === 'cliente') {
         // Para clientes, filtrar campos sensibles
-        processedCasos = processedCasos.map(caso => ({
-          ...filterCaseForClient(caso),
-          // Mantener campos necesarios para la UI
-          especialidades: caso.especialidades
-        })) as Caso[];
+        processedCasos = processedCasos.map(caso => filterCaseForClient(caso as Caso));
       }
 
-      setCasos(processedCasos);
+      setCasos(processedCasos as Caso[]);
     } catch (error) {
       console.error('Error:', error);
     } finally {

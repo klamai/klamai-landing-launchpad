@@ -45,16 +45,17 @@ export const getLawyerStatus = (estado: string): string => {
   return estado;
 };
 
-// Función para filtrar campos según el rol
-export const filterCaseForClient = (caso: Caso): Partial<Caso> => {
-  const filteredCase: Partial<Caso> = {
-    id: caso.id,
-    estado: caso.estado,
-    motivo_consulta: caso.motivo_consulta,
-    costo_en_creditos: caso.costo_en_creditos,
-    created_at: caso.created_at,
-    especialidades: caso.especialidades,
-    tiene_notificaciones_nuevas: caso.tiene_notificaciones_nuevas
+// Función para filtrar campos según el rol - devuelve un Caso completo pero sin campos sensibles
+export const filterCaseForClient = (caso: Caso): Caso => {
+  const filteredCase: Caso = {
+    ...caso,
+    // Remover campos sensibles para clientes
+    guia_abogado: undefined,
+    propuesta_estructurada: undefined,
+    resumen_caso: undefined,
+    transcripcion_chat: undefined,
+    propuesta_cliente: undefined,
+    valor_estimado: undefined
   };
 
   return filteredCase;
