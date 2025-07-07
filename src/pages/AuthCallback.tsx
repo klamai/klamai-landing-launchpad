@@ -15,20 +15,28 @@ const AuthCallback = () => {
   const casoId = searchParams.get('casoId');
 
   useEffect(() => {
+    console.log('AuthCallback - Estado inicial:', { 
+      loading, 
+      user: user?.id, 
+      planId, 
+      casoId 
+    });
+
     if (loading) return;
 
     if (!user) {
-      // Si no hay usuario, redirigir a auth
+      console.log('AuthCallback - No hay usuario, redirigiendo a auth');
       navigate('/auth');
       return;
     }
 
     if (!planId || !casoId) {
-      // Si no hay contexto, redirigir al dashboard
+      console.log('AuthCallback - Faltan parámetros, redirigiendo al dashboard');
       navigate('/dashboard');
       return;
     }
 
+    console.log('AuthCallback - Iniciando proceso de pago');
     processPayment();
   }, [user, loading, planId, casoId]);
 
@@ -70,6 +78,8 @@ const AuthCallback = () => {
   };
 
   const linkCaseToUser = async (casoId: string, userId: string) => {
+    console.log('Vinculando caso al usuario:', { casoId, userId });
+    
     // Obtener datos del caso
     const { data: caso, error: casoError } = await supabase
       .from('casos')
@@ -77,7 +87,10 @@ const AuthCallback = () => {
       .eq('id', casoId)
       .single();
 
+    console.log('Datos del caso obtenidos:', { caso, casoError });
+
     if (casoError) {
+      console.error('Error al obtener caso:', casoError);
       throw new Error('Error al obtener datos del caso');
     }
 
@@ -90,7 +103,10 @@ const AuthCallback = () => {
       })
       .eq('id', casoId);
 
+    console.log('Resultado actualización caso:', { updateCasoError });
+
     if (updateCasoError) {
+      console.error('Error al actualizar caso:', updateCasoError);
       throw new Error('Error al vincular caso al usuario');
     }
 
