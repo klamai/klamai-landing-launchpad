@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,18 +16,18 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  Filter
+  Filter,
+  Shield
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Caso } from "@/types/database";
 import { useCasesByRole } from "@/hooks/useCasesByRole";
 import { useAuth } from "@/hooks/useAuth";
 import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
 
 const MisCasos = () => {
   const { casos, loading } = useCasesByRole();
-  const [filteredCasos, setFilteredCasos] = useState<Caso[]>([]);
+  const [filteredCasos, setFilteredCasos] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("todos");
   const { user } = useAuth();
@@ -140,9 +141,12 @@ const MisCasos = () => {
       className="space-y-6"
     >
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          {userRole === 'abogado' ? 'Casos Disponibles' : 'Mis Casos'}
-        </h1>
+        <div className="flex items-center gap-2 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {userRole === 'abogado' ? 'Casos Disponibles' : 'Mis Casos'}
+          </h1>
+          <Shield className="h-5 w-5 text-green-600" title="Datos protegidos por RLS" />
+        </div>
         <p className="text-gray-600 dark:text-gray-300">
           {userRole === 'abogado' 
             ? 'Casos disponibles para comprar y casos que has adquirido'
@@ -173,8 +177,10 @@ const MisCasos = () => {
             textColor: "text-purple-600"
           },
           { 
-            title: "Pendientes de Pago", 
-            value: casos.filter(c => c.estado === 'esperando_pago').length.toString(), 
+            title: userRole === 'cliente' ? "Pendientes de Pago" : "Casos Disponibles", 
+            value: userRole === 'cliente' 
+              ? casos.filter(c => c.estado === 'esperando_pago').length.toString()
+              : casos.filter(c => c.estado === 'disponible').length.toString(), 
             color: "bg-orange-500",
             textColor: "text-orange-600"
           }
@@ -237,7 +243,9 @@ const MisCasos = () => {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FolderOpen className="h-16 w-16 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              {casos.length === 0 ? "No tienes casos aún" : "No se encontraron casos"}
+              {casos.length === 0 ? (
+                userRole === 'cliente' ? "No tienes casos aún" : "No hay casos disponibles"
+              ) : "No se encontraron casos"}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
               {casos.length === 0 
@@ -277,6 +285,9 @@ const MisCasos = () => {
                         </Badge>
                         {caso.tiene_notificaciones_nuevas && (
                           <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        )}
+                        {userRole === 'cliente' && (
+                          <Shield className="h-4 w-4 text-green-600" title="Tu información está protegida" />
                         )}
                       </div>
                       

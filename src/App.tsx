@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import Auth from "./pages/Auth";
@@ -30,18 +31,55 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth-callback" element={<AuthCallback />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/dashboard/nueva-consulta" element={<Dashboard />} />
-            <Route path="/dashboard/casos" element={<Dashboard />} />
-            <Route path="/dashboard/casos/:casoId" element={<Dashboard />} />
-            <Route path="/dashboard/perfil" element={<Dashboard />} />
-            <Route path="/dashboard/configuracion" element={<Dashboard />} />
-            <Route path="/dashboard/facturacion" element={<Dashboard />} />
-            <Route path="/dashboard/notificaciones" element={<Dashboard />} />
+            
+            {/* Rutas protegidas del dashboard */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/nueva-consulta" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/casos" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/casos/:casoId" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/perfil" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/configuracion" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/facturacion" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/notificaciones" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Rutas públicas */}
             <Route path="/politicas-privacidad" element={<PrivacyPolicy />} />
             <Route path="/aviso-legal" element={<LegalNotice />} />
             <Route path="/pago-exitoso" element={<PagoExitoso />} />
             <Route path="/pago-cancelado" element={<PagoCancelado />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
