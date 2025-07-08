@@ -210,12 +210,12 @@ const Index = () => {
                           <SignOutButton />
                         </div> : <>
                           <Link to="/auth">
-                            <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700">
+                            <Button variant="ghost" size="sm" className=" text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-black-800 dark:hover:bg-black">
                               Iniciar Sesión
                             </Button>
                           </Link>
                           <Link to="/auth">
-                            <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
+                            <Button size="sm" className="bg-black text-white hover:bg-gray-100 hover:text-black border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
                               Registrarse
                             </Button>
                           </Link>

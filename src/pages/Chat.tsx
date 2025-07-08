@@ -517,14 +517,14 @@ const Chat = () => {
                         onClick={() => setShowAuthModal(true)}
                         variant="ghost" 
                         size="sm" 
-                        className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200"
+                        className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-black-800 dark:hover:bg-black"
                       >
                         Iniciar Sesión
                       </Button>
                       <Button 
                         onClick={() => setShowAuthModal(true)}
                         size="sm" 
-                        className="bg-blue-600 text-white hover:bg-blue-700"
+                        className="bg-black text-white hover:bg-gray-100 hover:text-black border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
                       >
                         Registrarse
                       </Button>
