@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2, Shield, ArrowUp, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedGroup } from "@/components/ui/animated-group";
@@ -69,6 +69,7 @@ const Index = () => {
     user,
     loading
   } = useAuth();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Initialize dark mode from localStorage
   useEffect(() => {
@@ -83,6 +84,12 @@ const Index = () => {
       }
     }
   }, []);
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
+  }, [consultation]);
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
@@ -272,7 +279,7 @@ const Index = () => {
                 }}>
                     
                 
-                    <h1 className="mt-8 max-w-4xl mx-auto text-balance text-4xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
+                    <h1 className="mt-8 max-w-6xl mx-auto text-balance text-5xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
                       Recibe asesoramiento jurídico
                       <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"> de especialistas</span>
                     </h1>
@@ -300,6 +307,7 @@ const Index = () => {
                             </div>
                             <input
                               type="text"
+                              maxLength={500}
                               value={consultation}
                               onChange={(e) => setConsultation(e.target.value)}
                               onKeyDown={(e) => {
@@ -345,7 +353,7 @@ const Index = () => {
                             <button
                               key={index}
                               onClick={() => setConsultation(question)}
-                              className="px-5 sm:px-6 py-4 sm:py-5 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl text-sm sm:text-base text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 text-left hover:scale-105 hover:shadow-lg min-h-[48px] sm:min-h-[56px]"
+                              className="px-5 sm:px-6 py-4 sm:py-5 bg-gray-100 dark:bg-white-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl text-sm sm:text-base text-gray-700 dark:text-black-300 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-300 border border-gray-200 dark:border-blue-300 hover:border-blue-300 dark:hover:border-blue-600 text-left hover:scale-105 hover:shadow-lg min-h-[48px] sm:min-h-[56px]"
                             >
                               {question.length > (window.innerWidth < 640 ? 45 : 60) ? 
                                 question.slice(0, window.innerWidth < 640 ? 45 : 60) + '...' : 
@@ -379,7 +387,7 @@ const Index = () => {
                       </div>
                     </div>
 
-                    <p className="mx-auto mt-8 max-w-2xl text-balance text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                    <p className="mx-auto mt-8 max-w-10xl text-balance text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
                       Resuelve tus consultas legales con <span className="font-semibold text-blue-700 dark:text-blue-300">VitorIA</span>, nuestro asistente inteligente, y conecta con abogados especialistas. Rápido, seguro y eficiente.
                     </p>
                     <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400 font-medium mt-4">
