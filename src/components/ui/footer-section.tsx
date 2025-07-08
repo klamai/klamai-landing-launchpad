@@ -83,7 +83,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-cyan-200" />
-                <span className="text-blue-100">684 74 33 32</span>
+                <span className="text-blue-100"></span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-cyan-200" />
