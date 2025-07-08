@@ -11,4 +11,4 @@ cmds = ['npm install']
 cmds = ['npm run build']
 
 [start]
-cmd = 'npm run preview -- --port 8080 --host 0.0.0.0'
+cmd = 'npm run preview'
