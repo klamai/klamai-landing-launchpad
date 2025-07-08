@@ -1,0 +1,14 @@
+[variables]
+NIXPACKS_METADATA = "node"
+
+[phases.setup]
+nixPkgs = ['nodejs_18', 'npm']
+
+[phases.install]
+cmds = ['npm install']
+
+[phases.build]
+cmds = ['npm run build']
+
+[start]
+cmd = 'npm run preview -- --port 8080 --host 0.0.0.0'
