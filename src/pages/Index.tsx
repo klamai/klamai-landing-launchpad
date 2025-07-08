@@ -316,8 +316,8 @@ const Index = () => {
                                   handleSubmit();
                                 }
                               }}
-                              placeholder="Describe tu situación legal aquí..."
-                              className="flex-1 px-2 sm:px-4 py-3 sm:py-4 text-base sm:text-lg bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 min-w-0"
+                              placeholder="Escribe tu Consulta Legal Aqui..."
+                              className="flex-1 px-2 sm:px-4 py-3 sm:py-4 text-base sm:text-lg bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 min-w-0"
                               disabled={isSubmitting}
                             />
                             <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-2 flex-shrink-0">
@@ -340,8 +340,13 @@ const Index = () => {
                             </div>
                           </div>
                         </div>
+                        
                       </div>
-
+                      {consultation.trim() && (
+                          <div className="sm:hidden text-xs text-gray-400 animate-fade-in">
+                            {consultation.length}/500 caracteres
+                          </div>
+                        )}
                       {/* Quick suggestions - Enhanced - MOVED CLOSER TO INPUT */}
                       <div className="mt-4 sm:mt-6">
                         <p className="text-center text-gray-600 dark:text-gray-400 text-sm sm:text-base mb-4 sm:mb-6 flex items-center justify-center gap-2">
@@ -355,7 +360,7 @@ const Index = () => {
                               onClick={() => setConsultation(question)}
                               className="px-5 sm:px-6 py-4 sm:py-5 bg-gray-100 dark:bg-white-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl text-sm sm:text-base text-gray-700 dark:text-black-300 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-300 border border-gray-200 dark:border-blue-300 hover:border-blue-300 dark:hover:border-blue-600 text-left hover:scale-105 hover:shadow-lg min-h-[48px] sm:min-h-[56px]"
                             >
-                              {question.length > (window.innerWidth < 640 ? 45 : 60) ? 
+                              {question.length > (window.innerWidth < 640 ? 95 : 60) ? 
                                 question.slice(0, window.innerWidth < 640 ? 45 : 60) + '...' : 
                                 question}
                             </button>
@@ -379,11 +384,7 @@ const Index = () => {
                           <Shield className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           100% confidencial y sin compromiso
                         </p>
-                        {consultation.trim() && (
-                          <div className="sm:hidden text-xs text-gray-400 animate-fade-in">
-                            {consultation.length}/500 caracteres
-                          </div>
-                        )}
+                        
                       </div>
                     </div>
 
