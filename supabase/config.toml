@@ -58,6 +58,9 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
 
+[functions.crear-borrador-caso]
+verify_jwt = false
+
 [functions.crear-sesion-checkout]
 verify_jwt = true
 
