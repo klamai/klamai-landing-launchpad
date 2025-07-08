@@ -1,14 +1,50 @@
-[variables]
-NIXPACKS_METADATA = "node"
+# nixpacks.toml - Configuración para un proyecto Vite + React con Caddy
 
+# 1. Forzar a Nixpacks a usar el proveedor de Node.js.
+# ESTO SOLUCIONA LA DETECCIÓN INCORRECTA DE DENO.
+providers = ["node"]
+
+# 2. Definir las fases de construcción, replicando tu despliegue exitoso.
 [phases.setup]
-nixPkgs = ['nodejs_18', 'npm']
+# Instalamos las herramientas que tu build necesita: nodejs, bun y caddy
+nixPkgs = ["nodejs_18", "bun", "caddy"]
 
 [phases.install]
-cmds = ['npm install']
+# Comando para instalar las dependencias
+cmds = ["npm ci"] # 'npm ci' es más rápido y seguro para builds
 
 [phases.build]
-cmds = ['npm run build']
+# Comando para construir tu aplicación Vite con Bun
+cmds = ["bun run build"]
 
+# 3. Definir el comando de inicio usando Caddy.
+# Esto es exactamente lo que hacía tu despliegue anterior.
 [start]
-cmd = 'npm run preview'
+cmd = "caddy run --config /app/Caddyfile --adapter caddyfile"
+
+# 4. Proveer el archivo Caddyfile como un activo estático.
+# El contenido es una copia del que se generó en tu despliegue exitoso.
+[staticAssets]
+"Caddyfile" = """
+{
+  admin off
+  persist_config off
+  auto_https off
+  log {
+    format json
+  }
+  servers {
+    trusted_proxies static private_ranges
+  }
+}
+
+:{$PORT} {
+  log {
+    format json
+  }
+  root * /app/dist
+  encode gzip
+  file_server
+  try_files {path} /index.html
+}
+"""
