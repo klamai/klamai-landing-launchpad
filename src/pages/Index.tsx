@@ -279,7 +279,7 @@ const Index = () => {
                 }}>
                     
                 
-                    <h1 className="mt-8 max-w-6xl mx-auto text-balance text-5xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
+                    <h1 className="mt-6 max-w-6xl mx-auto text-balance text-5xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
                       Recibe asesoramiento jurídico
                       <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"> de especialistas</span>
                     </h1>
