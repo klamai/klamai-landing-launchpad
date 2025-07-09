@@ -279,13 +279,13 @@ const Index = () => {
                 }}>
                     
                 
-                    <h1 className="mt-6 max-w-6xl mx-auto text-balance text-5xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
+                    <h1 className="mt-6  max-w-6xl mx-auto text-balance text-5xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
                       Recibe asesoramiento jurídico
                       <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"> de especialistas</span>
                     </h1>
 
                     {/* Modern Google-style Search Bar - Principal - MOVED UP */}
-                    <div className="mt-8 sm:mt-12 max-w-4xl mx-auto px-4 sm:px-0">
+                    <div className="mt-14 sm:mt-20 max-w-4xl mx-auto px-4 sm:px-0">
                       {/* Main Search Bar with Enhanced Effects */}
                       <div className="relative group">
                         {/* Floating particles background */}
@@ -348,7 +348,7 @@ const Index = () => {
                           </div>
                         )}
                       {/* Quick suggestions - Enhanced - MOVED CLOSER TO INPUT */}
-                      <div className="mt-4 sm:mt-6">
+                      <div className="mt-12 sm:mt-16">
                         <p className="text-center text-gray-600 dark:text-gray-400 text-sm sm:text-base mb-4 sm:mb-6 flex items-center justify-center gap-2">
                           <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
                           Consultas populares:
