@@ -131,10 +131,7 @@ const Chat = () => {
       } else {
         console.log('Case linked to user successfully');
         setCaseLinked(true);
-        toast({
-          title: "¡Caso vinculado!",
-          description: "Tu caso ha sido asociado con tu perfil correctamente.",
-        });
+        
       }
     } catch (error) {
       console.error('Error in linkCaseToUser:', error);
@@ -232,10 +229,7 @@ const Chat = () => {
             setProposalData(newCaso.propuesta_estructurada);
             setShowProposal(true);
             
-            toast({
-              title: "¡Tu propuesta está lista!",
-              description: "Hemos preparado una propuesta personalizada para tu caso.",
-            });
+            
           }
         }
       )

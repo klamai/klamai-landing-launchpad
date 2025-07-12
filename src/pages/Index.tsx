@@ -279,9 +279,9 @@ const Index = () => {
                 }}>
                     
                 
-                    <h1 className="mt-6  max-w-6xl mx-auto text-balance text-5xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
+                    <h1 className="mt-6  max-w-6xl mx-auto text-balance text-4xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
                       Recibe asesoramiento jurídico
-                      <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"> de especialistas</span>
+                      <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"> de abogados especialistas</span>
                     </h1>
 
                     {/* Modern Google-style Search Bar - Principal - MOVED UP */}
@@ -298,9 +298,9 @@ const Index = () => {
                         
                         {/* Gradient breathing border */}
                         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-500 animate-pulse"></div>
-                        <div className="absolute -inset-2 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 rounded-full blur-sm opacity-10 group-hover:opacity-20 transition duration-700" style={{animation: 'pulse 3s ease-in-out infinite'}}></div>
+                        <div className="absolute -inset-2 bg-gradient-to-r from-cyan-100 via-blue-600 to-purple-600 rounded-full blur-sm opacity-10 group-hover:opacity-20 transition duration-700" style={{animation: 'pulse 3s ease-in-out infinite'}}></div>
                         
-                        <div className="relative bg-white dark:bg-gray-900 rounded-full shadow-2xl border border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-all duration-500 group-hover:border-blue-300 dark:group-hover:border-blue-600 group-hover:scale-[1.02]">
+                        <div className="relative bg-white dark:bg-gray-200 rounded-full shadow-2xl border border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-all duration-500 group-hover:border-blue-300 dark:group-hover:border-blue-600 group-hover:scale-[1.02]">
                           <div className="flex items-center p-1.5 sm:p-2">
                             <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-blue-600 dark:text-blue-400 ml-1 sm:ml-2 flex-shrink-0">
                               <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 group-hover:scale-110 transition-transform duration-300" />
@@ -317,7 +317,7 @@ const Index = () => {
                                 }
                               }}
                               placeholder="Escribe tu Consulta Legal Aqui..."
-                              className="flex-1 px-2 sm:px-4 py-3 sm:py-4 text-base sm:text-lg bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 min-w-0"
+                              className="flex-1 px-2 sm:px-4 py-3 sm:py-4 text-base sm:text-lg bg-transparent border-none outline-none text-gray-900 dark:text-gray-900 placeholder-gray-500 dark:placeholder-gray-500 min-w-0"
                               disabled={isSubmitting}
                             />
                             <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-2 flex-shrink-0">
@@ -358,7 +358,7 @@ const Index = () => {
                             <button
                               key={index}
                               onClick={() => setConsultation(question)}
-                              className="px-5 sm:px-6 py-4 sm:py-5 bg-gray-100 dark:bg-white-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl text-sm sm:text-base text-gray-700 dark:text-black-300 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-300 border border-gray-200 dark:border-blue-300 hover:border-blue-300 dark:hover:border-blue-600 text-left hover:scale-105 hover:shadow-lg min-h-[48px] sm:min-h-[56px]"
+                              className="px-5 sm:px-6 py-4 sm:py-5 bg-gray-100 dark:bg-gray-800/60 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl text-sm sm:text-base text-white-700 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-300 border border-gray-200 dark:border-blue-500/30 hover:border-blue-300 dark:hover:border-blue-600 text-left hover:scale-105 hover:shadow-lg min-h-[48px] sm:min-h-[56px]"
                             >
                               {question.length > (window.innerWidth < 640 ? 95 : 60) ? 
                                 question.slice(0, window.innerWidth < 640 ? 45 : 60) + '...' : 
