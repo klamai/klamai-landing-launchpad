@@ -87,6 +87,11 @@ const Chat = () => {
     });
   }, [navigate]);
 
+  // Función para generar token de sesión
+  const generateSessionToken = () => {
+    return crypto.randomUUID();
+  };
+
   // Función para vincular caso con usuario autenticado
   const linkCaseToUser = async (userId: string, caseId: string) => {
     if (!userId || !caseId || caseLinked) {
@@ -97,44 +102,62 @@ const Chat = () => {
     try {
       console.log('Linking case to user:', { userId, caseId });
       
-      // Verificar si el caso ya está vinculado
-      const { data: existingCase, error: checkError } = await supabase
-        .from('casos')
-        .select('cliente_id')
-        .eq('id', caseId)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error('Error checking existing case:', checkError);
-        return;
-      }
-
-      if (existingCase?.cliente_id === userId) {
-        console.log('Case already linked to this user');
-        setCaseLinked(true);
-        return;
-      }
-
-      // Vincular el caso con el usuario
-      const { error: linkError } = await supabase
-        .from('casos')
-        .update({ cliente_id: userId })
-        .eq('id', caseId);
-
-      if (linkError) {
-        console.error('Error linking case to user:', linkError);
+      // Obtener session_token del localStorage
+      const sessionToken = localStorage.getItem('current_session_token');
+      
+      if (!sessionToken) {
+        console.error('No session token found for case linking');
         toast({
           title: "Error",
-          description: "Hubo un error al vincular el caso con tu perfil.",
+          description: "No se pudo verificar la propiedad del caso.",
           variant: "destructive"
         });
-      } else {
-        console.log('Case linked to user successfully');
-        setCaseLinked(true);
-        
+        return;
       }
+
+      console.log('Using secure function to assign case');
+      
+      // Usar la función segura para asignar el caso
+      const { data, error } = await supabase.rpc('assign_anonymous_case_to_user', {
+        p_caso_id: caseId,
+        p_session_token: sessionToken,
+        p_user_id: userId
+      });
+
+      if (error) {
+        console.error('Error in assign_anonymous_case_to_user function:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo asignar el caso. Podría haber expirado.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (!data) {
+        console.error('Case assignment returned false');
+        toast({
+          title: "Error",
+          description: "No se pudo asignar el caso. Podría haber expirado o ya estar asignado.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('Case linked to user successfully');
+      setCaseLinked(true);
+
+      // Limpiar tokens del localStorage después de asignación exitosa
+      localStorage.removeItem('current_caso_id');
+      localStorage.removeItem('current_session_token');
+      
     } catch (error) {
       console.error('Error in linkCaseToUser:', error);
+      toast({
+        title: "Error",
+        description: "Hubo un error al vincular el caso con tu perfil.",
+        variant: "destructive"
+      });
     }
   };
 

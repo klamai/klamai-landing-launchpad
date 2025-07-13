@@ -25,6 +25,7 @@ export type Database = {
           costo_en_creditos: number
           created_at: string | null
           direccion_fiscal_borrador: string | null
+          documentos_adjuntos: Json | null
           email_borrador: string | null
           especialidad_id: number | null
           estado: Database["public"]["Enums"]["caso_estado_enum"]
@@ -41,6 +42,7 @@ export type Database = {
           propuesta_estructurada: Json | null
           razon_social_borrador: string | null
           resumen_caso: string | null
+          session_token: string | null
           telefono_borrador: string | null
           tiene_notificaciones_nuevas: boolean | null
           tipo_lead: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
@@ -60,6 +62,7 @@ export type Database = {
           costo_en_creditos?: number
           created_at?: string | null
           direccion_fiscal_borrador?: string | null
+          documentos_adjuntos?: Json | null
           email_borrador?: string | null
           especialidad_id?: number | null
           estado?: Database["public"]["Enums"]["caso_estado_enum"]
@@ -76,6 +79,7 @@ export type Database = {
           propuesta_estructurada?: Json | null
           razon_social_borrador?: string | null
           resumen_caso?: string | null
+          session_token?: string | null
           telefono_borrador?: string | null
           tiene_notificaciones_nuevas?: boolean | null
           tipo_lead?: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
@@ -95,6 +99,7 @@ export type Database = {
           costo_en_creditos?: number
           created_at?: string | null
           direccion_fiscal_borrador?: string | null
+          documentos_adjuntos?: Json | null
           email_borrador?: string | null
           especialidad_id?: number | null
           estado?: Database["public"]["Enums"]["caso_estado_enum"]
@@ -111,6 +116,7 @@ export type Database = {
           propuesta_estructurada?: Json | null
           razon_social_borrador?: string | null
           resumen_caso?: string | null
+          session_token?: string | null
           telefono_borrador?: string | null
           tiene_notificaciones_nuevas?: boolean | null
           tipo_lead?: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
@@ -476,6 +482,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_anonymous_case_to_user: {
+        Args: { p_caso_id: string; p_session_token: string; p_user_id: string }
+        Returns: boolean
+      }
+      cleanup_expired_anonymous_cases: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string

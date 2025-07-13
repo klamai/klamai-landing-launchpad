@@ -104,69 +104,36 @@ const AuthCallback = () => {
     console.log('AuthCallback - linkCaseToUser iniciado:', { casoId, userId });
     
     try {
-      // 1. Obtener datos del caso
-      console.log('AuthCallback - Obteniendo datos del caso');
-      const { data: caso, error: casoError } = await supabase
-        .from('casos')
-        .select('*')
-        .eq('id', casoId)
-        .single();
-
-      if (casoError) {
-        console.error('AuthCallback - Error al obtener caso:', casoError);
-        throw new Error(`Error al obtener caso: ${casoError.message}`);
-      }
-
-      if (!caso) {
-        throw new Error('No se encontró el caso especificado');
-      }
-
-      console.log('AuthCallback - Caso obtenido:', caso);
-
-      // 2. Actualizar caso con el cliente_id
-      console.log('AuthCallback - Actualizando caso con cliente_id');
-      const { error: updateCasoError } = await supabase
-        .from('casos')
-        .update({
-          cliente_id: userId,
-          estado: 'esperando_pago'
-        })
-        .eq('id', casoId);
-
-      if (updateCasoError) {
-        console.error('AuthCallback - Error al actualizar caso:', updateCasoError);
-        throw new Error(`Error al vincular caso: ${updateCasoError.message}`);
-      }
-
-      console.log('AuthCallback - Caso actualizado exitosamente');
-
-      // 3. Actualizar perfil del usuario con datos borrador (opcional)
-      const profileUpdates: any = {};
+      // Obtener session_token del localStorage
+      const sessionToken = localStorage.getItem('current_session_token');
       
-      if (caso.nombre_borrador) profileUpdates.nombre = caso.nombre_borrador;
-      if (caso.apellido_borrador) profileUpdates.apellido = caso.apellido_borrador;
-      if (caso.telefono_borrador) profileUpdates.telefono = caso.telefono_borrador;
-      if (caso.ciudad_borrador) profileUpdates.ciudad = caso.ciudad_borrador;
-      if (caso.tipo_perfil_borrador) profileUpdates.tipo_perfil = caso.tipo_perfil_borrador;
-      if (caso.razon_social_borrador) profileUpdates.razon_social = caso.razon_social_borrador;
-      if (caso.nif_cif_borrador) profileUpdates.nif_cif = caso.nif_cif_borrador;
-      if (caso.direccion_fiscal_borrador) profileUpdates.direccion_fiscal = caso.direccion_fiscal_borrador;
-      if (caso.nombre_gerente_borrador) profileUpdates.nombre_gerente = caso.nombre_gerente_borrador;
-
-      if (Object.keys(profileUpdates).length > 0) {
-        console.log('AuthCallback - Actualizando perfil con:', profileUpdates);
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update(profileUpdates)
-          .eq('id', userId);
-
-        if (profileError) {
-          console.error('AuthCallback - Error al actualizar perfil (no crítico):', profileError);
-          // No lanzar error aquí para no bloquear el pago
-        } else {
-          console.log('AuthCallback - Perfil actualizado exitosamente');
-        }
+      if (!sessionToken) {
+        throw new Error('Token de sesión no encontrado');
       }
+
+      console.log('AuthCallback - Usando función segura para asignar caso');
+      
+      // Usar la función segura para asignar el caso
+      const { data, error } = await supabase.rpc('assign_anonymous_case_to_user', {
+        p_caso_id: casoId,
+        p_session_token: sessionToken,
+        p_user_id: userId
+      });
+
+      if (error) {
+        console.error('AuthCallback - Error en función assign_anonymous_case_to_user:', error);
+        throw new Error(`Error al asignar caso: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('No se pudo asignar el caso. El caso podría haber expirado o ya estar asignado.');
+      }
+
+      console.log('AuthCallback - Caso asignado exitosamente');
+
+      // Limpiar tokens del localStorage después de asignación exitosa
+      localStorage.removeItem('current_caso_id');
+      localStorage.removeItem('current_session_token');
 
     } catch (error) {
       console.error('AuthCallback - Error en linkCaseToUser:', error);
