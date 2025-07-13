@@ -27,6 +27,7 @@ import { Caso, Pago } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
+import DocumentManager from "@/components/DocumentManager";
 
 const CaseDetailTabs = () => {
   const { casoId } = useParams();
@@ -367,48 +368,10 @@ const CaseDetailTabs = () => {
         </TabsContent>
 
         <TabsContent value="documentos" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5 text-blue-600" />
-                  Tus Documentos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">
-                    No has subido documentos aún
-                  </p>
-                  <Button variant="outline" disabled>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Subir Documento
-                  </Button>
-                  <p className="text-xs text-gray-400 mt-2">
-                    Funcionalidad próximamente disponible
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Download className="h-5 w-5 text-green-600" />
-                  Documentos del Abogado
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Cuando un abogado trabaje en tu caso, los documentos aparecerán aquí
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <DocumentManager 
+            casoId={casoId!} 
+            readOnly={userRole === 'abogado'} 
+          />
         </TabsContent>
 
         <TabsContent value="interacciones" className="space-y-4">
