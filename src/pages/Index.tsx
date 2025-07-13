@@ -156,7 +156,7 @@ const Index = () => {
       // 3. Guardar consulta, caso_id y session_token en localStorage
       localStorage.setItem('userConsultation', consultation.trim());
       localStorage.setItem('casoId', casoId);
-      localStorage.setItem('sessionToken', sessionToken);
+      localStorage.setItem('current_session_token', sessionToken);
       console.log('Caso creado con ID:', casoId);
       console.log('Consulta guardada:', consultation.trim());
 

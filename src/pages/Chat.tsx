@@ -69,6 +69,7 @@ const Chat = () => {
   useEffect(() => {
     const savedConsultation = localStorage.getItem('userConsultation');
     const savedCasoId = localStorage.getItem('casoId');
+    const savedSessionToken = localStorage.getItem('current_session_token');
     
     if (!savedConsultation || !savedCasoId) {
       navigate('/');
@@ -83,7 +84,8 @@ const Chat = () => {
 
     console.log('Datos recuperados del localStorage:', {
       consultation: savedConsultation,
-      casoId: savedCasoId
+      casoId: savedCasoId,
+      sessionToken: savedSessionToken
     });
   }, [navigate]);
 
