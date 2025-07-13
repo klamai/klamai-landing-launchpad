@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
     try {
       setLoading(true);
       
-      // Cargar documentos de Supabase Storage
+      // Cargar documentos de Supabase Storage usando la estructura correcta: casos/{casoId}/adjuntos/
       const { data: files, error } = await supabase.storage
         .from('documentos_legales')
         .list(`casos/${casoId}/adjuntos`, {
@@ -68,6 +67,8 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
             path: `casos/${casoId}/adjuntos/${file.name}`,
             source: 'supabase' as const
           }));
+      } else if (error) {
+        console.warn('Error loading from Supabase Storage:', error);
       }
 
       // Cargar documentos del localStorage como fallback (de conversaciones de chat anteriores)
@@ -155,7 +156,9 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
         const fileName = `${timestamp}_${file.name}`;
         const filePath = `casos/${casoId}/adjuntos/${fileName}`;
 
-        // Subir archivo a Supabase Storage
+        console.log('Attempting to upload file:', { fileName, filePath, casoId });
+
+        // Subir archivo a Supabase Storage con la estructura correcta
         const { error: uploadError } = await supabase.storage
           .from('documentos_legales')
           .upload(filePath, file, {
