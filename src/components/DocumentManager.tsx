@@ -24,7 +24,10 @@ interface Document {
   type: string;
   lastModified: number;
   url?: string;
-}interface DocumentManagerProps {
+  [key: string]: any; // This makes it compatible with Json
+}
+
+interface DocumentManagerProps {
   casoId: string;
 }
 
@@ -54,7 +57,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId }) => {
         return;
       }
 
-      const storedDocs = caso?.documentos_adjuntos as Document[] || [];
+      const storedDocs = (caso?.documentos_adjuntos as unknown as Document[]) || [];
       setDocuments(storedDocs);
 
     } catch (error) {
@@ -148,7 +151,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId }) => {
       // Guardar en la base de datos
       const { error: updateError } = await supabase
         .from('casos')
-        .update({ documentos_adjuntos: updatedDocuments })
+        .update({ documentos_adjuntos: updatedDocuments as unknown as any })
         .eq('id', casoId);
 
       if (updateError) {
@@ -188,7 +191,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId }) => {
       // Actualizar en la base de datos
       const { error } = await supabase
         .from('casos')
-        .update({ documentos_adjuntos: updatedDocuments })
+        .update({ documentos_adjuntos: updatedDocuments as unknown as any })
         .eq('id', casoId);
 
       if (error) {

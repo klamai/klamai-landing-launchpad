@@ -1,13 +1,21 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Typebot } from "@typebot.io/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText, Upload, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+// Importar Typebot correctamente
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'typebot-standard': any;
+    }
+  }
+}
 
 const Chat = () => {
   const navigate = useNavigate();
@@ -23,6 +31,7 @@ const Chat = () => {
       // Obtener datos del localStorage
       const savedCasoId = localStorage.getItem('casoId');
       const savedConsultation = localStorage.getItem('userConsultation');
+      const savedSessionToken = localStorage.getItem('current_session_token');
       
       if (!savedCasoId || !savedConsultation) {
         toast({
@@ -60,6 +69,34 @@ const Chat = () => {
     localStorage.removeItem('current_session_token');
     navigate('/');
   };
+
+  useEffect(() => {
+    if (chatStarted && casoId && userConsultation) {
+      // Cargar el script de Typebot
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = 'https://cdn.jsdelivr.net/npm/@typebot.io/js@0.3/dist/web.js';
+      document.head.appendChild(script);
+
+      script.onload = () => {
+        // Inicializar Typebot una vez que el script se haya cargado
+        const typebotElement = document.getElementById('typebot-container');
+        if (typebotElement && (window as any).Typebot) {
+          (window as any).Typebot.initStandard({
+            typebot: "vitoria-asesor-juridico-ia",
+            prefilledVariables: {
+              caso_id: casoId,
+              motivo_consulta: userConsultation
+            }
+          });
+        }
+      };
+
+      return () => {
+        document.head.removeChild(script);
+      };
+    }
+  }, [chatStarted, casoId, userConsultation]);
 
   if (isLoading) {
     return (
@@ -152,18 +189,24 @@ const Chat = () => {
           </div>
 
           <div className="rounded-lg overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700">
-            <Typebot
-              ref={typebotRef}
-              typebot="vitoria-asesor-juridico-ia"
+            <div 
+              id="typebot-container"
               style={{
                 height: "70vh",
                 minHeight: "500px"
               }}
-              prefilledVariables={{
-                caso_id: casoId || "",
-                motivo_consulta: userConsultation
-              }}
-            />
+            >
+              <typebot-standard 
+                style="width: 100%; height: 100%;"
+                config={JSON.stringify({
+                  typebot: "vitoria-asesor-juridico-ia",
+                  prefilledVariables: {
+                    caso_id: casoId || "",
+                    motivo_consulta: userConsultation
+                  }
+                })}
+              />
+            </div>
           </div>
         </div>
       </div>
