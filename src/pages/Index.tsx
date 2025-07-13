@@ -118,11 +118,19 @@ const Index = () => {
     if (!consultation.trim()) return;
     setIsSubmitting(true);
     try {
-      // 1. Crear caso borrador en Supabase
+      // 1. Generar session_token para la seguridad
+      const sessionToken = crypto.randomUUID();
+      
+      // 2. Crear caso borrador en Supabase
       const {
         data,
         error
-      } = await supabase.functions.invoke('crear-borrador-caso');
+      } = await supabase.functions.invoke('crear-borrador-caso', {
+        body: {
+          motivo_consulta: consultation.trim(),
+          session_token: sessionToken
+        }
+      });
       if (error) {
         console.error('Error al crear caso borrador:', error);
         toast({
@@ -145,9 +153,10 @@ const Index = () => {
         return;
       }
 
-      // 2. Guardar tanto la consulta como el caso_id en localStorage
+      // 3. Guardar consulta, caso_id y session_token en localStorage
       localStorage.setItem('userConsultation', consultation.trim());
       localStorage.setItem('casoId', casoId);
+      localStorage.setItem('sessionToken', sessionToken);
       console.log('Caso creado con ID:', casoId);
       console.log('Consulta guardada:', consultation.trim());
 
