@@ -12,8 +12,8 @@ import {
   Trash2, 
   Eye,
   AlertCircle,
-  CheckCircle,
-  File
+  File,
+  FolderOpen
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,7 @@ interface DocumentFile {
   created_at?: string;
   url?: string;
   path: string;
+  source: 'supabase' | 'chat';
 }
 
 interface DocumentManagerProps {
@@ -46,46 +47,56 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
     try {
       setLoading(true);
       
-      // Listar archivos del caso en Supabase Storage
+      // Cargar documentos de Supabase Storage
       const { data: files, error } = await supabase.storage
         .from('documentos_legales')
-        .list(casoId, {
+        .list(`casos/${casoId}/adjuntos`, {
           limit: 100,
           offset: 0,
         });
 
-      if (error) {
-        console.error('Error loading documents from storage:', error);
-        // Si hay error con storage, intentar cargar desde localStorage como fallback
-        const storedDocs = localStorage.getItem(`documents_${casoId}`);
-        if (storedDocs) {
+      let supabaseDocuments: DocumentFile[] = [];
+      
+      if (!error && files) {
+        supabaseDocuments = files
+          .filter(file => file.name !== '.readme.txt') // Filtrar archivo interno
+          .map(file => ({
+            name: file.name,
+            size: file.metadata?.size || 0,
+            type: file.metadata?.mimetype,
+            created_at: file.created_at,
+            path: `casos/${casoId}/adjuntos/${file.name}`,
+            source: 'supabase' as const
+          }));
+      }
+
+      // Cargar documentos del localStorage como fallback (de conversaciones de chat anteriores)
+      const storedDocs = localStorage.getItem(`documents_${casoId}`);
+      let chatDocuments: DocumentFile[] = [];
+      
+      if (storedDocs) {
+        try {
           const parsedDocs = JSON.parse(storedDocs);
-          const localDocs = Array.isArray(parsedDocs) ? parsedDocs.map(doc => ({
-            name: doc.name,
-            size: doc.size,
-            type: doc.type,
-            created_at: doc.lastModified ? new Date(doc.lastModified).toISOString() : undefined,
-            path: `localStorage/${doc.name}`,
-            url: doc.data
-          })) : [];
-          setDocuments(localDocs);
-        } else {
-          setDocuments([]);
+          if (Array.isArray(parsedDocs)) {
+            chatDocuments = parsedDocs.map(doc => ({
+              name: doc.name,
+              size: doc.size,
+              type: doc.type,
+              created_at: doc.lastModified ? new Date(doc.lastModified).toISOString() : undefined,
+              path: `localStorage/${doc.name}`,
+              url: doc.data,
+              source: 'chat' as const
+            }));
+          }
+        } catch (e) {
+          console.warn('Error parsing localStorage documents:', e);
         }
-        return;
       }
 
-      if (files) {
-        const documentFiles: DocumentFile[] = files.map(file => ({
-          name: file.name,
-          size: file.metadata?.size || 0,
-          type: file.metadata?.mimetype,
-          created_at: file.created_at,
-          path: `${casoId}/${file.name}`
-        }));
+      // Combinar documentos, priorizando los de Supabase
+      const allDocuments = [...supabaseDocuments, ...chatDocuments];
+      setDocuments(allDocuments);
 
-        setDocuments(documentFiles);
-      }
     } catch (error) {
       console.error('Error loading documents:', error);
       toast({
@@ -142,7 +153,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
         // Generar nombre único para evitar conflictos
         const timestamp = Date.now();
         const fileName = `${timestamp}_${file.name}`;
-        const filePath = `${casoId}/${fileName}`;
+        const filePath = `casos/${casoId}/adjuntos/${fileName}`;
 
         // Subir archivo a Supabase Storage
         const { error: uploadError } = await supabase.storage
@@ -167,7 +178,8 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
           size: file.size,
           type: file.type,
           created_at: new Date().toISOString(),
-          path: filePath
+          path: filePath,
+          source: 'supabase'
         };
 
         uploadedFiles.push(documentFile);
@@ -198,8 +210,8 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
 
   const handleDeleteDocument = async (document: DocumentFile) => {
     try {
-      // Si es un documento del localStorage, eliminarlo de ahí
-      if (document.path.startsWith('localStorage/')) {
+      if (document.source === 'chat') {
+        // Eliminar del localStorage
         const storedDocs = localStorage.getItem(`documents_${casoId}`);
         if (storedDocs) {
           const parsedDocs = JSON.parse(storedDocs);
@@ -243,8 +255,8 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
 
   const handleDownloadDocument = async (document: DocumentFile) => {
     try {
-      // Si es un documento del localStorage, usar la URL directamente
-      if (document.path.startsWith('localStorage/') && document.url) {
+      if (document.source === 'chat' && document.url) {
+        // Descargar desde localStorage
         const link = window.document.createElement('a');
         link.href = document.url;
         link.download = document.name;
@@ -326,7 +338,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-blue-600" />
+            <FolderOpen className="h-5 w-5 text-blue-600" />
             Documentos del Caso
           </CardTitle>
           {!readOnly && (
@@ -389,8 +401,11 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {formatFileSize(document.size)} • {formatDate(document.created_at)}
-                      {document.path.startsWith('localStorage/') && (
-                        <span className="ml-1 text-blue-600">(Chat)</span>
+                      {document.source === 'chat' && (
+                        <span className="ml-1 text-orange-600">(Chat)</span>
+                      )}
+                      {document.source === 'supabase' && (
+                        <span className="ml-1 text-green-600">(Dashboard)</span>
                       )}
                     </p>
                   </div>
@@ -436,6 +451,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
                   <li>• Formatos permitidos: PDF, DOC, DOCX, TXT, JPG, PNG, GIF</li>
                   <li>• Los documentos se guardan de forma segura y protegida</li>
                   <li>• Los documentos marcados "(Chat)" provienen de tu conversación inicial</li>
+                  <li>• Los documentos marcados "(Dashboard)" fueron subidos desde este panel</li>
                 </ul>
               </div>
             </div>
