@@ -16,13 +16,15 @@ import {
   File
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Document {
+interface DocumentFile {
   name: string;
   size: number;
-  type: string;
-  lastModified: number;
-  data?: string; // base64 data
+  type?: string;
+  created_at?: string;
+  url?: string;
+  path: string;
 }
 
 interface DocumentManagerProps {
@@ -31,38 +33,68 @@ interface DocumentManagerProps {
 }
 
 const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = false }) => {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<DocumentFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     loadDocuments();
   }, [casoId]);
 
-  const loadDocuments = () => {
+  const loadDocuments = async () => {
     try {
-      const storedDocs = localStorage.getItem(`documents_${casoId}`);
-      if (storedDocs) {
-        const parsedDocs = JSON.parse(storedDocs);
-        setDocuments(Array.isArray(parsedDocs) ? parsedDocs : []);
+      setLoading(true);
+      
+      // Listar archivos del caso en Supabase Storage
+      const { data: files, error } = await supabase.storage
+        .from('documentos_legales')
+        .list(casoId, {
+          limit: 100,
+          offset: 0,
+        });
+
+      if (error) {
+        console.error('Error loading documents from storage:', error);
+        // Si hay error con storage, intentar cargar desde localStorage como fallback
+        const storedDocs = localStorage.getItem(`documents_${casoId}`);
+        if (storedDocs) {
+          const parsedDocs = JSON.parse(storedDocs);
+          const localDocs = Array.isArray(parsedDocs) ? parsedDocs.map(doc => ({
+            name: doc.name,
+            size: doc.size,
+            type: doc.type,
+            created_at: doc.lastModified ? new Date(doc.lastModified).toISOString() : undefined,
+            path: `localStorage/${doc.name}`,
+            url: doc.data
+          })) : [];
+          setDocuments(localDocs);
+        } else {
+          setDocuments([]);
+        }
+        return;
+      }
+
+      if (files) {
+        const documentFiles: DocumentFile[] = files.map(file => ({
+          name: file.name,
+          size: file.metadata?.size || 0,
+          type: file.metadata?.mimetype,
+          created_at: file.created_at,
+          path: `${casoId}/${file.name}`
+        }));
+
+        setDocuments(documentFiles);
       }
     } catch (error) {
       console.error('Error loading documents:', error);
-      setDocuments([]);
-    }
-  };
-
-  const saveDocuments = (newDocuments: Document[]) => {
-    try {
-      localStorage.setItem(`documents_${casoId}`, JSON.stringify(newDocuments));
-      setDocuments(newDocuments);
-    } catch (error) {
-      console.error('Error saving documents:', error);
       toast({
         title: "Error",
-        description: "No se pudieron guardar los documentos",
+        description: "No se pudieron cargar los documentos",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,7 +103,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
     if (!files || files.length === 0) return;
 
     setUploading(true);
-    const newDocuments: Document[] = [];
+    const uploadedFiles: DocumentFile[] = [];
 
     try {
       for (let i = 0; i < files.length; i++) {
@@ -107,31 +139,47 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
           continue;
         }
 
-        // Convertir a base64
-        const reader = new FileReader();
-        const fileData = await new Promise<string>((resolve) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
+        // Generar nombre único para evitar conflictos
+        const timestamp = Date.now();
+        const fileName = `${timestamp}_${file.name}`;
+        const filePath = `${casoId}/${fileName}`;
 
-        const document: Document = {
+        // Subir archivo a Supabase Storage
+        const { error: uploadError } = await supabase.storage
+          .from('documentos_legales')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Error uploading file:', uploadError);
+          toast({
+            title: "Error al subir archivo",
+            description: `No se pudo subir ${file.name}: ${uploadError.message}`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        const documentFile: DocumentFile = {
           name: file.name,
           size: file.size,
           type: file.type,
-          lastModified: file.lastModified,
-          data: fileData
+          created_at: new Date().toISOString(),
+          path: filePath
         };
 
-        newDocuments.push(document);
+        uploadedFiles.push(documentFile);
       }
 
-      if (newDocuments.length > 0) {
-        const updatedDocuments = [...documents, ...newDocuments];
-        saveDocuments(updatedDocuments);
+      if (uploadedFiles.length > 0) {
+        // Recargar la lista de documentos
+        await loadDocuments();
         
         toast({
           title: "Documentos subidos",
-          description: `Se subieron ${newDocuments.length} documento(s) exitosamente.`,
+          description: `Se subieron ${uploadedFiles.length} documento(s) exitosamente.`,
         });
       }
     } catch (error) {
@@ -148,26 +196,88 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
     }
   };
 
-  const handleDeleteDocument = (index: number) => {
-    const updatedDocuments = documents.filter((_, i) => i !== index);
-    saveDocuments(updatedDocuments);
-    
-    toast({
-      title: "Documento eliminado",
-      description: "El documento ha sido eliminado exitosamente.",
-    });
+  const handleDeleteDocument = async (document: DocumentFile) => {
+    try {
+      // Si es un documento del localStorage, eliminarlo de ahí
+      if (document.path.startsWith('localStorage/')) {
+        const storedDocs = localStorage.getItem(`documents_${casoId}`);
+        if (storedDocs) {
+          const parsedDocs = JSON.parse(storedDocs);
+          const updatedDocs = parsedDocs.filter((doc: any) => doc.name !== document.name);
+          localStorage.setItem(`documents_${casoId}`, JSON.stringify(updatedDocs));
+          await loadDocuments();
+        }
+      } else {
+        // Eliminar de Supabase Storage
+        const { error } = await supabase.storage
+          .from('documentos_legales')
+          .remove([document.path]);
+
+        if (error) {
+          console.error('Error deleting document:', error);
+          toast({
+            title: "Error",
+            description: "Error al eliminar el documento",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Recargar la lista de documentos
+        await loadDocuments();
+      }
+      
+      toast({
+        title: "Documento eliminado",
+        description: "El documento ha sido eliminado exitosamente.",
+      });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Error",
+        description: "Error al eliminar el documento",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDownloadDocument = (document: Document) => {
-    if (!document.data) return;
-
+  const handleDownloadDocument = async (document: DocumentFile) => {
     try {
+      // Si es un documento del localStorage, usar la URL directamente
+      if (document.path.startsWith('localStorage/') && document.url) {
+        const link = window.document.createElement('a');
+        link.href = document.url;
+        link.download = document.name;
+        window.document.body.appendChild(link);
+        link.click();
+        window.document.body.removeChild(link);
+        return;
+      }
+
+      // Descargar de Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('documentos_legales')
+        .download(document.path);
+
+      if (error) {
+        console.error('Error downloading document:', error);
+        toast({
+          title: "Error",
+          description: "Error al descargar el documento",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Crear URL temporal y descargar
+      const url = URL.createObjectURL(data);
       const link = window.document.createElement('a');
-      link.href = document.data;
+      link.href = url;
       link.download = document.name;
       window.document.body.appendChild(link);
       link.click();
       window.document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading document:', error);
       toast({
@@ -186,11 +296,30 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getFileIcon = (type: string) => {
+  const getFileIcon = (type?: string) => {
+    if (!type) return <File className="h-4 w-4" />;
     if (type.startsWith('image/')) return <Eye className="h-4 w-4" />;
     if (type === 'application/pdf') return <FileText className="h-4 w-4" />;
     return <File className="h-4 w-4" />;
   };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Fecha desconocida';
+    return new Date(dateString).toLocaleDateString('es-ES');
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-300">Cargando documentos...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -231,20 +360,21 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
         {documents.length === 0 ? (
           <div className="text-center py-8">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               No hay documentos adjuntos a este caso
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
+              {!readOnly 
+                ? "Puedes subir documentos usando el botón 'Subir Documento'"
+                : "Este caso no tiene documentos adjuntos"
+              }
             </p>
-            {!readOnly && (
-              <p className="text-sm text-gray-400">
-                Puedes subir documentos usando el botón "Subir Documento"
-              </p>
-            )}
           </div>
         ) : (
           <div className="space-y-3">
             {documents.map((document, index) => (
               <motion.div
-                key={`${document.name}-${index}`}
+                key={`${document.path}-${index}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800"
@@ -258,11 +388,14 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
                       {document.name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {formatFileSize(document.size)} • {new Date(document.lastModified).toLocaleDateString('es-ES')}
+                      {formatFileSize(document.size)} • {formatDate(document.created_at)}
+                      {document.path.startsWith('localStorage/') && (
+                        <span className="ml-1 text-blue-600">(Chat)</span>
+                      )}
                     </p>
                   </div>
                   <Badge variant="outline" className="text-xs">
-                    {document.type.split('/')[1]?.toUpperCase() || 'FILE'}
+                    {document.type?.split('/')[1]?.toUpperCase() || 'FILE'}
                   </Badge>
                 </div>
                 <div className="flex items-center space-x-2 ml-3">
@@ -279,7 +412,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteDocument(index)}
+                      onClick={() => handleDeleteDocument(document)}
                       className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                       title="Eliminar"
                     >
@@ -301,7 +434,8 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
                 <ul className="space-y-1">
                   <li>• Tamaño máximo por archivo: 10MB</li>
                   <li>• Formatos permitidos: PDF, DOC, DOCX, TXT, JPG, PNG, GIF</li>
-                  <li>• Los documentos se guardan localmente hasta que el caso sea procesado</li>
+                  <li>• Los documentos se guardan de forma segura y protegida</li>
+                  <li>• Los documentos marcados "(Chat)" provienen de tu conversación inicial</li>
                 </ul>
               </div>
             </div>
