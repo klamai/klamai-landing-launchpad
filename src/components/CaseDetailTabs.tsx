@@ -1,57 +1,48 @@
-
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, FileText, MessageSquare, User, Calendar, CreditCard, Shield } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import DocumentManager from '@/components/DocumentManager';
-import { getClientFriendlyStatus, getLawyerStatus } from '@/utils/caseDisplayUtils';
-
-interface CaseData {
-  id: string;
-  motivo_consulta: string;
-  estado: string;
-  created_at: string;
-  costo_en_creditos: number;
-  resumen_caso?: string;
-  propuesta_cliente?: string;
-  propuesta_estructurada?: any;
-  valor_estimado?: string;
-  transcripcion_chat?: any;
-  especialidades?: {
-    nombre: string;
-  };
-  cliente_id: string;
-  nombre_borrador?: string;
-  apellido_borrador?: string;
-  email_borrador?: string;
-  telefono_borrador?: string;
-}
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { motion } from "framer-motion";
+import { 
+  FileText, 
+  Download, 
+  Upload, 
+  MessageCircle, 
+  Calendar, 
+  CreditCard,
+  User,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  ShieldCheck
+} from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { Caso, Pago } from "@/types/database";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
 
 const CaseDetailTabs = () => {
-  const { casoId } = useParams<{ casoId: string }>();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [caseData, setCaseData] = useState<CaseData | null>(null);
+  const { casoId } = useParams();
+  const [caso, setCaso] = useState<Caso | null>(null);
+  const [pagos, setPagos] = useState<Pago[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<'cliente' | 'abogado' | null>(null);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (!casoId) {
-      navigate('/dashboard/casos');
-      return;
+    if (casoId && user) {
+      fetchUserRole();
+      fetchCasoDetails();
+      fetchPagos();
     }
-    fetchCaseData();
-    fetchUserRole();
   }, [casoId, user]);
 
   const fetchUserRole = async () => {
@@ -66,7 +57,7 @@ const CaseDetailTabs = () => {
     setUserRole(profile?.role || null);
   };
 
-  const fetchCaseData = async () => {
+  const fetchCasoDetails = async () => {
     try {
       const { data, error } = await supabase
         .from('casos')
@@ -80,45 +71,55 @@ const CaseDetailTabs = () => {
         .single();
 
       if (error) {
-        console.error('Error fetching case:', error);
+        console.error('Error fetching caso:', error);
         toast({
           title: "Error",
-          description: "No se pudo cargar la información del caso",
-          variant: "destructive"
+          description: "No se pudo cargar el detalle del caso",
+          variant: "destructive",
         });
-        navigate('/dashboard/casos');
         return;
       }
 
-      setCaseData(data);
+      setCaso(data);
     } catch (error) {
       console.error('Error:', error);
-      toast({
-        title: "Error",
-        description: "Ocurrió un error inesperado",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPagos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pagos')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching pagos:', error);
+        return;
+      }
+
+      setPagos(data || []);
+    } catch (error) {
+      console.error('Error:', error);
     }
   };
 
   const getStatusColor = (estado: string) => {
     switch (estado) {
       case 'borrador':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800';
       case 'esperando_pago':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-100 text-yellow-800';
       case 'disponible':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-100 text-blue-800';
       case 'agotado':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-orange-100 text-orange-800';
       case 'cerrado':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'listo_para_propuesta':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-green-100 text-green-800';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -131,26 +132,54 @@ const CaseDetailTabs = () => {
     return estado;
   };
 
+  const getTimelineSteps = (estado: string) => {
+    if (userRole === 'cliente') {
+      // Timeline simplificado para clientes
+      const steps = [
+        { id: 'creado', label: 'Consulta Creada', completed: true },
+        { id: 'esperando_pago', label: 'Pendiente de Pago', completed: estado !== 'borrador' },
+        { id: 'disponible', label: 'En Revisión', completed: ['disponible', 'agotado', 'cerrado'].includes(estado) },
+        { id: 'cerrado', label: 'Finalizado', completed: estado === 'cerrado' }
+      ];
+      return steps;
+    } else {
+      // Timeline completo para abogados
+      const steps = [
+        { id: 'creado', label: 'Caso Creado', completed: true },
+        { id: 'esperando_pago', label: 'Esperando Pago', completed: estado !== 'borrador' },
+        { id: 'disponible', label: 'Disponible para Abogados', completed: ['disponible', 'agotado', 'cerrado', 'listo_para_propuesta'].includes(estado) },
+        { id: 'listo_para_propuesta', label: 'Listo para Propuesta', completed: ['listo_para_propuesta', 'cerrado'].includes(estado) },
+        { id: 'cerrado', label: 'Caso Cerrado', completed: estado === 'cerrado' }
+      ];
+      return steps;
+    }
+  };
+
+  const shouldShowField = (fieldName: string) => {
+    if (userRole === 'abogado') return true;
+    
+    const lawyerOnlyFields = ['guia_abogado', 'propuesta_estructurada', 'transcripcion_chat', 'propuesta_cliente', 'valor_estimado'];
+    return !lawyerOnlyFields.includes(fieldName);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Cargando información del caso...</p>
+          <p className="text-gray-600 dark:text-gray-300">Cargando detalles del caso...</p>
         </div>
       </div>
     );
   }
 
-  if (!caseData) {
+  if (!caso) {
     return (
-      <div className="text-center py-12">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          Caso no encontrado
-        </h3>
-        <Button onClick={() => navigate('/dashboard/casos')}>
-          Volver a Mis Casos
-        </Button>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-300">No se pudo encontrar el caso</p>
+        </div>
       </div>
     );
   }
@@ -161,260 +190,307 @@ const CaseDetailTabs = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="outline"
-          onClick={() => navigate('/dashboard/casos')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Volver a Casos
-        </Button>
-        
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Caso #{caseData.id.substring(0, 8)}
+              Caso #{caso.id.substring(0, 8)}
             </h1>
-            <Badge className={`${getStatusColor(caseData.estado)} flex items-center gap-1`}>
-              {getStatusText(caseData.estado)}
-            </Badge>
-            <div title="Datos protegidos por RLS">
-              <Shield className="h-5 w-5 text-green-600" />
-            </div>
+            <p className="text-gray-600 dark:text-gray-300 mt-1">
+              {caso.motivo_consulta || 'Sin descripción disponible'}
+            </p>
           </div>
-          <p className="text-gray-600 dark:text-gray-300 mt-1">
-            Creado el {format(new Date(caseData.created_at), 'dd MMMM yyyy', { locale: es })}
-          </p>
+          <div className="flex items-center gap-2">
+            <Badge className={getStatusColor(caso.estado)}>
+              {getStatusText(caso.estado)}
+            </Badge>
+            {userRole === 'abogado' && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3" />
+                Vista Abogado
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Calendar className="h-4 w-4 text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Fecha de Creación</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {format(new Date(caso.created_at), 'dd MMM yyyy', { locale: es })}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <CreditCard className="h-4 w-4 text-green-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Costo</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {caso.costo_en_creditos} créditos
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <User className="h-4 w-4 text-purple-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Especialidad</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {caso.especialidades?.nombre || 'No especificada'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="general" className="space-y-6">
+      <Tabs defaultValue="resumen" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="general" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            General
-          </TabsTrigger>
-          <TabsTrigger value="documentos" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Documentos
-          </TabsTrigger>
-          <TabsTrigger value="conversacion" className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            Conversación
-          </TabsTrigger>
-          <TabsTrigger value="propuesta" className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Propuesta
-          </TabsTrigger>
+          <TabsTrigger value="resumen">Resumen</TabsTrigger>
+          <TabsTrigger value="documentos">Documentos</TabsTrigger>
+          <TabsTrigger value="interacciones">Interacciones</TabsTrigger>
+          <TabsTrigger value="pagos">Pagos</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="space-y-6">
-          {/* Información General */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Información del Caso</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Motivo de la Consulta
-                </label>
-                <p className="text-gray-900 dark:text-white mt-1">
-                  {caseData.motivo_consulta}
-                </p>
-              </div>
-
-              {caseData.especialidades && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Especialidad
-                  </label>
-                  <p className="text-gray-900 dark:text-white mt-1">
-                    {caseData.especialidades.nombre}
-                  </p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Costo en Créditos
-                  </label>
-                  <p className="text-gray-900 dark:text-white mt-1">
-                    {caseData.costo_en_creditos} créditos
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Estado
-                  </label>
-                  <div className="mt-1">
-                    <Badge className={getStatusColor(caseData.estado)}>
-                      {getStatusText(caseData.estado)}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-
-              {caseData.resumen_caso && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Resumen del Caso
-                  </label>
-                  <p className="text-gray-900 dark:text-white mt-1 whitespace-pre-wrap">
-                    {caseData.resumen_caso}
-                  </p>
-                </div>
-              )}
-
-              {caseData.valor_estimado && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Valor Estimado
-                  </label>
-                  <p className="text-gray-900 dark:text-white mt-1">
-                    {caseData.valor_estimado}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Información de Contacto */}
-          {(caseData.nombre_borrador || caseData.email_borrador) && (
+        <TabsContent value="resumen" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Información de Contacto
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  {userRole === 'abogado' ? 'Análisis Completo del Caso' : 'Resumen del Caso'}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {caseData.nombre_borrador && (
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Descripción:</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {caso.motivo_consulta || 'Sin descripción disponible'}
+                    </p>
+                  </div>
+                  
+                  {shouldShowField('resumen_caso') && caso.resumen_caso && (
                     <div>
-                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Nombre
-                      </label>
-                      <p className="text-gray-900 dark:text-white mt-1">
-                        {caseData.nombre_borrador} {caseData.apellido_borrador || ''}
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Análisis del Caso:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {caso.resumen_caso}
                       </p>
                     </div>
                   )}
-                  {caseData.email_borrador && (
+                  
+                  {shouldShowField('guia_abogado') && caso.guia_abogado && (
                     <div>
-                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Email
-                      </label>
-                      <p className="text-gray-900 dark:text-white mt-1">
-                        {caseData.email_borrador}
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Guía para Abogados:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {caso.guia_abogado}
                       </p>
                     </div>
+                  )}
+                  
+                  {shouldShowField('propuesta_cliente') && caso.propuesta_cliente && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Propuesta del Cliente:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {caso.propuesta_cliente}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {shouldShowField('valor_estimado') && caso.valor_estimado && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Valor Estimado:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {caso.valor_estimado}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {!shouldShowField('resumen_caso') && !caso.resumen_caso && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {userRole === 'cliente' 
+                        ? 'Tu caso está siendo analizado por nuestros expertos.'
+                        : 'El análisis será generado cuando el caso sea procesado por nuestros expertos.'}
+                    </p>
                   )}
                 </div>
-                {caseData.telefono_borrador && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Teléfono
-                    </label>
-                    <p className="text-gray-900 dark:text-white mt-1">
-                      {caseData.telefono_borrador}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-green-600" />
+                  Estado del Caso
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {getTimelineSteps(caso.estado).map((step, index) => (
+                    <div key={step.id} className="flex items-center space-x-3">
+                      <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                        step.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                      }`}>
+                        {step.completed ? (
+                          <CheckCircle className="h-4 w-4" />
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-current" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-medium ${
+                          step.completed ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
+                        }`}>
+                          {step.label}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="documentos" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5 text-blue-600" />
+                  Tus Documentos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    No has subido documentos aún
+                  </p>
+                  <Button variant="outline" disabled>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Subir Documento
+                  </Button>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Funcionalidad próximamente disponible
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5 text-green-600" />
+                  Documentos del Abogado
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Cuando un abogado trabaje en tu caso, los documentos aparecerán aquí
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="interacciones" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-blue-600" />
+                Historial de Interacciones
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-96">
+                {caso.transcripcion_chat ? (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
+                        Chat Inicial con IA
+                      </p>
+                      <p className="text-sm text-blue-800 dark:text-blue-300">
+                        Conversación completada el {format(new Date(caso.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}
+                      </p>
+                    </div>
+                    <div className="border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        La transcripción completa del chat estará disponible próximamente.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">
+                      No hay interacciones registradas para este caso
                     </p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="documentos">
-          <DocumentManager casoId={caseData.id} />
-        </TabsContent>
-
-        <TabsContent value="conversacion" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Transcripción de la Conversación</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {caseData.transcripcion_chat ? (
-                <div className="space-y-4">
-                  {Array.isArray(caseData.transcripcion_chat) ? (
-                    caseData.transcripcion_chat.map((mensaje: any, index: number) => (
-                      <div key={index} className="border-l-4 border-blue-200 pl-4 py-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline" className="text-xs">
-                            {mensaje.role === 'user' ? 'Usuario' : 'VitorIA'}
-                          </Badge>
-                          {mensaje.timestamp && (
-                            <span className="text-xs text-gray-500">
-                              {format(new Date(mensaje.timestamp), 'HH:mm', { locale: es })}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
-                          {mensaje.content || mensaje.message}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Formato de conversación no reconocido
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                  No hay transcripción de conversación disponible
-                </p>
-              )}
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="propuesta" className="space-y-6">
+        <TabsContent value="pagos" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Propuesta Legal</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-green-600" />
+                Historial de Pagos
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              {caseData.propuesta_cliente ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Propuesta Generada
-                    </label>
-                    <div className="mt-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
-                        {caseData.propuesta_cliente}
-                      </p>
-                    </div>
-                  </div>
-
-                  {caseData.propuesta_estructurada && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Detalles Estructurados
-                      </label>
-                      <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
-                        <pre className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
-                          {JSON.stringify(caseData.propuesta_estructurada, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
-                </div>
+              {pagos.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Descripción</TableHead>
+                      <TableHead>Monto</TableHead>
+                      <TableHead>Estado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pagos.map((pago) => (
+                      <TableRow key={pago.id}>
+                        <TableCell>
+                          {format(new Date(pago.created_at), 'dd/MM/yyyy', { locale: es })}
+                        </TableCell>
+                        <TableCell>{pago.descripcion}</TableCell>
+                        <TableCell>€{(pago.monto / 100).toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge variant={pago.estado === 'succeeded' ? 'default' : 'secondary'}>
+                            {pago.estado === 'succeeded' ? 'Completado' : 'Pendiente'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               ) : (
                 <div className="text-center py-8">
-                  <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                  <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500 dark:text-gray-400">
-                    {caseData.estado === 'borrador' 
-                      ? 'La propuesta se generará cuando completes la conversación'
-                      : 'No hay propuesta disponible para este caso'
-                    }
+                    No hay pagos registrados para este caso
                   </p>
                 </div>
               )}
