@@ -96,11 +96,11 @@ const Chat = () => {
   useEffect(() => {
     if (!typebotReady || !casoId) return;
 
-    // Small delay to ensure Typebot starts loading first
+    // Longer delay to ensure Typebot loads completely first
     const backgroundTimer = setTimeout(() => {
       // Execute background operations
       backgroundOperations();
-    }, 100);
+    }, 3000);
 
     return () => clearTimeout(backgroundTimer);
   }, [typebotReady, casoId, user, loading]);

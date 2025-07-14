@@ -66,29 +66,8 @@ serve(async (req) => {
       )
     }
 
-    // Crear carpeta de documentos vacía para el caso
-    try {
-      const readmeContent = `# Documentos del Caso ${caso.id}
-
-Esta carpeta contiene los documentos adjuntos para este caso legal.
-Los documentos se organizan automáticamente por fecha de subida.
-
-Creado el: ${new Date().toISOString()}
-`;
-
-      const readmeFile = new Blob([readmeContent], { type: 'text/plain;charset=utf-8' });
-      
-      await supabaseClient.storage
-        .from('documentos_legales')
-        .upload(`casos/${caso.id}/adjuntos/.readme.txt`, readmeFile, {
-          upsert: true
-        });
-
-      console.log('Carpeta de documentos creada para el caso:', caso.id)
-    } catch (storageError) {
-      console.warn('Advertencia: No se pudo crear la carpeta inicial de documentos:', storageError)
-      // No fallar el proceso por esto, es solo para organización
-    }
+    // Nota: La carpeta de documentos se creará automáticamente cuando se suba el primer archivo
+    console.log('Caso creado - la carpeta de documentos se creará cuando sea necesaria:', caso.id)
 
     console.log('Caso creado exitosamente:', caso.id)
 
