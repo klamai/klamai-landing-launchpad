@@ -196,8 +196,9 @@ const Index = () => {
                 <div className="flex w-full justify-between lg:w-auto">
                 <button onClick={handleLogoClick} className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer">
   <img src="/logo.svg" alt="klamAI Logo" className="h-8" />
-</button>
+                      <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">KlamAI</span>
 
+</button>
                   <div className="flex items-center gap-4 lg:hidden">
                     <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
                       {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
