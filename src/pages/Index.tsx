@@ -415,7 +415,7 @@ const Index = () => {
                     </div>
 
                     <p className="mx-auto mt-8 max-w-10xl text-balance text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
-                      Resuelve tus consultas legales con <span className="font-semibold text-blue-700 dark:text-blue-300">VitorIA</span>, nuestro asistente inteligente, y conecta con abogados especialistas. Rápido, seguro y eficiente.
+                    Deja que <span className="font-semibold text-blue-700 dark:text-blue-300">VitorIA</span> estructure y organice tu caso legal. Nuestro asistente inteligente ofrece recomendaciones personalizadas y te conecta con el abogado especialista adecuado. Rápido, seguro y eficiente.
                     </p>
                     <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400 font-medium mt-4">
                       <div className="flex items-center gap-2">

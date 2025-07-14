@@ -245,13 +245,13 @@ export const Logo = () => {
       to="/abogados/dashboard"
       className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
     >
-      <Scale className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+      <img src="/logo2.svg" alt="klamAI Logo" className="h-8" />      
       <motion.span
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="font-bold text-black dark:text-white whitespace-pre text-xl tracking-tight"
       >
-        klamAI
+        
       </motion.span>
     </Link>
   );
@@ -263,7 +263,7 @@ export const LogoIcon = () => {
       to="/abogados/dashboard"
       className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
     >
-      <Scale className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-    </Link>
+      <img src="/logo.svg" alt="klamAI Logo" className="h-8" />      
+      </Link>
   );
 };

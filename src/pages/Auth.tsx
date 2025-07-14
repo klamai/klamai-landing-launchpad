@@ -399,9 +399,8 @@ const Auth = () => {
         <header className="fixed z-20 top-4 left-4 right-4">
           <div className="flex justify-between items-center">
             <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-full px-4 py-2 border border-white/20">
-              <Scale className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-              <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">klamAI</span>
-            </Link>
+            <img src="/logo.svg" alt="klamAI Logo" className="h-8" />
+            <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">KlamAI</span>            </Link>
 
             <div className="flex items-center gap-3">
               <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg border-white/20">
@@ -439,7 +438,7 @@ const Auth = () => {
                     className="mb-6"
                   >
                     <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200">
-                      <Scale className="text-white h-8 w-8" />
+                    <img src="/logo.svg" alt="klamAI Logo" className="h-8" />
                     </div>
                   </motion.div>
                   <motion.h2 
@@ -448,7 +447,7 @@ const Auth = () => {
                     transition={{ delay: 0.7, duration: 0.5 }}
                     className="text-4xl font-bold mb-2 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600"
                   >
-                    klamAI
+                    KlamAI
                   </motion.h2>
                   <motion.p 
                     initial={{ opacity: 0, y: -20 }}

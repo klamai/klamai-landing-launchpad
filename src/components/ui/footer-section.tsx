@@ -27,8 +27,9 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
           {/* Newsletter Section */}
           <div className="relative">
             <div className="flex items-center gap-3 mb-4">
-              <Scale className="h-8 w-8 text-white" />
-              <h2 className="text-2xl font-bold tracking-tight text-white">klamAI</h2>
+            <img src="/logo.svg" alt="klamAI Logo" className="h-8" />
+
+              <h2 className="text-2xl font-bold tracking-tight text-white">KlamAI</h2>
             </div>
             <p className="mb-6 text-blue-100">
               Recibe las últimas noticias sobre tecnología legal y consejos de VitorIA directamente en tu email.
