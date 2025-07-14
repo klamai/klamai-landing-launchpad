@@ -30,6 +30,7 @@ const Chat = () => {
   const [showPaymentButton, setShowPaymentButton] = useState(false);
   const [caseLinked, setCaseLinked] = useState(false);
   const [typebotReady, setTypebotReady] = useState(false);
+  const [proposalNotificationShown, setProposalNotificationShown] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -189,11 +190,12 @@ const Chat = () => {
         return;
       }
 
-      if (data.estado === 'listo_para_propuesta' && data.propuesta_estructurada) {
+      if (data.estado === 'listo_para_propuesta' && data.propuesta_estructurada && !proposalNotificationShown) {
         console.log('Case is ready for proposal!');
         setProposalData(data.propuesta_estructurada);
         setShowProposal(true);
         setShowPaymentButton(false);
+        setProposalNotificationShown(true);
         
         toast({
           title: "¡Tu propuesta está lista!",

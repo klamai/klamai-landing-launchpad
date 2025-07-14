@@ -20,7 +20,6 @@ interface PricingTier {
   features: Feature[]
   highlight?: boolean
   badge?: string
-  icon: React.ReactNode
   onSelect: () => void
 }
 
@@ -42,7 +41,7 @@ function PricingSection({ tier, className }: PricingSectionProps) {
 
   const badgeStyles = cn(
     "px-4 py-1.5 text-sm font-medium",
-    "bg-destructive text-destructive-foreground",
+    "bg-green-600 text-white",
     "border-none shadow-lg",
   )
 
@@ -50,7 +49,7 @@ function PricingSection({ tier, className }: PricingSectionProps) {
     <section
       className={cn(
         "relative bg-background text-foreground",
-        "py-12 px-4",
+        "py-8 px-4",
         "overflow-hidden",
         className,
       )}
@@ -63,38 +62,32 @@ function PricingSection({ tier, className }: PricingSectionProps) {
             </div>
           )}
 
-          <div className="p-8 flex-1">
-            <div className="flex items-center justify-center mb-6">
-              <div className="p-3 rounded-xl bg-primary/10 text-primary">
-                {tier.icon}
-              </div>
-            </div>
-
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-semibold text-foreground mb-4">
+          <div className="p-6 flex-1">
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-semibold text-foreground mb-3">
                 {tier.name}
               </h3>
               
               <div className="mb-4">
                 {/* Precio anterior tachado */}
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <span className="text-lg text-muted-foreground line-through">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <span className="text-base text-muted-foreground line-through">
                     {tier.originalPrice.toFixed(2)}€
                   </span>
-                  <Badge variant="destructive" className="text-xs">
+                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
                     -{discountPercentage}%
                   </Badge>
                 </div>
                 
                 {/* Precio actual */}
                 <div className="flex items-center justify-center gap-2">
-                  <span className="text-4xl font-bold text-foreground">
+                  <span className="text-3xl font-bold text-foreground">
                     {tier.price.toFixed(2)}€
                   </span>
                 </div>
                 
                 {/* Ahorro */}
-                <div className="mt-2 text-sm text-muted-foreground">
+                <div className="mt-1 text-sm text-muted-foreground">
                   Ahorras {discount.toFixed(2)}€
                 </div>
               </div>
@@ -104,17 +97,17 @@ function PricingSection({ tier, className }: PricingSectionProps) {
               </p>
             </div>
 
-            <div className="space-y-4 mb-8">
+            <div className="space-y-3 mb-6">
               {tier.features.map((feature) => (
                 <div key={feature.name} className="flex gap-3">
-                  <div className="mt-1 p-0.5 rounded-full transition-colors duration-200 text-green-600 dark:text-green-400">
-                    <Check className="w-4 h-4" />
+                  <div className="mt-0.5 p-0.5 rounded-full transition-colors duration-200 text-green-600 dark:text-green-400">
+                    <Check className="w-3 h-3" />
                   </div>
                   <div>
                     <div className="text-sm font-medium text-foreground">
                       {feature.name}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       {feature.description}
                     </div>
                   </div>
@@ -123,7 +116,7 @@ function PricingSection({ tier, className }: PricingSectionProps) {
             </div>
           </div>
 
-          <div className="p-8 pt-0 mt-auto">
+          <div className="p-6 pt-0 mt-auto">
             <Button
               onClick={tier.onSelect}
               className={cn(

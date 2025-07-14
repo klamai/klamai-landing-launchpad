@@ -137,7 +137,6 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     ],
     highlight: true,
     badge: 'Oferta Especial',
-    icon: <Sparkles className="w-7 h-7" />,
     onSelect: () => handlePlanSelect('consulta-estrategica')
   };
 
