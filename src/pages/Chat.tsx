@@ -196,11 +196,6 @@ const Chat = () => {
         setShowProposal(true);
         setShowPaymentButton(false);
         setProposalNotificationShown(true);
-        
-        toast({
-          title: "¡Tu propuesta está lista!",
-          description: "Hemos preparado una propuesta personalizada para tu caso.",
-        });
       }
     } catch (error) {
       console.error('Error in checkCaseStatus:', error);
