@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="Capa_1"
+   data-name="Capa 1"
+   viewBox="0 0 17 17"
+   version="1.1"
+   sodipodi:docname="favicon2.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview9"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="49.647059"
+     inkscape:cx="8.5"
+     inkscape:cy="8.5100711"
+     inkscape:window-width="1920"
+     inkscape:window-height="1016"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="Capa_1" />
+  <defs
+     id="defs4">
+    <style
+       id="style2">.cls-1{fill:#008cff;}</style>
+  </defs>
+  <path
+     class="cls-1"
+     d="M1.63,15.56a1.92,1.92,0,0,0,.74.15,1.86,1.86,0,0,0,1.25-.49l4.28-4,4.56,4.84H17v-.51L10.59,8.74l6.45-6V2.12H12.32L4.2,9.66V3H.52v10.9A1.83,1.83,0,0,0,1.63,15.56Z"
+     id="path6"
+     style="fill:#ffffff" />
+</svg>

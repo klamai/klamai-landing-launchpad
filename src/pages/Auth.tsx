@@ -438,7 +438,7 @@ const Auth = () => {
                     className="mb-6"
                   >
                     <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200">
-                    <img src="/logo.svg" alt="klamAI Logo" className="h-8" />
+                    <img src="/logo_white.svg" alt="klamAI Logo" className="h-8" />
                     </div>
                   </motion.div>
                   <motion.h2 
