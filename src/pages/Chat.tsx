@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,11 +29,12 @@ const Chat = () => {
   const [proposalData, setProposalData] = useState<any>(null);
   const [showPaymentButton, setShowPaymentButton] = useState(false);
   const [caseLinked, setCaseLinked] = useState(false);
+  const [typebotReady, setTypebotReady] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Initialize dark mode from localStorage
+  // Initialize dark mode from localStorage immediately
   useEffect(() => {
     const savedTheme = localStorage.getItem('darkMode');
     if (savedTheme !== null) {
@@ -65,61 +67,75 @@ const Chat = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Verificar que haya datos de consulta
+  // PRIORITY 1: Get essential data immediately for Typebot loading
   useEffect(() => {
     const savedConsultation = localStorage.getItem('userConsultation');
     const savedCasoId = localStorage.getItem('casoId');
-    const savedSessionToken = localStorage.getItem('current_session_token');
     
     if (!savedConsultation || !savedCasoId) {
       navigate('/');
       return;
     }
     
+    // Set data immediately for Typebot
     setUserConsultation(savedConsultation);
     setCasoId(savedCasoId);
+    setTypebotReady(true);
     
+    // Clean up localStorage after getting data
     localStorage.removeItem('userConsultation');
     localStorage.removeItem('casoId');
 
-    console.log('Datos recuperados del localStorage:', {
+    console.log('Essential data loaded for Typebot:', {
       consultation: savedConsultation,
-      casoId: savedCasoId,
-      sessionToken: savedSessionToken
+      casoId: savedCasoId
     });
   }, [navigate]);
 
-  // Función para generar token de sesión
-  const generateSessionToken = () => {
-    return crypto.randomUUID();
+  // PRIORITY 2: Background operations - only run after Typebot is ready
+  useEffect(() => {
+    if (!typebotReady || !casoId) return;
+
+    // Small delay to ensure Typebot starts loading first
+    const backgroundTimer = setTimeout(() => {
+      // Execute background operations
+      backgroundOperations();
+    }, 100);
+
+    return () => clearTimeout(backgroundTimer);
+  }, [typebotReady, casoId, user, loading]);
+
+  const backgroundOperations = async () => {
+    console.log('Starting background operations...');
+    
+    // Link case to user if authenticated
+    if (user && !caseLinked) {
+      await linkCaseToUser(user.id, casoId);
+    }
+    
+    // Check case status
+    await checkCaseStatus(casoId);
+    
+    // Set up real-time subscriptions after a longer delay
+    setTimeout(() => {
+      setupRealtimeSubscriptions();
+      setupPollingFallback();
+    }, 2000);
   };
 
-  // Función para vincular caso con usuario autenticado
   const linkCaseToUser = async (userId: string, caseId: string) => {
-    if (!userId || !caseId || caseLinked) {
-      console.log('Skipping case linking:', { userId: !!userId, caseId: !!caseId, caseLinked });
-      return;
-    }
+    if (!userId || !caseId || caseLinked) return;
 
     try {
       console.log('Linking case to user:', { userId, caseId });
       
-      // Obtener session_token del localStorage
       const sessionToken = localStorage.getItem('current_session_token');
       
       if (!sessionToken) {
         console.error('No session token found for case linking');
-        toast({
-          title: "Error",
-          description: "No se pudo verificar la propiedad del caso.",
-          variant: "destructive"
-        });
         return;
       }
 
-      console.log('Using secure function to assign case');
-      
-      // Usar la función segura para asignar el caso
       const { data, error } = await supabase.rpc('assign_anonymous_case_to_user', {
         p_caso_id: caseId,
         p_session_token: sessionToken,
@@ -128,59 +144,34 @@ const Chat = () => {
 
       if (error) {
         console.error('Error in assign_anonymous_case_to_user function:', error);
-        toast({
-          title: "Error",
-          description: "No se pudo asignar el caso. Podría haber expirado.",
-          variant: "destructive"
-        });
         return;
       }
 
       if (!data) {
         console.error('Case assignment returned false');
-        toast({
-          title: "Error",
-          description: "No se pudo asignar el caso. Podría haber expirado o ya estar asignado.",
-          variant: "destructive"
-        });
         return;
       }
 
       console.log('Case linked to user successfully');
       setCaseLinked(true);
 
-      // Limpiar tokens del localStorage después de asignación exitosa
+      // Transfer case data to profile
+      await transferCaseDataToProfile(userId, caseId);
+
+      // Clean up tokens after successful assignment
       localStorage.removeItem('current_caso_id');
       localStorage.removeItem('current_session_token');
       
     } catch (error) {
       console.error('Error in linkCaseToUser:', error);
-      toast({
-        title: "Error",
-        description: "Hubo un error al vincular el caso con tu perfil.",
-        variant: "destructive"
-      });
     }
   };
 
-  // Vincular caso cuando el usuario ya está autenticado desde el inicio
-  useEffect(() => {
-    if (user && casoId && !loading && !caseLinked) {
-      console.log('User is already authenticated, linking case:', { userId: user.id, casoId });
-      linkCaseToUser(user.id, casoId);
-    }
-  }, [user, casoId, loading, caseLinked]);
-
-  // Función para verificar el estado del caso
   const checkCaseStatus = async (caseId: string) => {
     if (!caseId) return;
     
     try {
       console.log('Checking case status for ID:', caseId);
-      console.log('Current auth state:', { 
-        user: user?.id, 
-        isAuthenticated: !!user 
-      });
       
       const { data, error } = await supabase
         .from('casos')
@@ -193,15 +184,13 @@ const Chat = () => {
         return;
       }
 
-      console.log('Current case data:', data);
-
       if (!data) {
         console.log('No case found with ID:', caseId);
         return;
       }
 
       if (data.estado === 'listo_para_propuesta' && data.propuesta_estructurada) {
-        console.log('Case is ready for proposal! Showing modal...');
+        console.log('Case is ready for proposal!');
         setProposalData(data.propuesta_estructurada);
         setShowProposal(true);
         setShowPaymentButton(false);
@@ -210,27 +199,13 @@ const Chat = () => {
           title: "¡Tu propuesta está lista!",
           description: "Hemos preparado una propuesta personalizada para tu caso.",
         });
-      } else {
-        console.log('Case not ready for proposal:', {
-          estado: data.estado,
-          hasPropuesta: !!data.propuesta_estructurada
-        });
       }
     } catch (error) {
       console.error('Error in checkCaseStatus:', error);
     }
   };
 
-  // Verificación inicial del estado del caso
-  useEffect(() => {
-    if (casoId && !showProposal) {
-      console.log('Setting up initial case status check for:', casoId);
-      checkCaseStatus(casoId);
-    }
-  }, [casoId]);
-
-  // Realtime subscription para detectar cambios de estado
-  useEffect(() => {
+  const setupRealtimeSubscriptions = () => {
     if (!casoId) return;
 
     console.log('Setting up realtime subscription for caso:', casoId);
@@ -246,15 +221,13 @@ const Chat = () => {
           filter: `id=eq.${casoId}`
         },
         (payload) => {
-          console.log('Realtime: Caso updated via realtime:', payload);
+          console.log('Realtime: Caso updated:', payload);
           const newCaso = payload.new;
           
           if (newCaso && newCaso.estado === 'listo_para_propuesta' && newCaso.propuesta_estructurada) {
-            console.log('Realtime: Showing proposal with data:', newCaso.propuesta_estructurada);
+            console.log('Realtime: Showing proposal');
             setProposalData(newCaso.propuesta_estructurada);
             setShowProposal(true);
-            
-            
           }
         }
       )
@@ -262,14 +235,14 @@ const Chat = () => {
         console.log('Realtime subscription status:', status);
       });
 
+    // Clean up on unmount
     return () => {
       console.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
-  }, [casoId, toast]);
+  };
 
-  // Polling fallback - verificar cada 30 segundos como respaldo
-  useEffect(() => {
+  const setupPollingFallback = () => {
     if (!casoId || showProposal) return;
 
     console.log('Setting up polling fallback for case:', casoId);
@@ -279,61 +252,18 @@ const Chat = () => {
         console.log('Polling: Checking case status...');
         checkCaseStatus(casoId);
       }
-    }, 30000); // Cada 30 segundos
+    }, 30000); // Every 30 seconds
 
     return () => {
       console.log('Cleaning up polling interval');
       clearInterval(pollingInterval);
     };
-  }, [casoId]);
-
-  // Secure communication with Typebot
-  useEffect(() => {
-    const handleTypebotMessage = (event: MessageEvent) => {
-      if (!event.data || typeof event.data !== 'object') {
-        console.log('Invalid message format received');
-        return;
-      }
-
-      const { type, mode } = event.data;
-
-      if (type === 'SHOW_AUTH_MODAL' && (mode === 'login' || mode === 'signup')) {
-        console.log('Valid auth modal request received:', { type, mode });
-        setAuthModalMode(mode);
-        setShowAuthModal(true);
-      } else {
-        console.log('Unknown message type or invalid mode:', { type, mode });
-      }
-    };
-
-    window.addEventListener('message', handleTypebotMessage);
-
-    return () => {
-      window.removeEventListener('message', handleTypebotMessage);
-    };
-  }, []);
-
-  const handleLogoClick = () => {
-    window.location.href = '/';
   };
 
-  const handleSelectSession = (sessionId: string) => {
-    setSelectedSessionId(sessionId);
-    console.log('Selected session:', sessionId);
-  };
-
-  // Manejar cierre del modal de propuesta
-  const handleProposalClose = () => {
-    setShowProposal(false);
-    setShowPaymentButton(true);
-  };
-
-  // Función mejorada para transferir datos del caso al perfil
   const transferCaseDataToProfile = async (userId: string, caseId: string) => {
     try {
       console.log('Starting data transfer process for user:', userId, 'case:', caseId);
       
-      // Verificar si es un perfil nuevo (sin datos previos)
       const { data: existingProfile, error: profileError } = await supabase
         .from('profiles')
         .select('nombre, apellido, email, telefono')
@@ -345,17 +275,11 @@ const Chat = () => {
         return;
       }
 
-      console.log('Existing profile:', existingProfile);
-
-      // Solo transferir datos si el perfil está vacío o es nuevo
       const isNewProfile = !existingProfile || 
         (!existingProfile.nombre && !existingProfile.apellido) ||
         existingProfile.nombre === '' || existingProfile.apellido === '';
 
-      console.log('Is new profile?', isNewProfile);
-
       if (isNewProfile) {
-        // Obtener todos los datos borrador del caso
         const { data: casoData, error: casoError } = await supabase
           .from('casos')
           .select(`
@@ -369,12 +293,8 @@ const Chat = () => {
         if (casoError) {
           console.error('Error fetching case data:', casoError);
         } else if (casoData) {
-          console.log('Case data to transfer:', casoData);
-          
-          // Obtener datos del usuario autenticado
           const { data: { user: currentUser } } = await supabase.auth.getUser();
           
-          // Preparar datos para actualizar, usando valores del caso o fallbacks
           const profileUpdate = {
             nombre: casoData.nombre_borrador || currentUser?.user_metadata?.nombre || '',
             apellido: casoData.apellido_borrador || currentUser?.user_metadata?.apellido || '',
@@ -388,9 +308,6 @@ const Chat = () => {
             nombre_gerente: casoData.nombre_gerente_borrador || null
           };
 
-          console.log('Profile update data:', profileUpdate);
-
-          // Actualizar perfil con todos los datos disponibles
           const { error: updateError } = await supabase
             .from('profiles')
             .update(profileUpdate)
@@ -398,11 +315,6 @@ const Chat = () => {
 
           if (updateError) {
             console.error('Error updating profile:', updateError);
-            toast({
-              title: "Error",
-              description: "Hubo un error al guardar tus datos. Por favor, actualízalos manualmente en tu perfil.",
-              variant: "destructive"
-            });
           } else {
             console.log('Profile updated successfully with case data');
             toast({
@@ -411,40 +323,54 @@ const Chat = () => {
             });
           }
         }
-      } else {
-        console.log('Profile already has data, skipping transfer');
       }
     } catch (error) {
       console.error('Error in transferCaseDataToProfile:', error);
-      toast({
-        title: "Error",
-        description: "Hubo un error al procesar tus datos. Por favor, revisa tu perfil.",
-        variant: "destructive"
-      });
     }
   };
 
-  // Manejar éxito de autenticación y copia de datos del caso
+  // Secure communication with Typebot
+  useEffect(() => {
+    const handleTypebotMessage = (event: MessageEvent) => {
+      if (!event.data || typeof event.data !== 'object') return;
+
+      const { type, mode } = event.data;
+
+      if (type === 'SHOW_AUTH_MODAL' && (mode === 'login' || mode === 'signup')) {
+        console.log('Valid auth modal request received:', { type, mode });
+        setAuthModalMode(mode);
+        setShowAuthModal(true);
+      }
+    };
+
+    window.addEventListener('message', handleTypebotMessage);
+    return () => window.removeEventListener('message', handleTypebotMessage);
+  }, []);
+
+  const handleLogoClick = () => {
+    window.location.href = '/';
+  };
+
+  const handleSelectSession = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    console.log('Selected session:', sessionId);
+  };
+
+  const handleProposalClose = () => {
+    setShowProposal(false);
+    setShowPaymentButton(true);
+  };
+
   const handleAuthSuccessWithCaseData = async () => {
     console.log('Starting handleAuthSuccessWithCaseData process...');
     setShowAuthModal(false);
     
-    // Esperar un momento para que el estado de autenticación se estabilice
     setTimeout(async () => {
-      console.log('Processing auth success with case data...');
-      
-      // Obtener el usuario actual para asegurar datos frescos
       const { data: { user: currentUser } } = await supabase.auth.getUser();
-      console.log('Current user from auth:', currentUser?.id);
       
       if (currentUser && casoId) {
-        // Transferir datos del caso al perfil
         await transferCaseDataToProfile(currentUser.id, casoId);
-        
-        // Vincular el caso con el usuario
         await linkCaseToUser(currentUser.id, casoId);
-      } else {
-        console.log('No user or case ID available for data transfer');
       }
 
       toast({
@@ -466,13 +392,17 @@ const Chat = () => {
         typebotIframe.contentWindow.postMessage(successMessage, '*');
         console.log('Auth success message sent to Typebot:', successMessage);
       }
-    }, 1000); // Esperar 1 segundo para que el perfil se cree completamente
+    }, 1000);
   };
 
-  if (loading) {
+  // Show loading while we get essential data
+  if (!typebotReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Iniciando VitorIA...</p>
+        </div>
       </div>
     );
   }
@@ -612,7 +542,7 @@ const Chat = () => {
             />
           )}
 
-          {/* Chat Container */}
+          {/* Chat Container - Typebot loads immediately */}
           <div className={cn(
             "flex-1 transition-all duration-300 relative z-10",
             sidebarOpen ? "lg:ml-0" : "lg:ml-0"
@@ -628,7 +558,7 @@ const Chat = () => {
                 }}
               />
               
-              {/* Botón flotante para continuar con planes */}
+              {/* Floating payment button */}
               {showPaymentButton && (
                 <div className="absolute bottom-4 right-4 z-20">
                   <Button 
@@ -667,7 +597,7 @@ const Chat = () => {
           </div>
         </footer>
 
-        {/* Modal de Autenticación */}
+        {/* Authentication Modal */}
         <AuthModal 
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
@@ -675,7 +605,7 @@ const Chat = () => {
           initialMode={authModalMode}
         />
 
-        {/* Modal de Propuesta */}
+        {/* Proposal Modal */}
         {showProposal && proposalData && (
           <ProposalDisplay 
             proposalData={proposalData} 

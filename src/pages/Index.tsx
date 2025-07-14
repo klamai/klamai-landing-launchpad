@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import SignOutButton from "@/components/SignOutButton";
+
 const transitionVariants = {
   item: {
     hidden: {
@@ -32,9 +33,10 @@ const transitionVariants = {
     }
   }
 };
+
 const testimonials = [{
   name: "María González",
-  role: "Empresaria",
+  role: "Empresaria", 
   company: "Valencia Tech",
   rating: 5,
   image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face",
@@ -54,7 +56,9 @@ const testimonials = [{
   image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face",
   testimonial: "Como directora de empresa, valoro la rapidez y precisión. VitorIA superó mis expectativas y me ahorró tiempo y dinero en consultas legales."
 }];
+
 const frequentQuestions = ["Quiero vender mi casa, cuál es el proceso legal?", "Cómo proteger la propiedad intelectual de mi negocio?", "Puedo modificar el acuerdo de custodia de mis hijos?", "Qué hacer si recibo una demanda por accidente de tráfico?", "Cómo resolver una disputa contractual con un proveedor?", "Qué pasos seguir si quiero divorciarme?"];
+
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [consultation, setConsultation] = useState("");
@@ -62,16 +66,10 @@ const Index = () => {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
-  const {
-    user,
-    loading
-  } = useAuth();
+  const { toast } = useToast();
+  const { user, loading } = useAuth();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Initialize dark mode from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem('darkMode');
     if (savedTheme !== null) {
@@ -84,12 +82,14 @@ const Index = () => {
       }
     }
   }, []);
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
     }
   }, [consultation]);
+
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
@@ -100,6 +100,7 @@ const Index = () => {
       document.documentElement.classList.remove('dark');
     }
   };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -107,43 +108,32 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
   const handleLogoClick = () => {
-    // If already on home page, scroll to top
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
   };
+
   const handleSubmit = async () => {
     if (!consultation.trim()) return;
     setIsSubmitting(true);
+    
     try {
-      // 1. Generar session_token para la seguridad
+      // 1. Generate session token for security
       const sessionToken = crypto.randomUUID();
       
-      // 2. Crear caso borrador en Supabase
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('crear-borrador-caso', {
+      // 2. Create draft case in Supabase
+      const { data, error } = await supabase.functions.invoke('crear-borrador-caso', {
         body: {
           motivo_consulta: consultation.trim(),
           session_token: sessionToken
         }
       });
+
       if (error) {
-        console.error('Error al crear caso borrador:', error);
-        toast({
-          title: "Error",
-          description: "No se pudo procesar tu consulta. Por favor, inténtalo de nuevo.",
-          variant: "destructive"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      const casoId = data?.caso_id;
-      if (!casoId) {
-        console.error('No se recibió caso_id de la función');
+        console.error('Error creating draft case:', error);
         toast({
           title: "Error",
           description: "No se pudo procesar tu consulta. Por favor, inténtalo de nuevo.",
@@ -153,19 +143,31 @@ const Index = () => {
         return;
       }
 
-      // 3. Guardar consulta, caso_id y session_token en localStorage
+      const casoId = data?.caso_id;
+      if (!casoId) {
+        console.error('No caso_id received from function');
+        toast({
+          title: "Error",
+          description: "No se pudo procesar tu consulta. Por favor, inténtalo de nuevo.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. Save essential data for immediate Typebot loading
       localStorage.setItem('userConsultation', consultation.trim());
       localStorage.setItem('casoId', casoId);
       localStorage.setItem('current_session_token', sessionToken);
-      console.log('Caso creado con ID:', casoId);
-      console.log('Consulta guardada:', consultation.trim());
+      
+      console.log('Case created with ID:', casoId);
+      console.log('Consultation saved:', consultation.trim());
 
-      // 3. Redirigir al chat
-      setTimeout(() => {
-        navigate('/chat');
-      }, 500);
+      // 4. Navigate immediately - no delay
+      navigate('/chat');
+      
     } catch (error) {
-      console.error('Error en handleSubmit:', error);
+      console.error('Error in handleSubmit:', error);
       toast({
         title: "Error",
         description: "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.",
@@ -174,13 +176,17 @@ const Index = () => {
       setIsSubmitting(false);
     }
   };
+
   const handleValueChange = (value: string) => {
     setConsultation(value);
   };
+
   const handleFrequentQuestion = (question: string) => {
     setConsultation(question);
   };
-  return <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
+
+  return (
+    <div className={`min-h-screen transition-all duration-300 font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
         {/* Header */}
         <header>
@@ -209,15 +215,19 @@ const Index = () => {
                     {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   </Button>
                   
-                  {!loading && <>
-                      {user ? <div className="flex items-center gap-4">
+                  {!loading && (
+                    <>
+                      {user ? (
+                        <div className="flex items-center gap-4">
                           <Link to="/dashboard">
                             <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200">
                               Dashboard
                             </Button>
                           </Link>
                           <SignOutButton />
-                        </div> : <>
+                        </div>
+                      ) : (
+                        <>
                           <Link to="/auth">
                             <Button variant="ghost" size="sm" className=" text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-black-800 dark:hover:bg-black">
                               Iniciar Sesión
@@ -228,22 +238,28 @@ const Index = () => {
                               Registrarse
                             </Button>
                           </Link>
-                        </>}
-                    </>}
+                        </>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 {/* Mobile menu */}
                 <div className="bg-background group-data-[state=active]:block hidden w-full p-4 rounded-2xl border shadow-lg mt-4 lg:hidden">
                   <div className="flex flex-col gap-3 w-full">
-                    {!loading && <>
-                        {user ? <>
+                    {!loading && (
+                      <>
+                        {user ? (
+                          <>
                             <Link to="/dashboard">
                               <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 w-full justify-center">
                                 Dashboard
                               </Button>
                             </Link>
                             <SignOutButton className="w-full justify-center" />
-                          </> : <>
+                          </>
+                        ) : (
+                          <>
                             <Link to="/auth">
                               <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center">
                                 Iniciar Sesión
@@ -254,8 +270,10 @@ const Index = () => {
                                 Registrarse
                               </Button>
                             </Link>
-                          </>}
-                      </>}
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -276,18 +294,17 @@ const Index = () => {
               <div className="mx-auto max-w-7xl px-6">
                 <div className="text-center sm:mx-auto lg:mr-auto lg:mt-0">
                   <AnimatedGroup variants={{
-                  container: {
-                    visible: {
-                      transition: {
-                        staggerChildren: 0.1,
-                        delayChildren: 0.1
+                    container: {
+                      visible: {
+                        transition: {
+                          staggerChildren: 0.1,
+                          delayChildren: 0.1
+                        }
                       }
-                    }
-                  },
-                  item: transitionVariants.item
-                }}>
+                    },
+                    item: transitionVariants.item
+                  }}>
                     
-                
                     <h1 className="mt-6  max-w-6xl mx-auto text-balance text-4xl sm:text-5xl md:text-6xl lg:text-7xl lg:mt-16 xl:text-[5.25rem] font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
                       Recibe asesoramiento jurídico
                       <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"> de abogados especialistas</span>
@@ -349,13 +366,14 @@ const Index = () => {
                             </div>
                           </div>
                         </div>
-                        
                       </div>
+                      
                       {consultation.trim() && (
-                          <div className="sm:hidden text-xs text-gray-400 animate-fade-in">
-                            {consultation.length}/500 caracteres
-                          </div>
-                        )}
+                        <div className="sm:hidden text-xs text-gray-400 animate-fade-in">
+                          {consultation.length}/500 caracteres
+                        </div>
+                      )}
+                      
                       {/* Quick suggestions - Enhanced - MOVED CLOSER TO INPUT */}
                       <div className="mt-12 sm:mt-16">
                         <p className="text-center text-gray-600 dark:text-gray-400 text-sm sm:text-base mb-4 sm:mb-6 flex items-center justify-center gap-2">
@@ -393,7 +411,6 @@ const Index = () => {
                           <Shield className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           100% confidencial y sin compromiso
                         </p>
-                        
                       </div>
                     </div>
 
@@ -411,7 +428,6 @@ const Index = () => {
                       </div>
                     </div>
                   </AnimatedGroup>
-
                 </div>
               </div>
             </div>
@@ -447,9 +463,6 @@ const Index = () => {
                   {testimonials.map(testimonial => <Testimonial key={testimonial.name} {...testimonial} />)}
                 </div>
               </div>
-
-              {/* Contact Section */}
-              
             </div>
           </section>
         </main>
@@ -457,6 +470,8 @@ const Index = () => {
         {/* New Footer */}
         <FooterSection darkMode={darkMode} onDarkModeToggle={toggleDarkMode} />
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
