@@ -220,16 +220,41 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                 </Card>
               </div>
 
-              {caso.guia_abogado && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Guía para el Abogado</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm whitespace-pre-wrap">{caso.guia_abogado}</p>
-                  </CardContent>
-                </Card>
-              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {caso.guia_abogado && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Guía para el Abogado</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ScrollArea className="h-32">
+                        <p className="text-sm whitespace-pre-wrap">{caso.guia_abogado}</p>
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                )}
+                
+                {caso.propuesta_estructurada && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Propuesta del Cliente</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ScrollArea className="h-32">
+                        <div className="text-sm">
+                          {typeof caso.propuesta_estructurada === 'string' ? (
+                            <p className="whitespace-pre-wrap">{caso.propuesta_estructurada}</p>
+                          ) : (
+                            <pre className="text-xs bg-gray-50 dark:bg-gray-800 p-2 rounded overflow-auto">
+                              {JSON.stringify(caso.propuesta_estructurada, null, 2)}
+                            </pre>
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="client" className="space-y-4">
@@ -331,26 +356,64 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
             </TabsContent>
 
             <TabsContent value="documents" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Documentos del Caso</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {caso.documentos_adjuntos ? (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Documentos adjuntos por el cliente:</p>
-                      <pre className="text-xs bg-gray-50 dark:bg-gray-800 p-2 rounded overflow-auto">
-                        {JSON.stringify(caso.documentos_adjuntos, null, 2)}
-                      </pre>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Documentos del Cliente</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {caso.documentos_adjuntos ? (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground mb-2">Documentos adjuntos por el cliente:</p>
+                        <div className="space-y-2">
+                          {Array.isArray(caso.documentos_adjuntos) ? (
+                            caso.documentos_adjuntos.map((doc: any, idx: number) => (
+                              <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm flex-1">{doc.nombre || `Documento ${idx + 1}`}</span>
+                                <Button variant="ghost" size="sm">
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))
+                          ) : (
+                            <pre className="text-xs bg-gray-50 dark:bg-gray-800 p-2 rounded overflow-auto">
+                              {JSON.stringify(caso.documentos_adjuntos, null, 2)}
+                            </pre>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No hay documentos del cliente</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Documentos de Resolución</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="text-center py-4 text-muted-foreground">
+                        <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No hay documentos de resolución</p>
+                      </div>
+                      <Button
+                        onClick={() => onUploadDocument(caso.id)}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Subir Documento de Resolución
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No hay documentos adjuntos</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </ScrollArea>
         </Tabs>

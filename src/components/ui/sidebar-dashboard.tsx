@@ -242,7 +242,7 @@ export const SidebarLink = ({
 export const Logo = () => {
   return (
     <Link
-      to="/dashboard"
+      to="/abogados/dashboard"
       className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
     >
       <Scale className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
@@ -260,7 +260,7 @@ export const Logo = () => {
 export const LogoIcon = () => {
   return (
     <Link
-      to="/dashboard"
+      to="/abogados/dashboard"
       className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
     >
       <Scale className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
