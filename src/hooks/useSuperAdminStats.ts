@@ -1,0 +1,264 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+
+interface SuperAdminStats {
+  totalCasos: number;
+  casosDisponibles: number;
+  casosAsignados: number;
+  casosCerrados: number;
+  totalAbogados: number;
+  abogadosActivos: number;
+  casosEsperandoPago: number;
+  casosAgotados: number;
+  loading: boolean;
+}
+
+interface CasosSuperAdmin {
+  id: string;
+  motivo_consulta: string;
+  especialidad_id: number;
+  estado: string;
+  created_at: string;
+  cliente_id: string;
+  compras_realizadas: number;
+  limite_compras: number;
+  costo_en_creditos: number;
+  especialidades?: { nombre: string };
+  profiles?: { nombre: string; apellido: string; email: string };
+  asignaciones_casos?: Array<{
+    abogado_id: string;
+    estado_asignacion: string;
+    fecha_asignacion: string;
+    profiles: { nombre: string; apellido: string; email: string };
+  }>;
+}
+
+interface AbogadoInfo {
+  id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  especialidades: number[] | null;
+  creditos_disponibles: number;
+  created_at: string;
+  casos_asignados: number;
+  casos_activos: number;
+}
+
+export const useSuperAdminStats = () => {
+  const [stats, setStats] = useState<SuperAdminStats>({
+    totalCasos: 0,
+    casosDisponibles: 0,
+    casosAsignados: 0,
+    casosCerrados: 0,
+    totalAbogados: 0,
+    abogadosActivos: 0,
+    casosEsperandoPago: 0,
+    casosAgotados: 0,
+    loading: true
+  });
+
+  const [casos, setCasos] = useState<CasosSuperAdmin[]>([]);
+  const [abogados, setAbogados] = useState<AbogadoInfo[]>([]);
+  const [loadingCasos, setLoadingCasos] = useState(true);
+  const [loadingAbogados, setLoadingAbogados] = useState(true);
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+      fetchCasos();
+      fetchAbogados();
+    }
+  }, [user]);
+
+  const fetchStats = async () => {
+    if (!user) return;
+
+    try {
+      // Verificar que el usuario es super admin
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, tipo_abogado')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile || profile.role !== 'abogado' || profile.tipo_abogado !== 'super_admin') {
+        console.error('Usuario no autorizado para ver estadísticas de super admin');
+        setStats(prev => ({ ...prev, loading: false }));
+        return;
+      }
+
+      // Obtener estadísticas de casos
+      const { data: casoStats } = await supabase
+        .from('casos')
+        .select('estado')
+        .in('estado', ['disponible', 'agotado', 'cerrado', 'esperando_pago']);
+
+      // Obtener estadísticas de abogados
+      const { data: abogadoStats } = await supabase
+        .from('profiles')
+        .select('id, created_at')
+        .eq('role', 'abogado')
+        .eq('tipo_abogado', 'regular');
+
+      // Obtener casos asignados
+      const { data: asignacionStats } = await supabase
+        .from('asignaciones_casos')
+        .select('caso_id')
+        .eq('estado_asignacion', 'activa');
+
+      const totalCasos = casoStats?.length || 0;
+      const casosDisponibles = casoStats?.filter(c => c.estado === 'disponible').length || 0;
+      const casosCerrados = casoStats?.filter(c => c.estado === 'cerrado').length || 0;
+      const casosEsperandoPago = casoStats?.filter(c => c.estado === 'esperando_pago').length || 0;
+      const casosAgotados = casoStats?.filter(c => c.estado === 'agotado').length || 0;
+      const casosAsignados = asignacionStats?.length || 0;
+      const totalAbogados = abogadoStats?.length || 0;
+      const abogadosActivos = abogadoStats?.filter(a => 
+        new Date(a.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      ).length || 0;
+
+      setStats({
+        totalCasos,
+        casosDisponibles,
+        casosAsignados,
+        casosCerrados,
+        totalAbogados,
+        abogadosActivos,
+        casosEsperandoPago,
+        casosAgotados,
+        loading: false
+      });
+
+    } catch (error) {
+      console.error('Error fetching super admin stats:', error);
+      setStats(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const fetchCasos = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('casos')
+        .select(`
+          id,
+          motivo_consulta,
+          especialidad_id,
+          estado,
+          created_at,
+          cliente_id,
+          compras_realizadas,
+          limite_compras,
+          costo_en_creditos,
+          especialidades (nombre),
+          profiles!casos_cliente_id_fkey (nombre, apellido, email),
+          asignaciones_casos!asignaciones_casos_caso_id_fkey (
+            abogado_id,
+            estado_asignacion,
+            fecha_asignacion,
+            profiles!asignaciones_casos_abogado_id_fkey (nombre, apellido, email)
+          )
+        `)
+        .in('estado', ['disponible', 'agotado', 'cerrado', 'esperando_pago'])
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching casos:', error);
+        setCasos([]);
+        return;
+      }
+
+      setCasos(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+      setCasos([]);
+    } finally {
+      setLoadingCasos(false);
+    }
+  };
+
+  const fetchAbogados = async () => {
+    if (!user) return;
+
+    try {
+      // Obtener abogados regulares
+      const { data: abogadosData, error } = await supabase
+        .from('profiles')
+        .select('id, nombre, apellido, email, especialidades, creditos_disponibles, created_at')
+        .eq('role', 'abogado')
+        .eq('tipo_abogado', 'regular')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching abogados:', error);
+        setAbogados([]);
+        return;
+      }
+
+      // Para cada abogado, obtener estadísticas de casos asignados
+      const abogadosConStats = await Promise.all(
+        (abogadosData || []).map(async (abogado) => {
+          const { data: asignaciones } = await supabase
+            .from('asignaciones_casos')
+            .select('caso_id, estado_asignacion')
+            .eq('abogado_id', abogado.id);
+
+          const casos_asignados = asignaciones?.length || 0;
+          const casos_activos = asignaciones?.filter(a => a.estado_asignacion === 'activa').length || 0;
+
+          return {
+            ...abogado,
+            casos_asignados,
+            casos_activos
+          };
+        })
+      );
+
+      setAbogados(abogadosConStats);
+    } catch (error) {
+      console.error('Error:', error);
+      setAbogados([]);
+    } finally {
+      setLoadingAbogados(false);
+    }
+  };
+
+  const assignCaseToLawyer = async (casoId: string, abogadoId: string, notas?: string) => {
+    try {
+      const { data, error } = await supabase.rpc('assign_case_to_lawyer', {
+        p_caso_id: casoId,
+        p_abogado_id: abogadoId,
+        p_notas: notas || null
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Refrescar datos
+      await Promise.all([fetchStats(), fetchCasos(), fetchAbogados()]);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error assigning case:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  return {
+    stats,
+    casos,
+    abogados,
+    loadingCasos,
+    loadingAbogados,
+    refetchStats: fetchStats,
+    refetchCasos: fetchCasos,
+    refetchAbogados: fetchAbogados,
+    assignCaseToLawyer
+  };
+};
