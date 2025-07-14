@@ -20,6 +20,7 @@ export interface Profile {
   nif_cif?: string;
   especialidades?: number[];
   creditos_disponibles: number;
+  tipo_abogado?: 'super_admin' | 'regular';
   created_at: string;
 }
 
@@ -123,5 +124,31 @@ export interface Notificacion {
   mensaje: string;
   leida: boolean;
   url_destino?: string;
+  created_at: string;
+}
+
+export interface AsignacionCaso {
+  id: string;
+  caso_id: string;
+  abogado_id: string;
+  asignado_por?: string;
+  fecha_asignacion: string;
+  estado_asignacion: 'activa' | 'completada' | 'cancelada';
+  notas_asignacion?: string;
+  created_at: string;
+}
+
+export interface DocumentoResolucion {
+  id: string;
+  caso_id: string;
+  abogado_id: string;
+  nombre_archivo: string;
+  ruta_archivo: string;
+  tipo_documento: string;
+  tamaño_archivo?: number;
+  descripcion?: string;
+  fecha_subida: string;
+  version: number;
+  es_version_final: boolean;
   created_at: string;
 }

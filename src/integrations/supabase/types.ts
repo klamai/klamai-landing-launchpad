@@ -14,6 +14,61 @@ export type Database = {
   }
   public: {
     Tables: {
+      asignaciones_casos: {
+        Row: {
+          abogado_id: string
+          asignado_por: string | null
+          caso_id: string
+          created_at: string
+          estado_asignacion: string | null
+          fecha_asignacion: string
+          id: string
+          notas_asignacion: string | null
+        }
+        Insert: {
+          abogado_id: string
+          asignado_por?: string | null
+          caso_id: string
+          created_at?: string
+          estado_asignacion?: string | null
+          fecha_asignacion?: string
+          id?: string
+          notas_asignacion?: string | null
+        }
+        Update: {
+          abogado_id?: string
+          asignado_por?: string | null
+          caso_id?: string
+          created_at?: string
+          estado_asignacion?: string | null
+          fecha_asignacion?: string
+          id?: string
+          notas_asignacion?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asignaciones_casos_abogado_id_fkey"
+            columns: ["abogado_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asignaciones_casos_asignado_por_fkey"
+            columns: ["asignado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asignaciones_casos_caso_id_fkey"
+            columns: ["caso_id"]
+            isOneToOne: false
+            referencedRelation: "casos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       casos: {
         Row: {
           acepto_politicas_inicial: boolean | null
@@ -182,6 +237,66 @@ export type Database = {
           },
         ]
       }
+      documentos_resolucion: {
+        Row: {
+          abogado_id: string
+          caso_id: string
+          created_at: string
+          descripcion: string | null
+          es_version_final: boolean | null
+          fecha_subida: string
+          id: string
+          nombre_archivo: string
+          ruta_archivo: string
+          tamaño_archivo: number | null
+          tipo_documento: string
+          version: number | null
+        }
+        Insert: {
+          abogado_id: string
+          caso_id: string
+          created_at?: string
+          descripcion?: string | null
+          es_version_final?: boolean | null
+          fecha_subida?: string
+          id?: string
+          nombre_archivo: string
+          ruta_archivo: string
+          tamaño_archivo?: number | null
+          tipo_documento: string
+          version?: number | null
+        }
+        Update: {
+          abogado_id?: string
+          caso_id?: string
+          created_at?: string
+          descripcion?: string | null
+          es_version_final?: boolean | null
+          fecha_subida?: string
+          id?: string
+          nombre_archivo?: string
+          ruta_archivo?: string
+          tamaño_archivo?: number | null
+          tipo_documento?: string
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_resolucion_abogado_id_fkey"
+            columns: ["abogado_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_resolucion_caso_id_fkey"
+            columns: ["caso_id"]
+            isOneToOne: false
+            referencedRelation: "casos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       especialidades: {
         Row: {
           id: number
@@ -296,6 +411,7 @@ export type Database = {
           role: Database["public"]["Enums"]["profile_role_enum"]
           stripe_customer_id: string | null
           telefono: string | null
+          tipo_abogado: Database["public"]["Enums"]["abogado_tipo_enum"] | null
           tipo_perfil: Database["public"]["Enums"]["profile_type_enum"]
         }
         Insert: {
@@ -317,6 +433,7 @@ export type Database = {
           role: Database["public"]["Enums"]["profile_role_enum"]
           stripe_customer_id?: string | null
           telefono?: string | null
+          tipo_abogado?: Database["public"]["Enums"]["abogado_tipo_enum"] | null
           tipo_perfil?: Database["public"]["Enums"]["profile_type_enum"]
         }
         Update: {
@@ -338,6 +455,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["profile_role_enum"]
           stripe_customer_id?: string | null
           telefono?: string | null
+          tipo_abogado?: Database["public"]["Enums"]["abogado_tipo_enum"] | null
           tipo_perfil?: Database["public"]["Enums"]["profile_type_enum"]
         }
         Relationships: []
@@ -519,9 +637,21 @@ export type Database = {
         Args: { p_caso_id: string; p_session_token: string; p_user_id: string }
         Returns: boolean
       }
+      assign_case_to_lawyer: {
+        Args: { p_caso_id: string; p_abogado_id: string; p_notas?: string }
+        Returns: boolean
+      }
+      can_access_case: {
+        Args: { p_caso_id: string }
+        Returns: boolean
+      }
       cleanup_expired_anonymous_cases: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      get_current_user_lawyer_type: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
@@ -529,6 +659,7 @@ export type Database = {
       }
     }
     Enums: {
+      abogado_tipo_enum: "super_admin" | "regular"
       caso_estado_enum:
         | "borrador"
         | "esperando_pago"
@@ -672,6 +803,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      abogado_tipo_enum: ["super_admin", "regular"],
       caso_estado_enum: [
         "borrador",
         "esperando_pago",
