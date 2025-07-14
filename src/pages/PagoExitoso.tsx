@@ -81,9 +81,9 @@ const PagoExitoso = () => {
         </h1>
         
         <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-          Tu pago ha sido procesado correctamente. 
+          Tu pago ha sido procesado con exito. 
           {casoActualizado 
-            ? " Tu caso ha sido activado y está disponible para los abogados especializados."
+            ? " Hemos activado tu caso y ahora está siendo revisado por nuestro equipo."
             : " En breve tu caso será activado y procesado por nuestro sistema."
           }
         </p>
@@ -109,7 +109,7 @@ const PagoExitoso = () => {
             <li className="flex items-start">
               <span className="text-green-500 mr-2">•</span>
               {casoActualizado 
-                ? "Tu caso ya está disponible en el marketplace de abogados"
+                ? "Revisa tu bandeja de entrada"
                 : "Recibirás un email de confirmación en los próximos minutos"
               }
             </li>
