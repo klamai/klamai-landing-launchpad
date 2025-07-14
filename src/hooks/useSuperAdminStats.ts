@@ -24,8 +24,18 @@ interface CasosSuperAdmin {
   compras_realizadas: number;
   limite_compras: number;
   costo_en_creditos: number;
+  valor_estimado?: string;
+  tipo_lead?: string;
+  ciudad_borrador?: string;
+  tipo_perfil_borrador?: string;
   especialidades?: { nombre: string };
-  profiles?: { nombre: string; apellido: string; email: string };
+  profiles?: { 
+    nombre: string; 
+    apellido: string; 
+    email: string;
+    ciudad?: string;
+    tipo_perfil?: string;
+  };
   asignaciones_casos?: Array<{
     abogado_id: string;
     estado_asignacion: string;

@@ -11,7 +11,8 @@ import {
   Moon, 
   Sun,
   UserCheck,
-  Briefcase
+  Briefcase,
+  Bot
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ import { useSuperAdminStats } from "@/hooks/useSuperAdminStats";
 import SuperAdminMetrics from "@/components/SuperAdminMetrics";
 import CasesManagement from "@/components/CasesManagement";
 import LawyersManagement from "@/components/LawyersManagement";
+import { Button } from "@/components/ui/button";
 
 const AbogadoDashboard = () => {
   const [open, setOpen] = useState(false);
@@ -59,6 +61,8 @@ const AbogadoDashboard = () => {
       setActiveSection("configuracion");
     } else if (path.includes('/notificaciones')) {
       setActiveSection("notificaciones");
+    } else if (path.includes('/asistente-ia')) {
+      setActiveSection("asistente-ia");
     } else {
       setActiveSection("dashboard");
     }
@@ -144,6 +148,13 @@ const AbogadoDashboard = () => {
         <Bell className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
+    {
+      label: "Asistente IA",
+      href: "/abogados/dashboard/asistente-ia",
+      icon: (
+        <Bot className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
   ];
 
   return (
@@ -221,6 +232,8 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
         return <ConfiguracionSection />;
       case "notificaciones":
         return <NotificacionesSection />;
+      case "asistente-ia":
+        return <AsistenteIASection />;
       default:
         return <SuperAdminDashboardSection />;
     }
@@ -367,6 +380,88 @@ const NotificacionesSection = () => (
     <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
       <Bell className="h-16 w-16 text-indigo-500 mx-auto mb-4" />
       <p className="text-gray-500 dark:text-gray-400">Centro de notificaciones próximamente disponible</p>
+    </div>
+  </motion.div>
+);
+
+const AsistenteIASection = () => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="space-y-6"
+  >
+    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Asistente IA Legal</h1>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2">
+        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg p-8 text-center border border-indigo-200 dark:border-indigo-800">
+          <Bot className="h-20 w-20 text-indigo-500 mx-auto mb-6" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Chat con IA Legal Especializada
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Obtén asistencia instantánea para análisis de casos, redacción de documentos y consultas legales especializadas.
+          </p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              🚀 Próximamente se integrará aquí el chat Typebot con IA especializada
+            </p>
+            <div className="space-y-2 text-left">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                <span>Análisis automático de casos</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                <span>Generación de documentos legales</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                <span>Consultas de jurisprudencia</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                <span>Asistencia en resoluciones</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="space-y-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Estadísticas de IA</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600 dark:text-gray-400">Consultas hoy</span>
+              <span className="font-medium">0</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600 dark:text-gray-400">Documentos generados</span>
+              <span className="font-medium">0</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600 dark:text-gray-400">Casos analizados</span>
+              <span className="font-medium">0</span>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Accesos Rápidos</h3>
+          <div className="space-y-2">
+            <Button variant="outline" size="sm" className="w-full justify-start">
+              <FileText className="h-4 w-4 mr-2" />
+              Generar contrato
+            </Button>
+            <Button variant="outline" size="sm" className="w-full justify-start">
+              <Scale className="h-4 w-4 mr-2" />
+              Analizar jurisprudencia
+            </Button>
+            <Button variant="outline" size="sm" className="w-full justify-start">
+              <Bot className="h-4 w-4 mr-2" />
+              Chat especializado
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   </motion.div>
 );
