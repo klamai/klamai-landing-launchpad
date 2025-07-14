@@ -419,8 +419,7 @@ const Chat = () => {
                     onClick={handleLogoClick}
                     className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
                   >
-                    <Scale className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">klamAI</span>
+                    <img src="/logo2.svg" alt="klamAI Logo" className="h-8" />                    <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight"></span>
                   </button>
 
                   <div className="flex items-center gap-4 lg:hidden">

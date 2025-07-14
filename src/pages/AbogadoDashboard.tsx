@@ -262,7 +262,7 @@ const SuperAdminDashboardSection = () => {
     >
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Panel de Administración - klamAI
+          Panel de Administración - KlamAI
         </h1>
         <p className="text-gray-600 dark:text-gray-300">
           Dashboard para la gestión completa de casos y abogados del bufete.
