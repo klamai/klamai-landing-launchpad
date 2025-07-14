@@ -106,7 +106,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     });
   };
 
-  // Solo mostramos el plan de consulta estratégica
+  // Plan único de pago con Price ID real de Stripe
   const singlePlan = {
     id: 'consulta-estrategica',
     name: 'Consulta Estratégica con Abogado Especialista',
@@ -137,6 +137,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     ],
     highlight: true,
     badge: 'Oferta Especial',
+    priceId: 'price_1Rc0kkI0mIGG72Op6Rk4GulG', // Price ID real de Stripe
     onSelect: () => handlePlanSelect('consulta-estrategica')
   };
 

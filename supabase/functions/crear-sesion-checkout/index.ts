@@ -52,29 +52,18 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     });
 
-    // Definir precios según el plan
-    const planPrices = {
-      'consulta-estrategica': {
-        amount: 3750, // 37.50€ en centavos
-        currency: 'eur',
-        name: 'Consulta Estratégica',
-        description: 'Análisis completo de tu caso con plan de acción'
-      },
-      'plan-asesoria': {
-        amount: 1990, // 19.90€ en centavos  
-        currency: 'eur',
-        name: 'Plan Asesoría Mensual',
-        description: 'Acompañamiento legal completo durante todo el proceso',
-        recurring: { interval: 'month' }
-      }
+    // Price IDs de Stripe (productos ya creados en producción)
+    const priceIds = {
+      'consulta-estrategica': 'price_1Rc0kkI0mIGG72Op6Rk4GulG', // Pago único €37.50
+      'plan-asesoria': 'price_1Rc0vCI0mIGG72OpSBXu3b2w'        // Suscripción mensual (futuro)
     };
 
-    const planConfig = planPrices[plan_id as keyof typeof planPrices];
-    if (!planConfig) {
+    if (!priceIds[plan_id as keyof typeof priceIds]) {
       throw new Error(`Plan no válido: ${plan_id}`);
     }
 
-    console.log('Configuración del plan:', planConfig);
+    const selectedPriceId = priceIds[plan_id as keyof typeof priceIds];
+    console.log('Price ID seleccionado:', selectedPriceId);
 
     // Verificar si ya existe un customer de Stripe para este usuario
     const customers = await stripe.customers.list({
@@ -99,20 +88,12 @@ serve(async (req) => {
       console.log('Nuevo customer creado:', customerId);
     }
 
-    // Determinar el modo de la sesión
-    const sessionMode = planConfig.recurring ? 'subscription' : 'payment';
+    // Determinar el modo según el Price ID (consulta-estrategica es pago único)
+    const sessionMode = plan_id === 'consulta-estrategica' ? 'payment' : 'subscription';
     
-    // Crear objeto de line items
+    // Usar Price ID directo en lugar de price_data
     const lineItems = [{
-      price_data: {
-        currency: planConfig.currency,
-        product_data: {
-          name: planConfig.name,
-          description: planConfig.description,
-        },
-        unit_amount: planConfig.amount,
-        ...(planConfig.recurring && { recurring: planConfig.recurring })
-      },
+      price: selectedPriceId,
       quantity: 1,
     }];
 

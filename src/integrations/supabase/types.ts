@@ -342,6 +342,39 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_webhook_events: {
+        Row: {
+          created_at: string | null
+          data: Json
+          error_message: string | null
+          event_type: string
+          id: string
+          processed: boolean | null
+          processed_at: string | null
+          stripe_event_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data: Json
+          error_message?: string | null
+          event_type: string
+          id?: string
+          processed?: boolean | null
+          processed_at?: string | null
+          stripe_event_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          processed?: boolean | null
+          processed_at?: string | null
+          stripe_event_id?: string
+        }
+        Relationships: []
+      }
       suscripciones_abogados: {
         Row: {
           abogado_id: string
