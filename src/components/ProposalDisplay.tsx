@@ -32,14 +32,14 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
   const plans = [
     {
       id: 'consulta-estrategica',
-      name: 'Consulta Estratégica',
+      name: 'Consulta Estratégica con Abogado',
       price: '37,50€',
       description: 'Análisis completo de tu caso con plan de acción',
       features: [
-        'Análisis detallado del caso',
-        'Estrategia personalizada',
-        'Documento de recomendaciones',
-        'Seguimiento de 7 días'
+        'Sesión de 30 minutos vía Zoom/WhatsApp con un abogado especialista.',
+        'Revisión detallada de tu caso y análisis documental.',
+        'Plan de acción con los pasos clave para tu situación.',
+        'Asesoramiento directo, sin esperas.'
       ],
       popular: false,
       color: 'blue'
