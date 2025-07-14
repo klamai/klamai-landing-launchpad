@@ -228,14 +228,16 @@ const AuthAbogado = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Verificar si es abogado
+        // Verificar si es abogado y su tipo
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, tipo_abogado')
           .eq('id', session.user.id)
           .single();
         
         if (profile?.role === 'abogado') {
+          // Por ahora todos los abogados van al mismo dashboard
+          // En el futuro: super_admin -> /abogados/dashboard, regular -> /abogados/casos
           navigate('/abogados/dashboard');
         } else {
           navigate('/dashboard');
@@ -284,7 +286,7 @@ const AuthAbogado = () => {
         throw error;
       }
 
-      // Verificar que el usuario es abogado
+      // Verificar que el usuario es abogado y obtener su tipo
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role, tipo_abogado')
@@ -298,10 +300,13 @@ const AuthAbogado = () => {
 
       toast({
         title: "¡Sesión iniciada con éxito!",
-        description: "Redirigiendo a tu dashboard...",
+        description: `Bienvenido ${profile.tipo_abogado === 'super_admin' ? 'Super Admin' : 'Abogado'}`,
       });
 
       setTimeout(() => {
+        // Por ahora todos van al dashboard de super admin
+        // Cuando implementemos dashboard regular:
+        // profile.tipo_abogado === 'super_admin' ? '/abogados/dashboard' : '/abogados/casos'
         navigate('/abogados/dashboard');
       }, 1000);
 

@@ -11,6 +11,7 @@ import Chat from "./pages/Chat";
 import Auth from "./pages/Auth";
 import AuthAbogado from "./pages/AuthAbogado";
 import Dashboard from "./pages/Dashboard";
+import AbogadoDashboard from "./pages/AbogadoDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import LegalNotice from "./pages/LegalNotice";
 import PagoExitoso from "./pages/PagoExitoso";
@@ -73,6 +74,13 @@ const App = () => (
             <Route path="/dashboard/notificaciones" element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Rutas protegidas del dashboard de abogados */}
+            <Route path="/abogados/dashboard/*" element={
+              <ProtectedRoute>
+                <AbogadoDashboard />
               </ProtectedRoute>
             } />
             
