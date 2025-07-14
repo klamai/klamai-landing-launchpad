@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Clock, Star, ArrowRight, X } from 'lucide-react';
+import { Star, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { PricingSection } from '@/components/ui/pricing-section';
 import AuthModal from '@/components/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -28,38 +28,6 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
-
-  const plans = [
-    {
-      id: 'consulta-estrategica',
-      name: 'Consulta Estratégica con Abogado',
-      price: '37,50€',
-      description: 'Análisis completo de tu caso con plan de acción',
-      features: [
-        'Sesión de 30 minutos vía Zoom/WhatsApp con un abogado especialista.',
-        'Revisión detallada de tu caso y análisis documental.',
-        'Plan de acción con los pasos clave para tu situación.',
-        'Asesoramiento directo, sin esperas.'
-      ],
-      popular: false,
-      color: 'blue'
-    },
-    {
-      id: 'plan-asesoria',
-      name: 'Plan Asesoría Mensual',
-      price: '19,90€/mes',
-      description: 'Acompañamiento legal completo durante todo el proceso',
-      features: [
-        'Todo lo de Consulta Estratégica',
-        'Asesoría ilimitada por WhatsApp',
-        'Revisión de documentos',
-        'Representación en gestiones',
-        'Seguimiento continuo'
-      ],
-      popular: true,
-      color: 'green'
-    }
-  ];
 
   const handlePlanSelect = (planId: string) => {
     setSelectedPlan(planId);
@@ -138,6 +106,60 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     });
   };
 
+  // Solo mostramos el plan de consulta estratégica
+  const singlePlan = {
+    id: 'consulta-estrategica',
+    name: 'Consulta Estratégica con Abogado Especialista',
+    originalPrice: 97.00,
+    price: 37.50,
+    description: 'Análisis completo de tu caso con plan de acción personalizado',
+    features: [
+      {
+        name: 'Sesión personalizada de 30 minutos',
+        description: 'Vía Zoom/WhatsApp con un abogado especialista en tu área.',
+        included: true
+      },
+      {
+        name: 'Revisión detallada de documentos',
+        description: 'Análisis completo de tu caso y documentación legal.',
+        included: true
+      },
+      {
+        name: 'Plan de acción específico',
+        description: 'Estrategia clara con los pasos clave para tu situación.',
+        included: true
+      },
+      {
+        name: 'Asesoramiento directo',
+        description: 'Sin esperas, acceso inmediato a orientación legal experta.',
+        included: true
+      }
+    ],
+    highlight: true,
+    badge: 'Oferta Especial',
+    icon: <Sparkles className="w-7 h-7" />,
+    onSelect: () => handlePlanSelect('consulta-estrategica')
+  };
+
+  // Planes ocultos para uso futuro
+  // const hiddenPlans = [
+  //   {
+  //     id: 'plan-asesoria',
+  //     name: 'Plan Asesoría Mensual',
+  //     price: '19,90€/mes',
+  //     description: 'Acompañamiento legal completo durante todo el proceso',
+  //     features: [
+  //       'Todo lo de Consulta Estratégica',
+  //       'Asesoría ilimitada por WhatsApp',
+  //       'Revisión de documentos',
+  //       'Representación en gestiones',
+  //       'Seguimiento continuo'
+  //     ],
+  //     popular: true,
+  //     color: 'green'
+  //   }
+  // ];
+
   return (
     <div className={cn(
       isModal 
@@ -183,66 +205,17 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
           </p>
         </motion.div>
 
-        {/* Planes de servicio */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-            >
-              <Card className={`relative p-8 h-full transition-all duration-300 hover:shadow-xl ${
-                plan.popular 
-                  ? 'border-green-500 shadow-lg transform scale-105' 
-                  : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
-              }`}>
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-                      Más Popular
-                    </span>
-                  </div>
-                )}
+        {/* Plan de servicio único */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <PricingSection tier={singlePlan} />
+        </motion.div>
 
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    {plan.name}
-                  </h3>
-                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-                    {plan.price}
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    {plan.description}
-                  </p>
-                </div>
-
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center">
-                      <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  onClick={() => handlePlanSelect(plan.id)}
-                  className={`w-full py-3 text-lg font-semibold transition-all duration-300 ${
-                    plan.popular
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
-                >
-                  Seleccionar Plan
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Opción de guardar progreso */}
+        {/* Sección de guardar progreso - comentada para uso futuro */}
+        {/* 
         <motion.div 
           className="text-center"
           initial={{ opacity: 0 }}
@@ -266,6 +239,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
             </Button>
           </div>
         </motion.div>
+        */}
       </div>
 
       {/* Modal de Autenticación */}
