@@ -427,7 +427,7 @@ const AuthAbogado = () => {
         {/* Header */}
         <header className="fixed z-20 top-4 left-4 right-4">
           <div className="flex justify-between items-center">
-            <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-full px-4 py-2 border border-white/20">
+            <Link to="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-full px-4 py-2 border border-white/20">
             <img src="/logo.svg" alt="klamAI Logo" className="h-8" />      
             <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">KlamAI</span>
               <span className="text-sm px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">Abogados</span>

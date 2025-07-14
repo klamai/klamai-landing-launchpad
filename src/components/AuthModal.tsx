@@ -176,8 +176,8 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
         <DialogHeader className="space-y-3 pb-4">
           <DialogTitle className="flex flex-col items-center gap-3 text-center">
             <div className="flex items-center gap-2">
-              <Scale className="h-6 w-6 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900 dark:text-white">klamAI</span>
+            <img src="/logo.svg" alt="klamAI Logo" className="h-8" />      
+              <span className="text-xl font-bold text-gray-900 dark:text-white">KlamAI</span>
             </div>
             <div className="space-y-1">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">

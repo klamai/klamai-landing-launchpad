@@ -13,10 +13,9 @@ const ChatHistoryAnonymous = ({ onAuthClick }: ChatHistoryAnonymousProps) => {
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <div className="flex items-center gap-2">
-          <Scale className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-          <MessageCircle className="h-5 w-5 text-slate-700 dark:text-white" />
+        <img src="/logo.svg" alt="klamAI Logo" className="h-8" />      
         </div>
-        <span className="text-lg font-semibold text-slate-900 dark:text-white">Mis Consultas</span>
+        <span className="text-lg  font-semibold text-slate-900 dark:text-white">Mis Consultas</span>
         <Lock className="h-4 w-4 text-blue-600 dark:text-blue-400 ml-auto" />
       </div>
 
