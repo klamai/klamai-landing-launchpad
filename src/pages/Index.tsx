@@ -194,10 +194,9 @@ const Index = () => {
             <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-white/80 dark:bg-gray-800/80 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
               <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
                 <div className="flex w-full justify-between lg:w-auto">
-                  <button onClick={handleLogoClick} className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer">
-                    <Scale className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">klamAI</span>
-                  </button>
+                <button onClick={handleLogoClick} className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer">
+  <img src="/logo.svg" alt="klamAI Logo" className="h-8" />
+</button>
 
                   <div className="flex items-center gap-4 lg:hidden">
                     <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
