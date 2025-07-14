@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import DashboardRedirect from "@/components/DashboardRedirect";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import Auth from "./pages/Auth";
@@ -38,42 +39,58 @@ const App = () => (
             {/* Rutas protegidas del dashboard */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
-                <Dashboard />
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/nueva-consulta" element={
               <ProtectedRoute>
-                <Dashboard />
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/casos" element={
               <ProtectedRoute>
-                <Dashboard />
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/casos/:casoId" element={
               <ProtectedRoute>
-                <Dashboard />
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/perfil" element={
               <ProtectedRoute>
-                <Dashboard />
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/configuracion" element={
               <ProtectedRoute>
-                <Dashboard />
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/facturacion" element={
               <ProtectedRoute>
-                <Dashboard />
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/notificaciones" element={
               <ProtectedRoute>
-                <Dashboard />
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
               </ProtectedRoute>
             } />
             

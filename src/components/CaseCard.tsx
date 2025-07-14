@@ -20,6 +20,8 @@ interface CaseCardProps {
   caso: {
     id: string;
     motivo_consulta: string;
+    resumen_caso?: string;
+    guia_abogado?: string;
     especialidad_id: number;
     estado: string;
     created_at: string;
@@ -27,6 +29,12 @@ interface CaseCardProps {
     valor_estimado?: string;
     tipo_lead?: string;
     ciudad_borrador?: string;
+    nombre_borrador?: string;
+    apellido_borrador?: string;
+    email_borrador?: string;
+    telefono_borrador?: string;
+    tipo_perfil_borrador?: string;
+    documentos_adjuntos?: any;
     especialidades?: { nombre: string };
     profiles?: { nombre: string; apellido: string; email: string };
     asignaciones_casos?: Array<{
@@ -79,20 +87,20 @@ const CaseCard: React.FC<CaseCardProps> = ({
     const typeConfig = {
       'premium': { 
         label: 'Premium', 
-        className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+        className: 'bg-muted text-muted-foreground'
       },
       'urgente': { 
         label: 'Urgente', 
-        className: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+        className: 'bg-muted text-muted-foreground'
       },
       'estandar': { 
         label: 'Estándar', 
-        className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+        className: 'bg-muted text-muted-foreground'
       }
     };
     
     const config = typeConfig[tipo as keyof typeof typeConfig] || typeConfig.estandar;
-    return <Badge className={config.className}>{config.label}</Badge>;
+    return <Badge variant="secondary" className={config.className}>{config.label}</Badge>;
   };
 
   return (
@@ -109,8 +117,11 @@ const CaseCard: React.FC<CaseCardProps> = ({
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-foreground truncate text-sm">
-                  {caso.profiles?.nombre} {caso.profiles?.apellido}
+                  {caso.profiles?.nombre || caso.nombre_borrador} {caso.profiles?.apellido || caso.apellido_borrador}
                 </h3>
+                <p className="text-xs text-muted-foreground">
+                  {caso.profiles?.email || caso.email_borrador}
+                </p>
               </div>
               <div className="flex flex-wrap gap-1 ml-2">
                 {getStatusBadge(caso.estado)}
@@ -120,10 +131,31 @@ const CaseCard: React.FC<CaseCardProps> = ({
 
             {/* Motivo de consulta */}
             <div>
+              <p className="text-sm font-medium text-foreground mb-1">Motivo:</p>
               <p className="text-sm text-muted-foreground line-clamp-2">
                 {caso.motivo_consulta}
               </p>
             </div>
+
+            {/* Resumen del caso */}
+            {caso.resumen_caso && (
+              <div>
+                <p className="text-sm font-medium text-foreground mb-1">Resumen:</p>
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {caso.resumen_caso}
+                </p>
+              </div>
+            )}
+
+            {/* Guía para abogado */}
+            {caso.guia_abogado && (
+              <div>
+                <p className="text-sm font-medium text-foreground mb-1">Guía:</p>
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {caso.guia_abogado}
+                </p>
+              </div>
+            )}
 
             {/* Info grid */}
             <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
@@ -141,13 +173,20 @@ const CaseCard: React.FC<CaseCardProps> = ({
                   <span>{caso.ciudad_borrador}</span>
                 </div>
               )}
-              {caso.valor_estimado && (
+              {caso.tipo_perfil_borrador && (
                 <div className="flex items-center gap-1">
-                  <Euro className="h-3 w-3" />
-                  <span>{caso.valor_estimado}</span>
+                  <span className="capitalize">{caso.tipo_perfil_borrador}</span>
                 </div>
               )}
             </div>
+
+            {/* Documentos del cliente */}
+            {caso.documentos_adjuntos && Array.isArray(caso.documentos_adjuntos) && caso.documentos_adjuntos.length > 0 && (
+              <div className="text-xs bg-blue-50 dark:bg-blue-900/20 p-2 rounded text-blue-700 dark:text-blue-300">
+                <FileText className="h-3 w-3 inline mr-1" />
+                {caso.documentos_adjuntos.length} documento(s) adjunto(s)
+              </div>
+            )}
 
             {/* Assignment status */}
             {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
