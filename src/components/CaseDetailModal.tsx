@@ -31,13 +31,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { toZonedTime } from 'date-fns-tz';
 
 interface CaseDetailModalProps {
   caso: {
     id: string;
     motivo_consulta: string;
+    resumen_caso?: string;
+    guia_abogado?: string;
     estado: string;
     created_at: string;
     valor_estimado?: string;
@@ -45,7 +48,6 @@ interface CaseDetailModalProps {
     tipo_perfil_borrador?: string;
     transcripcion_chat?: any;
     propuesta_estructurada?: any;
-    guia_abogado?: string;
     documentos_adjuntos?: any;
     nombre_borrador?: string;
     apellido_borrador?: string;
@@ -54,6 +56,9 @@ interface CaseDetailModalProps {
     ciudad_borrador?: string;
     razon_social_borrador?: string;
     nif_cif_borrador?: string;
+    nombre_gerente_borrador?: string;
+    direccion_fiscal_borrador?: string;
+    preferencia_horaria_contacto?: string;
     especialidades?: { nombre: string };
     profiles?: { 
       nombre: string; 
@@ -64,6 +69,8 @@ interface CaseDetailModalProps {
       tipo_perfil: string;
       razon_social?: string;
       nif_cif?: string;
+      nombre_gerente?: string;
+      direccion_fiscal?: string;
     };
     asignaciones_casos?: Array<{
       abogado_id: string;
@@ -94,6 +101,10 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
 
   if (!caso) return null;
 
+  // Convertir a zona horaria de España
+  const spainTimeZone = 'Europe/Madrid';
+  const casoDate = toZonedTime(new Date(caso.created_at), spainTimeZone);
+
   const clientData = caso.profiles || {
     nombre: caso.nombre_borrador || '',
     apellido: caso.apellido_borrador || '',
@@ -102,7 +113,9 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     ciudad: caso.ciudad_borrador || '',
     tipo_perfil: caso.tipo_perfil_borrador || 'individual',
     razon_social: caso.razon_social_borrador || '',
-    nif_cif: caso.nif_cif_borrador || ''
+    nif_cif: caso.nif_cif_borrador || '',
+    nombre_gerente: caso.nombre_gerente_borrador || '',
+    direccion_fiscal: caso.direccion_fiscal_borrador || ''
   };
 
   const getStatusBadge = (estado: string) => {
@@ -155,27 +168,53 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                   <CardHeader>
                     <CardTitle className="text-base">Información del Caso</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-4">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Motivo de consulta:</p>
                       <p className="text-sm">{caso.motivo_consulta}</p>
                     </div>
-                    <div className="flex items-center gap-4 text-sm">
+                    
+                    {caso.resumen_caso && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Resumen del caso:</p>
+                        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded text-sm">
+                          {caso.resumen_caso}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{format(new Date(caso.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}</span>
+                        <div>
+                          <span>{format(casoDate, 'dd/MM/yyyy HH:mm', { locale: es })}</span>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(casoDate, { locale: es, addSuffix: true })}
+                          </p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-1">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <span>{caso.especialidades?.nombre || 'Sin especialidad'}</span>
                       </div>
                     </div>
-                    {caso.valor_estimado && (
-                      <div className="flex items-center gap-1 text-sm">
-                        <Euro className="h-4 w-4 text-muted-foreground" />
-                        <span>Valor estimado: {caso.valor_estimado}</span>
-                      </div>
-                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {caso.tipo_lead && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Tipo de lead:</p>
+                          <Badge variant="secondary" className="capitalize">{caso.tipo_lead}</Badge>
+                        </div>
+                      )}
+                      {caso.valor_estimado && (
+                        <div className="flex items-center gap-1 text-sm">
+                          <Euro className="h-4 w-4 text-green-600" />
+                          <span className="font-medium text-green-700 dark:text-green-400">
+                            Valor estimado: {caso.valor_estimado}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -227,9 +266,9 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                       <CardTitle className="text-base">Guía para el Abogado</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ScrollArea className="h-32">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
                         <p className="text-sm whitespace-pre-wrap">{caso.guia_abogado}</p>
-                      </ScrollArea>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
@@ -317,18 +356,32 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
 
                   {clientData.tipo_perfil === 'empresa' && (
                     <>
-                      {clientData.razon_social && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Razón social:</p>
-                          <p className="text-sm">{clientData.razon_social}</p>
-                        </div>
-                      )}
-                      {clientData.nif_cif && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">NIF/CIF:</p>
-                          <p className="text-sm">{clientData.nif_cif}</p>
-                        </div>
-                      )}
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded space-y-2">
+                        {clientData.razon_social && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Razón social:</p>
+                            <p className="text-sm font-semibold">{clientData.razon_social}</p>
+                          </div>
+                        )}
+                        {clientData.nif_cif && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">NIF/CIF:</p>
+                            <p className="text-sm">{clientData.nif_cif}</p>
+                          </div>
+                        )}
+                        {clientData.nombre_gerente && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Nombre del gerente:</p>
+                            <p className="text-sm">{clientData.nombre_gerente}</p>
+                          </div>
+                        )}
+                        {clientData.direccion_fiscal && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Dirección fiscal:</p>
+                            <p className="text-sm">{clientData.direccion_fiscal}</p>
+                          </div>
+                        )}
+                      </div>
                     </>
                   )}
                 </CardContent>

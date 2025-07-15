@@ -86,22 +86,32 @@ const CasesManagement = () => {
   const specialties = Array.from(new Set(casos.map(c => c.especialidades?.nombre).filter(Boolean)));
   const cities = Array.from(new Set(casos.map(c => c.ciudad_borrador || c.profiles?.ciudad).filter(Boolean)));
   const leadTypes = Array.from(new Set(casos.map(c => c.tipo_lead).filter(Boolean)));
+  const profileTypes = Array.from(new Set(casos.map(c => c.tipo_perfil_borrador || c.profiles?.tipo_perfil).filter(Boolean)));
 
   const filteredCasos = casos.filter(caso => {
+    const clientData = {
+      nombre: caso.profiles?.nombre || caso.nombre_borrador || '',
+      apellido: caso.profiles?.apellido || caso.apellido_borrador || '',
+      email: caso.profiles?.email || caso.email_borrador || '',
+      ciudad: caso.profiles?.ciudad || caso.ciudad_borrador || '',
+      tipo_perfil: caso.profiles?.tipo_perfil || caso.tipo_perfil_borrador || 'individual',
+      razon_social: caso.profiles?.razon_social || caso.razon_social_borrador || ''
+    };
+
     const matchesSearch = caso.motivo_consulta?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         caso.profiles?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         caso.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         caso.ciudad_borrador?.toLowerCase().includes(searchTerm.toLowerCase());
+                         clientData.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         clientData.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         clientData.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         clientData.ciudad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         clientData.razon_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         caso.resumen_caso?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         caso.valor_estimado?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || caso.estado === statusFilter;
     const matchesSpecialty = specialtyFilter === 'all' || caso.especialidades?.nombre === specialtyFilter;
     const matchesType = typeFilter === 'all' || caso.tipo_lead === typeFilter;
-    const matchesCity = cityFilter === 'all' || 
-                       caso.ciudad_borrador === cityFilter || 
-                       caso.profiles?.ciudad === cityFilter;
-    const matchesProfileType = profileTypeFilter === 'all' || 
-                              caso.tipo_perfil_borrador === profileTypeFilter ||
-                              caso.profiles?.tipo_perfil === profileTypeFilter;
+    const matchesCity = cityFilter === 'all' || clientData.ciudad === cityFilter;
+    const matchesProfileType = profileTypeFilter === 'all' || clientData.tipo_perfil === profileTypeFilter;
     
     return matchesSearch && matchesStatus && matchesSpecialty && matchesType && matchesCity && matchesProfileType;
   });

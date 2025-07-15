@@ -17,6 +17,8 @@ interface SuperAdminStats {
 interface CasosSuperAdmin {
   id: string;
   motivo_consulta: string;
+  resumen_caso?: string;
+  guia_abogado?: string;
   especialidad_id: number;
   estado: string;
   created_at: string;
@@ -27,14 +29,29 @@ interface CasosSuperAdmin {
   valor_estimado?: string;
   tipo_lead?: string;
   ciudad_borrador?: string;
+  nombre_borrador?: string;
+  apellido_borrador?: string;
+  email_borrador?: string;
+  telefono_borrador?: string;
   tipo_perfil_borrador?: string;
+  razon_social_borrador?: string;
+  nif_cif_borrador?: string;
+  nombre_gerente_borrador?: string;
+  direccion_fiscal_borrador?: string;
+  preferencia_horaria_contacto?: string;
+  documentos_adjuntos?: any;
   especialidades?: { nombre: string };
   profiles?: { 
     nombre: string; 
     apellido: string; 
     email: string;
+    telefono?: string;
     ciudad?: string;
     tipo_perfil?: string;
+    razon_social?: string;
+    nif_cif?: string;
+    nombre_gerente?: string;
+    direccion_fiscal?: string;
   };
   asignaciones_casos?: Array<{
     abogado_id: string;
@@ -158,6 +175,8 @@ export const useSuperAdminStats = () => {
         .select(`
           id,
           motivo_consulta,
+          resumen_caso,
+          guia_abogado,
           especialidad_id,
           estado,
           created_at,
@@ -165,8 +184,33 @@ export const useSuperAdminStats = () => {
           compras_realizadas,
           limite_compras,
           costo_en_creditos,
+          valor_estimado,
+          tipo_lead,
+          ciudad_borrador,
+          nombre_borrador,
+          apellido_borrador,
+          email_borrador,
+          telefono_borrador,
+          tipo_perfil_borrador,
+          razon_social_borrador,
+          nif_cif_borrador,
+          nombre_gerente_borrador,
+          direccion_fiscal_borrador,
+          preferencia_horaria_contacto,
+          documentos_adjuntos,
           especialidades (nombre),
-          profiles!casos_cliente_id_fkey (nombre, apellido, email),
+          profiles!casos_cliente_id_fkey (
+            nombre, 
+            apellido, 
+            email, 
+            telefono, 
+            ciudad, 
+            tipo_perfil, 
+            razon_social, 
+            nif_cif, 
+            nombre_gerente, 
+            direccion_fiscal
+          ),
           asignaciones_casos!asignaciones_casos_caso_id_fkey (
             abogado_id,
             estado_asignacion,
