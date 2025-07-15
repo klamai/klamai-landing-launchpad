@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,23 +26,6 @@ export const useDocumentManagement = (casoId?: string) => {
   const [documentosResolucion, setDocumentosResolucion] = useState<DocumentoResolucion[]>([]);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-
-  // Función para sanitizar nombres de archivos
-  const sanitizeFileName = (fileName: string): string => {
-    // Extraer nombre y extensión
-    const lastDotIndex = fileName.lastIndexOf('.');
-    const name = lastDotIndex > 0 ? fileName.substring(0, lastDotIndex) : fileName;
-    const extension = lastDotIndex > 0 ? fileName.substring(lastDotIndex) : '';
-    
-    // Sanitizar el nombre: reemplazar espacios por guiones bajos y eliminar caracteres especiales
-    const sanitizedName = name
-      .replace(/\s+/g, '_') // Reemplazar espacios por guiones bajos
-      .replace(/[^a-zA-Z0-9._-]/g, '') // Eliminar caracteres especiales excepto puntos, guiones y guiones bajos
-      .replace(/_{2,}/g, '_') // Reemplazar múltiples guiones bajos por uno solo
-      .replace(/^_+|_+$/g, ''); // Eliminar guiones bajos al inicio y final
-    
-    return sanitizedName + extension;
-  };
 
   const fetchDocumentosResolucion = async () => {
     if (!casoId) return;
@@ -86,15 +68,14 @@ export const useDocumentManagement = (casoId?: string) => {
     }
 
     try {
-      // Sanitizar el nombre del archivo
-      const sanitizedFileName = sanitizeFileName(file.name);
+      // Generar nombre único para el archivo usando la estructura correcta
       const timestamp = Date.now();
-      const fileName = `${timestamp}_${sanitizedFileName}`;
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `${timestamp}_${file.name}`;
+      // Usar la estructura de paths que esperan las políticas RLS: casos/{caso_id}/documentos_resolucion/
       const filePath = `casos/${casoId}/documentos_resolucion/${fileName}`;
 
       console.log('Subiendo archivo con path:', filePath);
-      console.log('Nombre original:', file.name);
-      console.log('Nombre sanitizado:', sanitizedFileName);
 
       // Subir archivo a Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -106,15 +87,15 @@ export const useDocumentManagement = (casoId?: string) => {
         throw uploadError;
       }
 
-      // Guardar metadatos en la base de datos
+      // Guardar metadatos en la base de datos (guardamos el path del archivo)
       const { error: dbError } = await supabase
         .from('documentos_resolucion')
         .insert({
           caso_id: casoId,
           abogado_id: user.id,
           tipo_documento: tipoDocumento,
-          nombre_archivo: file.name, // Mantener el nombre original para mostrar al usuario
-          ruta_archivo: filePath,
+          nombre_archivo: file.name,
+          ruta_archivo: filePath, // Guardamos el path relativo en lugar de la URL
           tamaño_archivo: file.size,
           descripcion: descripcion || null,
           version: 1,
@@ -226,12 +207,15 @@ export const useDocumentManagement = (casoId?: string) => {
         throw dbError;
       }
 
-      console.log('Eliminando archivo con path:', documento.ruta_archivo);
+      // El ruta_archivo ya contiene el path relativo
+      const filePath = documento.ruta_archivo;
+
+      console.log('Eliminando archivo con path:', filePath);
 
       // Eliminar archivo del storage
       await supabase.storage
         .from('documentos_legales')
-        .remove([documento.ruta_archivo]);
+        .remove([filePath]);
 
       // Refrescar la lista
       await fetchDocumentosResolucion();
