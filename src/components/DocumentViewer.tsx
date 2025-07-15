@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { X, Download, FileText, Image as ImageIcon, File } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface DocumentViewerProps {
   isOpen: boolean;
@@ -20,11 +22,31 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onClose,
   document
 }) => {
+  const [textContent, setTextContent] = React.useState('');
+
+  React.useEffect(() => {
+    if (!document) return; // Early exit for useEffect if document is null
+
+    const isText = document.type?.startsWith('text/') ||
+      /\.(txt|json|xml|csv|html|js|ts|jsx|tsx|css|scss)$/i.test(document.name);
+    const isMarkdown = document.type === 'text/markdown' || document.name.toLowerCase().endsWith('.md');
+
+    if (isText || isMarkdown) {
+      fetch(document.url)
+        .then(response => response.text())
+        .then(text => setTextContent(text))
+        .catch(() => setTextContent('No se pudo cargar el contenido del archivo'));
+    }
+  }, [document, textContent]); // Add document to dependency array
+
   if (!document) return null;
 
   const isPDF = document.name.toLowerCase().endsWith('.pdf') || document.type?.includes('pdf');
   const isImage = document.type?.startsWith('image/') || 
     /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(document.name);
+  const isText = document.type?.startsWith('text/') ||
+    /\.(txt|json|xml|csv|html|js|ts|jsx|tsx|css|scss)$/i.test(document.name);
+  const isMarkdown = document.type === 'text/markdown' || document.name.toLowerCase().endsWith('.md');
 
   const handleDownload = () => {
     const link = window.document.createElement('a');
@@ -36,6 +58,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const getFileIcon = () => {
     if (isImage) return <ImageIcon className="h-6 w-6" />;
     if (isPDF) return <FileText className="h-6 w-6" />;
+    if (isText || isMarkdown) return <FileText className="h-6 w-6" />;
     return <File className="h-6 w-6" />;
   };
 
@@ -88,7 +111,24 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
               </div>
             )}
 
-            {!isPDF && !isImage && (
+
+            {isText && (
+              <div className="p-4 h-[60vh] overflow-auto">
+                <pre className="whitespace-pre-wrap font-mono text-sm">
+                  {textContent}
+                </pre>
+              </div>
+            )}
+
+            {isMarkdown && (
+              <div className="p-4 h-[60vh] overflow-auto prose dark:prose-invert">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {textContent}
+                </ReactMarkdown>
+              </div>
+            )}
+
+            {!isPDF && !isImage && !isText && !isMarkdown && (
               <div className="flex flex-col items-center justify-center h-[60vh] text-muted-foreground">
                 <File className="h-16 w-16 mb-4" />
                 <p className="text-lg font-medium mb-2">Vista previa no disponible</p>

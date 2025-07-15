@@ -43,7 +43,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
       }
 
       // Validar tipo de archivo
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'text/markdown'];
       if (!allowedTypes.includes(file.type)) {
         toast({
           title: "Error",
@@ -157,7 +157,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               <input
                 id="file-upload"
                 type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt,.md"
                 onChange={handleFileSelect}
                 className="hidden"
               />
