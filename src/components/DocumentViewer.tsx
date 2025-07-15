@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Download, FileText, Image as ImageIcon, File } from 'lucide-react';
+import { X, Download, FileText, Image as ImageIcon, File, ExternalLink, AlertCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import ReactMarkdown from 'react-markdown';
 
 interface DocumentViewerProps {
   isOpen: boolean;
@@ -20,11 +21,18 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onClose,
   document
 }) => {
+  const [textContent, setTextContent] = useState<string>('');
+  const [contentLoading, setContentLoading] = useState(false);
+  const [pdfError, setPdfError] = useState(false);
+
   if (!document) return null;
 
   const isPDF = document.name.toLowerCase().endsWith('.pdf') || document.type?.includes('pdf');
   const isImage = document.type?.startsWith('image/') || 
     /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(document.name);
+  const isMarkdown = document.name.toLowerCase().endsWith('.md') || document.type?.includes('markdown');
+  const isText = /\.(txt|rtf|log|csv|json|xml|yaml|yml)$/i.test(document.name) || 
+    document.type?.startsWith('text/') || document.type?.includes('json') || document.type?.includes('xml');
 
   const handleDownload = () => {
     const link = window.document.createElement('a');
@@ -33,9 +41,43 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     link.click();
   };
 
+  const openInNewTab = () => {
+    window.open(document.url, '_blank');
+  };
+
+  const loadTextContent = async () => {
+    if (!isText && !isMarkdown) return;
+    
+    setContentLoading(true);
+    try {
+      const response = await fetch(document.url);
+      const text = await response.text();
+      setTextContent(text);
+    } catch (error) {
+      console.error('Error loading text content:', error);
+      setTextContent('Error al cargar el contenido del archivo');
+    } finally {
+      setContentLoading(false);
+    }
+  };
+
+  const handlePdfError = () => {
+    setPdfError(true);
+  };
+
+  useEffect(() => {
+    if (isOpen && (isText || isMarkdown)) {
+      loadTextContent();
+    }
+    // Reset states when document changes
+    setPdfError(false);
+    setTextContent('');
+  }, [isOpen, document.url, isText, isMarkdown]);
+
   const getFileIcon = () => {
     if (isImage) return <ImageIcon className="h-6 w-6" />;
     if (isPDF) return <FileText className="h-6 w-6" />;
+    if (isMarkdown || isText) return <FileText className="h-6 w-6" />;
     return <File className="h-6 w-6" />;
   };
 
@@ -62,20 +104,49 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end gap-2 mb-4">
             <Button variant="outline" onClick={handleDownload} className="gap-2">
               <Download className="h-4 w-4" />
               Descargar
             </Button>
+            {isPDF && (
+              <Button variant="outline" onClick={openInNewTab} className="gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Abrir en nueva pestaña
+              </Button>
+            )}
           </div>
 
-          <div className="border rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
-            {isPDF && (
-              <iframe
-                src={document.url}
-                className="w-full h-[60vh]"
-                title={document.name}
-              />
+          <div className="border rounded-lg overflow-hidden bg-muted/30">
+            {isPDF && !pdfError && (
+              <div className="relative">
+                <iframe
+                  src={document.url}
+                  className="w-full h-[60vh]"
+                  title={document.name}
+                  onError={handlePdfError}
+                />
+              </div>
+            )}
+
+            {isPDF && pdfError && (
+              <div className="flex flex-col items-center justify-center h-[60vh] text-muted-foreground">
+                <AlertCircle className="h-16 w-16 mb-4 text-destructive" />
+                <p className="text-lg font-medium mb-2">Error al mostrar el PDF</p>
+                <p className="text-sm mb-4 text-center">
+                  El PDF no se puede mostrar directamente en el navegador.
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={openInNewTab} className="gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Abrir en nueva pestaña
+                  </Button>
+                  <Button variant="outline" onClick={handleDownload} className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Descargar
+                  </Button>
+                </div>
+              </div>
             )}
 
             {isImage && (
@@ -88,7 +159,35 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
               </div>
             )}
 
-            {!isPDF && !isImage && (
+            {isMarkdown && (
+              <div className="p-6 max-h-[60vh] overflow-y-auto">
+                {contentLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <ReactMarkdown>{textContent}</ReactMarkdown>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isText && !isMarkdown && (
+              <div className="p-6 max-h-[60vh] overflow-y-auto">
+                {contentLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <pre className="text-sm whitespace-pre-wrap font-mono bg-background p-4 rounded border">
+                    {textContent}
+                  </pre>
+                )}
+              </div>
+            )}
+
+            {!isPDF && !isImage && !isMarkdown && !isText && (
               <div className="flex flex-col items-center justify-center h-[60vh] text-muted-foreground">
                 <File className="h-16 w-16 mb-4" />
                 <p className="text-lg font-medium mb-2">Vista previa no disponible</p>

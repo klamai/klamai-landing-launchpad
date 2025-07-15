@@ -68,10 +68,26 @@ export const useDocumentManagement = (casoId?: string) => {
     }
 
     try {
+      // Función para sanitizar el nombre del archivo
+      const sanitizeFileName = (filename: string) => {
+        // Separar nombre y extensión
+        const lastDotIndex = filename.lastIndexOf('.');
+        const name = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+        const extension = lastDotIndex > 0 ? filename.substring(lastDotIndex) : '';
+        
+        // Sanitizar el nombre: reemplazar espacios por guiones bajos y quitar caracteres especiales
+        const sanitizedName = name
+          .replace(/\s+/g, '_')  // Reemplazar espacios por guiones bajos
+          .replace(/[^a-zA-Z0-9_\-]/g, '')  // Quitar caracteres especiales
+          .slice(0, 100); // Limitar longitud
+        
+        return sanitizedName + extension;
+      };
+
       // Generar nombre único para el archivo usando la estructura correcta
       const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `${timestamp}_${file.name}`;
+      const sanitizedOriginalName = sanitizeFileName(file.name);
+      const fileName = `${timestamp}_${sanitizedOriginalName}`;
       // Usar la estructura de paths que esperan las políticas RLS: casos/{caso_id}/documentos_resolucion/
       const filePath = `casos/${casoId}/documentos_resolucion/${fileName}`;
 
