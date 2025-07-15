@@ -68,11 +68,14 @@ export const useDocumentManagement = (casoId?: string) => {
     }
 
     try {
-      // Generar nombre único para el archivo
+      // Generar nombre único para el archivo usando la estructura correcta
       const timestamp = Date.now();
       const fileExtension = file.name.split('.').pop();
-      const fileName = `${casoId}_${timestamp}.${fileExtension}`;
-      const filePath = `documentos_resolucion/${fileName}`;
+      const fileName = `${timestamp}_${file.name}`;
+      // Usar la estructura de paths que esperan las políticas RLS: casos/{caso_id}/documentos_resolucion/
+      const filePath = `casos/${casoId}/documentos_resolucion/${fileName}`;
+
+      console.log('Subiendo archivo con path:', filePath);
 
       // Subir archivo a Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -80,6 +83,7 @@ export const useDocumentManagement = (casoId?: string) => {
         .upload(filePath, file);
 
       if (uploadError) {
+        console.error('Error al subir archivo:', uploadError);
         throw uploadError;
       }
 
@@ -87,6 +91,8 @@ export const useDocumentManagement = (casoId?: string) => {
       const { data: { publicUrl } } = supabase.storage
         .from('documentos_legales')
         .getPublicUrl(filePath);
+
+      console.log('URL pública generada:', publicUrl);
 
       // Guardar metadatos en la base de datos
       const { error: dbError } = await supabase
@@ -104,12 +110,15 @@ export const useDocumentManagement = (casoId?: string) => {
         });
 
       if (dbError) {
+        console.error('Error al guardar metadatos:', dbError);
         // Si falla la inserción en BD, eliminar el archivo subido
         await supabase.storage
           .from('documentos_legales')
           .remove([filePath]);
         throw dbError;
       }
+
+      console.log('Documento subido exitosamente');
 
       // Refrescar la lista de documentos
       await fetchDocumentosResolucion();
@@ -182,9 +191,13 @@ export const useDocumentManagement = (casoId?: string) => {
         throw dbError;
       }
 
-      // Extraer el path del archivo de la URL
+      // Extraer el path del archivo de la URL para la nueva estructura
       const url = new URL(documento.ruta_archivo);
-      const filePath = url.pathname.split('/').slice(-2).join('/'); // obtener "documentos_resolucion/filename"
+      // Para la nueva estructura: casos/{caso_id}/documentos_resolucion/{filename}
+      const pathParts = url.pathname.split('/');
+      const filePath = pathParts.slice(-4).join('/'); // obtener "casos/{caso_id}/documentos_resolucion/filename"
+
+      console.log('Eliminando archivo con path:', filePath);
 
       // Eliminar archivo del storage
       await supabase.storage
