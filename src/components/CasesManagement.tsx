@@ -242,7 +242,7 @@ const CasesManagement = () => {
                   <SelectValue placeholder="Especialidad" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="all">Todas Las Especialidades</SelectItem>
                   {specialties.map(specialty => (
                     <SelectItem key={specialty} value={specialty}>
                       {specialty} ({casos.filter(c => c.especialidades?.nombre === specialty).length})
@@ -370,6 +370,7 @@ const CasesManagement = () => {
                   <TableRow>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Motivo</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Especialidad</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Fecha</TableHead>
@@ -398,6 +399,11 @@ const CasesManagement = () => {
                       <TableCell>
                         <div className="max-w-xs truncate">
                           {caso.motivo_consulta}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs truncate">
+                          {caso.tipo_lead}
                         </div>
                       </TableCell>
                       <TableCell>
