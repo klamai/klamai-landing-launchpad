@@ -265,7 +265,9 @@ const CaseCard: React.FC<CaseCardProps> = ({
             {caso.documentos_adjuntos && Array.isArray(caso.documentos_adjuntos) && caso.documentos_adjuntos.length > 0 && (
               <div className="text-xs bg-amber-50 dark:bg-amber-900/20 p-2 rounded text-amber-700 dark:text-amber-300">
                 <FileText className="h-3 w-3 inline mr-1" />
-                {caso.documentos_adjuntos.length} documento(s) del cliente
+                <span className="cursor-pointer hover:underline">
+                  {caso.documentos_adjuntos.length} documento(s) del cliente - Click para ver
+                </span>
               </div>
             )}
 
