@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -69,26 +68,10 @@ export const useDocumentManagement = (casoId?: string) => {
     }
 
     try {
-      // Función para sanitizar el nombre del archivo
-      const sanitizeFileName = (filename: string) => {
-        // Separar nombre y extensión
-        const lastDotIndex = filename.lastIndexOf('.');
-        const name = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
-        const extension = lastDotIndex > 0 ? filename.substring(lastDotIndex) : '';
-        
-        // Sanitizar el nombre: reemplazar espacios por guiones bajos y quitar caracteres especiales
-        const sanitizedName = name
-          .replace(/\s+/g, '_')  // Reemplazar espacios por guiones bajos
-          .replace(/[^a-zA-Z0-9_\-]/g, '')  // Quitar caracteres especiales
-          .slice(0, 100); // Limitar longitud
-        
-        return sanitizedName + extension;
-      };
-
       // Generar nombre único para el archivo usando la estructura correcta
       const timestamp = Date.now();
-      const sanitizedOriginalName = sanitizeFileName(file.name);
-      const fileName = `${timestamp}_${sanitizedOriginalName}`;
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `${timestamp}_${file.name}`;
       // Usar la estructura de paths que esperan las políticas RLS: casos/{caso_id}/documentos_resolucion/
       const filePath = `casos/${casoId}/documentos_resolucion/${fileName}`;
 
@@ -145,8 +128,6 @@ export const useDocumentManagement = (casoId?: string) => {
 
   const getSignedUrl = async (documento: DocumentoResolucion): Promise<string | null> => {
     try {
-      console.log('Generando URL firmada para:', documento.ruta_archivo);
-      
       const { data, error } = await supabase.storage
         .from('documentos_legales')
         .createSignedUrl(documento.ruta_archivo, 3600); // 1 hora de expiración
@@ -156,7 +137,6 @@ export const useDocumentManagement = (casoId?: string) => {
         return null;
       }
 
-      console.log('URL firmada generada exitosamente:', data.signedUrl);
       return data.signedUrl;
     } catch (error) {
       console.error('Error getting signed URL:', error);
@@ -172,25 +152,17 @@ export const useDocumentManagement = (casoId?: string) => {
       }
 
       const response = await fetch(signedUrl);
-      if (!response.ok) {
-        throw new Error(`Error al descargar: ${response.status}`);
-      }
-      
       const blob = await response.blob();
       
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = documento.nombre_archivo;
-      document.body.appendChild(link);
       link.click();
       
-      // Limpiar
-      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading document:', error);
-      throw error;
     }
   };
 
