@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -144,6 +145,8 @@ export const useDocumentManagement = (casoId?: string) => {
 
   const getSignedUrl = async (documento: DocumentoResolucion): Promise<string | null> => {
     try {
+      console.log('Generando URL firmada para:', documento.ruta_archivo);
+      
       const { data, error } = await supabase.storage
         .from('documentos_legales')
         .createSignedUrl(documento.ruta_archivo, 3600); // 1 hora de expiración
@@ -153,6 +156,7 @@ export const useDocumentManagement = (casoId?: string) => {
         return null;
       }
 
+      console.log('URL firmada generada exitosamente:', data.signedUrl);
       return data.signedUrl;
     } catch (error) {
       console.error('Error getting signed URL:', error);
@@ -168,17 +172,25 @@ export const useDocumentManagement = (casoId?: string) => {
       }
 
       const response = await fetch(signedUrl);
+      if (!response.ok) {
+        throw new Error(`Error al descargar: ${response.status}`);
+      }
+      
       const blob = await response.blob();
       
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = documento.nombre_archivo;
+      document.body.appendChild(link);
       link.click();
       
+      // Limpiar
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading document:', error);
+      throw error;
     }
   };
 

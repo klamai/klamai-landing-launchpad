@@ -105,6 +105,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   const [messageText, setMessageText] = useState('');
   const [selectedDocument, setSelectedDocument] = useState<{name: string; url: string; type?: string; size?: number} | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [loadingDocument, setLoadingDocument] = useState(false);
   const { toast } = useToast();
 
   const { 
@@ -171,20 +172,37 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   };
 
   const handleViewResolutionDocument = async (doc: any) => {
-    const signedUrl = await getSignedUrl(doc);
-    if (signedUrl) {
-      setSelectedDocument({
-        name: doc.nombre_archivo,
-        url: signedUrl,
-        type: doc.tipo_documento,
-        size: doc.tamaño_archivo
-      });
-    } else {
+    setLoadingDocument(true);
+    try {
+      console.log('Intentando ver documento:', doc);
+      
+      const signedUrl = await getSignedUrl(doc);
+      console.log('URL firmada obtenida:', signedUrl);
+      
+      if (signedUrl) {
+        setSelectedDocument({
+          name: doc.nombre_archivo,
+          url: signedUrl,
+          type: doc.tipo_documento,
+          size: doc.tamaño_archivo
+        });
+      } else {
+        console.error('No se pudo generar la URL firmada');
+        toast({
+          title: "Error",
+          description: "No se pudo generar la URL para visualizar el documento",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error al obtener URL firmada:', error);
       toast({
         title: "Error",
-        description: "No se pudo generar la URL para visualizar el documento",
+        description: "Error al cargar el documento",
         variant: "destructive"
       });
+    } finally {
+      setLoadingDocument(false);
     }
   };
 
@@ -553,6 +571,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                       <div className="space-y-2">
                         {loadingDocs ? (
                           <div className="text-center py-4 text-muted-foreground">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                             <p className="text-sm">Cargando documentos...</p>
                           </div>
                         ) : documentosResolucion.length > 0 ? (
@@ -576,8 +595,13 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                                 variant="ghost" 
                                 size="sm"
                                 onClick={() => handleViewResolutionDocument(doc)}
+                                disabled={loadingDocument}
                               >
-                                <Eye className="h-3 w-3" />
+                                {loadingDocument ? (
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                                ) : (
+                                  <Eye className="h-3 w-3" />
+                                )}
                               </Button>
                               <Button 
                                 variant="ghost" 
