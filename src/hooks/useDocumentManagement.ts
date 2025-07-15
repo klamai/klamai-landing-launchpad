@@ -58,6 +58,23 @@ export const useDocumentManagement = (casoId?: string) => {
     }
   };
 
+  // Función para sanitizar nombres de archivos
+  const sanitizeFileName = (fileName: string): string => {
+    // Separar nombre y extensión
+    const lastDotIndex = fileName.lastIndexOf('.');
+    const name = lastDotIndex > 0 ? fileName.substring(0, lastDotIndex) : fileName;
+    const extension = lastDotIndex > 0 ? fileName.substring(lastDotIndex) : '';
+    
+    // Sanitizar el nombre: reemplazar espacios y caracteres especiales
+    const sanitizedName = name
+      .replace(/\s+/g, '_') // Reemplazar espacios por guiones bajos
+      .replace(/[^a-zA-Z0-9_-]/g, '') // Eliminar caracteres especiales
+      .replace(/_{2,}/g, '_') // Reemplazar múltiples guiones bajos por uno solo
+      .replace(/^_|_$/g, ''); // Eliminar guiones bajos al inicio y final
+    
+    return sanitizedName + extension;
+  };
+
   const uploadDocument = async (
     file: File,
     tipoDocumento: string,
@@ -68,14 +85,16 @@ export const useDocumentManagement = (casoId?: string) => {
     }
 
     try {
+      // Sanitizar el nombre del archivo
+      const sanitizedFileName = sanitizeFileName(file.name);
+      
       // Generar nombre único para el archivo usando la estructura correcta
       const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `${timestamp}_${file.name}`;
+      const fileName = `${timestamp}_${sanitizedFileName}`;
       // Usar la estructura de paths que esperan las políticas RLS: casos/{caso_id}/documentos_resolucion/
       const filePath = `casos/${casoId}/documentos_resolucion/${fileName}`;
 
-      console.log('Subiendo archivo con path:', filePath);
+      console.log('Subiendo archivo:', file.name, 'como:', fileName, 'a:', filePath);
 
       // Subir archivo a Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -94,8 +113,8 @@ export const useDocumentManagement = (casoId?: string) => {
           caso_id: casoId,
           abogado_id: user.id,
           tipo_documento: tipoDocumento,
-          nombre_archivo: file.name,
-          ruta_archivo: filePath, // Guardamos el path relativo en lugar de la URL
+          nombre_archivo: file.name, // Guardamos el nombre original para mostrar
+          ruta_archivo: filePath, // Guardamos el path sanitizado
           tamaño_archivo: file.size,
           descripcion: descripcion || null,
           version: 1,
