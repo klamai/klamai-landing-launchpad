@@ -112,6 +112,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     loading: loadingDocs, 
     downloadDocument, 
     deleteDocument,
+    getSignedUrl,
     refetch: refetchDocuments 
   } = useDocumentManagement(caso?.id);
 
@@ -169,13 +170,22 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     }
   };
 
-  const handleViewResolutionDocument = (doc: any) => {
-    setSelectedDocument({
-      name: doc.nombre_archivo,
-      url: doc.ruta_archivo,
-      type: doc.tipo_documento,
-      size: doc.tamaño_archivo
-    });
+  const handleViewResolutionDocument = async (doc: any) => {
+    const signedUrl = await getSignedUrl(doc);
+    if (signedUrl) {
+      setSelectedDocument({
+        name: doc.nombre_archivo,
+        url: signedUrl,
+        type: doc.tipo_documento,
+        size: doc.tamaño_archivo
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "No se pudo generar la URL para visualizar el documento",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDeleteDocument = async (docId: string) => {

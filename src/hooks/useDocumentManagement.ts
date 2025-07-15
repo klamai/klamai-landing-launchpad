@@ -87,14 +87,7 @@ export const useDocumentManagement = (casoId?: string) => {
         throw uploadError;
       }
 
-      // Obtener URL del archivo (usamos getPublicUrl ya que el bucket es privado)
-      const { data: { publicUrl } } = supabase.storage
-        .from('documentos_legales')
-        .getPublicUrl(filePath);
-
-      console.log('URL pública generada:', publicUrl);
-
-      // Guardar metadatos en la base de datos
+      // Guardar metadatos en la base de datos (guardamos el path del archivo)
       const { error: dbError } = await supabase
         .from('documentos_resolucion')
         .insert({
@@ -102,7 +95,7 @@ export const useDocumentManagement = (casoId?: string) => {
           abogado_id: user.id,
           tipo_documento: tipoDocumento,
           nombre_archivo: file.name,
-          ruta_archivo: publicUrl,
+          ruta_archivo: filePath, // Guardamos el path relativo en lugar de la URL
           tamaño_archivo: file.size,
           descripcion: descripcion || null,
           version: 1,
@@ -133,9 +126,32 @@ export const useDocumentManagement = (casoId?: string) => {
     }
   };
 
+  const getSignedUrl = async (documento: DocumentoResolucion): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documentos_legales')
+        .createSignedUrl(documento.ruta_archivo, 3600); // 1 hora de expiración
+
+      if (error) {
+        console.error('Error creating signed URL:', error);
+        return null;
+      }
+
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error getting signed URL:', error);
+      return null;
+    }
+  };
+
   const downloadDocument = async (documento: DocumentoResolucion) => {
     try {
-      const response = await fetch(documento.ruta_archivo);
+      const signedUrl = await getSignedUrl(documento);
+      if (!signedUrl) {
+        throw new Error('No se pudo generar la URL de descarga');
+      }
+
+      const response = await fetch(signedUrl);
       const blob = await response.blob();
       
       const url = window.URL.createObjectURL(blob);
@@ -191,11 +207,8 @@ export const useDocumentManagement = (casoId?: string) => {
         throw dbError;
       }
 
-      // Extraer el path del archivo de la URL para la nueva estructura
-      const url = new URL(documento.ruta_archivo);
-      // Para la nueva estructura: casos/{caso_id}/documentos_resolucion/{filename}
-      const pathParts = url.pathname.split('/');
-      const filePath = pathParts.slice(-4).join('/'); // obtener "casos/{caso_id}/documentos_resolucion/filename"
+      // El ruta_archivo ya contiene el path relativo
+      const filePath = documento.ruta_archivo;
 
       console.log('Eliminando archivo con path:', filePath);
 
@@ -229,6 +242,7 @@ export const useDocumentManagement = (casoId?: string) => {
     uploadDocument,
     downloadDocument,
     deleteDocument,
+    getSignedUrl,
     refetch: fetchDocumentosResolucion
   };
 };
