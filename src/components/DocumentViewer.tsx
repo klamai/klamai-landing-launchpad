@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Download, FileText, Image as ImageIcon, File } from 'lucide-react';
+import { X, Download, FileText, Image as ImageIcon, File, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
@@ -23,21 +24,48 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   document
 }) => {
   const [textContent, setTextContent] = React.useState('');
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!document) return; // Early exit for useEffect if document is null
+    if (!document) {
+      setTextContent('');
+      setError(null);
+      return;
+    }
 
     const isText = document.type?.startsWith('text/') ||
       /\.(txt|json|xml|csv|html|js|ts|jsx|tsx|css|scss)$/i.test(document.name);
     const isMarkdown = document.type === 'text/markdown' || document.name.toLowerCase().endsWith('.md');
 
     if (isText || isMarkdown) {
+      setIsLoading(true);
+      setError(null);
+      
       fetch(document.url)
-        .then(response => response.text())
-        .then(text => setTextContent(text))
-        .catch(() => setTextContent('No se pudo cargar el contenido del archivo'));
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Error al cargar el archivo');
+          }
+          return response.text();
+        })
+        .then(text => {
+          setTextContent(text);
+          setError(null);
+        })
+        .catch(err => {
+          console.error('Error loading file content:', err);
+          setError('No se pudo cargar el contenido del archivo');
+          setTextContent('');
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setTextContent('');
+      setError(null);
     }
-  }, [document, textContent]); // Add document to dependency array
+  }, [document?.url, document?.name, document?.type]);
 
   if (!document) return null;
 
@@ -69,6 +97,85 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
   };
 
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Cargando contenido...</span>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center h-[60vh] text-destructive">
+          <File className="h-16 w-16 mb-4" />
+          <p className="text-lg font-medium mb-2">Error al cargar el archivo</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      );
+    }
+
+    if (isPDF) {
+      return (
+        <iframe
+          src={document.url}
+          className="w-full h-[60vh]"
+          title={document.name}
+        />
+      );
+    }
+
+    if (isImage) {
+      return (
+        <div className="flex justify-center items-center p-4">
+          <img
+            src={document.url}
+            alt={document.name}
+            className="max-w-full max-h-[60vh] object-contain"
+          />
+        </div>
+      );
+    }
+
+    if (isMarkdown) {
+      return (
+        <div className="p-6 h-[60vh] overflow-auto">
+          <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-code:text-foreground prose-pre:bg-muted prose-pre:text-foreground">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {textContent}
+            </ReactMarkdown>
+          </div>
+        </div>
+      );
+    }
+
+    if (isText) {
+      return (
+        <div className="p-4 h-[60vh] overflow-auto">
+          <pre className="whitespace-pre-wrap font-mono text-sm text-foreground bg-muted/30 p-4 rounded-md">
+            {textContent}
+          </pre>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-muted-foreground">
+        <File className="h-16 w-16 mb-4" />
+        <p className="text-lg font-medium mb-2">Vista previa no disponible</p>
+        <p className="text-sm">
+          Este tipo de archivo no se puede previsualizar en el navegador.
+        </p>
+        <Button variant="outline" onClick={handleDownload} className="mt-4 gap-2">
+          <Download className="h-4 w-4" />
+          Descargar archivo
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
@@ -92,55 +199,8 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
             </Button>
           </div>
 
-          <div className="border rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
-            {isPDF && (
-              <iframe
-                src={document.url}
-                className="w-full h-[60vh]"
-                title={document.name}
-              />
-            )}
-
-            {isImage && (
-              <div className="flex justify-center items-center p-4">
-                <img
-                  src={document.url}
-                  alt={document.name}
-                  className="max-w-full max-h-[60vh] object-contain"
-                />
-              </div>
-            )}
-
-
-            {isText && (
-              <div className="p-4 h-[60vh] overflow-auto">
-                <pre className="whitespace-pre-wrap font-mono text-sm">
-                  {textContent}
-                </pre>
-              </div>
-            )}
-
-            {isMarkdown && (
-              <div className="p-4 h-[60vh] overflow-auto prose dark:prose-invert">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {textContent}
-                </ReactMarkdown>
-              </div>
-            )}
-
-            {!isPDF && !isImage && !isText && !isMarkdown && (
-              <div className="flex flex-col items-center justify-center h-[60vh] text-muted-foreground">
-                <File className="h-16 w-16 mb-4" />
-                <p className="text-lg font-medium mb-2">Vista previa no disponible</p>
-                <p className="text-sm">
-                  Este tipo de archivo no se puede previsualizar en el navegador.
-                </p>
-                <Button variant="outline" onClick={handleDownload} className="mt-4 gap-2">
-                  <Download className="h-4 w-4" />
-                  Descargar archivo
-                </Button>
-              </div>
-            )}
+          <div className="border rounded-lg overflow-hidden bg-background">
+            {renderContent()}
           </div>
         </div>
       </DialogContent>
