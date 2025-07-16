@@ -7,11 +7,9 @@ import {
   Upload, 
   Trash2, 
   Eye,
-  Calendar,
-  User,
-  FileIcon,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  FileIcon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +21,6 @@ import ClientDocumentUploadModal from '@/components/ClientDocumentUploadModal';
 import DocumentViewer from '@/components/DocumentViewer';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useAuth } from '@/hooks/useAuth';
 
 interface ClientDocumentManagerProps {
   casoId: string;
@@ -34,7 +31,6 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
   
   const { 
     documentosCliente, 
@@ -86,9 +82,8 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
 
   const handleView = async (documento: any) => {
     try {
-      console.log('Intentando ver documento:', documento);
+      console.log('[ClientDocumentManager] Intentando ver documento:', documento);
       const signedUrl = await getSignedUrl(documento);
-      console.log('URL firmada obtenida:', signedUrl);
       
       if (signedUrl) {
         setSelectedDocument({ 
@@ -102,7 +97,7 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
         throw new Error('No se pudo obtener la URL del documento');
       }
     } catch (error) {
-      console.error('Error al cargar documento:', error);
+      console.error('[ClientDocumentManager] Error al cargar documento:', error);
       toast({
         title: "Error",
         description: "No se pudo cargar el documento",
@@ -112,7 +107,7 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
   };
 
   const handleRetry = () => {
-    console.log('Reintentando cargar documentos...');
+    console.log('[ClientDocumentManager] Reintentando cargar documentos...');
     refetch();
   };
 
@@ -135,14 +130,6 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  console.log('=== CLIENT DOCUMENT MANAGER STATE ===');
-  console.log('Caso ID:', casoId);
-  console.log('Usuario:', user?.id);
-  console.log('Loading:', loading);
-  console.log('Error:', error);
-  console.log('Documentos encontrados:', documentosCliente.length);
-  console.log('Documentos data:', documentosCliente);
-
   return (
     <div className="space-y-6">
       <Card>
@@ -150,7 +137,7 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-blue-600" />
-              Documentos del Cliente
+              Mis Documentos
             </CardTitle>
             <div className="flex items-center gap-2">
               {error && (
@@ -179,12 +166,6 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
                 <span className="font-medium">Error al cargar documentos</span>
               </div>
               <p className="text-sm text-red-600 mt-1">{error}</p>
-              <div className="mt-2 text-xs text-red-500">
-                <p>Información de debugging:</p>
-                <p>• Caso ID: {casoId}</p>
-                <p>• Usuario ID: {user?.id}</p>
-                <p>• Email: {user?.email}</p>
-              </div>
             </div>
           )}
 
@@ -199,22 +180,14 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
             <div className="text-center py-8">
               <FileIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
-                No hay documentos
+                No tienes documentos
               </h3>
               <p className="text-muted-foreground mb-4">
-                No se encontraron documentos para este caso.
+                Comienza subiendo documentos relacionados con tu caso.
               </p>
-              <div className="text-xs text-gray-500 mt-4 p-3 bg-gray-50 rounded border">
-                <p className="font-medium mb-1">Información de debugging:</p>
-                <p>• Caso ID: {casoId}</p>
-                <p>• Usuario ID: {user?.id}</p>
-                <p>• Email: {user?.email}</p>
-                <p>• Estado: {loading ? 'Cargando' : 'Carga completa'}</p>
-                <p>• Documentos encontrados: {documentosCliente.length}</p>
-              </div>
               <Button 
                 onClick={() => setIsUploadModalOpen(true)} 
-                className="gap-2 mt-4"
+                className="gap-2"
               >
                 <Upload className="h-4 w-4" />
                 Subir Primer Documento

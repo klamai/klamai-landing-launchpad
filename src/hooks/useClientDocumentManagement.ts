@@ -20,126 +20,59 @@ export const useClientDocumentManagement = (casoId?: string) => {
   const [documentosCliente, setDocumentosCliente] = useState<DocumentoCliente[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
   const { user } = useAuth();
 
-  const fetchDocumentosCliente = async (isRetry = false) => {
+  const fetchDocumentosCliente = async () => {
     if (!casoId || !user) {
-      console.log('No se puede buscar documentos - casoId:', casoId, 'user:', !!user);
+      console.log('[ClientDocumentManagement] Sin casoId o usuario');
       setDocumentosCliente([]);
       return;
     }
 
-    if (!isRetry) {
-      setLoading(true);
-      setError(null);
-    }
+    setLoading(true);
+    setError(null);
     
     try {
-      console.log('=== INICIO FETCH DOCUMENTOS CLIENTE ===');
-      console.log('Caso ID:', casoId);
-      console.log('Usuario ID:', user.id);
-      console.log('Usuario email:', user.email);
+      console.log('[ClientDocumentManagement] Iniciando fetch para caso:', casoId);
+      console.log('[ClientDocumentManagement] Usuario cliente:', user.id);
       
-      // Verificar el contexto de autenticación
-      const { data: authUser, error: authError } = await supabase.auth.getUser();
-      console.log('Estado de autenticación:', authUser?.user ? 'Autenticado' : 'No autenticado');
-      if (authError) {
-        console.error('Error de autenticación:', authError);
-        throw new Error('Usuario no autenticado correctamente');
-      }
-
-      // Verificar el perfil del usuario
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role, tipo_abogado, id, email')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Error obteniendo perfil:', profileError);
-        throw new Error('No se pudo obtener el perfil del usuario');
-      }
-
-      console.log('Perfil del usuario completo:', profile);
-
-      // Verificar acceso al caso
+      // Verificar que el usuario es cliente y propietario del caso
       const { data: casoData, error: casoError } = await supabase
         .from('casos')
         .select('id, cliente_id, estado')
         .eq('id', casoId)
+        .eq('cliente_id', user.id)
         .single();
 
       if (casoError) {
-        console.error('Error obteniendo datos del caso:', casoError);
-        throw new Error('No se pudo acceder al caso');
+        console.error('[ClientDocumentManagement] Error obteniendo caso:', casoError);
+        throw new Error('No se pudo acceder al caso o no eres el propietario');
       }
 
-      console.log('Datos del caso:', casoData);
+      console.log('[ClientDocumentManagement] Caso verificado:', casoData);
 
-      // Si es abogado, verificar asignación
-      if (profile.role === 'abogado') {
-        if (profile.tipo_abogado === 'super_admin') {
-          console.log('Usuario es super admin - acceso completo');
-        } else {
-          // Verificar asignación para abogados regulares
-          const { data: asignacion, error: asignacionError } = await supabase
-            .from('asignaciones_casos')
-            .select('*')
-            .eq('caso_id', casoId)
-            .eq('abogado_id', user.id)
-            .eq('estado_asignacion', 'activa')
-            .single();
-
-          if (asignacionError || !asignacion) {
-            console.error('No hay asignación activa para este abogado:', asignacionError);
-            throw new Error('No tienes asignación activa para este caso');
-          }
-          console.log('Asignación encontrada:', asignacion);
-        }
-      }
-
-      // Realizar la consulta de documentos
-      console.log('Ejecutando consulta de documentos...');
+      // Obtener documentos del cliente
       const { data, error } = await supabase
         .from('documentos_cliente')
         .select('*')
         .eq('caso_id', casoId)
+        .eq('cliente_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error en consulta de documentos:', error);
-        console.error('Detalles del error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
+        console.error('[ClientDocumentManagement] Error consultando documentos:', error);
         throw error;
       }
 
-      console.log('Consulta exitosa - Documentos encontrados:', data?.length || 0);
-      console.log('Datos de documentos:', data);
-
+      console.log('[ClientDocumentManagement] Documentos encontrados:', data?.length || 0);
       setDocumentosCliente(data || []);
-      setRetryCount(0);
-      console.log('=== FIN FETCH DOCUMENTOS CLIENTE ===');
       
     } catch (error) {
-      console.error('Error en fetchDocumentosCliente:', error);
+      console.error('[ClientDocumentManagement] Error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       setError(errorMessage);
-      
-      // Retry logic para errores de red o temporales
-      if (retryCount < 2 && !isRetry) {
-        console.log(`Reintentando... (intento ${retryCount + 1})`);
-        setRetryCount(prev => prev + 1);
-        setTimeout(() => fetchDocumentosCliente(true), 1000);
-      }
     } finally {
-      if (!isRetry) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
@@ -153,25 +86,21 @@ export const useClientDocumentManagement = (casoId?: string) => {
     }
 
     try {
-      // Generar nombre único para el archivo
       const timestamp = Date.now();
       const fileName = `${timestamp}_${file.name}`;
-      // Estructura de paths para documentos del cliente: casos/{caso_id}/documentos_cliente/
       const filePath = `casos/${casoId}/documentos_cliente/${fileName}`;
 
-      console.log('Subiendo documento del cliente con path:', filePath);
+      console.log('[ClientDocumentManagement] Subiendo documento con path:', filePath);
 
-      // Subir archivo a Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('documentos_legales')
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Error al subir archivo:', uploadError);
+        console.error('[ClientDocumentManagement] Error al subir archivo:', uploadError);
         throw uploadError;
       }
 
-      // Guardar metadatos en la base de datos
       const { error: dbError } = await supabase
         .from('documentos_cliente')
         .insert({
@@ -185,22 +114,19 @@ export const useClientDocumentManagement = (casoId?: string) => {
         });
 
       if (dbError) {
-        console.error('Error al guardar metadatos:', dbError);
-        // Si falla la inserción en BD, eliminar el archivo subido
+        console.error('[ClientDocumentManagement] Error al guardar metadatos:', dbError);
         await supabase.storage
           .from('documentos_legales')
           .remove([filePath]);
         throw dbError;
       }
 
-      console.log('Documento del cliente subido exitosamente');
-
-      // Refrescar la lista de documentos
+      console.log('[ClientDocumentManagement] Documento subido exitosamente');
       await fetchDocumentosCliente();
 
       return { success: true };
     } catch (error) {
-      console.error('Error uploading client document:', error);
+      console.error('[ClientDocumentManagement] Error uploading document:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Error desconocido'
@@ -210,21 +136,20 @@ export const useClientDocumentManagement = (casoId?: string) => {
 
   const getSignedUrl = async (documento: DocumentoCliente): Promise<string | null> => {
     try {
-      console.log('Obteniendo URL firmada para:', documento.ruta_archivo);
+      console.log('[ClientDocumentManagement] Obteniendo URL firmada para:', documento.ruta_archivo);
       
       const { data, error } = await supabase.storage
         .from('documentos_legales')
-        .createSignedUrl(documento.ruta_archivo, 3600); // 1 hora de expiración
+        .createSignedUrl(documento.ruta_archivo, 3600);
 
       if (error) {
-        console.error('Error creating signed URL:', error);
+        console.error('[ClientDocumentManagement] Error creating signed URL:', error);
         return null;
       }
 
-      console.log('URL firmada generada exitosamente:', data.signedUrl);
       return data.signedUrl;
     } catch (error) {
-      console.error('Error getting signed URL:', error);
+      console.error('[ClientDocumentManagement] Error getting signed URL:', error);
       return null;
     }
   };
@@ -247,7 +172,8 @@ export const useClientDocumentManagement = (casoId?: string) => {
       
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading document:', error);
+      console.error('[ClientDocumentManagement] Error downloading document:', error);
+      throw error;
     }
   };
 
@@ -257,45 +183,36 @@ export const useClientDocumentManagement = (casoId?: string) => {
     }
 
     try {
-      // Obtener información del documento para eliminar el archivo
       const { data: documento } = await supabase
         .from('documentos_cliente')
         .select('ruta_archivo, cliente_id')
         .eq('id', documentoId)
+        .eq('cliente_id', user.id)
         .single();
 
       if (!documento) {
-        return { success: false, error: 'Documento no encontrado' };
+        return { success: false, error: 'Documento no encontrado o no tienes permisos' };
       }
 
-      // Verificar que el usuario es el propietario
-      if (documento.cliente_id !== user.id) {
-        return { success: false, error: 'No tienes permisos para eliminar este documento' };
-      }
-
-      // Eliminar de la base de datos
       const { error: dbError } = await supabase
         .from('documentos_cliente')
         .delete()
-        .eq('id', documentoId);
+        .eq('id', documentoId)
+        .eq('cliente_id', user.id);
 
       if (dbError) {
         throw dbError;
       }
 
-      console.log('Eliminando archivo con path:', documento.ruta_archivo);
-
-      // Eliminar archivo del storage
       await supabase.storage
         .from('documentos_legales')
         .remove([documento.ruta_archivo]);
 
-      // Refrescar la lista
       await fetchDocumentosCliente();
 
       return { success: true };
     } catch (error) {
-      console.error('Error deleting document:', error);
+      console.error('[ClientDocumentManagement] Error deleting document:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Error desconocido'

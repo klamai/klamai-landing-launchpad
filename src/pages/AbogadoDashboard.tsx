@@ -51,7 +51,9 @@ const AbogadoDashboard = () => {
   // Get active section from URL
   useEffect(() => {
     const path = location.pathname;
-    if (path.includes('/casos')) {
+    if (path.includes('/casos/') && path.split('/').length > 4) {
+      setActiveSection("caso-detalle");
+    } else if (path.includes('/casos')) {
       setActiveSection("casos");
     } else if (path.includes('/abogados')) {
       setActiveSection("abogados");
@@ -224,6 +226,8 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
     switch (activeSection) {
       case "casos":
         return <CasesManagementSection />;
+      case "caso-detalle":
+        return <CaseDetailSection />;
       case "abogados":
         return <LawyersManagementSection />;
       case "reportes":
@@ -247,6 +251,20 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+const CaseDetailSection = () => {
+  const CaseDetailTabs = React.lazy(() => import("@/components/CaseDetailTabs"));
+  
+  return (
+    <React.Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    }>
+      <CaseDetailTabs />
+    </React.Suspense>
   );
 };
 
