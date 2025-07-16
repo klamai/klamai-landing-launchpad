@@ -1,10 +1,5 @@
 
-import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import ClientDocumentManager from '@/components/ClientDocumentManager';
-import DocumentUploadModal from '@/components/DocumentUploadModal';
-import { useDocumentManagement } from '@/hooks/useDocumentManagement';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   FileText, 
@@ -21,60 +16,36 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
+import { useClientDocumentManagement } from '@/hooks/useClientDocumentManagement';
+import ClientDocumentUploadModal from '@/components/ClientDocumentUploadModal';
 import DocumentViewer from '@/components/DocumentViewer';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-interface DocumentManagerProps {
+interface ClientDocumentManagerProps {
   casoId: string;
-  readOnly?: boolean;
 }
 
-const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = false }) => {
-  const { user } = useAuth();
-  const [userRole, setUserRole] = useState<'cliente' | 'abogado' | null>(null);
+const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId }) => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const { toast } = useToast();
   
   const { 
-    documentosResolucion, 
+    documentosCliente, 
     loading, 
     downloadDocument, 
     deleteDocument, 
     getSignedUrl,
     refetch 
-  } = useDocumentManagement(casoId);
+  } = useClientDocumentManagement(casoId);
 
-  React.useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!user) return;
-      
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      
-      setUserRole(profile?.role || null);
-    };
-
-    fetchUserRole();
-  }, [user]);
-
-  // Si es cliente, mostrar DocumentManager para clientes
-  if (userRole === 'cliente') {
-    return <ClientDocumentManager casoId={casoId} />;
-  }
-
-  // Si es abogado, mostrar DocumentManager para abogados (documentos de resolución)
   const handleUploadSuccess = () => {
     refetch();
     toast({
       title: "Éxito",
-      description: "Documento de resolución subido correctamente",
+      description: "Documento subido correctamente",
     });
   };
 
@@ -128,10 +99,10 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
 
   const getTipoDocumentoBadge = (tipo: string) => {
     const tipos = {
-      resolucion: { label: 'Resolución', color: 'bg-green-100 text-green-800' },
-      dictamen: { label: 'Dictamen', color: 'bg-blue-100 text-blue-800' },
-      informe: { label: 'Informe', color: 'bg-purple-100 text-purple-800' },
-      propuesta: { label: 'Propuesta', color: 'bg-orange-100 text-orange-800' },
+      evidencia: { label: 'Evidencia', color: 'bg-blue-100 text-blue-800' },
+      contrato: { label: 'Contrato', color: 'bg-green-100 text-green-800' },
+      correspondencia: { label: 'Correspondencia', color: 'bg-purple-100 text-purple-800' },
+      identificacion: { label: 'Identificación', color: 'bg-orange-100 text-orange-800' },
       otros: { label: 'Otros', color: 'bg-gray-100 text-gray-800' }
     };
     const tipoInfo = tipos[tipo as keyof typeof tipos] || tipos.otros;
@@ -151,42 +122,36 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-green-600" />
-              Documentos de Resolución
+              <FileText className="h-5 w-5 text-blue-600" />
+              Mis Documentos
             </CardTitle>
-            {!readOnly && userRole === 'abogado' && (
-              <Button onClick={() => setIsUploadModalOpen(true)} className="gap-2">
-                <Upload className="h-4 w-4" />
-                Subir Resolución
-              </Button>
-            )}
+            <Button onClick={() => setIsUploadModalOpen(true)} className="gap-2">
+              <Upload className="h-4 w-4" />
+              Subir Documento
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center h-32">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <p className="text-muted-foreground">Cargando documentos...</p>
               </div>
             </div>
-          ) : documentosResolucion.length === 0 ? (
+          ) : documentosCliente.length === 0 ? (
             <div className="text-center py-8">
               <FileIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
-                No hay documentos de resolución
+                No hay documentos
               </h3>
               <p className="text-muted-foreground mb-4">
-                {userRole === 'abogado' 
-                  ? 'Sube documentos de resolución para este caso.'
-                  : 'Los documentos de resolución aparecerán aquí cuando estén disponibles.'}
+                Sube documentos relacionados con tu caso para que nuestros abogados puedan revisarlos.
               </p>
-              {!readOnly && userRole === 'abogado' && (
-                <Button onClick={() => setIsUploadModalOpen(true)} className="gap-2">
-                  <Upload className="h-4 w-4" />
-                  Subir Primer Documento
-                </Button>
-              )}
+              <Button onClick={() => setIsUploadModalOpen(true)} className="gap-2">
+                <Upload className="h-4 w-4" />
+                Subir Primer Documento
+              </Button>
             </div>
           ) : (
             <Table>
@@ -194,14 +159,13 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
                 <TableRow>
                   <TableHead>Documento</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>Abogado</TableHead>
                   <TableHead>Tamaño</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {documentosResolucion.map((documento) => (
+                {documentosCliente.map((documento) => (
                   <TableRow key={documento.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -218,16 +182,6 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
                     </TableCell>
                     <TableCell>
                       {getTipoDocumentoBadge(documento.tipo_documento)}
-                    </TableCell>
-                    <TableCell>
-                      {documento.profiles && (
-                        <div className="flex items-center gap-1">
-                          <User className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-sm">
-                            {documento.profiles.nombre} {documento.profiles.apellido}
-                          </span>
-                        </div>
-                      )}
                     </TableCell>
                     <TableCell>
                       {formatFileSize(documento.tamaño_archivo)}
@@ -253,17 +207,15 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
                         >
                           <Download className="h-4 w-4" />
                         </Button>
-                        {!readOnly && userRole === 'abogado' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(documento.id)}
-                            title="Eliminar documento"
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(documento.id)}
+                          title="Eliminar documento"
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -274,14 +226,12 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
         </CardContent>
       </Card>
 
-      {!readOnly && userRole === 'abogado' && (
-        <DocumentUploadModal
-          isOpen={isUploadModalOpen}
-          onClose={() => setIsUploadModalOpen(false)}
-          casoId={casoId}
-          onUploadSuccess={handleUploadSuccess}
-        />
-      )}
+      <ClientDocumentUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        casoId={casoId}
+        onUploadSuccess={handleUploadSuccess}
+      />
 
       {selectedDocument && (
         <DocumentViewer
@@ -297,4 +247,4 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
   );
 };
 
-export default DocumentManager;
+export default ClientDocumentManager;

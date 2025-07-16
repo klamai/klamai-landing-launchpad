@@ -237,6 +237,60 @@ export type Database = {
           },
         ]
       }
+      documentos_cliente: {
+        Row: {
+          caso_id: string
+          cliente_id: string
+          created_at: string
+          descripcion: string | null
+          fecha_subida: string
+          id: string
+          nombre_archivo: string
+          ruta_archivo: string
+          tamaño_archivo: number | null
+          tipo_documento: string
+        }
+        Insert: {
+          caso_id: string
+          cliente_id: string
+          created_at?: string
+          descripcion?: string | null
+          fecha_subida?: string
+          id?: string
+          nombre_archivo: string
+          ruta_archivo: string
+          tamaño_archivo?: number | null
+          tipo_documento?: string
+        }
+        Update: {
+          caso_id?: string
+          cliente_id?: string
+          created_at?: string
+          descripcion?: string | null
+          fecha_subida?: string
+          id?: string
+          nombre_archivo?: string
+          ruta_archivo?: string
+          tamaño_archivo?: number | null
+          tipo_documento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_cliente_caso_id_fkey"
+            columns: ["caso_id"]
+            isOneToOne: false
+            referencedRelation: "casos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_cliente_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documentos_resolucion: {
         Row: {
           abogado_id: string

@@ -1,4 +1,3 @@
-
 export interface Especialidad {
   id: number;
   nombre: string;
@@ -150,5 +149,18 @@ export interface DocumentoResolucion {
   fecha_subida: string;
   version: number;
   es_version_final: boolean;
+  created_at: string;
+}
+
+export interface DocumentoCliente {
+  id: string;
+  caso_id: string;
+  cliente_id: string;
+  nombre_archivo: string;
+  ruta_archivo: string;
+  tipo_documento: string;
+  tamaño_archivo?: number;
+  descripcion?: string;
+  fecha_subida: string;
   created_at: string;
 }

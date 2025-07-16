@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
 import DocumentManager from "@/components/DocumentManager";
+import ClientDocumentManager from "@/components/ClientDocumentManager";
 
 const CaseDetailTabs = () => {
   const { casoId } = useParams();
@@ -260,9 +261,14 @@ const CaseDetailTabs = () => {
       </div>
 
       <Tabs defaultValue="resumen" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className={`grid w-full ${userRole === 'abogado' ? 'grid-cols-5' : 'grid-cols-4'}`}>
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
-          <TabsTrigger value="documentos">Documentos</TabsTrigger>
+          <TabsTrigger value="documentos">
+            {userRole === 'cliente' ? 'Mis Documentos' : 'Documentos Cliente'}
+          </TabsTrigger>
+          {userRole === 'abogado' && (
+            <TabsTrigger value="resoluciones">Resoluciones</TabsTrigger>
+          )}
           <TabsTrigger value="interacciones">Interacciones</TabsTrigger>
           <TabsTrigger value="pagos">Pagos</TabsTrigger>
         </TabsList>
@@ -368,11 +374,33 @@ const CaseDetailTabs = () => {
         </TabsContent>
 
         <TabsContent value="documentos" className="space-y-4">
-          <DocumentManager 
-            casoId={casoId!} 
-            readOnly={userRole === 'abogado'} 
-          />
+          {userRole === 'cliente' ? (
+            <ClientDocumentManager casoId={casoId!} />
+          ) : (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    Documentos del Cliente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ClientDocumentManager casoId={casoId!} />
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </TabsContent>
+
+        {userRole === 'abogado' && (
+          <TabsContent value="resoluciones" className="space-y-4">
+            <DocumentManager 
+              casoId={casoId!} 
+              readOnly={false} 
+            />
+          </TabsContent>
+        )}
 
         <TabsContent value="interacciones" className="space-y-4">
           <Card>
