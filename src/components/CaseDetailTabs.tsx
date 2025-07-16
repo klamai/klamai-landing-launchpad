@@ -10,6 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
 import { 
   FileText, 
+  Download, 
+  Upload, 
   MessageCircle, 
   Calendar, 
   CreditCard,
@@ -27,7 +29,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
 import DocumentManager from "@/components/DocumentManager";
 import ClientDocumentManager from "@/components/ClientDocumentManager";
-import LawyerDocumentManager from "@/components/LawyerDocumentManager";
 
 const CaseDetailTabs = () => {
   const { casoId } = useParams();
@@ -135,6 +136,7 @@ const CaseDetailTabs = () => {
 
   const getTimelineSteps = (estado: string) => {
     if (userRole === 'cliente') {
+      // Timeline simplificado para clientes
       const steps = [
         { id: 'creado', label: 'Consulta Creada', completed: true },
         { id: 'esperando_pago', label: 'Pendiente de Pago', completed: estado !== 'borrador' },
@@ -143,6 +145,7 @@ const CaseDetailTabs = () => {
       ];
       return steps;
     } else {
+      // Timeline completo para abogados
       const steps = [
         { id: 'creado', label: 'Caso Creado', completed: true },
         { id: 'esperando_pago', label: 'Esperando Pago', completed: estado !== 'borrador' },
@@ -374,7 +377,19 @@ const CaseDetailTabs = () => {
           {userRole === 'cliente' ? (
             <ClientDocumentManager casoId={casoId!} />
           ) : (
-            <LawyerDocumentManager casoId={casoId!} />
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    Documentos del Cliente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ClientDocumentManager casoId={casoId!} />
+                </CardContent>
+              </Card>
+            </div>
           )}
         </TabsContent>
 
