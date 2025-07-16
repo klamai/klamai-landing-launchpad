@@ -35,12 +35,8 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs, Thumbnail } from "react-pdf";
 
-// Configuración mejorada del worker con versión estable
+// Configuración simplificada del worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs`;
-
-// Configuración global para mejorar el renderizado
-pdfjs.GlobalWorkerOptions.cMapUrl = `//unpkg.com/pdfjs-dist@4.0.379/cmaps/`;
-pdfjs.GlobalWorkerOptions.cMapPacked = true;
 
 const ZOOM_OPTIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 4, 8];
 
@@ -184,8 +180,7 @@ function PDFViewer({ url, className }: PDFViewerProps) {
         onLoadError={onDocumentLoadError}
         className="w-full h-full flex"
         options={{
-          // Mejorar configuración para renderizado
-          enableWebGL: false,
+          // Configuración básica para renderizado
           verbosity: 0,
           disableAutoFetch: false,
           disableStream: false,
