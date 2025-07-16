@@ -36,6 +36,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toZonedTime } from 'date-fns-tz';
 import { useDocumentManagement } from '@/hooks/useDocumentManagement';
+import { useClientDocumentManagement } from '@/hooks/useClientDocumentManagement';
 import DocumentViewer from '@/components/DocumentViewer';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
 import { useToast } from '@/hooks/use-toast';
@@ -118,6 +119,13 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     refetch: refetchDocuments 
   } = useDocumentManagement(caso?.id);
 
+  const {
+    documentosCliente,
+    loading: loadingClientDocs,
+    downloadDocument: downloadClientDocument,
+    getSignedUrl: getClientSignedUrl
+  } = useClientDocumentManagement(caso?.id);
+
   if (!caso) return null;
 
   // Convertir a zona horaria de España
@@ -161,13 +169,20 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  const handleViewClientDocument = (doc: any) => {
-    if (doc.url) {
+  const handleViewClientDocument = async (doc: any) => {
+    const signedUrl = await getClientSignedUrl(doc);
+    if (signedUrl) {
       setSelectedDocument({
-        name: doc.nombre || doc.name || 'Documento del cliente',
-        url: doc.url,
-        type: doc.tipo || doc.type,
-        size: doc.tamaño || doc.size
+        name: doc.nombre_archivo,
+        url: signedUrl,
+        type: doc.tipo_documento,
+        size: doc.tamaño_archivo
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "No se pudo generar la URL para visualizar el documento",
+        variant: "destructive"
       });
     }
   };
@@ -493,49 +508,53 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                       <CardTitle className="text-base">Documentos del Cliente</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {caso.documentos_adjuntos ? (
+                      {loadingClientDocs ? (
+                        <div className="text-center py-4 text-muted-foreground">
+                          <p className="text-sm">Cargando documentos del cliente...</p>
+                        </div>
+                      ) : documentosCliente.length > 0 ? (
                         <div className="space-y-2">
-                          <p className="text-sm text-muted-foreground mb-2">Documentos adjuntos por el cliente:</p>
+                          <p className="text-sm text-muted-foreground mb-2">Documentos subidos por el cliente:</p>
                           <div className="space-y-2">
-                            {Array.isArray(caso.documentos_adjuntos) ? (
-                              caso.documentos_adjuntos.map((doc: any, idx: number) => (
-                                <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                  <FileText className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-sm flex-1 cursor-pointer" onClick={() => handleViewClientDocument(doc)}>
-                                    {doc.nombre || doc.name || `Documento ${idx + 1}`}
-                                  </span>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => handleViewClientDocument(doc)}
-                                  >
-                                    <Eye className="h-3 w-3" />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => {
-                                      const link = window.document.createElement('a');
-                                      link.href = doc.url;
-                                      link.download = doc.nombre || doc.name || `documento_${idx + 1}`;
-                                      link.click();
-                                    }}
-                                  >
-                                    <Download className="h-3 w-3" />
-                                  </Button>
+                            {documentosCliente.map((doc) => (
+                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate cursor-pointer" onClick={() => handleViewClientDocument(doc)}>
+                                    {doc.nombre_archivo}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
+                                  </p>
+                                  {doc.descripcion && (
+                                    <p className="text-xs text-muted-foreground truncate">
+                                      {doc.descripcion}
+                                    </p>
+                                  )}
                                 </div>
-                              ))
-                            ) : (
-                              <pre className="text-xs bg-gray-50 dark:bg-gray-800 p-2 rounded overflow-auto">
-                                {JSON.stringify(caso.documentos_adjuntos, null, 2)}
-                              </pre>
-                            )}
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleViewClientDocument(doc)}
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => downloadClientDocument(doc)}
+                                >
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       ) : (
                         <div className="text-center py-8 text-muted-foreground">
                           <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p>No hay documentos del cliente</p>
+                          <p className="text-sm">No hay documentos del cliente</p>
+                          <p className="text-xs">El cliente no ha subido documentos aún</p>
                         </div>
                       )}
                     </CardContent>
