@@ -209,147 +209,169 @@ const CasesManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Filtros y búsqueda */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
+      {/* Filtros y búsqueda - MEJORADOS PARA ABOGADOS MAYORES */}
+      <Card className="border-2 shadow-md">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+            <Filter className="h-5 w-5 text-blue-600" />
             Filtrar Casos
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm text-gray-700 dark:text-gray-300">
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Search bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Buscar por motivo, cliente, email o ciudad..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            {/* Advanced filters */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Estado (Disponible, Cerrado)</SelectItem>
-                  <SelectItem value="disponible">Disponible ({filteredCasos.filter(c => c.estado === 'disponible').length})</SelectItem>
-                  <SelectItem value="agotado">Agotado ({filteredCasos.filter(c => c.estado === 'agotado').length})</SelectItem>
-                  <SelectItem value="esperando_pago">Esperando Pago ({filteredCasos.filter(c => c.estado === 'esperando_pago').length})</SelectItem>
-                </SelectContent>
-              </Select>
+        <CardContent className="space-y-4">
+          {/* Search bar - MEJORADA */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
+            <Input
+              placeholder="Buscar por motivo, cliente, email o ciudad..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-11 h-11 text-base border-2 focus:border-blue-400"
+            />
+          </div>
+          
+          {/* Filtros en dos filas para mejor organización */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-10 text-sm border-2">
+                <SelectValue placeholder="Estado del Caso" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-sm py-2">Estado (Disp, Cerrado...)</SelectItem>
+                <SelectItem value="disponible" className="text-sm py-2">
+                  Disponible ({filteredCasos.filter(c => c.estado === 'disponible').length})
+                </SelectItem>
+                <SelectItem value="agotado" className="text-sm py-2">
+                  Agotado ({filteredCasos.filter(c => c.estado === 'agotado').length})
+                </SelectItem>
+                <SelectItem value="esperando_pago" className="text-sm py-2">
+                  Esperando Pago ({filteredCasos.filter(c => c.estado === 'esperando_pago').length})
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
-              <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Especialidad" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Especialidades</SelectItem>
-                  {specialties.map(specialty => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty} ({casos.filter(c => c.especialidades?.nombre === specialty).length})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tipo Lead" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tipo (Estandard, Premium, Urgente)</SelectItem>
-                  {leadTypes.map(type => (
-                    <SelectItem key={type} value={type}>
-                      {type} ({casos.filter(c => c.tipo_lead === type).length})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={cityFilter} onValueChange={setCityFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Ciudad" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Ciudades</SelectItem>
-                  {cities.map(city => (
-                    <SelectItem key={city} value={city}>
-                      <MapPin className="h-3 w-3 mr-1" />
-                      {city} ({casos.filter(c => c.ciudad_borrador === city || c.profiles?.ciudad === city).length})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={profileTypeFilter} onValueChange={setProfileTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Perfil" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Perfil (Individual, Empresa)</SelectItem>
-                  <SelectItem value="individual">
-                    <UserIcon className="h-3 w-3 mr-1" />
-                    Individual ({casos.filter(c => (c.tipo_perfil_borrador || c.profiles?.tipo_perfil) === 'individual').length})
+            <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+              <SelectTrigger className="h-10 text-sm border-2">
+                <SelectValue placeholder="Especialidad" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-sm py-2">Especialidad</SelectItem>
+                {specialties.map(specialty => (
+                  <SelectItem key={specialty} value={specialty} className="text-sm py-2">
+                    {specialty} ({casos.filter(c => c.especialidades?.nombre === specialty).length})
                   </SelectItem>
-                  <SelectItem value="empresa">
-                    <Building className="h-3 w-3 mr-1" />
-                    Empresa ({casos.filter(c => (c.tipo_perfil_borrador || c.profiles?.tipo_perfil) === 'empresa').length})
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={profileTypeFilter} onValueChange={setProfileTypeFilter}>
+              <SelectTrigger className="h-10 text-sm border-2">
+                <SelectValue placeholder="Tipo de Cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-sm py-2">Perfil (Individual, Empresa)</SelectItem>
+                <SelectItem value="individual" className="text-sm py-2">
+                  <UserIcon className="h-4 w-4 mr-1" />
+                  Individual ({casos.filter(c => (c.tipo_perfil_borrador || c.profiles?.tipo_perfil) === 'individual').length})
+                </SelectItem>
+                <SelectItem value="empresa" className="text-sm py-2">
+                  <Building className="h-4 w-4 mr-1" />
+                  Empresa ({casos.filter(c => (c.tipo_perfil_borrador || c.profiles?.tipo_perfil) === 'empresa').length})
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Segunda fila de filtros */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="h-10 text-sm border-2">
+                <SelectValue placeholder="Tipo Lead" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-sm py-2">Tipo (Estandar, Premium...)</SelectItem>
+                {leadTypes.map(type => (
+                  <SelectItem key={type} value={type} className="text-sm py-2">
+                    {type} ({casos.filter(c => c.tipo_lead === type).length})
                   </SelectItem>
-                </SelectContent>
-              </Select>
+                ))}
+              </SelectContent>
+            </Select>
 
-              {/* View mode toggle */}
-              <div className="flex border rounded-md">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="flex-1 rounded-r-none"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="flex-1 rounded-l-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
+            <Select value={cityFilter} onValueChange={setCityFilter}>
+              <SelectTrigger className="h-10 text-sm border-2">
+                <SelectValue placeholder="Ciudad" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-sm py-2">Ciudad</SelectItem>
+                {cities.map(city => (
+                  <SelectItem key={city} value={city} className="text-sm py-2">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    {city} ({casos.filter(c => c.ciudad_borrador === city || c.profiles?.ciudad === city).length})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Controles de vista */}
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="flex-1 h-10 text-sm font-medium border-2"
+              >
+                <Grid3X3 className="h-4 w-4 mr-1" />
+                Cajas
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="flex-1 h-10 text-sm font-medium border-2"
+              >
+                <List className="h-4 w-4 mr-1" />
+                Lista
+              </Button>
             </div>
+          </div>
 
-            
+          {/* Resumen de filtros - COMPACTO */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+            <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200">
+              <Sparkles className="h-4 w-4" />
+              <span className="font-medium">
+                Mostrando {activeCasos.length} casos activos de {casos.length} totales
+                {searchTerm && (
+                  <span className="ml-2 text-xs bg-blue-200 dark:bg-blue-800 px-2 py-1 rounded">
+                    Búsqueda: "{searchTerm}"
+                  </span>
+                )}
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Cases display */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between ">
+      {/* Cases display - MEJORADO */}
+      <Card className="border-2 shadow-md">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-red-500" />
-                Casos Activos
+              <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-900 dark:text-white">
+                <AlertCircle className="h-6 w-6 text-orange-500" />
+                Casos Activos - Vista {viewMode === 'grid' ? 'Cajas' : 'Lista'}
               </CardTitle>
-              <CardDescription>
-                {activeCasos.length} casos activos encontrados
+              <CardDescription className="text-base text-gray-700 dark:text-gray-300 mt-1">
+                {activeCasos.length} casos activos encontrados para gestionar
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {activeCasos.map((caso) => (
                 <CaseCard
                   key={caso.id}
@@ -369,15 +391,15 @@ const CasesManagement = () => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Motivo</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Especialidad</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Asignado a</TableHead>
-                    <TableHead>Acciones</TableHead>
+                  <TableRow className="border-b-2">
+                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Cliente</TableHead>
+                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Motivo</TableHead>
+                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Tipo</TableHead>
+                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Especialidad</TableHead>
+                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Estado</TableHead>
+                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Fecha</TableHead>
+                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Asignado a</TableHead>
+                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -386,90 +408,106 @@ const CasesManagement = () => {
                       key={caso.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                      className="hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b h-20"
                     >
-                      <TableCell>
+                      <TableCell className="py-4">
                         <div>
-                          <div className="font-medium">
+                          <div className="font-semibold text-base text-gray-900 dark:text-white">
                             {caso.profiles?.nombre} {caso.profiles?.apellido}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             {caso.profiles?.email}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="max-w-xs truncate">
-                          {caso.motivo_consulta}
+                      <TableCell className="py-4">
+                        <div className="max-w-xs">
+                          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed">
+                            {caso.motivo_consulta}
+                          </p>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="max-w-xs truncate">
+                      <TableCell className="py-4">
+                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                           {caso.tipo_lead}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
+                      <TableCell className="py-4">
+                        <Badge variant="outline" className="text-sm px-3 py-1 font-medium">
                           {caso.especialidades?.nombre || 'Sin especialidad'}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-4">
                         {getStatusBadge(caso.estado)}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm text-gray-500">
-                          <Calendar className="h-3 w-3" />
-                          {format(new Date(caso.created_at), 'dd/MM/yy', { locale: es })}
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                          <Calendar className="h-4 w-4" />
+                          <span className="font-medium">
+                            {format(new Date(caso.created_at), 'dd/MM/yy', { locale: es })}
+                          </span>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-4">
                         {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
                           <div className="text-sm">
                             {caso.asignaciones_casos.map((asignacion, idx) => (
-                              <div key={idx} className="flex items-center gap-1">
-                                <CheckCircle className="h-3 w-3 text-green-500" />
-                                {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
+                              <div key={idx} className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 p-2 rounded">
+                                <CheckCircle className="h-4 w-4 text-green-600" />
+                                <span className="font-medium text-green-800 dark:text-green-200">
+                                  {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
+                                </span>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-gray-500 text-sm">Sin asignar</span>
+                          <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-center">
+                            <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">Sin asignar</span>
+                          </div>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-4">
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(caso.id)}>
-                            <Eye className="h-4 w-4" />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDetails(caso.id)}
+                            className="h-9 px-3 text-sm font-medium border-2 hover:bg-blue-50"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Ver
                           </Button>
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => setSelectedCaseId(caso.id)}
                                 disabled={caso.estado === 'cerrado'}
+                                className="h-9 px-3 text-sm font-medium border-2 hover:bg-green-50"
                               >
-                                <UserPlus className="h-4 w-4" />
+                                <UserPlus className="h-4 w-4 mr-1" />
+                                Asignar
                               </Button>
                             </DialogTrigger>
-                            <DialogContent>
+                            <DialogContent className="max-w-md">
                               <DialogHeader>
-                                <DialogTitle>Asignar Caso a Abogado</DialogTitle>
-                                <DialogDescription>
+                                <DialogTitle className="text-lg font-bold">Asignar Caso a Abogado</DialogTitle>
+                                <DialogDescription className="text-base">
                                   Selecciona un abogado para asignar este caso
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="space-y-4">
                                 <div>
-                                  <label className="text-sm font-medium">Seleccionar Abogado</label>
+                                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Seleccionar Abogado</label>
                                   <Select value={selectedLawyerId} onValueChange={setSelectedLawyerId}>
-                                    <SelectTrigger>
+                                    <SelectTrigger className="h-11 text-base border-2">
                                       <SelectValue placeholder="Selecciona un abogado" />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {abogados.map((abogado) => (
-                                        <SelectItem key={abogado.id} value={abogado.id}>
-                                          {abogado.nombre} {abogado.apellido} 
+                                        <SelectItem key={abogado.id} value={abogado.id} className="text-base py-3">
+                                          {abogado.nombre} {abogado.apellido}
                                           <span className="text-gray-500 ml-2">
                                             ({abogado.casos_activos} casos activos)
                                           </span>
@@ -479,18 +517,20 @@ const CasesManagement = () => {
                                   </Select>
                                 </div>
                                 <div>
-                                  <label className="text-sm font-medium">Notas de Asignación</label>
+                                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Notas de Asignación</label>
                                   <Textarea
                                     placeholder="Notas adicionales para el abogado..."
                                     value={assignmentNotes}
                                     onChange={(e) => setAssignmentNotes(e.target.value)}
+                                    className="text-base border-2"
                                   />
                                 </div>
-                                <div className="flex justify-end gap-2">
-                                  <Button variant="outline">Cancelar</Button>
-                                  <Button 
+                                <div className="flex justify-end gap-3">
+                                  <Button variant="outline" className="h-10 px-4 text-base border-2">Cancelar</Button>
+                                  <Button
                                     onClick={handleAssignCase}
                                     disabled={isAssigning}
+                                    className="h-10 px-4 text-base"
                                   >
                                     {isAssigning ? 'Asignando...' : 'Asignar Caso'}
                                   </Button>
@@ -508,15 +548,15 @@ const CasesManagement = () => {
           )}
 
           {activeCasos.length === 0 && (
-            <div className="text-center py-12">
-              <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            <div className="text-center py-16 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300">
+              <AlertCircle className="h-20 w-20 text-gray-400 mx-auto mb-6" />
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
                 No hay casos activos
               </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                {filteredCasos.length === 0 
-                  ? "No se encontraron casos con los filtros aplicados"
-                  : "Todos los casos están cerrados"
+              <p className="text-base text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                {filteredCasos.length === 0
+                  ? "No se encontraron casos con los filtros aplicados. Intenta ajustar los criterios de búsqueda."
+                  : "Todos los casos están cerrados. Los casos cerrados no se muestran en esta vista."
                 }
               </p>
             </div>
