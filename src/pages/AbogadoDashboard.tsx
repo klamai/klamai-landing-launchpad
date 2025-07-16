@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { SidebarDashboard, SidebarBody, SidebarLink, Logo, LogoIcon } from "@/components/ui/sidebar-dashboard";
 import { 
@@ -20,8 +21,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperAdminStats } from "@/hooks/useSuperAdminStats";
+import { useCasesByRole } from "@/hooks/useCasesByRole";
 import SuperAdminMetrics from "@/components/SuperAdminMetrics";
-import CasesManagement from "@/components/CasesManagement";
+import CaseCard from "@/components/CaseCard";
 import LawyersManagement from "@/components/LawyersManagement";
 import { Button } from "@/components/ui/button";
 
@@ -335,14 +337,88 @@ const SuperAdminDashboardSection = () => {
 };
 
 const CasesManagementSection = () => {
+  const { casos, loading, refetch } = useCasesByRole();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleViewDetails = (casoId: string) => {
+    navigate(`/abogados/dashboard/casos/${casoId}`);
+  };
+
+  const handleAssignLawyer = (casoId: string) => {
+    toast({
+      title: "Función pendiente",
+      description: "La asignación de abogados estará disponible próximamente",
+    });
+  };
+
+  const handleGenerateResolution = (casoId: string) => {
+    toast({
+      title: "Función pendiente",
+      description: "La generación de resoluciones estará disponible próximamente",
+    });
+  };
+
+  const handleUploadDocument = (casoId: string) => {
+    toast({
+      title: "Función pendiente",
+      description: "La subida de documentos estará disponible próximamente",
+    });
+  };
+
+  const handleSendMessage = (casoId: string) => {
+    toast({
+      title: "Función pendiente",
+      description: "El envío de mensajes estará disponible próximamente",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando casos...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Casos</h1>
-      <CasesManagement />
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Casos</h1>
+        <Button onClick={refetch} variant="outline" className="gap-2">
+          <Scale className="h-4 w-4" />
+          Actualizar
+        </Button>
+      </div>
+
+      {casos.length === 0 ? (
+        <div className="text-center py-12">
+          <Scale className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground text-lg">No hay casos disponibles</p>
+          <p className="text-muted-foreground text-sm">Los casos aparecerán aquí cuando estén disponibles</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {casos.map((caso) => (
+            <CaseCard
+              key={caso.id}
+              caso={caso}
+              onViewDetails={handleViewDetails}
+              onAssignLawyer={handleAssignLawyer}
+              onGenerateResolution={handleGenerateResolution}
+              onUploadDocument={handleUploadDocument}
+              onSendMessage={handleSendMessage}
+            />
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };
