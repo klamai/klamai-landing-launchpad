@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
   CircleMinus,
@@ -27,11 +29,18 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Settings,
+  Eye,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs, Thumbnail } from "react-pdf";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
+// Configuración mejorada del worker con versión estable
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs`;
+
+// Configuración global para mejorar el renderizado
+pdfjs.GlobalWorkerOptions.cMapUrl = `//unpkg.com/pdfjs-dist@4.0.379/cmaps/`;
+pdfjs.GlobalWorkerOptions.cMapPacked = true;
 
 const ZOOM_OPTIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 4, 8];
 
@@ -53,6 +62,10 @@ function PDFViewer({ url, className }: PDFViewerProps) {
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [showThumbnails, setShowThumbnails] = useState(false);
+  const [enableTextLayer, setEnableTextLayer] = useState(false);
+  const [enableSearch, setEnableSearch] = useState(false);
+  const [renderingQuality, setRenderingQuality] = useState<'standard' | 'high'>('standard');
+  const [loadingError, setLoadingError] = useState<string | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -64,6 +77,12 @@ function PDFViewer({ url, className }: PDFViewerProps) {
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
+    setLoadingError(null);
+  }
+
+  function onDocumentLoadError(error: Error) {
+    console.error('Error loading PDF:', error);
+    setLoadingError('Error al cargar el documento PDF');
   }
 
   const goToPage = (pageNumber: number) => {
@@ -74,6 +93,21 @@ function PDFViewer({ url, className }: PDFViewerProps) {
       if (pageElement) {
         pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+    }
+  };
+
+  const handleTextLayerToggle = (enabled: boolean) => {
+    setEnableTextLayer(enabled);
+    if (!enabled) {
+      setEnableSearch(false);
+      setSearchQuery("");
+    }
+  };
+
+  const handleSearchToggle = (enabled: boolean) => {
+    setEnableSearch(enabled);
+    if (enabled && !enableTextLayer) {
+      setEnableTextLayer(true);
     }
   };
 
@@ -123,12 +157,40 @@ function PDFViewer({ url, className }: PDFViewerProps) {
     };
   }, [numPages]);
 
+  if (loadingError) {
+    return (
+      <div className={cn("flex flex-col items-center justify-center h-full bg-background", className)}>
+        <div className="text-center p-8">
+          <p className="text-lg font-medium text-destructive mb-2">Error al cargar el PDF</p>
+          <p className="text-sm text-muted-foreground mb-4">{loadingError}</p>
+          <Button 
+            variant="outline" 
+            onClick={() => window.open(url, '_blank')}
+            className="gap-2"
+          >
+            <Eye className="h-4 w-4" />
+            Abrir en nueva ventana
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("flex flex-col h-full w-full bg-background", className)}>
       <Document
         file={url}
         onLoadSuccess={onDocumentLoadSuccess}
+        onLoadError={onDocumentLoadError}
         className="w-full h-full flex"
+        options={{
+          // Mejorar configuración para renderizado
+          enableWebGL: false,
+          verbosity: 0,
+          disableAutoFetch: false,
+          disableStream: false,
+          disableRange: false,
+        }}
         loading={
           <div className="flex flex-col items-center justify-center h-full">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -273,21 +335,79 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                   </SelectContent>
                 </Select>
                 <Separator orientation="vertical" className="h-6" />
+                
+                {/* Popover de búsqueda mejorado */}
+                {enableSearch && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Search className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Buscar en el documento</label>
+                        <Input
+                          placeholder="Ingresa texto a buscar..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+
+                {/* Configuraciones de renderizado */}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Search className="h-4 w-4" />
+                      <Settings className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Buscar en el documento</label>
-                      <Input
-                        placeholder="Ingresa texto a buscar..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full"
-                      />
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Opciones de visualización</Label>
+                        
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="text-layer" className="text-sm">
+                            Capa de texto (para búsqueda)
+                          </Label>
+                          <Switch
+                            id="text-layer"
+                            checked={enableTextLayer}
+                            onCheckedChange={handleTextLayerToggle}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="search-enabled" className="text-sm">
+                            Habilitar búsqueda
+                          </Label>
+                          <Switch
+                            id="search-enabled"
+                            checked={enableSearch}
+                            onCheckedChange={handleSearchToggle}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm">Calidad de renderizado</Label>
+                          <Select
+                            value={renderingQuality}
+                            onValueChange={(value: 'standard' | 'high') => setRenderingQuality(value)}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="standard">Estándar (recomendado)</SelectItem>
+                              <SelectItem value="high">Alta calidad</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -305,14 +425,16 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                     className="border shadow-sm rounded-lg"
                     data-page-number={index + 1}
                     renderAnnotationLayer={false}
-                    scale={zoom}
+                    renderTextLayer={enableTextLayer}
+                    scale={zoom * (renderingQuality === 'high' ? 1.5 : 1)}
                     rotate={rotation}
                     loading={
                       <div className="flex items-center justify-center h-96 border rounded-lg bg-muted/20">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                       </div>
                     }
-                    customTextRenderer={searchQuery ? textRenderer : undefined}
+                    customTextRenderer={enableSearch && searchQuery ? textRenderer : undefined}
+                    canvasBackground="white"
                   />
                 ))}
               </div>
