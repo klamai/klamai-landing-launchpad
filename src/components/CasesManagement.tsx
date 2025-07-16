@@ -214,10 +214,9 @@ const CasesManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Filtros de Casos
+            Filtrar Casos
           </CardTitle>
           <CardDescription>
-            Busca y filtra casos para gestionar asignaciones
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -328,14 +327,7 @@ const CasesManagement = () => {
               </div>
             </div>
 
-            {/* Filter summary */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Sparkles className="h-4 w-4" />
-              <span>
-                Mostrando {activeCasos.length} casos activos de {casos.length} totales
-                {searchTerm && ` - Filtrado por: "${searchTerm}"`}
-              </span>
-            </div>
+            
           </div>
         </CardContent>
       </Card>
