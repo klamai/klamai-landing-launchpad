@@ -359,8 +359,11 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                         <CardTitle className="text-base">Guía para el Abogado</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
-                          <p className="text-sm whitespace-pre-wrap">{caso.guia_abogado}</p>
+                      <div className="prose prose-slate bg-gray-50 max-w-none dark:prose-invert dark:bg-gray-800 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden">                        <ScrollArea className="h-48">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {caso.guia_abogado}
+                          </ReactMarkdown>
+                          </ScrollArea>
                         </div>
                       </CardContent>
                     </Card>
