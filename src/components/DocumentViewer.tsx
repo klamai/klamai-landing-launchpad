@@ -4,8 +4,10 @@ import { motion } from 'framer-motion';
 import { X, Download, FileText, Image as ImageIcon, File, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { PDFViewer } from '@/components/ui/pdf-viewer';
 
 interface DocumentViewerProps {
   isOpen: boolean;
@@ -125,11 +127,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
     if (isPDF) {
       return (
-        <iframe
-          src={document.url}
-          className="w-full h-[60vh]"
-          title={document.name}
-        />
+        <div className="h-[70vh] w-full">
+          <PDFViewer url={document.url} className="h-full w-full" />
+        </div>
       );
     }
 
@@ -148,7 +148,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     if (isMarkdown) {
       return (
         <div className="p-6 h-[60vh] overflow-auto bg-muted/30">
-          <div className="prose prose-slate max-w-none dark:prose-invert p-10">
+          <div className="prose prose-slate max-w-none dark:prose-invert">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {textContent}
             </ReactMarkdown>
@@ -160,8 +160,8 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     if (isText) {
       return (
         <div className="p-6 h-[60vh] overflow-auto bg-muted/30">
-          <div className="prose prose-slate max-w-none dark:prose-invert p-10">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          <div className="prose prose-slate max-w-none dark:prose-invert">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {textContent}
             </ReactMarkdown>
           </div>
@@ -186,7 +186,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className={cn("overflow-hidden", isPDF ? "max-w-7xl max-h-[95vh]" : "max-w-4xl max-h-[90vh]")}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {getFileIcon()}
@@ -200,14 +200,16 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">
-          <div className="flex justify-end mb-4">
-            <Button variant="outline" onClick={handleDownload} className="gap-2">
-              <Download className="h-4 w-4" />
-              Descargar
-            </Button>
-          </div>
+          {!isPDF && (
+            <div className="flex justify-end mb-4">
+              <Button variant="outline" onClick={handleDownload} className="gap-2">
+                <Download className="h-4 w-4" />
+                Descargar
+              </Button>
+            </div>
+          )}
 
-          <div className="border rounded-lg overflow-hidden bg-background">
+          <div className={cn("border rounded-lg overflow-hidden bg-background", isPDF && "border-0")}>
             {renderContent()}
           </div>
         </div>
