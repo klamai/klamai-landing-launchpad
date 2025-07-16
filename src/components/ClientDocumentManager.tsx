@@ -81,14 +81,23 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
 
   const handleView = async (documento: any) => {
     try {
+      console.log('Intentando ver documento:', documento);
       const signedUrl = await getSignedUrl(documento);
+      console.log('URL firmada obtenida:', signedUrl);
+      
       if (signedUrl) {
-        setSelectedDocument({ ...documento, signedUrl });
+        setSelectedDocument({ 
+          name: documento.nombre_archivo,
+          url: signedUrl,
+          type: documento.tipo_documento,
+          size: documento.tamaño_archivo
+        });
         setIsViewerOpen(true);
       } else {
         throw new Error('No se pudo obtener la URL del documento');
       }
     } catch (error) {
+      console.error('Error al cargar documento:', error);
       toast({
         title: "Error",
         description: "No se pudo cargar el documento",
@@ -115,6 +124,8 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
   };
+
+  console.log('DocumentosCliente cargados:', documentosCliente);
 
   return (
     <div className="space-y-6">
@@ -240,7 +251,7 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
             setIsViewerOpen(false);
             setSelectedDocument(null);
           }}
-          documento={selectedDocument}
+          document={selectedDocument}
         />
       )}
     </div>

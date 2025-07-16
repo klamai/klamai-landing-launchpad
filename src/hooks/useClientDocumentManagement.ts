@@ -22,10 +22,29 @@ export const useClientDocumentManagement = (casoId?: string) => {
   const { user } = useAuth();
 
   const fetchDocumentosCliente = async () => {
-    if (!casoId || !user) return;
+    if (!casoId || !user) {
+      console.log('No se puede buscar documentos - casoId:', casoId, 'user:', !!user);
+      return;
+    }
 
     setLoading(true);
     try {
+      console.log('Buscando documentos del cliente para caso:', casoId, 'usuario:', user.id);
+      
+      // Primero, verificar el rol del usuario
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, tipo_abogado')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error obteniendo perfil:', profileError);
+        return;
+      }
+
+      console.log('Perfil del usuario:', profile);
+
       const { data, error } = await supabase
         .from('documentos_cliente')
         .select('*')
@@ -36,6 +55,9 @@ export const useClientDocumentManagement = (casoId?: string) => {
         console.error('Error fetching documentos cliente:', error);
         return;
       }
+
+      console.log('Documentos cliente encontrados:', data?.length || 0);
+      console.log('Documentos cliente data:', data);
 
       setDocumentosCliente(data || []);
     } catch (error) {
@@ -112,6 +134,8 @@ export const useClientDocumentManagement = (casoId?: string) => {
 
   const getSignedUrl = async (documento: DocumentoCliente): Promise<string | null> => {
     try {
+      console.log('Obteniendo URL firmada para:', documento.ruta_archivo);
+      
       const { data, error } = await supabase.storage
         .from('documentos_legales')
         .createSignedUrl(documento.ruta_archivo, 3600); // 1 hora de expiración
@@ -121,6 +145,7 @@ export const useClientDocumentManagement = (casoId?: string) => {
         return null;
       }
 
+      console.log('URL firmada generada exitosamente:', data.signedUrl);
       return data.signedUrl;
     } catch (error) {
       console.error('Error getting signed URL:', error);

@@ -110,14 +110,23 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
 
   const handleView = async (documento: any) => {
     try {
+      console.log('Intentando ver documento de resolución:', documento);
       const signedUrl = await getSignedUrl(documento);
+      console.log('URL firmada obtenida para resolución:', signedUrl);
+      
       if (signedUrl) {
-        setSelectedDocument({ ...documento, signedUrl });
+        setSelectedDocument({ 
+          name: documento.nombre_archivo,
+          url: signedUrl,
+          type: documento.tipo_documento,
+          size: documento.tamaño_archivo
+        });
         setIsViewerOpen(true);
       } else {
         throw new Error('No se pudo obtener la URL del documento');
       }
     } catch (error) {
+      console.error('Error al cargar documento de resolución:', error);
       toast({
         title: "Error",
         description: "No se pudo cargar el documento",
@@ -144,6 +153,8 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
   };
+
+  console.log('DocumentosResolucion cargados:', documentosResolucion);
 
   return (
     <div className="space-y-6">
@@ -290,7 +301,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({ casoId, readOnly = fa
             setIsViewerOpen(false);
             setSelectedDocument(null);
           }}
-          documento={selectedDocument}
+          document={selectedDocument}
         />
       )}
     </div>
