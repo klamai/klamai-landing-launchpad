@@ -31,12 +31,15 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     if (!document) {
       setTextContent('');
       setError(null);
+      setIsLoading(false);
       return;
     }
 
     const isText = document.type?.startsWith('text/') ||
       /\.(txt|json|xml|csv|html|js|ts|jsx|tsx|css|scss)$/i.test(document.name);
-    const isMarkdown = document.type === 'text/markdown' || document.name.toLowerCase().endsWith('.md');
+    const isMarkdown = document.type === 'text/markdown' || 
+      document.name.toLowerCase().endsWith('.md') ||
+      document.name.toLowerCase().endsWith('.markdown');
 
     if (isText || isMarkdown) {
       setIsLoading(true);
@@ -64,6 +67,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     } else {
       setTextContent('');
       setError(null);
+      setIsLoading(false);
     }
   }, [document?.url, document?.name, document?.type]);
 
@@ -74,7 +78,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(document.name);
   const isText = document.type?.startsWith('text/') ||
     /\.(txt|json|xml|csv|html|js|ts|jsx|tsx|css|scss)$/i.test(document.name);
-  const isMarkdown = document.type === 'text/markdown' || document.name.toLowerCase().endsWith('.md');
+  const isMarkdown = document.type === 'text/markdown' || 
+    document.name.toLowerCase().endsWith('.md') ||
+    document.name.toLowerCase().endsWith('.markdown');
 
   const handleDownload = () => {
     const link = window.document.createElement('a');
@@ -142,7 +148,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     if (isMarkdown) {
       return (
         <div className="p-6 h-[60vh] overflow-auto">
-          <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-code:text-foreground prose-pre:bg-muted prose-pre:text-foreground">
+          <div className="prose prose-slate max-w-none dark:prose-invert">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {textContent}
             </ReactMarkdown>
