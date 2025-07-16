@@ -147,8 +147,8 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
     if (isMarkdown) {
       return (
-        <div className="p-6 h-[60vh] overflow-auto">
-          <div className="prose prose-slate max-w-none dark:prose-invert">
+        <div className="p-6 h-[60vh] overflow-auto bg-muted/30">
+          <div className="prose prose-slate max-w-none dark:prose-invert p-10">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {textContent}
             </ReactMarkdown>
@@ -159,10 +159,12 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
     if (isText) {
       return (
-        <div className="p-4 h-[60vh] overflow-auto">
-          <pre className="whitespace-pre-wrap font-mono text-sm text-foreground bg-muted/30 p-4 rounded-md">
-            {textContent}
-          </pre>
+        <div className="p-6 h-[60vh] overflow-auto bg-muted/30">
+          <div className="prose prose-slate max-w-none dark:prose-invert p-10">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {textContent}
+            </ReactMarkdown>
+          </div>
         </div>
       );
     }

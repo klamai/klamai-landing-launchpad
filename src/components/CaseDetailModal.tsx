@@ -39,6 +39,8 @@ import { useDocumentManagement } from '@/hooks/useDocumentManagement';
 import DocumentViewer from '@/components/DocumentViewer';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
 import { useToast } from '@/hooks/use-toast';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface CaseDetailModalProps {
   caso: {
@@ -249,9 +251,13 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                       {caso.resumen_caso && (
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Resumen del caso:</p>
-                          <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded text-sm">
+                          <div className="prose prose-slate bg-gray-50 max-w-none dark:prose-invert dark:bg-gray-800 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <ScrollArea className="h-48">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {caso.resumen_caso}
-                          </div>
+                            </ReactMarkdown>
+                            </ScrollArea>
+                        </div>
                         </div>
                       )}
 
