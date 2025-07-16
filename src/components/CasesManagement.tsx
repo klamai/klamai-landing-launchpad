@@ -240,7 +240,7 @@ const CasesManagement = () => {
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="all">Estado (Disponible, Cerrado)</SelectItem>
                   <SelectItem value="disponible">Disponible ({filteredCasos.filter(c => c.estado === 'disponible').length})</SelectItem>
                   <SelectItem value="agotado">Agotado ({filteredCasos.filter(c => c.estado === 'agotado').length})</SelectItem>
                   <SelectItem value="esperando_pago">Esperando Pago ({filteredCasos.filter(c => c.estado === 'esperando_pago').length})</SelectItem>
@@ -252,7 +252,7 @@ const CasesManagement = () => {
                   <SelectValue placeholder="Especialidad" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas Las Especialidades</SelectItem>
+                  <SelectItem value="all">Especialidades</SelectItem>
                   {specialties.map(specialty => (
                     <SelectItem key={specialty} value={specialty}>
                       {specialty} ({casos.filter(c => c.especialidades?.nombre === specialty).length})
@@ -266,7 +266,7 @@ const CasesManagement = () => {
                   <SelectValue placeholder="Tipo Lead" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="all">Tipo (Estandard, Premium, Urgente)</SelectItem>
                   {leadTypes.map(type => (
                     <SelectItem key={type} value={type}>
                       {type} ({casos.filter(c => c.tipo_lead === type).length})
@@ -280,7 +280,7 @@ const CasesManagement = () => {
                   <SelectValue placeholder="Ciudad" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="all">Ciudades</SelectItem>
                   {cities.map(city => (
                     <SelectItem key={city} value={city}>
                       <MapPin className="h-3 w-3 mr-1" />
@@ -295,7 +295,7 @@ const CasesManagement = () => {
                   <SelectValue placeholder="Perfil" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="all">Perfil (Individual, Empresa)</SelectItem>
                   <SelectItem value="individual">
                     <UserIcon className="h-3 w-3 mr-1" />
                     Individual ({casos.filter(c => (c.tipo_perfil_borrador || c.profiles?.tipo_perfil) === 'individual').length})
@@ -343,11 +343,11 @@ const CasesManagement = () => {
       {/* Cases display */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between ">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-orange-500" />
-                Casos Activos - Vista {viewMode === 'grid' ? 'Cajas' : 'Lista'}
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                Casos Activos
               </CardTitle>
               <CardDescription>
                 {activeCasos.length} casos activos encontrados

@@ -127,15 +127,15 @@ const CaseCard: React.FC<CaseCardProps> = ({
     const typeConfig = {
       'premium': { 
         label: 'Premium', 
-        className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+        className: 'bg-purple-300 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
       },
       'urgente': { 
         label: 'Urgente', 
-        className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+        className: 'bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200'
       },
       'estandar': { 
         label: 'Estándar', 
-        className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+        className: 'bg-blue-500 text-white dark:bg-blue-500 dark:text-white'
       }
     };
     
@@ -168,8 +168,8 @@ const CaseCard: React.FC<CaseCardProps> = ({
       transition={{ duration: 0.3 }}
       className="group"
     >
-      <Card className="relative transition-all duration-200 hover:shadow-lg border-border">
-        <CardContent className="p-4">
+      <Card className="relative transition-all duration-200 hover:shadow-lg border-border h-full flex flex-col">
+        <CardContent className="p-4 flex-1 flex flex-col">
           <div className="space-y-3">
             {/* Header con información del cliente */}
             <div className="flex items-start justify-between">
@@ -284,8 +284,12 @@ const CaseCard: React.FC<CaseCardProps> = ({
               </div>
             )}
 
-            {/* Botones de acción */}
-            <div className="flex gap-2 pt-2">
+            
+          </div>
+        </CardContent>
+        {/* Botones de acción */}
+        
+        <div className="flex gap-2 pt-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -320,9 +324,8 @@ const CaseCard: React.FC<CaseCardProps> = ({
                 </>
               )}
             </div>
-          </div>
-        </CardContent>
       </Card>
+      
     </motion.div>
   );
 };
