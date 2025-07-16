@@ -31,14 +31,20 @@ import {
   ChevronRight,
   Settings,
   Eye,
+  RefreshCw,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Document, Page, pdfjs, Thumbnail } from "react-pdf";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useThrottle } from "@/hooks/useThrottle";
 
 // Configuración automática del worker para sincronizar versiones
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
 
 const ZOOM_OPTIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 4, 8];
+const MAX_CONCURRENT_PAGES = 5; // Limitar páginas renderizadas simultáneamente
+const SCROLL_THROTTLE = 100; // ms
+const ZOOM_DEBOUNCE = 300; // ms
 
 function highlightPattern(text: string, pattern: string, itemIndex: number) {
   return text.replace(
@@ -62,8 +68,28 @@ function PDFViewer({ url, className }: PDFViewerProps) {
   const [enableSearch, setEnableSearch] = useState(false);
   const [renderingQuality, setRenderingQuality] = useState<'standard' | 'high'>('standard');
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [isRendering, setIsRendering] = useState(false);
+  const [needsRecovery, setNeedsRecovery] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const renderingPagesRef = useRef<Set<number>>(new Set());
+
+  // Debounced functions para prevenir re-renders excesivos
+  const debouncedZoomChange = useDebounce((newZoom: number) => {
+    setZoom(newZoom);
+    setIsRendering(true);
+  }, ZOOM_DEBOUNCE);
+
+  const debouncedRotationChange = useDebounce((newRotation: number) => {
+    setRotation(newRotation);
+    setIsRendering(true);
+  }, ZOOM_DEBOUNCE);
+
+  // Throttled scroll handler
+  const throttledPageChange = useThrottle((pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  }, SCROLL_THROTTLE);
 
   const textRenderer = useCallback(
     (textItem: { str: string; itemIndex: number }) =>
@@ -71,44 +97,96 @@ function PDFViewer({ url, className }: PDFViewerProps) {
     [searchQuery]
   );
 
+  // Memoized document options para evitar re-renders
+  const documentOptions = useMemo(() => ({
+    verbosity: 0,
+    disableAutoFetch: false,
+    disableStream: false,
+    disableRange: false,
+    // Configuración optimizada para evitar problemas de memoria
+    maxImageSize: renderingQuality === 'high' ? -1 : 1024 * 1024, // 1MB limit for standard
+    isEvalSupported: false,
+    useSystemFonts: true,
+  }), [renderingQuality]);
+
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
     setLoadingError(null);
+    setNeedsRecovery(false);
+    setIsRendering(false);
   }
 
   function onDocumentLoadError(error: Error) {
     console.error('Error loading PDF:', error);
     setLoadingError('Error al cargar el documento PDF');
+    setNeedsRecovery(true);
+    setIsRendering(false);
   }
 
-  const goToPage = (pageNumber: number) => {
+  const goToPage = useCallback((pageNumber: number) => {
     if (pageNumber >= 1 && pageNumber <= (numPages || 1)) {
       setCurrentPage(pageNumber);
-      // Scroll to the specific page
+      // Scroll suave a la página específica
       const pageElement = document.querySelector(`[data-page-number="${pageNumber}"]`);
       if (pageElement) {
         pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
-  };
+  }, [numPages]);
 
-  const handleTextLayerToggle = (enabled: boolean) => {
+  const handleZoomChange = useCallback((newZoom: number) => {
+    // Limitar zoom según el tamaño del documento para evitar problemas de memoria
+    const maxZoom = numPages && numPages > 50 ? 2 : 8;
+    const clampedZoom = Math.min(newZoom, maxZoom);
+    debouncedZoomChange(clampedZoom);
+  }, [numPages, debouncedZoomChange]);
+
+  const handleRotationChange = useCallback((rotationDelta: number) => {
+    debouncedRotationChange((rotation + rotationDelta) % 360);
+  }, [rotation, debouncedRotationChange]);
+
+  const handleTextLayerToggle = useCallback((enabled: boolean) => {
     setEnableTextLayer(enabled);
     if (!enabled) {
       setEnableSearch(false);
       setSearchQuery("");
     }
-  };
+  }, []);
 
-  const handleSearchToggle = (enabled: boolean) => {
+  const handleSearchToggle = useCallback((enabled: boolean) => {
     setEnableSearch(enabled);
     if (enabled && !enableTextLayer) {
       setEnableTextLayer(true);
     }
-  };
+  }, [enableTextLayer]);
 
+  const handleRecovery = useCallback(() => {
+    setLoadingError(null);
+    setNeedsRecovery(false);
+    setIsRendering(true);
+    // Limpiar cache de páginas renderizadas
+    renderingPagesRef.current.clear();
+    // Forzar re-render del documento
+    window.location.reload();
+  }, []);
+
+  // Cleanup de observer al desmontar
   useEffect(() => {
-    if (!viewportRef.current) return;
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  // Intersection Observer optimizado con throttling
+  useEffect(() => {
+    if (!viewportRef.current || !numPages) return;
+
+    // Limpiar observer previo
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
 
     const options = {
       root: viewportRef.current,
@@ -116,7 +194,9 @@ function PDFViewer({ url, className }: PDFViewerProps) {
       threshold: 0.5,
     };
 
-    const callback: IntersectionObserverCallback = (entries) => {
+    const callback = throttledPageChange as any;
+    
+    const wrappedCallback: IntersectionObserverCallback = (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           const pageElement = entry.target.closest("[data-page-number]");
@@ -125,19 +205,26 @@ function PDFViewer({ url, className }: PDFViewerProps) {
               pageElement.getAttribute("data-page-number") || "1",
               10
             );
-            setCurrentPage(pageNumber);
+            callback(pageNumber);
           }
         }
       });
     };
 
-    const observer = new IntersectionObserver(callback, options);
+    observerRef.current = new IntersectionObserver(wrappedCallback, options);
 
+    // Observer las páginas existentes
+    const pages = viewportRef.current.querySelectorAll(".react-pdf__Page");
+    pages.forEach((page) => {
+      observerRef.current?.observe(page);
+    });
+
+    // MutationObserver para nuevas páginas
     const mutationObserver = new MutationObserver(() => {
-      const pages = viewportRef.current?.querySelectorAll(".react-pdf__Page");
-      if (pages) {
-        pages.forEach((page) => {
-          observer.observe(page);
+      const newPages = viewportRef.current?.querySelectorAll(".react-pdf__Page");
+      if (newPages && observerRef.current) {
+        newPages.forEach((page) => {
+          observerRef.current?.observe(page);
         });
       }
     });
@@ -148,25 +235,62 @@ function PDFViewer({ url, className }: PDFViewerProps) {
     });
 
     return () => {
-      observer.disconnect();
+      observerRef.current?.disconnect();
       mutationObserver.disconnect();
     };
-  }, [numPages]);
+  }, [numPages, throttledPageChange]);
 
-  if (loadingError) {
+  // Función para determinar si una página debe renderizarse (virtualización)
+  const shouldRenderPage = useCallback((pageNumber: number) => {
+    if (!numPages) return true;
+    
+    // Si hay pocas páginas, renderizar todas
+    if (numPages <= 10) return true;
+    
+    // Renderizar solo páginas cerca de la actual
+    const range = 3; // Renderizar 3 páginas antes y después
+    return Math.abs(pageNumber - currentPage) <= range;
+  }, [numPages, currentPage]);
+
+  const handlePageRenderSuccess = useCallback((pageNumber: number) => {
+    renderingPagesRef.current.delete(pageNumber);
+    if (renderingPagesRef.current.size === 0) {
+      setIsRendering(false);
+    }
+  }, []);
+
+  const handlePageRenderError = useCallback((pageNumber: number) => {
+    renderingPagesRef.current.delete(pageNumber);
+    console.error(`Error rendering page ${pageNumber}`);
+    if (renderingPagesRef.current.size === 0) {
+      setIsRendering(false);
+    }
+  }, []);
+
+  if (loadingError && needsRecovery) {
     return (
       <div className={cn("flex flex-col items-center justify-center h-full bg-background", className)}>
         <div className="text-center p-8">
           <p className="text-lg font-medium text-destructive mb-2">Error al cargar el PDF</p>
           <p className="text-sm text-muted-foreground mb-4">{loadingError}</p>
-          <Button 
-            variant="outline" 
-            onClick={() => window.open(url, '_blank')}
-            className="gap-2"
-          >
-            <Eye className="h-4 w-4" />
-            Abrir en nueva ventana
-          </Button>
+          <div className="flex gap-2 justify-center">
+            <Button 
+              variant="outline" 
+              onClick={handleRecovery}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Intentar de nuevo
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => window.open(url, '_blank')}
+              className="gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              Abrir en nueva ventana
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -179,13 +303,7 @@ function PDFViewer({ url, className }: PDFViewerProps) {
         onLoadSuccess={onDocumentLoadSuccess}
         onLoadError={onDocumentLoadError}
         className="w-full h-full flex"
-        options={{
-          // Configuración básica optimizada para compatibilidad
-          verbosity: 0,
-          disableAutoFetch: false,
-          disableStream: false,
-          disableRange: false,
-        }}
+        options={documentOptions}
         loading={
           <div className="flex flex-col items-center justify-center h-full">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -246,6 +364,7 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                   size="sm"
                   onClick={() => setShowThumbnails(!showThumbnails)}
                   className="h-8"
+                  disabled={isRendering}
                 >
                   {showThumbnails ? "Ocultar" : "Mostrar"} páginas
                 </Button>
@@ -255,7 +374,7 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    disabled={currentPage <= 1}
+                    disabled={currentPage <= 1 || isRendering}
                     onClick={() => goToPage(currentPage - 1)}
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -267,12 +386,18 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    disabled={currentPage >= (numPages || 1)}
+                    disabled={currentPage >= (numPages || 1) || isRendering}
                     onClick={() => goToPage(currentPage + 1)}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
+                {isRendering && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Procesando...
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -280,7 +405,8 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => setRotation(rotation - 90)}
+                  onClick={() => handleRotationChange(-90)}
+                  disabled={isRendering}
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
@@ -288,7 +414,8 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => setRotation(rotation + 90)}
+                  onClick={() => handleRotationChange(90)}
+                  disabled={isRendering}
                 >
                   <RotateCw className="h-4 w-4" />
                 </Button>
@@ -297,8 +424,8 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  disabled={zoom <= ZOOM_OPTIONS[0]}
-                  onClick={() => setZoom(Math.max(ZOOM_OPTIONS[0], zoom - 0.25))}
+                  disabled={zoom <= ZOOM_OPTIONS[0] || isRendering}
+                  onClick={() => handleZoomChange(Math.max(ZOOM_OPTIONS[0], zoom - 0.25))}
                 >
                   <CircleMinus className="h-4 w-4" />
                 </Button>
@@ -306,15 +433,16 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  disabled={zoom >= ZOOM_OPTIONS[ZOOM_OPTIONS.length - 1]}
-                  onClick={() => setZoom(Math.min(ZOOM_OPTIONS[ZOOM_OPTIONS.length - 1], zoom + 0.25))}
+                  disabled={zoom >= ZOOM_OPTIONS[ZOOM_OPTIONS.length - 1] || isRendering}
+                  onClick={() => handleZoomChange(Math.min(ZOOM_OPTIONS[ZOOM_OPTIONS.length - 1], zoom + 0.25))}
                 >
                   <CirclePlus className="h-4 w-4" />
                 </Button>
 
                 <Select
                   value={zoom.toString()}
-                  onValueChange={(value) => setZoom(Number(value))}
+                  onValueChange={(value) => handleZoomChange(Number(value))}
+                  disabled={isRendering}
                 >
                   <SelectTrigger className="h-8 w-20">
                     <SelectValue>
@@ -335,7 +463,7 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                 {enableSearch && (
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isRendering}>
                         <Search className="h-4 w-4" />
                       </Button>
                     </PopoverTrigger>
@@ -373,6 +501,7 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                             id="text-layer"
                             checked={enableTextLayer}
                             onCheckedChange={handleTextLayerToggle}
+                            disabled={isRendering}
                           />
                         </div>
 
@@ -384,6 +513,7 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                             id="search-enabled"
                             checked={enableSearch}
                             onCheckedChange={handleSearchToggle}
+                            disabled={isRendering}
                           />
                         </div>
 
@@ -392,6 +522,7 @@ function PDFViewer({ url, className }: PDFViewerProps) {
                           <Select
                             value={renderingQuality}
                             onValueChange={(value: 'standard' | 'high') => setRenderingQuality(value)}
+                            disabled={isRendering}
                           >
                             <SelectTrigger className="h-8">
                               <SelectValue />
@@ -413,25 +544,49 @@ function PDFViewer({ url, className }: PDFViewerProps) {
             <ScrollArea className="flex-1 w-full" ref={viewportRef}>
               <ScrollBar orientation="horizontal" />
               <div className="flex flex-col items-center p-8 space-y-6">
-                {Array.from(new Array(numPages), (el, index) => (
-                  <Page
-                    key={`page_${index + 1}`}
-                    pageNumber={index + 1}
-                    className="border shadow-sm rounded-lg"
-                    data-page-number={index + 1}
-                    renderAnnotationLayer={false}
-                    renderTextLayer={enableTextLayer}
-                    scale={zoom * (renderingQuality === 'high' ? 1.5 : 1)}
-                    rotate={rotation}
-                    loading={
-                      <div className="flex items-center justify-center h-96 border rounded-lg bg-muted/20">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                {Array.from(new Array(numPages), (el, index) => {
+                  const pageNumber = index + 1;
+                  const shouldRender = shouldRenderPage(pageNumber);
+                  
+                  if (!shouldRender) {
+                    // Placeholder para páginas no renderizadas (virtualización)
+                    return (
+                      <div
+                        key={`page_placeholder_${pageNumber}`}
+                        className="flex items-center justify-center h-96 border rounded-lg bg-muted/20"
+                        data-page-number={pageNumber}
+                        style={{ minHeight: '800px' }}
+                      >
+                        <div className="text-center">
+                          <p className="text-sm text-muted-foreground">Página {pageNumber}</p>
+                          <p className="text-xs text-muted-foreground">Scroll para cargar</p>
+                        </div>
                       </div>
-                    }
-                    customTextRenderer={enableSearch && searchQuery ? textRenderer : undefined}
-                    canvasBackground="white"
-                  />
-                ))}
+                    );
+                  }
+
+                  return (
+                    <Page
+                      key={`page_${pageNumber}`}
+                      pageNumber={pageNumber}
+                      className="border shadow-sm rounded-lg"
+                      data-page-number={pageNumber}
+                      renderAnnotationLayer={false}
+                      renderTextLayer={enableTextLayer}
+                      scale={zoom * (renderingQuality === 'high' ? 1.5 : 1)}
+                      rotate={rotation}
+                      loading={
+                        <div className="flex items-center justify-center h-96 border rounded-lg bg-muted/20">
+                          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        </div>
+                      }
+                      customTextRenderer={enableSearch && searchQuery ? textRenderer : undefined}
+                      canvasBackground="white"
+                      onRenderSuccess={() => handlePageRenderSuccess(pageNumber)}
+                      onRenderError={() => handlePageRenderError(pageNumber)}
+                    />
+                  );
+                })}
               </div>
             </ScrollArea>
           </div>
