@@ -19,32 +19,88 @@ interface DocumentoCliente {
 export const useClientDocumentManagement = (casoId?: string) => {
   const [documentosCliente, setDocumentosCliente] = useState<DocumentoCliente[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const { user } = useAuth();
 
-  const fetchDocumentosCliente = async () => {
+  const fetchDocumentosCliente = async (isRetry = false) => {
     if (!casoId || !user) {
       console.log('No se puede buscar documentos - casoId:', casoId, 'user:', !!user);
+      setDocumentosCliente([]);
       return;
     }
 
-    setLoading(true);
+    if (!isRetry) {
+      setLoading(true);
+      setError(null);
+    }
+    
     try {
-      console.log('Buscando documentos del cliente para caso:', casoId, 'usuario:', user.id);
+      console.log('=== INICIO FETCH DOCUMENTOS CLIENTE ===');
+      console.log('Caso ID:', casoId);
+      console.log('Usuario ID:', user.id);
+      console.log('Usuario email:', user.email);
       
-      // Primero, verificar el rol del usuario
+      // Verificar el contexto de autenticación
+      const { data: authUser, error: authError } = await supabase.auth.getUser();
+      console.log('Estado de autenticación:', authUser?.user ? 'Autenticado' : 'No autenticado');
+      if (authError) {
+        console.error('Error de autenticación:', authError);
+        throw new Error('Usuario no autenticado correctamente');
+      }
+
+      // Verificar el perfil del usuario
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('role, tipo_abogado')
+        .select('role, tipo_abogado, id, email')
         .eq('id', user.id)
         .single();
 
       if (profileError) {
         console.error('Error obteniendo perfil:', profileError);
-        return;
+        throw new Error('No se pudo obtener el perfil del usuario');
       }
 
-      console.log('Perfil del usuario:', profile);
+      console.log('Perfil del usuario completo:', profile);
 
+      // Verificar acceso al caso
+      const { data: casoData, error: casoError } = await supabase
+        .from('casos')
+        .select('id, cliente_id, estado')
+        .eq('id', casoId)
+        .single();
+
+      if (casoError) {
+        console.error('Error obteniendo datos del caso:', casoError);
+        throw new Error('No se pudo acceder al caso');
+      }
+
+      console.log('Datos del caso:', casoData);
+
+      // Si es abogado, verificar asignación
+      if (profile.role === 'abogado') {
+        if (profile.tipo_abogado === 'super_admin') {
+          console.log('Usuario es super admin - acceso completo');
+        } else {
+          // Verificar asignación para abogados regulares
+          const { data: asignacion, error: asignacionError } = await supabase
+            .from('asignaciones_casos')
+            .select('*')
+            .eq('caso_id', casoId)
+            .eq('abogado_id', user.id)
+            .eq('estado_asignacion', 'activa')
+            .single();
+
+          if (asignacionError || !asignacion) {
+            console.error('No hay asignación activa para este abogado:', asignacionError);
+            throw new Error('No tienes asignación activa para este caso');
+          }
+          console.log('Asignación encontrada:', asignacion);
+        }
+      }
+
+      // Realizar la consulta de documentos
+      console.log('Ejecutando consulta de documentos...');
       const { data, error } = await supabase
         .from('documentos_cliente')
         .select('*')
@@ -52,18 +108,38 @@ export const useClientDocumentManagement = (casoId?: string) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching documentos cliente:', error);
-        return;
+        console.error('Error en consulta de documentos:', error);
+        console.error('Detalles del error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
       }
 
-      console.log('Documentos cliente encontrados:', data?.length || 0);
-      console.log('Documentos cliente data:', data);
+      console.log('Consulta exitosa - Documentos encontrados:', data?.length || 0);
+      console.log('Datos de documentos:', data);
 
       setDocumentosCliente(data || []);
+      setRetryCount(0);
+      console.log('=== FIN FETCH DOCUMENTOS CLIENTE ===');
+      
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error en fetchDocumentosCliente:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      setError(errorMessage);
+      
+      // Retry logic para errores de red o temporales
+      if (retryCount < 2 && !isRetry) {
+        console.log(`Reintentando... (intento ${retryCount + 1})`);
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => fetchDocumentosCliente(true), 1000);
+      }
     } finally {
-      setLoading(false);
+      if (!isRetry) {
+        setLoading(false);
+      }
     }
   };
 
@@ -236,6 +312,7 @@ export const useClientDocumentManagement = (casoId?: string) => {
   return {
     documentosCliente,
     loading,
+    error,
     uploadDocument,
     downloadDocument,
     deleteDocument,
