@@ -31,13 +31,12 @@ const CasesManagement = () => {
   const navigate = useNavigate();
   
   const { 
-    cases, 
+    casos, 
     loading, 
-    error, 
     refetch 
   } = useCasesByRole();
 
-  const filteredCases = cases.filter(caso => {
+  const filteredCases = casos.filter(caso => {
     const matchesSearch = caso.motivo_consulta?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          caso.nombre_borrador?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          caso.email_borrador?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -93,21 +92,6 @@ const CasesManagement = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
           <p className="text-muted-foreground">Cargando casos...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">Error al cargar casos: {error}</p>
-          <Button onClick={refetch} variant="outline" className="gap-2">
-            <RefreshCw className="h-4 w-4" />
-            Reintentar
-          </Button>
         </div>
       </div>
     );
