@@ -337,20 +337,7 @@ const CasesManagement = () => {
             </div>
           </div>
 
-          {/* Resumen de filtros - COMPACTO */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
-            <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200">
-              <Sparkles className="h-4 w-4" />
-              <span className="font-medium">
-                Mostrando {activeCasos.length} casos activos de {casos.length} totales
-                {searchTerm && (
-                  <span className="ml-2 text-xs bg-blue-200 dark:bg-blue-800 px-2 py-1 rounded">
-                    Búsqueda: "{searchTerm}"
-                  </span>
-                )}
-              </span>
-            </div>
-          </div>
+          
         </CardContent>
       </Card>
 
@@ -361,7 +348,7 @@ const CasesManagement = () => {
             <div>
               <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-900 dark:text-white">
                 <AlertCircle className="h-6 w-6 text-orange-500" />
-                Casos Activos - Vista {viewMode === 'grid' ? 'Cajas' : 'Lista'}
+                Casos Activos
               </CardTitle>
               <CardDescription className="text-base text-gray-700 dark:text-gray-300 mt-1">
                 {activeCasos.length} casos activos encontrados para gestionar
