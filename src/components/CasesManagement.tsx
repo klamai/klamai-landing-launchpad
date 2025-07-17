@@ -9,13 +9,8 @@ import {
   AlertCircle,
   CheckCircle,
   Eye,
-  MoreHorizontal,
   Grid3X3,
   List,
-  MapPin,
-  Building,
-  User as UserIcon,
-  Sparkles
 } from 'lucide-react';
 import { useSuperAdminStats } from '@/hooks/useSuperAdminStats';
 import { Button } from '@/components/ui/button';
@@ -31,23 +26,15 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import CaseCard from './CaseCard';
 import CaseDetailModal from './CaseDetailModal';
+import CaseAssignmentModal from './CaseAssignmentModal';
 
 const CasesManagement = () => {
-  const { casos, abogados, loadingCasos, assignCaseToLawyer } = useSuperAdminStats();
+  const { casos, loadingCasos } = useSuperAdminStats();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [specialtyFilter, setSpecialtyFilter] = useState('all');
@@ -55,12 +42,10 @@ const CasesManagement = () => {
   const [cityFilter, setCityFilter] = useState('all');
   const [profileTypeFilter, setProfileTypeFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [selectedLawyerId, setSelectedLawyerId] = useState('');
-  const [assignmentNotes, setAssignmentNotes] = useState('');
-  const [isAssigning, setIsAssigning] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedCaseDetail, setSelectedCaseDetail] = useState<any | null>(null);
+  const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
+  const [selectedCaseForAssignment, setSelectedCaseForAssignment] = useState<any | null>(null);
   const { toast } = useToast();
 
   const getStatusBadge = (estado: string) => {
@@ -119,55 +104,19 @@ const CasesManagement = () => {
   // Filter out closed cases for main view
   const activeCasos = filteredCasos.filter(caso => caso.estado !== 'cerrado');
 
-  const handleAssignCase = async () => {
-    if (!selectedCaseId || !selectedLawyerId) {
-      toast({
-        title: "Error",
-        description: "Selecciona un caso y un abogado",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsAssigning(true);
-    
-    try {
-      const result = await assignCaseToLawyer(selectedCaseId, selectedLawyerId, assignmentNotes);
-      
-      if (result.success) {
-        toast({
-          title: "Caso asignado",
-          description: "El caso ha sido asignado exitosamente al abogado",
-        });
-        setSelectedCaseId(null);
-        setSelectedLawyerId('');
-        setAssignmentNotes('');
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Error al asignar el caso",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Error inesperado al asignar el caso",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAssigning(false);
-    }
-  };
-
   const handleViewDetails = (casoId: string) => {
     const caso = casos.find(c => c.id === casoId);
     setSelectedCaseDetail(caso);
     setDetailModalOpen(true);
   };
 
+  const handleAssignLawyer = (casoId: string) => {
+    const caso = casos.find(c => c.id === casoId);
+    setSelectedCaseForAssignment(caso);
+    setAssignmentModalOpen(true);
+  };
+
   const handleGenerateResolution = async (casoId: string) => {
-    // TODO: Implement webhook call for auto-resolution
     toast({
       title: "Función en desarrollo",
       description: "La generación automática de resolución estará disponible pronto",
@@ -175,7 +124,6 @@ const CasesManagement = () => {
   };
 
   const handleUploadDocument = (casoId: string) => {
-    // TODO: Open document upload modal
     toast({
       title: "Función en desarrollo", 
       description: "La subida de documentos estará disponible pronto",
@@ -183,7 +131,6 @@ const CasesManagement = () => {
   };
 
   const handleSendMessage = (casoId: string) => {
-    // TODO: Open messaging modal
     toast({
       title: "Función en desarrollo",
       description: "El sistema de mensajería estará disponible pronto", 
@@ -209,16 +156,13 @@ const CasesManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Filtros compactos */}
       <Card className="border shadow-sm bg-gray-50 dark:bg-black">
         <CardContent className="p-4">
-          {/* Header minimalista */}
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-blue-600" />
             <span className="font-medium text-sm text-gray-700 dark:text-gray-300">Filtros</span>
           </div>
           
-          {/* Búsqueda compacta */}
           <div className="relative mb-3">
             <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
@@ -229,7 +173,6 @@ const CasesManagement = () => {
             />
           </div>
           
-          {/* Filtros en una sola fila compacta */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-8 text-xs">
@@ -290,7 +233,6 @@ const CasesManagement = () => {
               </SelectContent>
             </Select>
 
-            {/* Botones de vista compactos */}
             <div className="flex gap-1">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
@@ -313,7 +255,6 @@ const CasesManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Cases display - MEJORADO */}
       <Card className="border-2 shadow-md bg-gray-100 dark:bg-black">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
@@ -336,10 +277,7 @@ const CasesManagement = () => {
                   key={caso.id}
                   caso={caso}
                   onViewDetails={handleViewDetails}
-                  onAssignLawyer={(casoId) => {
-                    setSelectedCaseId(casoId);
-                    // Open assignment dialog
-                  }}
+                  onAssignLawyer={handleAssignLawyer}
                   onGenerateResolution={handleGenerateResolution}
                   onUploadDocument={handleUploadDocument}
                   onSendMessage={handleSendMessage}
@@ -372,10 +310,10 @@ const CasesManagement = () => {
                       <TableCell className="py-4">
                         <div>
                           <div className="font-semibold text-base text-gray-900 dark:text-white">
-                            {caso.profiles?.nombre} {caso.profiles?.apellido}
+                            {caso.profiles?.nombre || caso.nombre_borrador} {caso.profiles?.apellido || caso.apellido_borrador}
                           </div>
                           <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            {caso.profiles?.email}
+                            {caso.profiles?.email || caso.email_borrador}
                           </div>
                         </div>
                       </TableCell>
@@ -436,67 +374,16 @@ const CasesManagement = () => {
                             <Eye className="h-4 w-4 mr-1" />
                             Ver
                           </Button>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedCaseId(caso.id)}
-                                disabled={caso.estado === 'cerrado'}
-                                className="h-9 px-3 text-sm font-medium border-2 hover:bg-green-50"
-                              >
-                                <UserPlus className="h-4 w-4 mr-1" />
-                                Asignar
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-md">
-                              <DialogHeader>
-                                <DialogTitle className="text-lg font-bold">Asignar Caso a Abogado</DialogTitle>
-                                <DialogDescription className="text-base">
-                                  Selecciona un abogado para asignar este caso
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div>
-                                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Seleccionar Abogado</label>
-                                  <Select value={selectedLawyerId} onValueChange={setSelectedLawyerId}>
-                                    <SelectTrigger className="h-11 text-base border-2">
-                                      <SelectValue placeholder="Selecciona un abogado" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {abogados.map((abogado) => (
-                                        <SelectItem key={abogado.id} value={abogado.id} className="text-base py-3">
-                                          {abogado.nombre} {abogado.apellido}
-                                          <span className="text-gray-500 ml-2">
-                                            ({abogado.casos_activos} casos activos)
-                                          </span>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Notas de Asignación</label>
-                                  <Textarea
-                                    placeholder="Notas adicionales para el abogado..."
-                                    value={assignmentNotes}
-                                    onChange={(e) => setAssignmentNotes(e.target.value)}
-                                    className="text-base border-2"
-                                  />
-                                </div>
-                                <div className="flex justify-end gap-3">
-                                  <Button variant="outline" className="h-10 px-4 text-base border-2">Cancelar</Button>
-                                  <Button
-                                    onClick={handleAssignCase}
-                                    disabled={isAssigning}
-                                    className="h-10 px-4 text-base"
-                                  >
-                                    {isAssigning ? 'Asignando...' : 'Asignar Caso'}
-                                  </Button>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleAssignLawyer(caso.id)}
+                            disabled={caso.estado === 'cerrado'}
+                            className="h-9 px-3 text-sm font-medium border-2 hover:bg-green-50"
+                          >
+                            <UserPlus className="h-4 w-4 mr-1" />
+                            Asignar
+                          </Button>
                         </div>
                       </TableCell>
                     </motion.tr>
@@ -523,7 +410,6 @@ const CasesManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Case Detail Modal */}
       <CaseDetailModal
         caso={selectedCaseDetail}
         isOpen={detailModalOpen}
@@ -531,13 +417,19 @@ const CasesManagement = () => {
           setDetailModalOpen(false);
           setSelectedCaseDetail(null);
         }}
-        onAssignLawyer={(casoId) => {
-          setSelectedCaseId(casoId);
-          setDetailModalOpen(false);
-        }}
+        onAssignLawyer={handleAssignLawyer}
         onGenerateResolution={handleGenerateResolution}
         onUploadDocument={handleUploadDocument}
         onSendMessage={handleSendMessage}
+      />
+
+      <CaseAssignmentModal
+        isOpen={assignmentModalOpen}
+        onClose={() => {
+          setAssignmentModalOpen(false);
+          setSelectedCaseForAssignment(null);
+        }}
+        caso={selectedCaseForAssignment}
       />
     </div>
   );

@@ -6,7 +6,6 @@ import {
   Scale,
   Euro, 
   Clock, 
-  FileText,
   UserPlus,
   Bot,
   Eye,
@@ -78,11 +77,9 @@ const CaseCard: React.FC<CaseCardProps> = ({
   onUploadDocument,
   onSendMessage
 }) => {
-  // Convertir a zona horaria de España
   const spainTimeZone = 'Europe/Madrid';
   const casoDate = toZonedTime(new Date(caso.created_at), spainTimeZone);
 
-  // Obtener datos del cliente combinando profiles y borrador
   const clientData = {
     nombre: caso.profiles?.nombre || caso.nombre_borrador || '',
     apellido: caso.profiles?.apellido || caso.apellido_borrador || '',
@@ -171,7 +168,6 @@ const CaseCard: React.FC<CaseCardProps> = ({
       <Card className="relative transition-all duration-200 hover:shadow-lg border hover:border-blue-300 h-full flex flex-col bg-white dark:bg-gray-800">
         <CardContent className="p-3 flex-1 flex flex-col">
           <div className="space-y-2">
-            {/* Header con información del cliente - MUY COMPACTO */}
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-gray-900 dark:text-white truncate text-sm">
@@ -186,13 +182,11 @@ const CaseCard: React.FC<CaseCardProps> = ({
               </div>
             </div>
 
-            {/* Badges de tipo - MUY COMPACTOS */}
             <div className="flex flex-wrap gap-1">
               {caso.tipo_lead && getLeadTypeBadge(caso.tipo_lead)}
               {getProfileTypeBadge(clientData.tipo_perfil)}
             </div>
 
-            {/* Fecha - ULTRA COMPACTO */}
             <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
@@ -204,7 +198,6 @@ const CaseCard: React.FC<CaseCardProps> = ({
               </div>
             </div>
 
-            {/* Especialidad y ciudad - ULTRA COMPACTAS */}
             <div className="grid grid-cols-1 gap-1 text-xs">
               <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                 <Scale className="h-3 w-3 text-blue-600" />
@@ -218,7 +211,6 @@ const CaseCard: React.FC<CaseCardProps> = ({
               )}
             </div>
 
-            {/* Información de empresa - ULTRA COMPACTA */}
             {clientData.tipo_perfil === 'empresa' && clientData.razon_social && (
               <div className="bg-blue-50 dark:bg-blue-900/20 p-1 rounded text-xs">
                 <div className="font-medium text-blue-900 dark:text-blue-100 truncate">
@@ -227,7 +219,6 @@ const CaseCard: React.FC<CaseCardProps> = ({
               </div>
             )}
 
-            {/* Motivo de consulta - ULTRA COMPACTO */}
             <div className=" p-2 rounded">
               <p className="text-xs font-medium text-gray-800 dark:text-white mb-1">Motivo:</p>
               <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2 leading-tight">
@@ -235,7 +226,6 @@ const CaseCard: React.FC<CaseCardProps> = ({
               </p>
             </div>
 
-            {/* Valor estimado - ULTRA COMPACTO */}
             {caso.valor_estimado && (
               <div className="flex items-center gap-1 text-xs bg-green-50 dark:bg-green-900/20 p-1 rounded">
                 <Euro className="h-3 w-3 text-green-600" />
@@ -245,7 +235,6 @@ const CaseCard: React.FC<CaseCardProps> = ({
               </div>
             )}
 
-            {/* Estado de asignación - ULTRA COMPACTO */}
             {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
               <div className="text-xs bg-green-50 dark:bg-green-900/20 p-1 rounded text-green-700 dark:text-green-300 flex items-center gap-1">
                 <UserPlus className="h-3 w-3" />
@@ -260,7 +249,6 @@ const CaseCard: React.FC<CaseCardProps> = ({
           </div>
         </CardContent>
         
-        {/* Botones de acción - ULTRA COMPACTOS */}
         <div className="p-2 pt-0">
           <div className="flex gap-1">
             <Button
