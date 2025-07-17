@@ -255,7 +255,7 @@ const CasesManagement = () => {
         </CardContent>
       </Card>
 
-      <Card className="border-2 shadow-md bg-gray-100 dark:bg-black">
+      <Card className="border-0 shadow-md bg-gray-100 dark:bg-black">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div>
@@ -271,7 +271,7 @@ const CasesManagement = () => {
         </CardHeader>
         <CardContent>
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-3 gap-4">
               {activeCasos.map((caso) => (
                 <CaseCard
                   key={caso.id}
