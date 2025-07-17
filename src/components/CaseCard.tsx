@@ -99,23 +99,23 @@ const CaseCard: React.FC<CaseCardProps> = ({
     const statusConfig = {
       'disponible': {
         label: 'Disponible',
-        className: 'bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-100 text-xs font-medium px-2 py-1'
+        className: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800 text-xs font-medium px-2 py-1 border'
       },
       'agotado': {
         label: 'Agotado',
-        className: 'bg-red-200 text-red-900 dark:bg-red-800 dark:text-red-100 text-xs font-medium px-2 py-1'
+        className: 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-800 text-xs font-medium px-2 py-1 border'
       },
       'cerrado': {
         label: 'Cerrado',
-        className: 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100 text-xs font-medium px-2 py-1'
+        className: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-700 text-xs font-medium px-2 py-1 border'
       },
       'esperando_pago': {
         label: 'Esperando Pago',
-        className: 'bg-yellow-200 text-yellow-900 dark:bg-yellow-800 dark:text-yellow-100 text-xs font-medium px-2 py-1'
+        className: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800 text-xs font-medium px-2 py-1 border'
       },
       'listo_para_propuesta': {
         label: 'Listo para Propuesta',
-        className: 'bg-blue-200 text-blue-900 dark:bg-blue-800 dark:text-blue-100 text-xs font-medium px-2 py-1'
+        className: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800 text-xs font-medium px-2 py-1 border'
       }
     };
     
@@ -127,18 +127,17 @@ const CaseCard: React.FC<CaseCardProps> = ({
     const typeConfig = {
       'premium': {
         label: 'Premium',
-        className: 'bg-purple-200 text-purple-900 dark:bg-purple-800 dark:text-purple-100 text-xs font-medium px-2 py-1'
+        className: 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white dark:from-blue-700 dark:to-indigo-700 text-xs font-medium px-2 py-1 border-0'
       },
       'urgente': {
         label: 'Urgente',
-        className: 'bg-red-200 text-red-900 dark:bg-red-800 dark:text-red-100 text-xs font-medium px-2 py-1'
+        className: 'bg-gradient-to-r from-red-600 to-orange-500 text-white dark:from-red-700 dark:to-orange-700 text-xs font-medium px-2 py-1 border-0'
       },
       'estandar': {
         label: 'Estándar',
-        className: 'bg-blue-200 text-blue-900 dark:bg-blue-800 dark:text-blue-100 text-xs font-medium px-2 py-1'
+        className: 'bg-gradient-to-r from-sky-600 to-teal-500 text-white dark:from-sky-600 dark:to-teal-600 text-xs font-medium px-2 py-1 border-0'
       }
     };
-    
     const config = typeConfig[tipo as keyof typeof typeConfig] || typeConfig.estandar;
     return <Badge variant="secondary" className={config.className}>{config.label}</Badge>;
   };
@@ -228,7 +227,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
             )}
 
             {/* Motivo de consulta - ULTRA COMPACTO */}
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+            <div className=" p-2 rounded">
               <p className="text-xs font-medium text-gray-800 dark:text-white mb-1">Motivo:</p>
               <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2 leading-tight">
                 {caso.motivo_consulta}

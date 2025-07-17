@@ -342,12 +342,12 @@ const CasesManagement = () => {
       </Card>
 
       {/* Cases display - MEJORADO */}
-      <Card className="border-2 shadow-md">
+      <Card className="border-2 shadow-md bg-gray-100 dark:bg-black">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-900 dark:text-white">
-                <AlertCircle className="h-6 w-6 text-orange-500" />
+                <AlertCircle className="h-6 w-6 text-red-500" />
                 Casos Activos
               </CardTitle>
               <CardDescription className="text-base text-gray-700 dark:text-gray-300 mt-1">
