@@ -99,23 +99,23 @@ const CaseCard: React.FC<CaseCardProps> = ({
     const statusConfig = {
       'disponible': {
         label: 'Disponible',
-        className: 'bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-100 text-sm font-semibold px-3 py-1.5 border-2 border-green-300'
+        className: 'bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-100 text-xs font-medium px-2 py-1'
       },
       'agotado': {
         label: 'Agotado',
-        className: 'bg-red-200 text-red-900 dark:bg-red-800 dark:text-red-100 text-sm font-semibold px-3 py-1.5 border-2 border-red-300'
+        className: 'bg-red-200 text-red-900 dark:bg-red-800 dark:text-red-100 text-xs font-medium px-2 py-1'
       },
       'cerrado': {
         label: 'Cerrado',
-        className: 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100 text-sm font-semibold px-3 py-1.5 border-2 border-gray-300'
+        className: 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100 text-xs font-medium px-2 py-1'
       },
       'esperando_pago': {
         label: 'Esperando Pago',
-        className: 'bg-yellow-200 text-yellow-900 dark:bg-yellow-800 dark:text-yellow-100 text-sm font-semibold px-3 py-1.5 border-2 border-yellow-300'
+        className: 'bg-yellow-200 text-yellow-900 dark:bg-yellow-800 dark:text-yellow-100 text-xs font-medium px-2 py-1'
       },
       'listo_para_propuesta': {
         label: 'Listo para Propuesta',
-        className: 'bg-blue-200 text-blue-900 dark:bg-blue-800 dark:text-blue-100 text-sm font-semibold px-3 py-1.5 border-2 border-blue-300'
+        className: 'bg-blue-200 text-blue-900 dark:bg-blue-800 dark:text-blue-100 text-xs font-medium px-2 py-1'
       }
     };
     
@@ -127,15 +127,15 @@ const CaseCard: React.FC<CaseCardProps> = ({
     const typeConfig = {
       'premium': {
         label: 'Premium',
-        className: 'bg-purple-300 text-purple-900 dark:bg-purple-800 dark:text-purple-100 text-sm font-semibold px-3 py-1.5 border-2 border-purple-400'
+        className: 'bg-purple-200 text-purple-900 dark:bg-purple-800 dark:text-purple-100 text-xs font-medium px-2 py-1'
       },
       'urgente': {
         label: 'Urgente',
-        className: 'bg-red-300 text-red-900 dark:bg-red-800 dark:text-red-100 text-sm font-semibold px-3 py-1.5 border-2 border-red-400'
+        className: 'bg-red-200 text-red-900 dark:bg-red-800 dark:text-red-100 text-xs font-medium px-2 py-1'
       },
       'estandar': {
         label: 'Estándar',
-        className: 'bg-blue-300 text-blue-900 dark:bg-blue-800 dark:text-blue-100 text-sm font-semibold px-3 py-1.5 border-2 border-blue-400'
+        className: 'bg-blue-200 text-blue-900 dark:bg-blue-800 dark:text-blue-100 text-xs font-medium px-2 py-1'
       }
     };
     
@@ -145,15 +145,15 @@ const CaseCard: React.FC<CaseCardProps> = ({
 
   const getProfileTypeBadge = (tipo: string) => {
     return (
-      <Badge variant="outline" className="text-sm font-medium px-3 py-1.5 border-2">
+      <Badge variant="outline" className="text-xs font-medium px-2 py-1">
         {tipo === 'empresa' ? (
           <>
-            <Building className="h-4 w-4 mr-2" />
+            <Building className="h-3 w-3 mr-1" />
             Empresa
           </>
         ) : (
           <>
-            <User className="h-4 w-4 mr-2" />
+            <User className="h-3 w-3 mr-1" />
             Individual
           </>
         )}
@@ -168,125 +168,108 @@ const CaseCard: React.FC<CaseCardProps> = ({
       transition={{ duration: 0.3 }}
       className="group"
     >
-      <Card className="relative transition-all duration-200 hover:shadow-xl border-2 hover:border-blue-300 h-full flex flex-col bg-white dark:bg-gray-800">
-        <CardContent className="p-4 flex-1 flex flex-col">
-          <div className="space-y-3">
-            {/* Header con información del cliente - COMPACTO */}
+      <Card className="relative transition-all duration-200 hover:shadow-lg border hover:border-blue-300 h-full flex flex-col bg-white dark:bg-gray-800">
+        <CardContent className="p-3 flex-1 flex flex-col">
+          <div className="space-y-2">
+            {/* Header con información del cliente - MUY COMPACTO */}
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-gray-900 dark:text-white truncate text-base">
+                <h3 className="font-semibold text-gray-900 dark:text-white truncate text-sm">
                   {clientData.nombre} {clientData.apellido}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {clientData.email}
                 </p>
               </div>
-              <div className="ml-2">
+              <div className="ml-1">
                 {getStatusBadge(caso.estado)}
               </div>
             </div>
 
-            {/* Badges de tipo - COMPACTOS */}
+            {/* Badges de tipo - MUY COMPACTOS */}
             <div className="flex flex-wrap gap-1">
               {caso.tipo_lead && getLeadTypeBadge(caso.tipo_lead)}
               {getProfileTypeBadge(clientData.tipo_perfil)}
             </div>
 
-            {/* Fecha y tiempo relativo - COMPACTO */}
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded">
+            {/* Fecha - ULTRA COMPACTO */}
+            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                <span>{format(casoDate, 'dd/MM/yy', { locale: es })}</span>
+                <Calendar className="h-3 w-3" />
+                <span>{format(casoDate, 'dd/MM', { locale: es })}</span>
               </div>
               <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                <span>{formatDistanceToNow(casoDate, { locale: es, addSuffix: true })}</span>
+                <Clock className="h-3 w-3" />
+                <span>{formatDistanceToNow(casoDate, { locale: es, addSuffix: true }).replace('hace ', '').replace('alrededor de ', '')}</span>
               </div>
             </div>
 
-            {/* Información de empresa si aplica - COMPACTA */}
-            {clientData.tipo_perfil === 'empresa' && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border-l-4 border-blue-400">
-                {clientData.razon_social && (
-                  <div className="font-semibold text-blue-900 dark:text-blue-100 text-sm">
-                    {clientData.razon_social}
-                  </div>
-                )}
-                {clientData.nif_cif && (
-                  <div className="text-xs text-blue-700 dark:text-blue-300">
-                    NIF/CIF: {clientData.nif_cif}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Especialidad y ciudad - COMPACTAS */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            {/* Especialidad y ciudad - ULTRA COMPACTAS */}
+            <div className="grid grid-cols-1 gap-1 text-xs">
               <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                <FileText className="h-4 w-4 text-blue-600" />
+                <FileText className="h-3 w-3 text-blue-600" />
                 <span className="truncate font-medium">{caso.especialidades?.nombre || 'Sin especialidad'}</span>
               </div>
               {clientData.ciudad && (
                 <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                  <MapPin className="h-4 w-4 text-green-600" />
+                  <MapPin className="h-3 w-3 text-green-600" />
                   <span className="truncate font-medium">{clientData.ciudad}</span>
                 </div>
               )}
             </div>
 
-            {/* Motivo de consulta - COMPACTO */}
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded border-l-3 border-yellow-400">
-              <p className="text-xs font-semibold text-gray-800 dark:text-white mb-1">Motivo:</p>
-              <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">
+            {/* Información de empresa - ULTRA COMPACTA */}
+            {clientData.tipo_perfil === 'empresa' && clientData.razon_social && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-1 rounded text-xs">
+                <div className="font-medium text-blue-900 dark:text-blue-100 truncate">
+                  {clientData.razon_social}
+                </div>
+              </div>
+            )}
+
+            {/* Motivo de consulta - ULTRA COMPACTO */}
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+              <p className="text-xs font-medium text-gray-800 dark:text-white mb-1">Motivo:</p>
+              <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2 leading-tight">
                 {caso.motivo_consulta}
               </p>
             </div>
 
-            {/* Resumen del caso - COMPACTO */}
-            {caso.resumen_caso && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border-l-3 border-blue-400">
-                <p className="text-xs font-semibold text-gray-800 dark:text-white mb-1">Resumen:</p>
-                <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">
-                  {caso.resumen_caso}
-                </p>
-              </div>
-            )}
-
-            {/* Valor estimado - COMPACTO */}
+            {/* Valor estimado - ULTRA COMPACTO */}
             {caso.valor_estimado && (
-              <div className="flex items-center gap-1 text-xs bg-green-50 dark:bg-green-900/20 p-2 rounded">
-                <Euro className="h-4 w-4 text-green-600" />
-                <span className="font-semibold text-green-700 dark:text-green-300">
+              <div className="flex items-center gap-1 text-xs bg-green-50 dark:bg-green-900/20 p-1 rounded">
+                <Euro className="h-3 w-3 text-green-600" />
+                <span className="font-medium text-green-700 dark:text-green-300 truncate">
                   {caso.valor_estimado}
                 </span>
               </div>
             )}
 
-            {/* Estado de asignación - COMPACTO */}
+            {/* Estado de asignación - ULTRA COMPACTO */}
             {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
-              <div className="text-xs bg-green-50 dark:bg-green-900/20 p-2 rounded text-green-700 dark:text-green-300 flex items-center gap-1">
-                <UserPlus className="h-4 w-4" />
-                <span className="font-medium">Asignado: {caso.asignaciones_casos[0].profiles?.nombre}</span>
+              <div className="text-xs bg-green-50 dark:bg-green-900/20 p-1 rounded text-green-700 dark:text-green-300 flex items-center gap-1">
+                <UserPlus className="h-3 w-3" />
+                <span className="font-medium truncate">Asignado: {caso.asignaciones_casos[0].profiles?.nombre}</span>
               </div>
             ) : (
-              <div className="text-xs bg-gray-50 dark:bg-gray-700 p-2 rounded text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                <Clock className="h-4 w-4 text-orange-500" />
+              <div className="text-xs bg-gray-50 dark:bg-gray-700 p-1 rounded text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                <Clock className="h-3 w-3 text-orange-500" />
                 <span className="font-medium">Sin asignar</span>
               </div>
             )}
           </div>
         </CardContent>
         
-        {/* Botones de acción - COMPACTOS */}
-        <div className="p-3 pt-0">
-          <div className="flex gap-2">
+        {/* Botones de acción - ULTRA COMPACTOS */}
+        <div className="p-2 pt-0">
+          <div className="flex gap-1">
             <Button
               variant="outline"
               size="sm"
               onClick={() => onViewDetails(caso.id)}
-              className="flex-1 h-10 text-sm font-medium border-2 hover:bg-blue-50"
+              className="flex-1 h-8 text-xs font-medium hover:bg-blue-50"
             >
-              <Eye className="h-4 w-4 mr-1" />
+              <Eye className="h-3 w-3 mr-1" />
               Ver
             </Button>
             
@@ -296,9 +279,9 @@ const CaseCard: React.FC<CaseCardProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => onAssignLawyer(caso.id)}
-                  className="flex-1 h-10 text-sm font-medium border-2 hover:bg-green-50"
+                  className="flex-1 h-8 text-xs font-medium hover:bg-green-50"
                 >
-                  <UserPlus className="h-4 w-4 mr-1" />
+                  <UserPlus className="h-3 w-3 mr-1" />
                   Asignar
                 </Button>
                 
@@ -306,9 +289,9 @@ const CaseCard: React.FC<CaseCardProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => onGenerateResolution(caso.id)}
-                  className="flex-1 h-10 text-sm font-medium border-2 hover:bg-purple-50"
+                  className="flex-1 h-8 text-xs font-medium hover:bg-purple-50"
                 >
-                  <Bot className="h-4 w-4 mr-1" />
+                  <Bot className="h-3 w-3 mr-1" />
                   IA
                 </Button>
               </>
