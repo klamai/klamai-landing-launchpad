@@ -54,8 +54,8 @@ const CasesManagement: React.FC = () => {
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterEstado, setFilterEstado] = useState<string>('');
-  const [filterTipoLead, setFilterTipoLead] = useState<string>('');
+  const [filterEstado, setFilterEstado] = useState<string>('all');
+  const [filterTipoLead, setFilterTipoLead] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const { toast } = useToast();
 
@@ -119,8 +119,8 @@ const CasesManagement: React.FC = () => {
       caso.apellido_borrador?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       caso.email_borrador?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesEstado = !filterEstado || caso.estado === filterEstado;
-    const matchesTipoLead = !filterTipoLead || caso.tipo_lead === filterTipoLead;
+    const matchesEstado = filterEstado === 'all' || caso.estado === filterEstado;
+    const matchesTipoLead = filterTipoLead === 'all' || caso.tipo_lead === filterTipoLead;
     
     return matchesSearch && matchesEstado && matchesTipoLead;
   });
@@ -194,7 +194,7 @@ const CasesManagement: React.FC = () => {
                 <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los estados</SelectItem>
+                <SelectItem value="all">Todos los estados</SelectItem>
                 <SelectItem value="borrador">Borrador</SelectItem>
                 <SelectItem value="disponible">Disponible</SelectItem>
                 <SelectItem value="asignado">Asignado</SelectItem>
@@ -209,7 +209,7 @@ const CasesManagement: React.FC = () => {
                 <SelectValue placeholder="Filtrar por tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los tipos</SelectItem>
+                <SelectItem value="all">Todos los tipos</SelectItem>
                 <SelectItem value="estandar">Estándar</SelectItem>
                 <SelectItem value="premium">Premium</SelectItem>
                 <SelectItem value="urgente">Urgente</SelectItem>
@@ -220,8 +220,8 @@ const CasesManagement: React.FC = () => {
               variant="outline" 
               onClick={() => {
                 setSearchTerm('');
-                setFilterEstado('');
-                setFilterTipoLead('');
+                setFilterEstado('all');
+                setFilterTipoLead('all');
               }}
               className="flex items-center gap-2"
             >
@@ -299,7 +299,7 @@ const CasesManagement: React.FC = () => {
                 No se encontraron casos
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                {searchTerm || filterEstado || filterTipoLead 
+                {searchTerm || filterEstado !== 'all' || filterTipoLead !== 'all'
                   ? 'Intenta ajustar los filtros de búsqueda'
                   : 'Comienza añadiendo tu primer caso'
                 }
