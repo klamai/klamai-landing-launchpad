@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { SidebarDashboard, SidebarBody, SidebarLink, Logo, LogoIcon } from "@/components/ui/sidebar-dashboard";
 import { 
@@ -19,6 +18,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useRegularLawyerStats } from "@/hooks/useRegularLawyerStats";
+import AssignedCasesList from "@/components/AssignedCasesList";
 
 const RegularLawyerDashboard = () => {
   const [open, setOpen] = useState(false);
@@ -246,6 +247,7 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
 
 const RegularLawyerDashboardSection = () => {
   const { user } = useAuth();
+  const { stats, loading } = useRegularLawyerStats();
 
   return (
     <motion.div
@@ -263,11 +265,32 @@ const RegularLawyerDashboardSection = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {[
-          { title: "Casos Asignados", value: "3", color: "bg-blue-500", textColor: "text-blue-600" },
-          { title: "Casos Activos", value: "2", color: "bg-green-500", textColor: "text-green-600" },
-          { title: "Documentos Pendientes", value: "1", color: "bg-orange-500", textColor: "text-orange-600" },
+          { 
+            title: "Casos Asignados", 
+            value: loading ? "..." : stats.totalCasosAsignados.toString(), 
+            color: "bg-blue-500", 
+            textColor: "text-blue-600" 
+          },
+          { 
+            title: "Casos Activos", 
+            value: loading ? "..." : stats.casosActivos.toString(), 
+            color: "bg-green-500", 
+            textColor: "text-green-600" 
+          },
+          { 
+            title: "Casos Completados", 
+            value: loading ? "..." : stats.casosCompletados.toString(), 
+            color: "bg-purple-500", 
+            textColor: "text-purple-600" 
+          },
+          { 
+            title: "Documentos Pendientes", 
+            value: loading ? "..." : stats.documentosPendientes.toString(), 
+            color: "bg-orange-500", 
+            textColor: "text-orange-600" 
+          },
         ].map((stat, i) => (
           <motion.div
             key={stat.title}
@@ -306,8 +329,8 @@ const RegularLawyerDashboardSection = () => {
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Casos asignados recientemente
             </div>
-            <div className="h-32 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-              <p className="text-gray-500 dark:text-gray-400">Cargando casos asignados...</p>
+            <div className="max-h-64 overflow-y-auto">
+              <AssignedCasesList />
             </div>
           </div>
         </motion.div>
@@ -326,8 +349,28 @@ const RegularLawyerDashboardSection = () => {
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Documentos y tareas por completar
             </div>
-            <div className="h-32 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-              <p className="text-gray-500 dark:text-gray-400">Cargando tareas pendientes...</p>
+            <div className="space-y-3">
+              {loading ? (
+                <div className="animate-pulse space-y-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-white dark:bg-neutral-900 rounded border">
+                    <span className="text-sm">Documentos de resolución pendientes</span>
+                    <span className="text-sm font-medium text-orange-600">
+                      {stats.documentosPendientes}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-white dark:bg-neutral-900 rounded border">
+                    <span className="text-sm">Casos esperando respuesta</span>
+                    <span className="text-sm font-medium text-blue-600">
+                      {stats.casosActivos}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -343,10 +386,7 @@ const MisCasosAsignadosSection = () => (
     className="space-y-6"
   >
     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mis Casos Asignados</h1>
-    <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <Scale className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">Lista de casos asignados próximamente disponible</p>
-    </div>
+    <AssignedCasesList />
   </motion.div>
 );
 
