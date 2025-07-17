@@ -192,11 +192,11 @@ const CaseCard: React.FC<CaseCardProps> = ({
             <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                <span>{format(casoDate, 'dd/MM', { locale: es })}</span>
+                <span>{format(casoDate, 'dd/MM/yy HH:mm', { locale: es })}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                <span>{formatDistanceToNow(casoDate, { locale: es, addSuffix: true }).replace('hace ', '').replace('alrededor de ', '')}</span>
+                <span>Hace {formatDistanceToNow(casoDate, { locale: es, addSuffix: false }).replace('hace ', '').replace('alrededor de ', '')}</span>
               </div>
             </div>
 
