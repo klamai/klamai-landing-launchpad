@@ -1,35 +1,93 @@
-
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 import { 
+  X, 
   User, 
   Mail, 
   Phone, 
   MapPin, 
-  Building, 
   Calendar, 
+  FileText, 
+  Euro,
   Clock,
-  FileText,
-  AlertCircle,
-  CheckCircle,
-  UserPlus,
   MessageSquare,
   Upload,
-  Edit,
+  Download,
+  Bot,
+  UserPlus,
+  Eye,
+  Building,
   Trash2
 } from 'lucide-react';
-import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useToast } from '@/hooks/use-toast';
+import { toZonedTime } from 'date-fns-tz';
 import { useDocumentManagement } from '@/hooks/useDocumentManagement';
 import { useClientDocumentManagement } from '@/hooks/useClientDocumentManagement';
-import CaseEditModal from './CaseEditModal';
-import CaseDeleteConfirmModal from './CaseDeleteConfirmModal';
+import DocumentViewer from '@/components/DocumentViewer';
+import DocumentUploadModal from '@/components/DocumentUploadModal';
+import { useToast } from '@/hooks/use-toast';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface CaseDetailModalProps {
-  caso: any;
+  caso: {
+    id: string;
+    motivo_consulta: string;
+    resumen_caso?: string;
+    guia_abogado?: string;
+    estado: string;
+    created_at: string;
+    valor_estimado?: string;
+    tipo_lead?: string;
+    tipo_perfil_borrador?: string;
+    transcripcion_chat?: any;
+    propuesta_estructurada?: any;
+    documentos_adjuntos?: any;
+    nombre_borrador?: string;
+    apellido_borrador?: string;
+    email_borrador?: string;
+    telefono_borrador?: string;
+    ciudad_borrador?: string;
+    razon_social_borrador?: string;
+    nif_cif_borrador?: string;
+    nombre_gerente_borrador?: string;
+    direccion_fiscal_borrador?: string;
+    preferencia_horaria_contacto?: string;
+    especialidades?: { nombre: string };
+    profiles?: { 
+      nombre: string; 
+      apellido: string; 
+      email: string;
+      telefono?: string;
+      ciudad?: string;
+      tipo_perfil: string;
+      razon_social?: string;
+      nif_cif?: string;
+      nombre_gerente?: string;
+      direccion_fiscal?: string;
+    };
+    asignaciones_casos?: Array<{
+      abogado_id: string;
+      estado_asignacion: string;
+      fecha_asignacion: string;
+      notas_asignacion?: string;
+      profiles: { nombre: string; apellido: string; email: string };
+    }>;
+  } | null;
   isOpen: boolean;
   onClose: () => void;
   onAssignLawyer: (casoId: string) => void;
@@ -38,264 +96,605 @@ interface CaseDetailModalProps {
   onSendMessage: (casoId: string) => void;
 }
 
-const CaseDetailModal = ({ caso, isOpen, onClose, onAssignLawyer, onGenerateResolution, onUploadDocument, onSendMessage }: CaseDetailModalProps) => {
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
+  caso,
+  isOpen,
+  onClose,
+  onAssignLawyer,
+  onGenerateResolution,
+  onUploadDocument,
+  onSendMessage
+}) => {
+  const [messageText, setMessageText] = useState('');
+  const [selectedDocument, setSelectedDocument] = useState<{name: string; url: string; type?: string; size?: number} | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const { toast } = useToast();
 
-  // Document management hooks - only initialize when we have a selected case
   const { 
     documentosResolucion, 
-    loading: documentsLoading, 
-    uploadDocument, 
+    loading: loadingDocs, 
+    downloadDocument, 
     deleteDocument,
-    refetch: refetchDocuments
+    getSignedUrl,
+    refetch: refetchDocuments 
   } = useDocumentManagement(caso?.id);
-  
-  const { 
-    documentosCliente, 
-    loading: clientDocumentsLoading,
-    refetch: refetchClientDocuments
+
+  const {
+    documentosCliente,
+    loading: loadingClientDocs,
+    downloadDocument: downloadClientDocument,
+    getSignedUrl: getClientSignedUrl
   } = useClientDocumentManagement(caso?.id);
 
-  const handleEditSuccess = () => {
-    toast({
-      title: "Caso actualizado",
-      description: "Los cambios se han guardado correctamente",
-    });
-    // El componente padre se actualizará automáticamente por el realtime
-  };
+  if (!caso) return null;
 
-  const handleDeleteSuccess = () => {
-    onClose(); // Cerrar el modal de detalles
-    toast({
-      title: "Caso eliminado",
-      description: "El caso ha sido eliminado correctamente",
-    });
-    // El componente padre se actualizará automáticamente por el realtime
+  // Convertir a zona horaria de España
+  const spainTimeZone = 'Europe/Madrid';
+  const casoDate = toZonedTime(new Date(caso.created_at), spainTimeZone);
+
+  const clientData = caso.profiles || {
+    nombre: caso.nombre_borrador || '',
+    apellido: caso.apellido_borrador || '',
+    email: caso.email_borrador || '',
+    telefono: caso.telefono_borrador || '',
+    ciudad: caso.ciudad_borrador || '',
+    tipo_perfil: caso.tipo_perfil_borrador || 'individual',
+    razon_social: caso.razon_social_borrador || '',
+    nif_cif: caso.nif_cif_borrador || '',
+    nombre_gerente: caso.nombre_gerente_borrador || '',
+    direccion_fiscal: caso.direccion_fiscal_borrador || ''
   };
 
   const getStatusBadge = (estado: string) => {
     const statusConfig = {
-      'disponible': { label: 'Disponible', variant: 'default' as const, icon: AlertCircle },
-      'agotado': { label: 'Agotado', variant: 'destructive' as const, icon: Clock },
-      'cerrado': { label: 'Cerrado', variant: 'secondary' as const, icon: CheckCircle },
-      'esperando_pago': { label: 'Esperando Pago', variant: 'outline' as const, icon: Clock }
+      'disponible': { 
+        label: 'Disponible', 
+        className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+      },
+      'agotado': { 
+        label: 'Agotado', 
+        className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+      },
+      'cerrado': { 
+        label: 'Cerrado', 
+        className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+      },
+      'esperando_pago': { 
+        label: 'Esperando Pago', 
+        className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+      }
     };
     
     const config = statusConfig[estado as keyof typeof statusConfig] || statusConfig.disponible;
-    const IconComponent = config.icon;
-    
-    return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
-        <IconComponent className="h-3 w-3" />
-        {config.label}
-      </Badge>
-    );
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  const getClientName = () => {
-    if (!caso) return '';
-    
-    if (caso.profiles?.nombre) {
-      return `${caso.profiles.nombre} ${caso.profiles.apellido || ''}`.trim();
+  const handleViewClientDocument = async (doc: any) => {
+    const signedUrl = await getClientSignedUrl(doc);
+    if (signedUrl) {
+      setSelectedDocument({
+        name: doc.nombre_archivo,
+        url: signedUrl,
+        type: doc.tipo_documento,
+        size: doc.tamaño_archivo
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "No se pudo generar la URL para visualizar el documento",
+        variant: "destructive"
+      });
     }
-    
-    if (caso.nombre_borrador) {
-      return `${caso.nombre_borrador} ${caso.apellido_borrador || ''}`.trim();
+  };
+
+  const handleViewResolutionDocument = async (doc: any) => {
+    const signedUrl = await getSignedUrl(doc);
+    if (signedUrl) {
+      setSelectedDocument({
+        name: doc.nombre_archivo,
+        url: signedUrl,
+        type: doc.tipo_documento,
+        size: doc.tamaño_archivo
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "No se pudo generar la URL para visualizar el documento",
+        variant: "destructive"
+      });
     }
-    
-    if (caso.razon_social_borrador) {
-      return caso.razon_social_borrador;
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    const result = await deleteDocument(docId);
+    if (result.success) {
+      toast({
+        title: "Éxito",
+        description: "Documento eliminado correctamente",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: result.error || "Error al eliminar el documento",
+        variant: "destructive",
+      });
     }
-    
-    return 'Cliente sin nombre';
+  };
+
+  const handleUploadSuccess = () => {
+    refetchDocuments();
+    setShowUploadModal(false);
+    toast({
+      title: "Éxito",
+      description: "Documento subido correctamente",
+    });
   };
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">
-                Detalles del Caso
-              </DialogTitle>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditModalOpen(true)}
-                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDeleteModalOpen(true)}
-                  className="text-red-600 border-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Eliminar
-                </Button>
-              </div>
-            </div>
-            <DialogDescription className="text-gray-600 dark:text-gray-400">
-              ID: {caso?.id?.substring(0, 8)}... • Estado: {caso?.estado}
-            </DialogDescription>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Detalle del Caso #{caso.id.substring(0, 8)}
+              {getStatusBadge(caso.estado)}
+            </DialogTitle>
           </DialogHeader>
 
-          {/* Case Details Content */}
-          {caso && (
-            <div className="space-y-6">
-              {/* Basic Info */}
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Información Básica</h3>
-                  {getStatusBadge(caso.estado)}
-                </div>
-                
+          <Tabs defaultValue="overview" className="flex-1">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview">Resumen</TabsTrigger>
+              <TabsTrigger value="client">Cliente</TabsTrigger>
+              <TabsTrigger value="chat">Conversación</TabsTrigger>
+              <TabsTrigger value="documents">Documentos</TabsTrigger>
+            </TabsList>
+
+            <ScrollArea className="h-[60vh] mt-4">
+              <TabsContent value="overview" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Cliente</p>
-                    <p className="font-medium">{getClientName()}</p>
-                  </div>
-                  
-                  {caso.email_borrador && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-gray-500" />
-                      <span>{caso.email_borrador}</span>
-                    </div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Información del Caso</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Motivo de consulta:</p>
+                        <p className="text-sm">{caso.motivo_consulta}</p>
+                      </div>
+                      
+                      {caso.resumen_caso && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Resumen del caso:</p>
+                          <div className="prose prose-slate bg-gray-50 max-w-none dark:prose-invert dark:bg-gray-800 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <ScrollArea className="h-48">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {caso.resumen_caso}
+                            </ReactMarkdown>
+                            </ScrollArea>
+                        </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <span>{format(casoDate, 'dd/MM/yyyy HH:mm', { locale: es })}</span>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(casoDate, { locale: es, addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span>{caso.especialidades?.nombre || 'Sin especialidad'}</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {caso.tipo_lead && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Tipo de lead:</p>
+                            <Badge variant="secondary" className="capitalize">{caso.tipo_lead}</Badge>
+                          </div>
+                        )}
+                        {caso.valor_estimado && (
+                          <div className="flex items-center gap-1 text-sm">
+                            <Euro className="h-4 w-4 text-green-600" />
+                            <span className="font-medium text-green-700 dark:text-green-400">
+                              Valor estimado: {caso.valor_estimado}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Estado y Asignación</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Estado actual:</p>
+                        {getStatusBadge(caso.estado)}
+                      </div>
+                      {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Asignado a:</p>
+                          {caso.asignaciones_casos.map((asignacion, idx) => (
+                            <div key={idx} className="bg-green-50 dark:bg-green-900/20 p-2 rounded-md">
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-green-600" />
+                                <span className="font-medium">
+                                  {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
+                                </span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Asignado el {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy', { locale: es })}
+                              </p>
+                              {asignacion.notas_asignacion && (
+                                <p className="text-xs mt-1">{asignacion.notas_asignacion}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Sin asignar</span>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {caso.guia_abogado && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Guía para el Abogado</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                      <div className="prose prose-slate bg-gray-50 max-w-none dark:prose-invert dark:bg-gray-800 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden">                        
+                        <ScrollArea className="h-48">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {caso.guia_abogado}
+                          </ReactMarkdown>
+                          </ScrollArea>
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
                   
-                  {caso.telefono_borrador && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-gray-500" />
-                      <span>{caso.telefono_borrador}</span>
-                    </div>
-                  )}
-                  
-                  {caso.ciudad_borrador && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                      <span>{caso.ciudad_borrador}</span>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <span>{format(new Date(caso.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}</span>
-                  </div>
-                  
-                  {caso.especialidades?.nombre && (
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Especialidad</p>
-                      <p className="font-medium">{caso.especialidades.nombre}</p>
-                    </div>
+                  {caso.propuesta_estructurada && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Propuesta del Cliente</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ScrollArea className="h-32">
+                          <div className="text-sm">
+                            {typeof caso.propuesta_estructurada === 'string' ? (
+                              <p className="whitespace-pre-wrap">{caso.propuesta_estructurada}</p>
+                            ) : (
+                              <pre className="text-xs bg-gray-50 dark:bg-gray-800 p-2 rounded overflow-auto">
+                                {JSON.stringify(caso.propuesta_estructurada, null, 2)}
+                              </pre>
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
                   )}
                 </div>
-              </div>
+              </TabsContent>
 
-              {/* Case Description */}
-              {caso.motivo_consulta && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Motivo de Consulta</h3>
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                    {caso.motivo_consulta}
-                  </p>
+              <TabsContent value="client" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Información del Cliente</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Nombre completo:</p>
+                        <p className="text-sm">{clientData.nombre} {clientData.apellido}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Tipo de perfil:</p>
+                        <Badge variant="outline">
+                          {clientData.tipo_perfil === 'empresa' ? (
+                            <>
+                              <Building className="h-3 w-3 mr-1" />
+                              Empresa
+                            </>
+                          ) : (
+                            <>
+                              <User className="h-3 w-3 mr-1" />
+                              Individual
+                            </>
+                          )}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Email:</p>
+                        <div className="flex items-center gap-1">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-sm">{clientData.email}</p>
+                        </div>
+                      </div>
+                      {clientData.telefono && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Teléfono:</p>
+                          <div className="flex items-center gap-1">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-sm">{clientData.telefono}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {clientData.ciudad && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Ciudad:</p>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-sm">{clientData.ciudad}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {clientData.tipo_perfil === 'empresa' && (
+                      <>
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded space-y-2">
+                          {clientData.razon_social && (
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Razón social:</p>
+                              <p className="text-sm font-semibold">{clientData.razon_social}</p>
+                            </div>
+                          )}
+                          {clientData.nif_cif && (
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">NIF/CIF:</p>
+                              <p className="text-sm">{clientData.nif_cif}</p>
+                            </div>
+                          )}
+                          {clientData.nombre_gerente && (
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Nombre del gerente:</p>
+                              <p className="text-sm">{clientData.nombre_gerente}</p>
+                            </div>
+                          )}
+                          {clientData.direccion_fiscal && (
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Dirección fiscal:</p>
+                              <p className="text-sm">{clientData.direccion_fiscal}</p>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="chat" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {caso.transcripcion_chat ? (
+                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {JSON.stringify(caso.transcripcion_chat, null, 2)}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No hay transcripción disponible</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="documents" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Documentos del Cliente</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingClientDocs ? (
+                        <div className="text-center py-4 text-muted-foreground">
+                          <p className="text-sm">Cargando documentos del cliente...</p>
+                        </div>
+                      ) : documentosCliente.length > 0 ? (
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground mb-2">Documentos subidos por el cliente:</p>
+                          <div className="space-y-2">
+                            {documentosCliente.map((doc) => (
+                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate cursor-pointer" onClick={() => handleViewClientDocument(doc)}>
+                                    {doc.nombre_archivo}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
+                                  </p>
+                                  {doc.descripcion && (
+                                    <p className="text-xs text-muted-foreground truncate">
+                                      {doc.descripcion}
+                                    </p>
+                                  )}
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleViewClientDocument(doc)}
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => downloadClientDocument(doc)}
+                                >
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No hay documentos del cliente</p>
+                          <p className="text-xs">El cliente no ha subido documentos aún</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center justify-between">
+                        Documentos de Resolución
+                        <Button
+                          onClick={() => setShowUploadModal(true)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Upload className="h-4 w-4 mr-1" />
+                          Subir
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {loadingDocs ? (
+                          <div className="text-center py-4 text-muted-foreground">
+                            <p className="text-sm">Cargando documentos...</p>
+                          </div>
+                        ) : documentosResolucion.length > 0 ? (
+                          documentosResolucion.map((doc) => (
+                            <div key={doc.id} className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                              <FileText className="h-4 w-4 text-blue-600" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
+                                  {doc.nombre_archivo}
+                                </p>
+                                <p className="text-xs text-blue-700 dark:text-blue-300">
+                                  {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
+                                </p>
+                                {doc.descripcion && (
+                                  <p className="text-xs text-blue-600 dark:text-blue-400 truncate">
+                                    {doc.descripcion}
+                                  </p>
+                                )}
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleViewResolutionDocument(doc)}
+                              >
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => downloadDocument(doc)}
+                              >
+                                <Download className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDeleteDocument(doc.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <Upload className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No hay documentos de resolución</p>
+                            <p className="text-xs">Sube el primer documento usando el botón de arriba</p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              )}
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
 
-              {/* Case Summary */}
-              {caso.resumen_caso && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Resumen del Caso</h3>
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                    {caso.resumen_caso}
-                  </p>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex flex-wrap gap-2 pt-4 border-t">
-                <Button onClick={() => onAssignLawyer(caso.id)} variant="outline">
+          {/* Action buttons */}
+          {caso.estado !== 'cerrado' && (
+            <>
+              <Separator />
+              <div className="flex flex-wrap gap-2 pt-4">
+                <Button
+                  onClick={() => onAssignLawyer(caso.id)}
+                  variant="default"
+                >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Asignar Abogado
                 </Button>
-                <Button onClick={() => onGenerateResolution(caso.id)} variant="outline">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Generar Resolución
+                
+                <Button
+                  onClick={() => onGenerateResolution(caso.id)}
+                  variant="outline"
+                >
+                  <Bot className="h-4 w-4 mr-2" />
+                  Generar Resolución IA
                 </Button>
-                <Button onClick={() => onUploadDocument(caso.id)} variant="outline">
+                
+                <Button
+                  onClick={() => setShowUploadModal(true)}
+                  variant="outline"
+                >
                   <Upload className="h-4 w-4 mr-2" />
                   Subir Documento
                 </Button>
-                <Button onClick={() => onSendMessage(caso.id)} variant="outline">
+                
+                <Button
+                  onClick={() => onSendMessage(caso.id)}
+                  variant="outline"
+                >
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Enviar Mensaje
                 </Button>
               </div>
-
-              {/* Documents Section */}
-              {(documentosResolucion.length > 0 || documentosCliente.length > 0) && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Documentos</h3>
-                  
-                  {documentosResolucion.length > 0 && (
-                    <div className="mb-4">
-                      <h4 className="font-medium mb-2">Documentos de Resolución</h4>
-                      <div className="space-y-2">
-                        {documentosResolucion.map((doc) => (
-                          <div key={doc.id} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                            <FileText className="h-4 w-4" />
-                            <span className="flex-1">{doc.nombre_archivo}</span>
-                            <span className="text-sm text-gray-500">
-                              {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {documentosCliente.length > 0 && (
-                    <div>
-                      <h4 className="font-medium mb-2">Documentos del Cliente</h4>
-                      <div className="space-y-2">
-                        {documentosCliente.map((doc) => (
-                          <div key={doc.id} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                            <FileText className="h-4 w-4" />
-                            <span className="flex-1">{doc.nombre_archivo}</span>
-                            <span className="text-sm text-gray-500">
-                              {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Edit and Delete Modals */}
-      <CaseEditModal
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        caso={caso}
-        onSuccess={handleEditSuccess}
+      {/* Document Viewer Modal */}
+      <DocumentViewer
+        isOpen={!!selectedDocument}
+        onClose={() => setSelectedDocument(null)}
+        document={selectedDocument}
       />
 
-      <CaseDeleteConfirmModal
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        caso={caso}
-        onSuccess={handleDeleteSuccess}
+      {/* Document Upload Modal */}
+      <DocumentUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        casoId={caso.id}
+        onUploadSuccess={handleUploadSuccess}
       />
     </>
   );

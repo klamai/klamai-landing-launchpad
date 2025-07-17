@@ -35,7 +35,6 @@ import CaseCard from './CaseCard';
 import CaseDetailModal from './CaseDetailModal';
 import CaseAssignmentModal from './CaseAssignmentModal';
 import AddManualCaseModal from './AddManualCaseModal';
-import { useRealtimeCases } from '@/hooks/useRealtimeCases';
 
 const CasesManagement = () => {
   const { casos, loadingCasos, refetchCasos } = useSuperAdminStats();
@@ -52,18 +51,6 @@ const CasesManagement = () => {
   const [selectedCaseForAssignment, setSelectedCaseForAssignment] = useState<any | null>(null);
   const [addManualCaseOpen, setAddManualCaseOpen] = useState(false);
   const { toast } = useToast();
-
-  // Configurar actualizaciones en tiempo real
-  useRealtimeCases({
-    onCaseUpdate: () => {
-      console.log('Actualizando lista de casos...');
-      refetchCasos();
-      toast({
-        title: "Lista actualizada",
-        description: "Los casos se han actualizado automáticamente",
-      });
-    }
-  });
 
   const getStatusBadge = (estado: string) => {
     const statusConfig = {
@@ -155,6 +142,7 @@ const CasesManagement = () => {
   };
 
   const handleManualCaseSuccess = () => {
+    refetchCasos();
     toast({
       title: "¡Caso creado!",
       description: "El caso ha sido creado exitosamente y se está procesando con IA",
