@@ -27,7 +27,7 @@ const DashboardRedirect = ({ children }: DashboardRedirectProps) => {
           .from('profiles')
           .select('role')
           .eq('id', user.id)
-          .maybeSingle(); // Cambio de .single() a .maybeSingle() para manejo robusto
+          .maybeSingle();
 
         if (error) {
           console.error('❌ Error fetching user role:', error);
@@ -62,7 +62,7 @@ const DashboardRedirect = ({ children }: DashboardRedirectProps) => {
     );
   }
 
-  // If user is a lawyer, redirect to lawyer dashboard
+  // If user is a lawyer, redirect to lawyer dashboard router
   if (userRole === 'abogado') {
     console.log('🚀 Redirigiendo a dashboard de abogado');
     return <Navigate to="/abogados/dashboard" replace />;

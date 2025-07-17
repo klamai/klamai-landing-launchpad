@@ -7,12 +7,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardRedirect from "@/components/DashboardRedirect";
+import LawyerDashboardRouter from "@/components/LawyerDashboardRouter";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import Auth from "./pages/Auth";
 import AuthAbogado from "./pages/AuthAbogado";
 import Dashboard from "./pages/Dashboard";
-import AbogadoDashboard from "./pages/AbogadoDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import LegalNotice from "./pages/LegalNotice";
 import PagoExitoso from "./pages/PagoExitoso";
@@ -36,7 +36,7 @@ const App = () => (
             <Route path="/auth-callback" element={<AuthCallback />} />
             <Route path="/chat" element={<Chat />} />
             
-            {/* Rutas protegidas del dashboard */}
+            {/* Rutas protegidas del dashboard de clientes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <DashboardRedirect>
@@ -94,10 +94,15 @@ const App = () => (
               </ProtectedRoute>
             } />
             
-            {/* Rutas protegidas del dashboard de abogados */}
+            {/* Rutas protegidas del dashboard de abogados - Enrutador inteligente */}
+            <Route path="/abogados/dashboard" element={
+              <ProtectedRoute>
+                <LawyerDashboardRouter />
+              </ProtectedRoute>
+            } />
             <Route path="/abogados/dashboard/*" element={
               <ProtectedRoute>
-                <AbogadoDashboard />
+                <LawyerDashboardRouter />
               </ProtectedRoute>
             } />
             
