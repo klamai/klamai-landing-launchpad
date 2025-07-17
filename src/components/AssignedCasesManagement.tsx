@@ -1,19 +1,52 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Grid3X3, List, Scale, FileText, AlertCircle } from 'lucide-react';
+import { Search, Grid3X3, List, Scale, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAssignedCases } from '@/hooks/useAssignedCases';
 import CaseCard from '@/components/CaseCard';
+import CaseDetailModal from '@/components/CaseDetailModal';
+import DocumentUploadModal from '@/components/DocumentUploadModal';
+import DocumentViewer from '@/components/DocumentViewer';
 import { useToast } from '@/hooks/use-toast';
+import { useDocumentManagement } from '@/hooks/useDocumentManagement';
+import { useClientDocumentManagement } from '@/hooks/useClientDocumentManagement';
+import { useCasesByRole } from '@/hooks/useCasesByRole';
 
 const AssignedCasesManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterState, setFilterState] = useState<string>('all');
+  
+  // Modal states
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedCaseDetail, setSelectedCaseDetail] = useState<any>(null);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [selectedCaseForUpload, setSelectedCaseForUpload] = useState<string>('');
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  
   const { cases, loading, error } = useAssignedCases();
   const { toast } = useToast();
+  
+  // Document management hooks
+  const { 
+    documents: resolutionDocuments, 
+    loading: documentsLoading, 
+    uploadDocument, 
+    deleteDocument,
+    refetch: refetchDocuments
+  } = useDocumentManagement();
+  
+  const { 
+    documents: clientDocuments, 
+    loading: clientDocumentsLoading,
+    refetch: refetchClientDocuments
+  } = useClientDocumentManagement();
+
+  // Get case details for modal
+  const { getCaseById } = useCasesByRole();
 
   // Filtrar casos basado en búsqueda y estado
   const filteredCases = cases.filter(caso => {
@@ -28,16 +61,30 @@ const AssignedCasesManagement = () => {
     return matchesSearch && matchesState;
   });
 
-  const handleViewDetails = (casoId: string) => {
-    // Funcionalidad para ver detalles del caso
-    toast({
-      title: "Ver Detalles",
-      description: `Abriendo detalles del caso ${casoId}`,
-    });
+  const handleViewDetails = async (casoId: string) => {
+    try {
+      const caseDetails = await getCaseById(casoId);
+      if (caseDetails) {
+        setSelectedCaseDetail(caseDetails);
+        setDetailModalOpen(true);
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo cargar la información del caso",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching case details:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar la información del caso",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleGenerateResolution = (casoId: string) => {
-    // Funcionalidad para generar resolución con IA
     toast({
       title: "Generar Resolución",
       description: `Generando resolución para el caso ${casoId}`,
@@ -45,15 +92,11 @@ const AssignedCasesManagement = () => {
   };
 
   const handleUploadDocument = (casoId: string) => {
-    // Funcionalidad para subir documentos
-    toast({
-      title: "Subir Documento",
-      description: `Subiendo documento para el caso ${casoId}`,
-    });
+    setSelectedCaseForUpload(casoId);
+    setUploadModalOpen(true);
   };
 
   const handleSendMessage = (casoId: string) => {
-    // Funcionalidad para enviar mensaje al cliente
     toast({
       title: "Enviar Mensaje",
       description: `Enviando mensaje al cliente del caso ${casoId}`,
@@ -62,6 +105,51 @@ const AssignedCasesManagement = () => {
 
   // Función vacía para asignar abogado (no se usa en abogados regulares)
   const handleAssignLawyer = () => {};
+
+  const handleDocumentUpload = async (file: File, description: string) => {
+    if (!selectedCaseForUpload) return;
+    
+    try {
+      await uploadDocument(selectedCaseForUpload, file, description);
+      toast({
+        title: "Éxito",
+        description: "Documento subido correctamente",
+      });
+      setUploadModalOpen(false);
+      setSelectedCaseForUpload('');
+      refetchDocuments();
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      toast({
+        title: "Error",
+        description: "Error al subir el documento",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleViewDocument = (document: any) => {
+    setSelectedDocument(document);
+    setViewerOpen(true);
+  };
+
+  const handleDeleteDocument = async (documentId: string) => {
+    try {
+      await deleteDocument(documentId);
+      toast({
+        title: "Éxito",
+        description: "Documento eliminado correctamente",
+      });
+      refetchDocuments();
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Error",
+        description: "Error al eliminar el documento",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -213,6 +301,41 @@ const AssignedCasesManagement = () => {
           ))}
         </div>
       )}
+
+      {/* Modales */}
+      <CaseDetailModal
+        isOpen={detailModalOpen}
+        onClose={() => {
+          setDetailModalOpen(false);
+          setSelectedCaseDetail(null);
+        }}
+        caso={selectedCaseDetail}
+        onViewDocument={handleViewDocument}
+        onUploadDocument={handleUploadDocument}
+        onDeleteDocument={handleDeleteDocument}
+        resolutionDocuments={resolutionDocuments}
+        clientDocuments={clientDocuments}
+        documentsLoading={documentsLoading || clientDocumentsLoading}
+      />
+
+      <DocumentUploadModal
+        isOpen={uploadModalOpen}
+        onClose={() => {
+          setUploadModalOpen(false);
+          setSelectedCaseForUpload('');
+        }}
+        onUpload={handleDocumentUpload}
+        loading={false}
+      />
+
+      <DocumentViewer
+        isOpen={viewerOpen}
+        onClose={() => {
+          setViewerOpen(false);
+          setSelectedDocument(null);
+        }}
+        document={selectedDocument}
+      />
     </motion.div>
   );
 };
