@@ -228,6 +228,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
 
             {caso.valor_estimado && (
               <div className="flex items-center gap-1 text-xs bg-green-50 dark:bg-green-900/20 p-1 rounded">
+                <span className="font-medium truncate">Valor Estimado:</span>
                 <Euro className="h-3 w-3 text-green-600" />
                 <span className="font-medium text-green-700 dark:text-green-300 truncate">
                   {caso.valor_estimado}
@@ -236,9 +237,9 @@ const CaseCard: React.FC<CaseCardProps> = ({
             )}
 
             {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
-              <div className="text-xs bg-green-50 dark:bg-green-900/20 p-1 rounded text-green-700 dark:text-green-300 flex items-center gap-1">
+              <div className="text-xs  dark:bg-green-900/20 p-1 rounded text-blue-700 dark:text-green-300 flex items-center gap-1">
                 <UserPlus className="h-3 w-3" />
-                <span className="font-medium truncate">Asignado: {caso.asignaciones_casos[0].profiles?.nombre}</span>
+                <span className="font-medium truncate">Asignado a: {caso.asignaciones_casos[0].profiles?.nombre} {caso.asignaciones_casos[0].profiles?.apellido}</span>
               </div>
             ) : (
               <div className="text-xs bg-gray-50 dark:bg-gray-700 p-1 rounded text-gray-600 dark:text-gray-400 flex items-center gap-1">
