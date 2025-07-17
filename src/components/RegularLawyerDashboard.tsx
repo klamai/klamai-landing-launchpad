@@ -19,7 +19,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useRegularLawyerStats } from "@/hooks/useRegularLawyerStats";
-import AssignedCasesList from "@/components/AssignedCasesList";
+import AssignedCasesManagement from "@/components/AssignedCasesManagement";
 
 const RegularLawyerDashboard = () => {
   const [open, setOpen] = useState(false);
@@ -330,7 +330,7 @@ const RegularLawyerDashboardSection = () => {
               Casos asignados recientemente
             </div>
             <div className="max-h-64 overflow-y-auto">
-              <AssignedCasesList />
+              <AssignedCasesManagement />
             </div>
           </div>
         </motion.div>
@@ -385,8 +385,7 @@ const MisCasosAsignadosSection = () => (
     animate={{ opacity: 1, y: 0 }}
     className="space-y-6"
   >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mis Casos Asignados</h1>
-    <AssignedCasesList />
+    <AssignedCasesManagement />
   </motion.div>
 );
 

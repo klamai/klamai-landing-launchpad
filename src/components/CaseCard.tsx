@@ -67,6 +67,7 @@ interface CaseCardProps {
   onGenerateResolution: (casoId: string) => void;
   onUploadDocument: (casoId: string) => void;
   onSendMessage: (casoId: string) => void;
+  hideAssignButton?: boolean;
 }
 
 const CaseCard: React.FC<CaseCardProps> = ({
@@ -75,7 +76,8 @@ const CaseCard: React.FC<CaseCardProps> = ({
   onAssignLawyer,
   onGenerateResolution,
   onUploadDocument,
-  onSendMessage
+  onSendMessage,
+  hideAssignButton = false
 }) => {
   const spainTimeZone = 'Europe/Madrid';
   const casoDate = toZonedTime(new Date(caso.created_at), spainTimeZone);
@@ -264,15 +266,17 @@ const CaseCard: React.FC<CaseCardProps> = ({
             
             {caso.estado !== 'cerrado' && (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onAssignLawyer(caso.id)}
-                  className="flex-1 h-8 text-xs font-medium hover:bg-green-50"
-                >
-                  <UserPlus className="h-3 w-3 mr-1" />
-                  Asignar
-                </Button>
+                {!hideAssignButton && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onAssignLawyer(caso.id)}
+                    className="flex-1 h-8 text-xs font-medium hover:bg-green-50"
+                  >
+                    <UserPlus className="h-3 w-3 mr-1" />
+                    Asignar
+                  </Button>
+                )}
                 
                 <Button
                   variant="outline"
