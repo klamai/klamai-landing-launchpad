@@ -2,7 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar, 
-  MapPin, 
+  MapPin,
+  Scale,
   Euro, 
   Clock, 
   FileText,
@@ -206,12 +207,12 @@ const CaseCard: React.FC<CaseCardProps> = ({
             {/* Especialidad y ciudad - ULTRA COMPACTAS */}
             <div className="grid grid-cols-1 gap-1 text-xs">
               <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                <FileText className="h-3 w-3 text-blue-600" />
+                <Scale className="h-3 w-3 text-blue-600" />
                 <span className="truncate font-medium">{caso.especialidades?.nombre || 'Sin especialidad'}</span>
               </div>
               {clientData.ciudad && (
                 <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                  <MapPin className="h-3 w-3 text-green-600" />
+                  <MapPin className="h-3 w-3 text-red-600" />
                   <span className="truncate font-medium">{clientData.ciudad}</span>
                 </div>
               )}
