@@ -11,6 +11,8 @@ import {
   Eye,
   Grid3X3,
   List,
+  Plus,
+  FileText,
 } from 'lucide-react';
 import { useSuperAdminStats } from '@/hooks/useSuperAdminStats';
 import { Button } from '@/components/ui/button';
@@ -32,9 +34,10 @@ import { es } from 'date-fns/locale';
 import CaseCard from './CaseCard';
 import CaseDetailModal from './CaseDetailModal';
 import CaseAssignmentModal from './CaseAssignmentModal';
+import AddManualCaseModal from './AddManualCaseModal';
 
 const CasesManagement = () => {
-  const { casos, loadingCasos } = useSuperAdminStats();
+  const { casos, loadingCasos, refetchCasos } = useSuperAdminStats();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [specialtyFilter, setSpecialtyFilter] = useState('all');
@@ -46,6 +49,7 @@ const CasesManagement = () => {
   const [selectedCaseDetail, setSelectedCaseDetail] = useState<any | null>(null);
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
   const [selectedCaseForAssignment, setSelectedCaseForAssignment] = useState<any | null>(null);
+  const [addManualCaseOpen, setAddManualCaseOpen] = useState(false);
   const { toast } = useToast();
 
   const getStatusBadge = (estado: string) => {
@@ -134,6 +138,14 @@ const CasesManagement = () => {
     toast({
       title: "Función en desarrollo",
       description: "El sistema de mensajería estará disponible pronto", 
+    });
+  };
+
+  const handleManualCaseSuccess = () => {
+    refetchCasos();
+    toast({
+      title: "¡Caso creado!",
+      description: "El caso ha sido creado exitosamente y se está procesando con IA",
     });
   };
 
@@ -267,6 +279,13 @@ const CasesManagement = () => {
                 {activeCasos.length} casos activos encontrados para gestionar
               </CardDescription>
             </div>
+            <Button
+              onClick={() => setAddManualCaseOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Añadir Caso
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -399,12 +418,19 @@ const CasesManagement = () => {
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
                 No hay casos activos
               </h3>
-              <p className="text-base text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+              <p className="text-base text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-6">
                 {filteredCasos.length === 0
                   ? "No se encontraron casos con los filtros aplicados. Intenta ajustar los criterios de búsqueda."
                   : "Todos los casos están cerrados. Los casos cerrados no se muestran en esta vista."
                 }
               </p>
+              <Button
+                onClick={() => setAddManualCaseOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Añadir Primer Caso
+              </Button>
             </div>
           )}
         </CardContent>
@@ -430,6 +456,13 @@ const CasesManagement = () => {
           setSelectedCaseForAssignment(null);
         }}
         caso={selectedCaseForAssignment}
+      />
+
+      <AddManualCaseModal
+        isOpen={addManualCaseOpen}
+        onClose={() => setAddManualCaseOpen(false)}
+        onSuccess={handleManualCaseSuccess}
+        especialidades={specialties.map((nombre, idx) => ({ id: idx + 1, nombre }))}
       />
     </div>
   );
