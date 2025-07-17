@@ -4,27 +4,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Sparkles, AlertTriangle } from 'lucide-react';
+import { FileText, Sparkles, AlertTriangle, Zap } from 'lucide-react';
 
 interface AddManualCaseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  especialidades: Array<{ id: number; nombre: string }>;
 }
 
 const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
   isOpen,
   onClose,
-  onSuccess,
-  especialidades
+  onSuccess
 }) => {
   const [caseText, setCaseText] = useState('');
-  const [especialidadId, setEspecialidadId] = useState<string>('');
-  const [tipoLead, setTipoLead] = useState<'estandar' | 'premium' | 'urgente'>('estandar');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -40,10 +35,10 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
       return;
     }
 
-    if (!especialidadId) {
+    if (caseText.trim().length < 50) {
       toast({
-        title: "Error", 
-        description: "Por favor, selecciona una especialidad",
+        title: "Error",
+        description: "El texto del caso debe tener al menos 50 caracteres para poder extraer información suficiente",
         variant: "destructive",
       });
       return;
@@ -54,9 +49,7 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
     try {
       const { data, error } = await supabase.functions.invoke('add-manual-case', {
         body: {
-          caseText: caseText.trim(),
-          especialidadId: parseInt(especialidadId),
-          tipoLead
+          caseText: caseText.trim()
         }
       });
 
@@ -67,13 +60,11 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
       if (data?.success) {
         toast({
           title: "¡Éxito!",
-          description: "Caso creado exitosamente. Se está procesando con IA...",
+          description: "Caso creado exitosamente. Se está procesando con IA automáticamente...",
         });
         
         // Limpiar formulario
         setCaseText('');
-        setEspecialidadId('');
-        setTipoLead('estandar');
         
         onSuccess();
         onClose();
@@ -95,8 +86,6 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
   const handleClose = () => {
     if (!loading) {
       setCaseText('');
-      setEspecialidadId('');
-      setTipoLead('estandar');
       onClose();
     }
   };
@@ -107,86 +96,70 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <FileText className="h-5 w-5 text-blue-600" />
-            Añadir Caso Manual
+            Añadir Caso Manual con IA
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
             <div className="flex items-start gap-3">
-              <Sparkles className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <Zap className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
               <div className="space-y-2">
                 <h4 className="font-medium text-blue-900 dark:text-blue-100">
-                  Procesamiento Inteligente
+                  Procesamiento Automático con IA
                 </h4>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Pega el texto completo del caso incluyendo datos del cliente y la consulta legal. 
-                  Nuestro sistema de IA extraerá automáticamente la información estructurada, 
-                  generará un resumen profesional y una guía para el abogado asignado.
+                  Pega el texto completo del caso y nuestros asistentes de IA personalizados se encargarán de:
                 </p>
+                <ul className="text-sm text-blue-700 dark:text-blue-300 ml-4 space-y-1">
+                  <li>• <strong>Extraer automáticamente</strong> los datos del cliente</li>
+                  <li>• <strong>Determinar la especialidad legal</strong> más apropiada</li>
+                  <li>• <strong>Clasificar el tipo de lead</strong> (estándar, premium, urgente)</li>
+                  <li>• <strong>Generar un resumen profesional</strong> del caso</li>
+                  <li>• <strong>Crear una guía técnica</strong> para el abogado asignado</li>
+                  <li>• <strong>Estimar el valor económico</strong> del caso</li>
+                </ul>
               </div>
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="caseText" className="text-sm font-medium">
-              Texto del Caso *
+              Texto Completo del Caso *
             </Label>
             <Textarea
               id="caseText"
               value={caseText}
               onChange={(e) => setCaseText(e.target.value)}
-              placeholder="Pega aquí el texto completo del caso. Incluye:
-- Datos del cliente (nombre, email, teléfono, ciudad)
-- Tipo de cliente (individual o empresa)
-- Consulta legal completa
-- Detalles adicionales relevantes
-- Cualquier información de contacto o preferencias
+              placeholder="Pega aquí el texto completo del caso. Incluye TODA la información disponible:
 
-Ejemplo:
-Juan Pérez, email: juan@email.com, teléfono: 600123456, Madrid. 
-Consulta sobre despido improcedente. Trabajo en empresa X desde hace 3 años, me despidieron sin causa justificada el 15/12/2023..."
-              className="min-h-[200px] resize-none"
+📋 DATOS DEL CLIENTE:
+- Nombre completo y datos de contacto
+- Email y teléfono
+- Ubicación (ciudad)
+- Tipo de cliente (particular o empresa)
+- Para empresas: razón social, CIF, gerente, dirección fiscal
+
+⚖️ CONSULTA LEGAL:
+- Descripción detallada del problema legal
+- Hechos relevantes y cronología
+- Documentación disponible
+- Urgencia del caso
+- Expectativas del cliente
+
+💡 EJEMPLO:
+Juan Pérez Martínez, email: juan.perez@email.com, teléfono: 600123456, Madrid.
+Consulta sobre despido improcedente. Trabajaba en la empresa XYZ desde enero 2020, me despidieron el 15 de diciembre de 2023 sin causa justificada. Tengo contrato indefinido y nunca recibí amonestaciones. La empresa alega reestructuración pero han contratado a alguien nuevo para mi puesto. Necesito reclamar indemnización..."
+              className="min-h-[300px] resize-none font-mono text-sm"
               disabled={loading}
             />
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              {caseText.length}/5000 caracteres
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="especialidad" className="text-sm font-medium">
-                Especialidad *
-              </Label>
-              <Select value={especialidadId} onValueChange={setEspecialidadId} disabled={loading}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona una especialidad" />
-                </SelectTrigger>
-                <SelectContent>
-                  {especialidades.map((esp) => (
-                    <SelectItem key={esp.id} value={esp.id.toString()}>
-                      {esp.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tipoLead" className="text-sm font-medium">
-                Tipo de Lead
-              </Label>
-              <Select value={tipoLead} onValueChange={(value: 'estandar' | 'premium' | 'urgente') => setTipoLead(value)} disabled={loading}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="estandar">Estándar</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
-                  <SelectItem value="urgente">Urgente</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex justify-between items-center">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                {caseText.length}/10000 caracteres
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Mínimo 50 caracteres requeridos
+              </p>
             </div>
           </div>
 
@@ -195,13 +168,13 @@ Consulta sobre despido improcedente. Trabajo en empresa X desde hace 3 años, me
               <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
               <div className="space-y-1">
                 <h4 className="font-medium text-amber-900 dark:text-amber-100">
-                  Información Importante
+                  ¿Cómo funciona el procesamiento automático?
                 </h4>
                 <ul className="text-sm text-amber-700 dark:text-amber-300 space-y-1">
-                  <li>• El caso se creará en estado "borrador" inicialmente</li>
-                  <li>• La IA procesará el texto y extraerá los datos automáticamente</li>
-                  <li>• Una vez procesado, el caso pasará a estado "disponible"</li>
-                  <li>• Se generará un resumen profesional y guía para el abogado</li>
+                  <li>1. <strong>Análisis de texto</strong>: Extracción automática de datos estructurados</li>
+                  <li>2. <strong>Clasificación inteligente</strong>: Asignación de especialidad y tipo de lead</li>
+                  <li>3. <strong>Procesamiento con IA</strong>: Resumen, guía y valoración del caso</li>
+                  <li>4. <strong>Estado final</strong>: El caso queda listo para asignación a abogados</li>
                 </ul>
               </div>
             </div>
@@ -218,18 +191,18 @@ Consulta sobre despido improcedente. Trabajo en empresa X desde hace 3 años, me
             </Button>
             <Button
               type="submit"
-              disabled={loading || !caseText.trim() || !especialidadId}
-              className="min-w-[140px]"
+              disabled={loading || !caseText.trim() || caseText.trim().length < 50}
+              className="min-w-[180px]"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Procesando...
+                  Procesando con IA...
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  Crear Caso
+                  Crear Caso Automáticamente
                 </div>
               )}
             </Button>
