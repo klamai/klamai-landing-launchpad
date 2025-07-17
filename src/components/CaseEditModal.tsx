@@ -9,6 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Save, X } from 'lucide-react';
+import type { Database } from '@/integrations/supabase/types';
+
+type CasoEstado = Database['public']['Enums']['caso_estado_enum'];
+type CasoTipoLead = Database['public']['Enums']['caso_tipo_lead_enum'];
+type ProfileType = Database['public']['Enums']['profile_type_enum'];
 
 interface CaseEditModalProps {
   isOpen: boolean;
@@ -24,15 +29,15 @@ const CaseEditModal = ({ isOpen, onClose, caso, onSuccess }: CaseEditModalProps)
     motivo_consulta: '',
     resumen_caso: '',
     valor_estimado: '',
-    tipo_lead: '',
-    estado: '',
+    tipo_lead: '' as CasoTipoLead | '',
+    estado: '' as CasoEstado | '',
     especialidad_id: '',
     nombre_borrador: '',
     apellido_borrador: '',
     email_borrador: '',
     telefono_borrador: '',
     ciudad_borrador: '',
-    tipo_perfil_borrador: 'individual',
+    tipo_perfil_borrador: 'individual' as ProfileType,
     razon_social_borrador: '',
     nif_cif_borrador: '',
     direccion_fiscal_borrador: '',
@@ -82,11 +87,31 @@ const CaseEditModal = ({ isOpen, onClose, caso, onSuccess }: CaseEditModalProps)
     setLoading(true);
 
     try {
-      const updateData = {
-        ...formData,
+      const updateData: Record<string, any> = {
+        motivo_consulta: formData.motivo_consulta,
+        resumen_caso: formData.resumen_caso,
+        valor_estimado: formData.valor_estimado,
         especialidad_id: formData.especialidad_id ? parseInt(formData.especialidad_id) : null,
-        tipo_perfil_borrador: formData.tipo_perfil_borrador as 'individual' | 'empresa'
+        tipo_perfil_borrador: formData.tipo_perfil_borrador,
+        nombre_borrador: formData.nombre_borrador,
+        apellido_borrador: formData.apellido_borrador,
+        email_borrador: formData.email_borrador,
+        telefono_borrador: formData.telefono_borrador,
+        ciudad_borrador: formData.ciudad_borrador,
+        razon_social_borrador: formData.razon_social_borrador,
+        nif_cif_borrador: formData.nif_cif_borrador,
+        direccion_fiscal_borrador: formData.direccion_fiscal_borrador,
+        nombre_gerente_borrador: formData.nombre_gerente_borrador,
+        preferencia_horaria_contacto: formData.preferencia_horaria_contacto
       };
+
+      // Only add these fields if they have values
+      if (formData.tipo_lead) {
+        updateData.tipo_lead = formData.tipo_lead;
+      }
+      if (formData.estado) {
+        updateData.estado = formData.estado;
+      }
 
       const { error } = await supabase
         .from('casos')
