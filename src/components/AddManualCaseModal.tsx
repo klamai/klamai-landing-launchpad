@@ -138,7 +138,6 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
               onChange={(e) => setCaseText(e.target.value)}
               placeholder="Pega aquí el texto completo del caso. Incluye:
 - Datos del cliente (nombre, email, teléfono, ciudad)
-- Tipo de cliente (individual o empresa)
 - Consulta legal completa
 - Detalles adicionales relevantes
 - Cualquier información de contacto o preferencias

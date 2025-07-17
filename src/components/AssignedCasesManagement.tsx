@@ -83,7 +83,7 @@ const AssignedCasesManagement = () => {
   const handleGenerateResolution = (casoId: string) => {
     toast({
       title: "Generar Resolución",
-      description: `Generando resolución para el caso ${casoId}`,
+      description: `Funcion proximamente disponible`,
     });
   };
 
@@ -95,7 +95,7 @@ const AssignedCasesManagement = () => {
   const handleSendMessage = (casoId: string) => {
     toast({
       title: "Enviar Mensaje",
-      description: `Enviando mensaje al cliente del caso ${casoId}`,
+      description: `FUncion proximamente disponible`,
     });
   };
 

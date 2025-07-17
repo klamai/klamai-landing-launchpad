@@ -131,7 +131,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
       },
       'urgente': {
         label: 'Urgente',
-        className: 'bg-gradient-to-r from-red-600 to-orange-500 text-white dark:from-red-700 dark:to-orange-700 text-xs font-medium px-2 py-1 border-0'
+        className: 'bg-gradient-to-r from-red-600 to-red-500 text-white dark:from-red-700 dark:to-orange-700 text-xs font-medium px-2 py-1 border-0'
       },
       'estandar': {
         label: 'Estándar',
