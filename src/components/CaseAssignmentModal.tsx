@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useSuperAdminStats } from '@/hooks/useSuperAdminStats';
-import { UserPlus, Scale, MapPin, Building, User, AlertCircle } from 'lucide-react';
+import { UserPlus, Scale, MapPin, Building, User, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 
 interface CaseAssignmentModalProps {
   isOpen: boolean;
@@ -47,7 +47,7 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
   const [selectedLawyerId, setSelectedLawyerId] = useState('');
   const [assignmentNotes, setAssignmentNotes] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
-  const { abogados, assignCaseToLawyer } = useSuperAdminStats();
+  const { abogados, loadingAbogados, errorAbogados, retryFetchAbogados, assignCaseToLawyer } = useSuperAdminStats();
   const { toast } = useToast();
 
   const handleAssignCase = async () => {
@@ -199,25 +199,71 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
               <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">
                 Seleccionar Abogado *
               </label>
-              <Select value={selectedLawyerId} onValueChange={setSelectedLawyerId} disabled={isAssigning}>
-                <SelectTrigger className="h-12 text-base border-2">
-                  <SelectValue placeholder="Selecciona un abogado..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {abogados.map((abogado) => (
-                    <SelectItem key={abogado.id} value={abogado.id} className="text-base py-3">
-                      <div className="flex flex-col">
-                        <span className="font-medium">
-                          {abogado.nombre} {abogado.apellido}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {abogado.casos_activos} casos activos • {abogado.creditos_disponibles} créditos
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              
+              {loadingAbogados ? (
+                <div className="flex items-center justify-center p-4 border-2 border-dashed rounded-lg">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  <span className="text-sm text-gray-600">Cargando abogados...</span>
+                </div>
+              ) : errorAbogados ? (
+                <div className="p-4 border-2 border-dashed border-red-300 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-red-600 font-medium">Error al cargar abogados</p>
+                      <p className="text-xs text-red-500 mt-1">{errorAbogados}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={retryFetchAbogados}
+                      className="flex items-center gap-2"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Reintentar
+                    </Button>
+                  </div>
+                </div>
+              ) : abogados.length === 0 ? (
+                <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                  <p className="text-sm text-gray-600">No se encontraron abogados disponibles</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={retryFetchAbogados}
+                    className="mt-2 flex items-center gap-2 mx-auto"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Recargar
+                  </Button>
+                </div>
+              ) : (
+                <Select value={selectedLawyerId} onValueChange={setSelectedLawyerId} disabled={isAssigning}>
+                  <SelectTrigger className="h-12 text-base border-2">
+                    <SelectValue placeholder="Selecciona un abogado..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {abogados.map((abogado) => (
+                      <SelectItem key={abogado.id} value={abogado.id} className="text-base py-3">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">
+                              {abogado.nombre} {abogado.apellido}
+                            </span>
+                            {abogado.tipo_abogado === 'super_admin' && (
+                              <Badge variant="secondary" className="text-xs">
+                                Super Admin
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {abogado.casos_activos} casos activos • {abogado.creditos_disponibles} créditos
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {/* Notas de asignación */}
@@ -247,12 +293,12 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
             </Button>
             <Button
               onClick={handleAssignCase}
-              disabled={isAssigning || !selectedLawyerId}
+              disabled={isAssigning || !selectedLawyerId || loadingAbogados}
               className="h-11 px-6 text-base"
             >
               {isAssigning ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Asignando...
                 </>
               ) : (
