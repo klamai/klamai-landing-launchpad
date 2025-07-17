@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,20 +21,26 @@ const DashboardRedirect = ({ children }: DashboardRedirectProps) => {
       }
 
       try {
+        console.log('🔍 Fetcheando rol de usuario:', user.id);
+        
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
-          .single();
+          .maybeSingle(); // Cambio de .single() a .maybeSingle() para manejo robusto
 
         if (error) {
-          console.error('Error fetching user role:', error);
+          console.error('❌ Error fetching user role:', error);
           setUserRole('cliente'); // Default to cliente if error
+        } else if (profile) {
+          console.log('✅ Rol de usuario obtenido:', profile.role);
+          setUserRole(profile.role);
         } else {
-          setUserRole(profile?.role || 'cliente');
+          console.log('⚠️ No se encontró perfil de usuario, usando rol por defecto');
+          setUserRole('cliente'); // Default to cliente if no profile found
         }
       } catch (error) {
-        console.error('Error fetching user role:', error);
+        console.error('❌ Error general fetching user role:', error);
         setUserRole('cliente'); // Default to cliente if error
       } finally {
         setRoleLoading(false);
@@ -57,9 +64,11 @@ const DashboardRedirect = ({ children }: DashboardRedirectProps) => {
 
   // If user is a lawyer, redirect to lawyer dashboard
   if (userRole === 'abogado') {
+    console.log('🚀 Redirigiendo a dashboard de abogado');
     return <Navigate to="/abogados/dashboard" replace />;
   }
 
+  console.log('🚀 Mostrando dashboard de cliente');
   // If user is a client, show client dashboard
   return <>{children}</>;
 };

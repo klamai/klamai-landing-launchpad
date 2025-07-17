@@ -244,9 +244,9 @@ export const useSuperAdminStats = () => {
     setErrorAbogados(null);
 
     try {
-      console.log('🔍 Iniciando fetchAbogados con nueva política RLS...');
+      console.log('🔍 Iniciando fetchAbogados con política RLS actualizada...');
       
-      // Ahora que la nueva política RLS está activa, esto debería devolver todos los abogados
+      // Con la nueva política RLS, los super admins pueden ver todos los abogados
       const { data: abogadosData, error } = await supabase
         .from('profiles')
         .select('id, nombre, apellido, email, especialidades, creditos_disponibles, created_at, tipo_abogado')
@@ -260,7 +260,7 @@ export const useSuperAdminStats = () => {
         return;
       }
 
-      console.log('✅ Abogados obtenidos con nueva política:', abogadosData?.length || 0);
+      console.log('✅ Abogados obtenidos exitosamente:', abogadosData?.length || 0);
 
       if (!abogadosData || abogadosData.length === 0) {
         console.log('⚠️ No se encontraron abogados');
@@ -296,7 +296,7 @@ export const useSuperAdminStats = () => {
         })
       );
 
-      console.log('✅ Abogados con estadísticas:', abogadosConStats);
+      console.log('✅ Abogados con estadísticas completados:', abogadosConStats.length);
       setAbogados(abogadosConStats);
     } catch (error) {
       console.error('❌ Error general en fetchAbogados:', error);
