@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -245,9 +244,9 @@ export const useSuperAdminStats = () => {
     setErrorAbogados(null);
 
     try {
-      console.log('🔍 Iniciando fetchAbogados...');
+      console.log('🔍 Iniciando fetchAbogados con nueva política RLS...');
       
-      // Obtener TODOS los abogados (incluyendo super admins)
+      // Ahora que la nueva política RLS está activa, esto debería devolver todos los abogados
       const { data: abogadosData, error } = await supabase
         .from('profiles')
         .select('id, nombre, apellido, email, especialidades, creditos_disponibles, created_at, tipo_abogado')
@@ -256,13 +255,12 @@ export const useSuperAdminStats = () => {
 
       if (error) {
         console.error('❌ Error fetching abogados:', error);
-        setErrorAbogados(error.message);
+        setErrorAbogados('Error al cargar la lista de abogados: ' + error.message);
         setAbogados([]);
         return;
       }
 
-      console.log('✅ Abogados obtenidos:', abogadosData?.length || 0);
-      console.log('📋 Lista de abogados:', abogadosData);
+      console.log('✅ Abogados obtenidos con nueva política:', abogadosData?.length || 0);
 
       if (!abogadosData || abogadosData.length === 0) {
         console.log('⚠️ No se encontraron abogados');
@@ -302,7 +300,7 @@ export const useSuperAdminStats = () => {
       setAbogados(abogadosConStats);
     } catch (error) {
       console.error('❌ Error general en fetchAbogados:', error);
-      setErrorAbogados(error instanceof Error ? error.message : 'Error desconocido');
+      setErrorAbogados('Error inesperado al cargar abogados');
       setAbogados([]);
     } finally {
       setLoadingAbogados(false);
@@ -351,7 +349,7 @@ export const useSuperAdminStats = () => {
     refetchStats: fetchStats,
     refetchCasos: fetchCasos,
     refetchAbogados: fetchAbogados,
-    retryFetchAbogados,
+    retryFetchAbogados: fetchAbogados,
     assignCaseToLawyer
   };
 };
