@@ -12,7 +12,6 @@ import DocumentViewer from '@/components/DocumentViewer';
 import { useToast } from '@/hooks/use-toast';
 import { useDocumentManagement } from '@/hooks/useDocumentManagement';
 import { useClientDocumentManagement } from '@/hooks/useClientDocumentManagement';
-import { useCasesByRole } from '@/hooks/useCasesByRole';
 
 const AssignedCasesManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,23 +29,20 @@ const AssignedCasesManagement = () => {
   const { cases, loading, error } = useAssignedCases();
   const { toast } = useToast();
   
-  // Document management hooks
+  // Document management hooks - only initialize when we have a selected case
   const { 
-    documents: resolutionDocuments, 
+    documentosResolucion, 
     loading: documentsLoading, 
     uploadDocument, 
     deleteDocument,
     refetch: refetchDocuments
-  } = useDocumentManagement();
+  } = useDocumentManagement(selectedCaseDetail?.id);
   
   const { 
-    documents: clientDocuments, 
+    documentosCliente, 
     loading: clientDocumentsLoading,
     refetch: refetchClientDocuments
-  } = useClientDocumentManagement();
-
-  // Get case details for modal
-  const { getCaseById } = useCasesByRole();
+  } = useClientDocumentManagement(selectedCaseDetail?.id);
 
   // Filtrar casos basado en búsqueda y estado
   const filteredCases = cases.filter(caso => {
@@ -63,7 +59,8 @@ const AssignedCasesManagement = () => {
 
   const handleViewDetails = async (casoId: string) => {
     try {
-      const caseDetails = await getCaseById(casoId);
+      // Find the case in our current cases array
+      const caseDetails = cases.find(c => c.id === casoId);
       if (caseDetails) {
         setSelectedCaseDetail(caseDetails);
         setDetailModalOpen(true);
@@ -110,14 +107,22 @@ const AssignedCasesManagement = () => {
     if (!selectedCaseForUpload) return;
     
     try {
-      await uploadDocument(selectedCaseForUpload, file, description);
-      toast({
-        title: "Éxito",
-        description: "Documento subido correctamente",
-      });
-      setUploadModalOpen(false);
-      setSelectedCaseForUpload('');
-      refetchDocuments();
+      const result = await uploadDocument(file, 'documento_resolucion', description);
+      if (result.success) {
+        toast({
+          title: "Éxito",
+          description: "Documento subido correctamente",
+        });
+        setUploadModalOpen(false);
+        setSelectedCaseForUpload('');
+        refetchDocuments();
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Error al subir el documento",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Error uploading document:', error);
       toast({
@@ -135,12 +140,20 @@ const AssignedCasesManagement = () => {
 
   const handleDeleteDocument = async (documentId: string) => {
     try {
-      await deleteDocument(documentId);
-      toast({
-        title: "Éxito",
-        description: "Documento eliminado correctamente",
-      });
-      refetchDocuments();
+      const result = await deleteDocument(documentId);
+      if (result.success) {
+        toast({
+          title: "Éxito",
+          description: "Documento eliminado correctamente",
+        });
+        refetchDocuments();
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Error al eliminar el documento",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Error deleting document:', error);
       toast({
@@ -310,12 +323,11 @@ const AssignedCasesManagement = () => {
           setSelectedCaseDetail(null);
         }}
         caso={selectedCaseDetail}
-        onViewDocument={handleViewDocument}
+        resolutionDocuments={documentosResolucion}
+        clientDocuments={documentosCliente}
+        documentsLoading={documentsLoading || clientDocumentsLoading}
         onUploadDocument={handleUploadDocument}
         onDeleteDocument={handleDeleteDocument}
-        resolutionDocuments={resolutionDocuments}
-        clientDocuments={clientDocuments}
-        documentsLoading={documentsLoading || clientDocumentsLoading}
       />
 
       <DocumentUploadModal
