@@ -60,7 +60,7 @@ const CasesManagement = () => {
   const [assignmentNotes, setAssignmentNotes] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
-  const [selectedCaseDetail, setSelectedCaseDetail] = useState<any>(null);
+  const [selectedCaseDetail, setSelectedCaseDetail] = useState<any | null>(null);
   const { toast } = useToast();
 
   const getStatusBadge = (estado: string) => {
@@ -209,135 +209,107 @@ const CasesManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Filtros y búsqueda - MEJORADOS PARA ABOGADOS MAYORES */}
-      <Card className="border-2 shadow-md">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
-            <Filter className="h-5 w-5 text-blue-600" />
-            Filtrar Casos
-          </CardTitle>
-          <CardDescription className="text-sm text-gray-700 dark:text-gray-300">
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Search bar - MEJORADA */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
+      {/* Filtros compactos */}
+      <Card className="border shadow-sm bg-gray-50 dark:bg-black">
+        <CardContent className="p-4">
+          {/* Header minimalista */}
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="h-4 w-4 text-blue-600" />
+            <span className="font-medium text-sm text-gray-700 dark:text-gray-300">Filtros</span>
+          </div>
+          
+          {/* Búsqueda compacta */}
+          <div className="relative mb-3">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Buscar por motivo, cliente, email o ciudad..."
+              placeholder="Buscar casos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-11 h-11 text-base border-2 focus:border-blue-400"
+              className="pl-8 h-8 text-sm"
             />
           </div>
           
-          {/* Filtros en dos filas para mejor organización */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Filtros en una sola fila compacta */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-10 text-sm border-2">
-                <SelectValue placeholder="Estado del Caso" />
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-sm py-2">Estado (Disp, Cerrado...)</SelectItem>
-                <SelectItem value="disponible" className="text-sm py-2">
-                  Disponible ({filteredCasos.filter(c => c.estado === 'disponible').length})
-                </SelectItem>
-                <SelectItem value="agotado" className="text-sm py-2">
-                  Agotado ({filteredCasos.filter(c => c.estado === 'agotado').length})
-                </SelectItem>
-                <SelectItem value="esperando_pago" className="text-sm py-2">
-                  Esperando Pago ({filteredCasos.filter(c => c.estado === 'esperando_pago').length})
-                </SelectItem>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="disponible">Disponible</SelectItem>
+                <SelectItem value="agotado">Agotado</SelectItem>
+                <SelectItem value="esperando_pago">Esperando Pago</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-              <SelectTrigger className="h-10 text-sm border-2">
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Especialidad" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-sm py-2">Especialidad</SelectItem>
+                <SelectItem value="all">Todas las ramas</SelectItem>
                 {specialties.map(specialty => (
-                  <SelectItem key={specialty} value={specialty} className="text-sm py-2">
-                    {specialty} ({casos.filter(c => c.especialidades?.nombre === specialty).length})
-                  </SelectItem>
+                  <SelectItem key={specialty} value={specialty}>{specialty}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            <Select value={profileTypeFilter} onValueChange={setProfileTypeFilter}>
-              <SelectTrigger className="h-10 text-sm border-2">
-                <SelectValue placeholder="Tipo de Cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-sm py-2">Perfil (Individual, Empresa)</SelectItem>
-                <SelectItem value="individual" className="text-sm py-2">
-                  <UserIcon className="h-4 w-4 mr-1" />
-                  Individual ({casos.filter(c => (c.tipo_perfil_borrador || c.profiles?.tipo_perfil) === 'individual').length})
-                </SelectItem>
-                <SelectItem value="empresa" className="text-sm py-2">
-                  <Building className="h-4 w-4 mr-1" />
-                  Empresa ({casos.filter(c => (c.tipo_perfil_borrador || c.profiles?.tipo_perfil) === 'empresa').length})
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Segunda fila de filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="h-10 text-sm border-2">
-                <SelectValue placeholder="Tipo Lead" />
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-sm py-2">Tipo (Estandar, Premium...)</SelectItem>
+                <SelectItem value="all">Todos los tipos</SelectItem>
                 {leadTypes.map(type => (
-                  <SelectItem key={type} value={type} className="text-sm py-2">
-                    {type} ({casos.filter(c => c.tipo_lead === type).length})
-                  </SelectItem>
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             <Select value={cityFilter} onValueChange={setCityFilter}>
-              <SelectTrigger className="h-10 text-sm border-2">
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Ciudad" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-sm py-2">Ciudad</SelectItem>
+                <SelectItem value="all">Todas las ciudades</SelectItem>
                 {cities.map(city => (
-                  <SelectItem key={city} value={city} className="text-sm py-2">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    {city} ({casos.filter(c => c.ciudad_borrador === city || c.profiles?.ciudad === city).length})
-                  </SelectItem>
+                  <SelectItem key={city} value={city}>{city}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            {/* Controles de vista */}
-            <div className="flex gap-2">
+            <Select value={profileTypeFilter} onValueChange={setProfileTypeFilter}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Perfil" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="individual">Individual</SelectItem>
+                <SelectItem value="empresa">Empresa</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Botones de vista compactos */}
+            <div className="flex gap-1">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className="flex-1 h-10 text-sm font-medium border-2"
+                className="h-8 px-2 text-xs flex-1"
               >
-                <Grid3X3 className="h-4 w-4 mr-1" />
-                Cajas
+                <Grid3X3 className="h-3 w-3" />
               </Button>
               <Button
                 variant={viewMode === 'list' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className="flex-1 h-10 text-sm font-medium border-2"
+                className="h-8 px-2 text-xs flex-1"
               >
-                <List className="h-4 w-4 mr-1" />
-                Lista
+                <List className="h-3 w-3" />
               </Button>
             </div>
           </div>
-
-          
         </CardContent>
       </Card>
 
