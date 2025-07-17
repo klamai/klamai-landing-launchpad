@@ -2,7 +2,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import OpenAI from "https://deno.land/x/openai@v4.69.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,79 +13,6 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY')!;
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
-const openai = new OpenAI({
-  apiKey: openAIApiKey
-});
-
-const LISTA_ESPECIALIDADES_VALIDAS = [
-  'Derecho Civil',
-  'Derecho Penal',
-  'Derecho Laboral',
-  'Derecho Mercantil',
-  'Derecho Administrativo',
-  'Derecho Fiscal',
-  'Derecho Familiar',
-  'Derecho Inmobiliario',
-  'Derecho de Extranjería',
-  'Derecho de la Seguridad Social',
-  'Derecho Sanitario',
-  'Derecho de Seguros',
-  'Derecho Concursal',
-  'Derecho de Propiedad Intelectual',
-  'Derecho Ambiental',
-  'Consulta General'
-];
-
-/** Logging estructurado para facilitar la búsqueda en producción. */
-function log(level: string, message: string, context = {}) {
-  console.log(JSON.stringify({
-    level,
-    message,
-    ...context,
-    timestamp: new Date().toISOString()
-  }));
-}
-
-/** Extrae una cadena JSON de un texto que puede contener formato Markdown. */
-function extractJsonFromString(text: string): string | null {
-  if (!text) return null;
-  const match = text.match(/\{[\s\S]*\}/);
-  return match ? match[0] : null;
-}
-
-/** Ejecuta un asistente de OpenAI y espera el resultado final. */
-async function ejecutarAsistente(assistant_id: string, content: string): Promise<string> {
-  if (!assistant_id) throw new Error(`El ID para un asistente no está configurado.`);
-  
-  const thread = await openai.beta.threads.create();
-  await openai.beta.threads.messages.create(thread.id, {
-    role: "user",
-    content
-  });
-  
-  const run = await openai.beta.threads.runs.create(thread.id, {
-    assistant_id
-  });
-  
-  let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-  while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-  }
-  
-  if (runStatus.status !== 'completed') {
-    throw new Error(`La ejecución del asistente ${assistant_id} falló con estado: ${runStatus.status}.`);
-  }
-  
-  const messages = await openai.beta.threads.messages.list(thread.id);
-  const lastMessage = messages.data.find((msg) => msg.role === 'assistant');
-  
-  if (lastMessage?.content[0]?.type === 'text') {
-    return lastMessage.content[0].text.value;
-  }
-  
-  return "";
-}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -95,13 +21,9 @@ serve(async (req) => {
   }
 
   try {
-    const { caseText } = await req.json();
+    const { caseText, especialidadId, tipoLead = 'estandar' } = await req.json();
 
-    console.log('🔍 Procesando caso manual:', { caseText: caseText?.substring(0, 100) + '...', length: caseText?.length });
-
-    if (!caseText?.trim()) {
-      throw new Error('El texto del caso es requerido');
-    }
+    console.log('🔍 Procesando caso manual:', { caseText: caseText?.substring(0, 100) + '...', especialidadId, tipoLead });
 
     // Paso 1: Extraer datos estructurados del texto usando OpenAI
     const extractionPrompt = `
@@ -165,9 +87,11 @@ ${caseText}
 
     console.log('✅ Datos extraídos:', extractedInfo);
 
-    // Paso 2: Crear el caso en la base de datos en estado borrador
+    // Paso 2: Crear el caso en la base de datos
     const casoData = {
       motivo_consulta: extractedInfo.consulta.motivo_consulta,
+      especialidad_id: especialidadId,
+      tipo_lead: tipoLead,
       estado: 'borrador',
       canal_atencion: 'manual_admin',
       // Datos del cliente (formato borrador)
@@ -203,8 +127,8 @@ ${caseText}
 
     console.log('✅ Caso creado:', caso.id);
 
-    // Paso 3: Procesar con tus asistentes de IA personalizados
-    await processWithCustomAssistants(caso.id, extractedInfo, caseText);
+    // Paso 3: Procesar con asistentes de IA (similar al flujo normal)
+    await processWithAIAssistants(caso.id, extractedInfo, caseText);
 
     return new Response(
       JSON.stringify({
@@ -232,12 +156,14 @@ ${caseText}
   }
 });
 
-async function processWithCustomAssistants(casoId: string, extractedInfo: any, originalText: string) {
+async function processWithAIAssistants(casoId: string, extractedInfo: any, originalText: string) {
   try {
-    console.log('🤖 Iniciando procesamiento con asistentes personalizados para caso:', casoId);
+    console.log('🤖 Iniciando procesamiento con asistentes de IA para caso:', casoId);
 
-    // Preparar el resumen para los asistentes
-    const resumenParaAsistentes = `
+    // Paso 1: Asistente Auxiliar - Generar resumen del caso
+    const auxiliarPrompt = `
+Analiza la siguiente consulta legal y genera un resumen profesional del caso:
+
 Información del cliente:
 - Nombre: ${extractedInfo.cliente.nombre} ${extractedInfo.cliente.apellido}
 - Tipo: ${extractedInfo.cliente.tipo_perfil}
@@ -250,114 +176,153 @@ ${extractedInfo.consulta.motivo_consulta}
 Detalles adicionales:
 ${extractedInfo.consulta.detalles_adicionales}
 
+Texto original:
+${originalText}
+
+Genera un resumen profesional del caso que incluya:
+1. Descripción clara del problema legal
+2. Hechos relevantes
+3. Posibles áreas del derecho involucradas
+4. Información relevante del cliente
+`;
+
+    const auxiliarResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'Eres un asistente legal experto en analizar consultas legales y generar resúmenes profesionales para abogados.'
+          },
+          {
+            role: 'user',
+            content: auxiliarPrompt
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 800
+      }),
+    });
+
+    const auxiliarData = await auxiliarResponse.json();
+    const resumenCaso = auxiliarData.choices[0].message.content;
+
+    // Paso 2: Asistente Clasificador - Generar guía para el abogado
+    const clasificadorPrompt = `
+Basándote en el siguiente caso legal, genera una guía profesional para el abogado que lo trabajará:
+
+Resumen del caso:
+${resumenCaso}
+
+Información del cliente:
+- Tipo de cliente: ${extractedInfo.cliente.tipo_perfil}
+- Urgencia: ${extractedInfo.consulta.urgencia}
+
+Genera una guía que incluya:
+1. Estrategia legal recomendada
+2. Documentos que se deberían solicitar al cliente
+3. Pasos a seguir para el caso
+4. Posibles riesgos o consideraciones especiales
+5. Estimación de tiempo de resolución
+`;
+
+    const clasificadorResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'Eres un asistente legal experto en generar guías estratégicas para abogados.'
+          },
+          {
+            role: 'user',
+            content: clasificadorPrompt
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 1000
+      }),
+    });
+
+    const clasificadorData = await clasificadorResponse.json();
+    const guiaAbogado = clasificadorData.choices[0].message.content;
+
+    // Paso 3: Asistente de Propuestas - Generar valor estimado
+    const propuestasPrompt = `
+Basándote en el siguiente caso legal, genera una estimación del valor del caso:
+
+Resumen del caso:
+${resumenCaso}
+
+Guía del abogado:
+${guiaAbogado}
+
+Tipo de cliente: ${extractedInfo.cliente.tipo_perfil}
 Urgencia: ${extractedInfo.consulta.urgencia}
 
-Texto original completo:
-${originalText}
-    `;
+Genera una estimación que incluya:
+1. Valor económico estimado del caso
+2. Complejidad del caso (baja/media/alta)
+3. Justificación del valor
+4. Tiempo estimado de resolución
+`;
 
-    // Paso 1: Asistente Auxiliar - Generar resumen del caso
-    const guiaResult = await ejecutarAsistente(
-      Deno.env.get("ASISTENTE_AUXILIAR_ID")!,
-      `Genera una guía técnica para un abogado a partir del siguiente caso: ${resumenParaAsistentes}`
-    );
+    const propuestasResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'Eres un asistente legal experto en valorar casos legales.'
+          },
+          {
+            role: 'user',
+            content: propuestasPrompt
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 600
+      }),
+    });
 
-    // Paso 2: Asistente Clasificador - Generar clasificación automática
-    const prompt_clasificador = `Analiza el resumen y devuelve ÚNICAMENTE un objeto JSON crudo (raw), sin explicaciones. La estructura debe ser: {"motivo_consulta_ia": "...", "especialidad_nombre": "...", "tipo_lead": "...", "valor_estimado": "..."}. 
-
-- Para 'motivo_consulta_ia', crea un titular de caso conciso y profesional, y entendible, máximo 20 palabras. Ej: "Reclamación de indemnización por despido con posible vulneración de derechos."
-
-- Para 'especialidad_nombre', DEBES elegir uno de la lista: [${LISTA_ESPECIALIDADES_VALIDAS.join(', ')}]. Si no encaja, usa 'Consulta General'.
-
-- Para 'tipo_lead', DEBES ELEGIR OBLIGATORIAMENTE uno de los siguientes tres valores exactos: 'estandar', 'premium', 'urgente'. No inventes otros valores. Un lead es 'premium' si el caso es claro y de alto potencial; 'urgente' si requiere acción inmediata; 'estandar' en los demás casos.
-
-- Para 'valor_estimado', da una estimación en euros como texto (ej: "1.500€ - 3.000€").
-
-Resumen del caso: ${resumenParaAsistentes}`;
-
-    const clasificacionResult = await ejecutarAsistente(
-      Deno.env.get("ASISTENTE_CLASIFICADOR_ID")!,
-      prompt_clasificador
-    );
-
-    // Paso 3: Asistente de Propuestas - Generar propuesta estructurada
-    const prompt_propuesta = `Analiza el resumen y genera un contenido de propuesta para el cliente. Su nombre es ${extractedInfo.cliente.nombre || 'cliente'}. Tu respuesta debe ser ÚNICAMENTE un objeto JSON crudo (raw) con la estructura: {"titulo_personalizado": "...", "subtitulo_refuerzo": "...", "etiqueta_caso": "..."}. 
-
-- "titulo_personalizado": Título corto y potente, usando el nombre del cliente.
-- "subtitulo_refuerzo": Una o dos frases que demuestren que entendimos su punto fuerte.
-- "etiqueta_caso": Etiqueta muy corta de 2-3 palabras para el caso.
-
-Resumen: ${resumenParaAsistentes}`;
-
-    const propuestaResult = await ejecutarAsistente(
-      Deno.env.get("ASISTENTE_PROPUESTAS_ID")!,
-      prompt_propuesta
-    );
-
-    console.log('✅ Asistentes completados');
-
-    // Procesar las respuestas
-    const guia_abogado = guiaResult;
-    const clasificacion_raw = clasificacionResult;
-    const propuesta_raw = propuestaResult;
-
-    // Parsear JSON de las respuestas
-    const clasificacion = JSON.parse(extractJsonFromString(clasificacion_raw) || '{}');
-    const propuesta_estructurada = JSON.parse(extractJsonFromString(propuesta_raw) || '{}');
-
-    // Obtener la especialidad de la base de datos
-    const { data: especialidad } = await supabase
-      .from("especialidades")
-      .select("id")
-      .eq("nombre", clasificacion.especialidad_nombre)
-      .single();
-
-    let especialidadId = especialidad?.id;
-    if (!especialidadId && clasificacion.especialidad_nombre) {
-      log('warn', 'Especialidad no encontrada, usando fallback', {
-        caso_id: casoId,
-        especialidad_recibida: clasificacion.especialidad_nombre
-      });
-      const { data: generalSpec } = await supabase
-        .from("especialidades")
-        .select("id")
-        .eq("nombre", "Consulta General")
-        .single();
-      especialidadId = generalSpec?.id;
-    }
-
-    // Guardar la guía para abogado en storage
-    const guiaFile = new Blob([guia_abogado], { type: 'text/plain;charset=utf-8' });
-    await supabase.storage
-      .from('documentos_legales')
-      .upload(`casos/${casoId}/guia_para_abogado.txt`, guiaFile, { upsert: true });
+    const propuestasData = await propuestasResponse.json();
+    const valorEstimado = propuestasData.choices[0].message.content;
 
     // Actualizar el caso con toda la información procesada
-    const datosParaActualizar = {
-      estado: "listo_para_propuesta",
-      motivo_consulta: clasificacion.motivo_consulta_ia || extractedInfo.consulta.motivo_consulta || "Consulta General",
-      resumen_caso: resumenParaAsistentes,
-      propuesta_estructurada,
-      tipo_lead: clasificacion.tipo_lead || 'estandar',
-      valor_estimado: clasificacion.valor_estimado,
-      especialidad_id: especialidadId,
-      guia_abogado
-    };
-
     const { error: updateError } = await supabase
-      .from("casos")
-      .update(datosParaActualizar)
-      .eq("id", casoId);
+      .from('casos')
+      .update({
+        resumen_caso: resumenCaso,
+        guia_abogado: guiaAbogado,
+        valor_estimado: valorEstimado,
+        estado: 'disponible' // Cambiar a disponible después del procesamiento
+      })
+      .eq('id', casoId);
 
     if (updateError) {
       console.error('❌ Error actualizando caso:', updateError);
       throw updateError;
     }
 
-    console.log('✅ Caso procesado completamente con asistentes personalizados');
+    console.log('✅ Caso procesado completamente con IA');
 
   } catch (error) {
-    console.error('❌ Error en processWithCustomAssistants:', error);
+    console.error('❌ Error en processWithAIAssistants:', error);
     // No lanzar el error para no bloquear la creación del caso
     // El caso quedará en estado borrador para procesamiento manual
   }
