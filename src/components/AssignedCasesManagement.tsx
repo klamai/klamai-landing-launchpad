@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Grid3X3, List, Scale, AlertCircle } from 'lucide-react';
@@ -323,11 +322,10 @@ const AssignedCasesManagement = () => {
           setSelectedCaseDetail(null);
         }}
         caso={selectedCaseDetail}
-        resolutionDocuments={documentosResolucion}
-        clientDocuments={documentosCliente}
-        documentsLoading={documentsLoading || clientDocumentsLoading}
+        onAssignLawyer={handleAssignLawyer}
+        onGenerateResolution={handleGenerateResolution}
         onUploadDocument={handleUploadDocument}
-        onDeleteDocument={handleDeleteDocument}
+        onSendMessage={handleSendMessage}
       />
 
       <DocumentUploadModal
@@ -336,8 +334,16 @@ const AssignedCasesManagement = () => {
           setUploadModalOpen(false);
           setSelectedCaseForUpload('');
         }}
-        onUpload={handleDocumentUpload}
-        loading={false}
+        casoId={selectedCaseForUpload}
+        onUploadSuccess={() => {
+          refetchDocuments();
+          setUploadModalOpen(false);
+          setSelectedCaseForUpload('');
+          toast({
+            title: "Éxito",
+            description: "Documento subido correctamente",
+          });
+        }}
       />
 
       <DocumentViewer
