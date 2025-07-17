@@ -2,9 +2,22 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Caso } from '@/types/database';
 
-interface AssignedCase extends Caso {
+interface AssignedCase {
+  id: string;
+  motivo_consulta: string | null;
+  resumen_caso: string | null;
+  estado: 'borrador' | 'esperando_pago' | 'disponible' | 'agotado' | 'cerrado' | 'listo_para_propuesta';
+  created_at: string;
+  nombre_borrador: string | null;
+  apellido_borrador: string | null;
+  email_borrador: string | null;
+  telefono_borrador: string | null;
+  tipo_lead: 'estandar' | 'premium' | 'urgente' | null;
+  especialidad_id: number | null;
+  especialidades?: {
+    nombre: string;
+  };
   fecha_asignacion: string;
   estado_asignacion: string;
   notas_asignacion?: string;
@@ -69,7 +82,18 @@ export const useAssignedCases = () => {
 
       // Transformar los datos para que coincidan con la interfaz
       const transformedCases: AssignedCase[] = (data || []).map(assignment => ({
-        ...assignment.casos,
+        id: assignment.casos.id,
+        motivo_consulta: assignment.casos.motivo_consulta,
+        resumen_caso: assignment.casos.resumen_caso,
+        estado: assignment.casos.estado,
+        created_at: assignment.casos.created_at,
+        nombre_borrador: assignment.casos.nombre_borrador,
+        apellido_borrador: assignment.casos.apellido_borrador,
+        email_borrador: assignment.casos.email_borrador,
+        telefono_borrador: assignment.casos.telefono_borrador,
+        tipo_lead: assignment.casos.tipo_lead,
+        especialidad_id: assignment.casos.especialidad_id,
+        especialidades: assignment.casos.especialidades,
         fecha_asignacion: assignment.fecha_asignacion,
         estado_asignacion: assignment.estado_asignacion,
         notas_asignacion: assignment.notas_asignacion,
