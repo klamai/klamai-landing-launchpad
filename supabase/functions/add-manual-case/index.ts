@@ -21,43 +21,49 @@ serve(async (req) => {
   }
 
   try {
-    const { caseText, especialidadId, tipoLead = 'estandar' } = await req.json();
+    const { caseText } = await req.json();
 
-    console.log('🔍 Procesando caso manual:', { caseText: caseText?.substring(0, 100) + '...', especialidadId, tipoLead });
+    console.log('🔍 Procesando caso manual:', { caseText: caseText?.substring(0, 100) + '...' });
 
     // Paso 1: Extraer datos estructurados del texto usando OpenAI
     const extractionPrompt = `
-Analiza el siguiente texto que contiene información de un cliente y su consulta legal. 
-Extrae los datos y devuelve ÚNICAMENTE un JSON válido con la siguiente estructura:
+   Analiza el siguiente texto que contiene información de un cliente y su consulta legal.
+   Extrae los datos y devuelve ÚNICAMENTE un JSON válido con la siguiente estructura:
 
-{
-  "cliente": {
-    "nombre": "string",
-    "apellido": "string", 
-    "email": "string",
-    "telefono": "string",
-    "ciudad": "string",
-    "tipo_perfil": "individual" | "empresa",
-    "razon_social": "string (solo si es empresa)",
-    "nif_cif": "string (solo si es empresa)",
-    "nombre_gerente": "string (solo si es empresa)",
-    "direccion_fiscal": "string (solo si es empresa)"
-  },
-  "consulta": {
-    "motivo_consulta": "string (resumen del problema legal)",
-    "detalles_adicionales": "string (información adicional relevante)",
-    "urgencia": "alta" | "media" | "baja",
-    "preferencia_horaria": "string (si se menciona)"
-  }
-}
+   {
+     "cliente": {
+       "nombre": "string",
+       "apellido": "string",
+       "email": "string",
+       "telefono": "string",
+       "ciudad": "string",
+       "tipo_perfil": "individual" | "empresa",
+       "razon_social": "string (solo si es empresa)",
+       "nif_cif": "string (solo si es empresa)",
+       "nombre_gerente": "string (solo si es empresa)",
+       "direccion_fiscal": "string (solo si es empresa)"
+     },
+     "consulta": {
+       "motivo_consulta": "string (resumen del problema legal)",
+       "detalles_adicionales": "string (información adicional relevante)",
+       "urgencia": "alta" | "media" | "baja",
+       "preferencia_horaria": "string (si se menciona)",
+       "especialidad_legal": "laboral" | "civil" | "penal" | "administrativo" | "fiscal" | "mercantil" | "familia" | "otra",
+       "tipo_lead": "estandar" | "premium" | "urgente"
+     }
+   }
 
-Si no puedes extraer algún campo, usa null. 
-Si es una empresa, asegúrate de marcar tipo_perfil como "empresa".
-Si es una persona individual, marca tipo_perfil como "individual".
+   Si no puedes extraer algún campo, usa null.
+   Si es una empresa, asegúrate de marcar tipo_perfil como "empresa".
+   Si es una persona individual, marca tipo_perfil como "individual".
+   Para tipo_lead, considera:
+   - "urgente": Casos que requieren acción inmediata (24-48h)
+   - "premium": Casos de alta complejidad o valor económico
+   - "estandar": Casos normales que no requieren urgencia especial
 
-Texto a analizar:
-${caseText}
-    `;
+   Texto a analizar:
+   ${caseText}
+   `;
 
     const extractionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -86,6 +92,36 @@ ${caseText}
     const extractedInfo = JSON.parse(extractionData.choices[0].message.content);
 
     console.log('✅ Datos extraídos:', extractedInfo);
+
+    // Obtener todas las especialidades de la base de datos
+    const { data: especialidades, error: especialidadesError } = await supabase
+      .from('especialidades')
+      .select('id, nombre');
+
+    if (especialidadesError) {
+      console.error('❌ Error obteniendo especialidades:', especialidadesError);
+      throw especialidadesError;
+    }
+
+    // Mapear la especialidad extraída a su ID
+    let especialidadId = null;
+    if (extractedInfo.consulta.especialidad_legal) {
+      // Buscar por similitud (no case sensitive)
+      const especialidadEncontrada = especialidades.find(esp =>
+        esp.nombre.toLowerCase().includes(extractedInfo.consulta.especialidad_legal.toLowerCase()) ||
+        extractedInfo.consulta.especialidad_legal.toLowerCase().includes(esp.nombre.toLowerCase())
+      );
+
+      if (especialidadEncontrada) {
+        especialidadId = especialidadEncontrada.id;
+      } else {
+        // Si no encuentra coincidencia exacta, usar una lógica más avanzada o asignar una por defecto
+        especialidadId = especialidades[0]?.id || null; // Primera especialidad como fallback
+      }
+    }
+
+    // Obtener el tipo de lead desde la extracción o usar el valor por defecto
+    const tipoLead = extractedInfo.consulta.tipo_lead || 'estandar';
 
     // Paso 2: Crear el caso en la base de datos
     const casoData = {

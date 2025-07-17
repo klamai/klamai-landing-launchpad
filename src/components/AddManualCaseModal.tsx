@@ -23,8 +23,6 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
   especialidades
 }) => {
   const [caseText, setCaseText] = useState('');
-  const [especialidadId, setEspecialidadId] = useState<string>('');
-  const [tipoLead, setTipoLead] = useState<'estandar' | 'premium' | 'urgente'>('estandar');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -40,23 +38,13 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
       return;
     }
 
-    if (!especialidadId) {
-      toast({
-        title: "Error", 
-        description: "Por favor, selecciona una especialidad",
-        variant: "destructive",
-      });
-      return;
-    }
 
     setLoading(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('add-manual-case', {
         body: {
-          caseText: caseText.trim(),
-          especialidadId: parseInt(especialidadId),
-          tipoLead
+          caseText: caseText.trim()
         }
       });
 
@@ -72,8 +60,6 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
         
         // Limpiar formulario
         setCaseText('');
-        setEspecialidadId('');
-        setTipoLead('estandar');
         
         onSuccess();
         onClose();
@@ -95,8 +81,6 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
   const handleClose = () => {
     if (!loading) {
       setCaseText('');
-      setEspecialidadId('');
-      setTipoLead('estandar');
       onClose();
     }
   };
@@ -120,8 +104,8 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
                   Procesamiento Inteligente
                 </h4>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Pega el texto completo del caso incluyendo datos del cliente y la consulta legal. 
-                  Nuestro sistema de IA extraerá automáticamente la información estructurada, 
+                  Pega el texto completo del caso incluyendo datos del cliente y la consulta legal.
+                  Nuestro sistema de IA extraerá automáticamente toda la información necesaria, incluida la especialidad legal y el tipo de lead,
                   generará un resumen profesional y una guía para el abogado asignado.
                 </p>
               </div>
@@ -153,41 +137,6 @@ Consulta sobre despido improcedente. Trabajo en empresa X desde hace 3 años, me
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="especialidad" className="text-sm font-medium">
-                Especialidad *
-              </Label>
-              <Select value={especialidadId} onValueChange={setEspecialidadId} disabled={loading}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona una especialidad" />
-                </SelectTrigger>
-                <SelectContent>
-                  {especialidades.map((esp) => (
-                    <SelectItem key={esp.id} value={esp.id.toString()}>
-                      {esp.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tipoLead" className="text-sm font-medium">
-                Tipo de Lead
-              </Label>
-              <Select value={tipoLead} onValueChange={(value: 'estandar' | 'premium' | 'urgente') => setTipoLead(value)} disabled={loading}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="estandar">Estándar</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
-                  <SelectItem value="urgente">Urgente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
           <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
             <div className="flex items-start gap-3">
@@ -217,7 +166,7 @@ Consulta sobre despido improcedente. Trabajo en empresa X desde hace 3 años, me
             </Button>
             <Button
               type="submit"
-              disabled={loading || !caseText.trim() || !especialidadId}
+              disabled={loading || !caseText.trim()}
               className="min-w-[140px]"
             >
               {loading ? (
