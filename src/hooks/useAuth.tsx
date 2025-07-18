@@ -3,9 +3,15 @@ import { useState, useEffect, createContext, useContext, useCallback, useRef } f
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+interface UserProfile {
+  role: string;
+  tipo_abogado?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  userProfile: UserProfile | null;
   loading: boolean;
   isValidating: boolean;
   signUp: (email: string, password: string, name?: string) => Promise<{ error: any }>;
@@ -32,27 +38,75 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(false);
   
-  // Referencias para evitar dependencias circulares
+  // Referencias para optimización
   const sessionRef = useRef<Session | null>(null);
+  const profileCacheRef = useRef<{ [userId: string]: UserProfile }>({});
   const validationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastValidationRef = useRef<number>(0);
 
-  // Función para limpiar completamente el estado local (estable)
+  // Función optimizada para obtener perfil de usuario con cache
+  const fetchUserProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
+    // Usar cache si está disponible y es reciente (menos de 5 minutos)
+    const cached = profileCacheRef.current[userId];
+    if (cached && Date.now() - lastValidationRef.current < 5 * 60 * 1000) {
+      return cached;
+    }
+
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role, tipo_abogado')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('❌ Error fetching user profile:', error);
+        return null;
+      }
+
+      const userProfile: UserProfile = {
+        role: profile.role,
+        tipo_abogado: profile.tipo_abogado
+      };
+
+      // Actualizar cache
+      profileCacheRef.current[userId] = userProfile;
+      lastValidationRef.current = Date.now();
+
+      return userProfile;
+    } catch (error) {
+      console.error('❌ Error general fetching user profile:', error);
+      return null;
+    }
+  }, []);
+
+  // Función para limpiar estado (estable)
   const clearAuthState = useCallback(() => {
     console.log('🧹 Limpiando estado de autenticación');
     setUser(null);
     setSession(null);
+    setUserProfile(null);
     sessionRef.current = null;
     setLoading(false);
     setIsValidating(false);
+    // Limpiar cache
+    profileCacheRef.current = {};
+    lastValidationRef.current = 0;
   }, []);
 
-  // Función para validar la sesión actual (estable)
+  // Función optimizada de validación de sesión
   const validateSession = useCallback(async (): Promise<boolean> => {
     const currentSession = sessionRef.current;
     if (!currentSession) return false;
+    
+    // Evitar validaciones demasiado frecuentes (menos de 1 minuto)
+    if (Date.now() - lastValidationRef.current < 60 * 1000) {
+      return true;
+    }
     
     setIsValidating(true);
     try {
@@ -70,8 +124,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(serverSession);
         setUser(serverSession.user);
         sessionRef.current = serverSession;
+        
+        // Actualizar perfil si es necesario
+        const profile = await fetchUserProfile(serverSession.user.id);
+        setUserProfile(profile);
       }
       
+      lastValidationRef.current = Date.now();
       return true;
     } catch (error) {
       console.error('❌ Error validando sesión:', error);
@@ -80,20 +139,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } finally {
       setIsValidating(false);
     }
-  }, [clearAuthState]);
-
-  // Interceptor para manejar errores 401/403 automáticamente
-  const handleAuthError = useCallback((error: any) => {
-    if (error?.message?.includes('JWT') || 
-        error?.message?.includes('expired') ||
-        error?.message?.includes('invalid') ||
-        error?.status === 401 ||
-        error?.status === 403) {
-      console.warn('🚨 Error de autenticación detectado, forzando logout:', error.message);
-      clearAuthState();
-      window.location.href = '/auth';
-    }
-  }, [clearAuthState]);
+  }, [clearAuthState, fetchUserProfile]);
 
   // Efecto 1: Configurar listener de cambios de estado (solo una vez)
   useEffect(() => {
@@ -108,6 +154,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setSession(newSession);
             setUser(newSession?.user ?? null);
             sessionRef.current = newSession;
+            
+            // Obtener perfil de usuario de forma asíncrona
+            if (newSession?.user) {
+              setTimeout(async () => {
+                const profile = await fetchUserProfile(newSession.user.id);
+                setUserProfile(profile);
+              }, 0);
+            }
             setLoading(false);
             break;
             
@@ -144,7 +198,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, []); // Sin dependencias para evitar bucles
 
-  // Efecto 2: Inicialización una sola vez
+  // Efecto 2: Inicialización optimizada
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -162,6 +216,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setSession(initialSession);
           setUser(initialSession.user);
           sessionRef.current = initialSession;
+          
+          // Obtener perfil de usuario
+          const profile = await fetchUserProfile(initialSession.user.id);
+          setUserProfile(profile);
         } else {
           console.log('ℹ️ No hay sesión inicial');
         }
@@ -176,23 +234,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     initializeAuth();
   }, []); // Sin dependencias para evitar bucles
 
-  // Efecto 3: Validación periódica (independiente)
+  // Efecto 3: Validación periódica menos frecuente (15 minutos)
   useEffect(() => {
     const startPeriodicValidation = () => {
-      // Limpiar cualquier intervalo existente
       if (validationIntervalRef.current) {
         clearInterval(validationIntervalRef.current);
       }
 
-      // Solo iniciar validación si hay una sesión
       if (sessionRef.current && !loading) {
-        console.log('🔍 Iniciando validación periódica de sesión...');
+        console.log('🔍 Iniciando validación periódica de sesión (15 min)...');
         validationIntervalRef.current = setInterval(async () => {
           if (sessionRef.current && !isValidating) {
             console.log('🔍 Validación periódica de sesión...');
             await validateSession();
           }
-        }, 5 * 60 * 1000); // 5 minutos
+        }, 15 * 60 * 1000); // 15 minutos en lugar de 5
       }
     };
 
@@ -203,8 +259,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         clearInterval(validationIntervalRef.current);
       }
     };
-  }, [session, loading, isValidating, validateSession]); // Dependencias mínimas necesarias
+  }, [session, loading, isValidating, validateSession]);
 
+  // Funciones de autenticación optimizadas
   const signUp = async (email: string, password: string, name?: string) => {
     try {
       const { error } = await supabase.auth.signUp({
@@ -220,13 +277,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       });
       
-      if (error) {
-        handleAuthError(error);
-      }
-      
       return { error };
     } catch (error: any) {
-      handleAuthError(error);
       return { error };
     }
   };
@@ -238,13 +290,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         password,
       });
       
-      if (error) {
-        handleAuthError(error);
-      }
-      
       return { error };
     } catch (error: any) {
-      handleAuthError(error);
       return { error };
     }
   };
@@ -267,17 +314,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const forceSignOut = async () => {
     console.log('🔒 Forzando logout completo...');
     
-    // Limpiar estado local inmediatamente
     clearAuthState();
     
-    // Intentar logout en el servidor sin esperar
     try {
       await supabase.auth.signOut();
     } catch (error) {
       console.warn('⚠️ Error en logout forzado del servidor:', error);
     }
     
-    // Limpiar localStorage y sessionStorage
     try {
       localStorage.removeItem('supabase.auth.token');
       sessionStorage.clear();
@@ -291,6 +335,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const value: AuthContextType = {
     user,
     session,
+    userProfile,
     loading,
     isValidating,
     signUp,

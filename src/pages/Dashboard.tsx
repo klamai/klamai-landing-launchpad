@@ -17,7 +17,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { DashboardSkeleton, StatsSkeleton } from "@/components/ui/dashboard-skeleton";
 
 const Dashboard = () => {
   const [open, setOpen] = useState(false);
@@ -90,11 +91,9 @@ const Dashboard = () => {
     }
   };
 
-  // Function to handle navigation and close sidebar on mobile
   const handleNavigation = (href: string) => {
     navigate(href);
-    // Close sidebar on mobile after navigation
-    if (window.innerWidth < 768) { // md breakpoint
+    if (window.innerWidth < 768) {
       setOpen(false);
     }
   };
@@ -215,14 +214,11 @@ const Dashboard = () => {
 };
 
 const DashboardContent = ({ activeSection }: { activeSection: string }) => {
-  const { user } = useAuth();
-
   const renderContent = () => {
     switch (activeSection) {
       case "nueva-consulta":
         return <NuevaConsultaSection />;
       case "casos":
-        // Check if we're viewing a specific case
         if (location.pathname.includes('/casos/') && location.pathname.split('/').length > 3) {
           return <CaseDetailTabs />;
         }
@@ -253,6 +249,11 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
 
 const DashboardSection = () => {
   const { user } = useAuth();
+  const { totalCasos, casosActivos, casosCerrados, casosEsperandoPago, loading } = useDashboardStats();
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <motion.div
@@ -272,10 +273,10 @@ const DashboardSection = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {[
-          { title: "Consultas Activas", value: "3", color: "bg-blue-500", textColor: "text-blue-600" },
-          { title: "Casos Resueltos", value: "12", color: "bg-green-500", textColor: "text-green-600" },
-          { title: "Documentos", value: "8", color: "bg-purple-500", textColor: "text-purple-600" },
-          { title: "Notificaciones", value: "2", color: "bg-orange-500", textColor: "text-orange-600" }
+          { title: "Total de Casos", value: totalCasos.toString(), color: "bg-blue-500", textColor: "text-blue-600" },
+          { title: "Casos Activos", value: casosActivos.toString(), color: "bg-green-500", textColor: "text-green-600" },
+          { title: "Casos Cerrados", value: casosCerrados.toString(), color: "bg-purple-500", textColor: "text-purple-600" },
+          { title: "Esperando Pago", value: casosEsperandoPago.toString(), color: "bg-orange-500", textColor: "text-orange-600" }
         ].map((stat, i) => (
           <motion.div
             key={stat.title}
