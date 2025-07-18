@@ -19,30 +19,31 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     let timeoutId: NodeJS.Timeout;
     
     const initializeProtection = async () => {
-      // Dar tiempo para que la autenticación se inicialice
-      timeoutId = setTimeout(async () => {
-        if (!loading && user && session) {
-          console.log('🔍 Validando sesión en ruta protegida...');
-          
-          // Validar que la sesión sea realmente válida
-          const isValid = await validateSession();
-          
-          if (!isValid) {
-            console.warn('❌ Sesión inválida detectada en ruta protegida');
-            toast({
-              title: "Sesión expirada",
-              description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
-              variant: "destructive",
-            });
-            await forceSignOut();
-            return;
-          }
-          
-          setSessionValidated(true);
+      // Solo proceder si no estamos cargando y tenemos usuario y sesión
+      if (!loading && user && session) {
+        console.log('🔍 Validando sesión en ruta protegida...');
+        
+        // Validar que la sesión sea realmente válida
+        const isValid = await validateSession();
+        
+        if (!isValid) {
+          console.warn('❌ Sesión inválida detectada en ruta protegida');
+          toast({
+            title: "Sesión expirada",
+            description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+            variant: "destructive",
+          });
+          await forceSignOut();
+          return;
         }
         
+        setSessionValidated(true);
+      }
+      
+      // Dar un pequeño delay para asegurar que el estado se ha estabilizado
+      timeoutId = setTimeout(() => {
         setIsReady(true);
-      }, 1000);
+      }, 100);
     };
 
     initializeProtection();

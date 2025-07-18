@@ -1,5 +1,5 @@
 
-import { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import { useState, useEffect, createContext, useContext, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -34,34 +34,42 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(false);
+  
+  // Referencias para evitar dependencias circulares
+  const sessionRef = useRef<Session | null>(null);
+  const validationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Función para limpiar completamente el estado local
+  // Función para limpiar completamente el estado local (estable)
   const clearAuthState = useCallback(() => {
+    console.log('🧹 Limpiando estado de autenticación');
     setUser(null);
     setSession(null);
+    sessionRef.current = null;
     setLoading(false);
     setIsValidating(false);
   }, []);
 
-  // Función para validar la sesión actual
+  // Función para validar la sesión actual (estable)
   const validateSession = useCallback(async (): Promise<boolean> => {
-    if (!session) return false;
+    const currentSession = sessionRef.current;
+    if (!currentSession) return false;
     
     setIsValidating(true);
     try {
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      const { data: { session: serverSession }, error } = await supabase.auth.getSession();
       
-      if (error || !currentSession) {
+      if (error || !serverSession) {
         console.warn('🔐 Sesión inválida detectada, limpiando estado:', error?.message);
         clearAuthState();
         return false;
       }
       
       // Verificar si la sesión ha cambiado
-      if (currentSession.access_token !== session.access_token) {
+      if (serverSession.access_token !== currentSession.access_token) {
         console.log('🔄 Sesión actualizada, sincronizando estado');
-        setSession(currentSession);
-        setUser(currentSession.user);
+        setSession(serverSession);
+        setUser(serverSession.user);
+        sessionRef.current = serverSession;
       }
       
       return true;
@@ -72,7 +80,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } finally {
       setIsValidating(false);
     }
-  }, [session, clearAuthState]);
+  }, [clearAuthState]);
 
   // Interceptor para manejar errores 401/403 automáticamente
   const handleAuthError = useCallback((error: any) => {
@@ -87,19 +95,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [clearAuthState]);
 
+  // Efecto 1: Configurar listener de cambios de estado (solo una vez)
   useEffect(() => {
-    console.log('🔐 Iniciando sistema de autenticación...');
+    console.log('🔐 Configurando listener de autenticación...');
 
-    // Configurar listener de cambios de estado PRIMERO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('🔄 Evento de autenticación:', event, newSession ? 'Con sesión' : 'Sin sesión');
         
-        // Manejar diferentes eventos
         switch (event) {
           case 'SIGNED_IN':
             setSession(newSession);
             setUser(newSession?.user ?? null);
+            sessionRef.current = newSession;
             setLoading(false);
             break;
             
@@ -111,26 +119,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             console.log('🔄 Token refreshed exitosamente');
             setSession(newSession);
             setUser(newSession?.user ?? null);
+            sessionRef.current = newSession;
             break;
             
           case 'USER_UPDATED':
             if (newSession) {
               setSession(newSession);
               setUser(newSession.user);
+              sessionRef.current = newSession;
             }
             break;
             
           default:
             setSession(newSession);
             setUser(newSession?.user ?? null);
+            sessionRef.current = newSession;
             setLoading(false);
         }
       }
     );
 
-    // LUEGO verificar sesión existente
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []); // Sin dependencias para evitar bucles
+
+  // Efecto 2: Inicialización una sola vez
+  useEffect(() => {
     const initializeAuth = async () => {
       try {
+        console.log('🚀 Inicializando autenticación...');
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -143,6 +161,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log('✅ Sesión inicial encontrada');
           setSession(initialSession);
           setUser(initialSession.user);
+          sessionRef.current = initialSession;
         } else {
           console.log('ℹ️ No hay sesión inicial');
         }
@@ -155,20 +174,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     initializeAuth();
+  }, []); // Sin dependencias para evitar bucles
 
-    // Configurar validación periódica de sesión (cada 5 minutos)
-    const sessionValidationInterval = setInterval(async () => {
-      if (session && !loading) {
-        console.log('🔍 Validación periódica de sesión...');
-        await validateSession();
+  // Efecto 3: Validación periódica (independiente)
+  useEffect(() => {
+    const startPeriodicValidation = () => {
+      // Limpiar cualquier intervalo existente
+      if (validationIntervalRef.current) {
+        clearInterval(validationIntervalRef.current);
       }
-    }, 5 * 60 * 1000); // 5 minutos
+
+      // Solo iniciar validación si hay una sesión
+      if (sessionRef.current && !loading) {
+        console.log('🔍 Iniciando validación periódica de sesión...');
+        validationIntervalRef.current = setInterval(async () => {
+          if (sessionRef.current && !isValidating) {
+            console.log('🔍 Validación periódica de sesión...');
+            await validateSession();
+          }
+        }, 5 * 60 * 1000); // 5 minutos
+      }
+    };
+
+    startPeriodicValidation();
 
     return () => {
-      subscription.unsubscribe();
-      clearInterval(sessionValidationInterval);
+      if (validationIntervalRef.current) {
+        clearInterval(validationIntervalRef.current);
+      }
     };
-  }, [clearAuthState, validateSession, session, loading]);
+  }, [session, loading, isValidating, validateSession]); // Dependencias mínimas necesarias
 
   const signUp = async (email: string, password: string, name?: string) => {
     try {
@@ -220,12 +255,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.warn('⚠️ Error en logout del servidor:', error.message);
-        // Aunque haya error en el servidor, limpiamos el estado local
       }
     } catch (error: any) {
       console.warn('⚠️ Error en proceso de logout:', error);
     } finally {
-      // Siempre limpiar el estado local
       clearAuthState();
       console.log('✅ Estado local limpiado');
     }
@@ -242,7 +275,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await supabase.auth.signOut();
     } catch (error) {
       console.warn('⚠️ Error en logout forzado del servidor:', error);
-      // Ignoramos errores del servidor en logout forzado
     }
     
     // Limpiar localStorage y sessionStorage

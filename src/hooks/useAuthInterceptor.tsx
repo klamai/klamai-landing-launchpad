@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,11 +7,16 @@ import { supabase } from '@/integrations/supabase/client';
 export const useAuthInterceptor = () => {
   const { forceSignOut, session } = useAuth();
   const { toast } = useToast();
+  const hasIntercepted = useRef(false);
 
   useEffect(() => {
+    // Evitar múltiples configuraciones del interceptor
+    if (hasIntercepted.current) return;
+
+    console.log('🔧 Configurando interceptor de autenticación...');
+    
     // Interceptor para todas las consultas de Supabase
     const originalFrom = supabase.from;
-    const originalAuth = supabase.auth;
 
     // Wrapper para interceptar errores en consultas de datos
     supabase.from = function(table: string) {
@@ -48,7 +53,7 @@ export const useAuthInterceptor = () => {
 
     // Función para verificar errores de autenticación
     const checkAuthError = (error: any) => {
-      if (!error) return;
+      if (!error || !session) return;
       
       const isAuthError = 
         error.message?.includes('JWT') ||
@@ -60,7 +65,7 @@ export const useAuthInterceptor = () => {
         error.status === 401 ||
         error.status === 403;
 
-      if (isAuthError && session) {
+      if (isAuthError) {
         console.warn('🚨 Error de autenticación interceptado:', error);
         
         toast({
@@ -76,9 +81,12 @@ export const useAuthInterceptor = () => {
       }
     };
 
+    hasIntercepted.current = true;
+
     // Cleanup function
     return () => {
       supabase.from = originalFrom;
+      hasIntercepted.current = false;
     };
   }, [forceSignOut, session, toast]);
 };
