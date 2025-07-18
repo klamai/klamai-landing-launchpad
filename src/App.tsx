@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import { useAuthInterceptor } from "@/hooks/useAuthInterceptor";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardRedirect from "@/components/DashboardRedirect";
 import LawyerDashboardRouter from "@/components/LawyerDashboardRouter";
@@ -21,113 +20,7 @@ import PagoCancelado from "./pages/PagoCancelado";
 import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: (failureCount, error: any) => {
-        // No reintentar en errores de autenticación
-        if (error?.status === 401 || error?.status === 403) {
-          return false;
-        }
-        return failureCount < 3;
-      },
-    },
-  },
-});
-
-// Componente interno para usar el interceptor dentro del AuthProvider
-const AppContent = () => {
-  useAuthInterceptor();
-  
-  return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/abogados/auth" element={<AuthAbogado />} />
-      <Route path="/auth-callback" element={<AuthCallback />} />
-      <Route path="/chat" element={<Chat />} />
-      
-      {/* Rutas protegidas del dashboard de clientes */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute>
-          <DashboardRedirect>
-            <Dashboard />
-          </DashboardRedirect>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/nueva-consulta" element={
-        <ProtectedRoute>
-          <DashboardRedirect>
-            <Dashboard />
-          </DashboardRedirect>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/casos" element={
-        <ProtectedRoute>
-          <DashboardRedirect>
-            <Dashboard />
-          </DashboardRedirect>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/casos/:casoId" element={
-        <ProtectedRoute>
-          <DashboardRedirect>
-            <Dashboard />
-          </DashboardRedirect>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/perfil" element={
-        <ProtectedRoute>
-          <DashboardRedirect>
-            <Dashboard />
-          </DashboardRedirect>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/configuracion" element={
-        <ProtectedRoute>
-          <DashboardRedirect>
-            <Dashboard />
-          </DashboardRedirect>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/facturacion" element={
-        <ProtectedRoute>
-          <DashboardRedirect>
-            <Dashboard />
-          </DashboardRedirect>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/notificaciones" element={
-        <ProtectedRoute>
-          <DashboardRedirect>
-            <Dashboard />
-          </DashboardRedirect>
-        </ProtectedRoute>
-      } />
-      
-      {/* Rutas protegidas del dashboard de abogados - Enrutador inteligente */}
-      <Route path="/abogados/dashboard" element={
-        <ProtectedRoute>
-          <LawyerDashboardRouter />
-        </ProtectedRoute>
-      } />
-      <Route path="/abogados/dashboard/*" element={
-        <ProtectedRoute>
-          <LawyerDashboardRouter />
-        </ProtectedRoute>
-      } />
-      
-      {/* Rutas públicas */}
-      <Route path="/politicas-privacidad" element={<PrivacyPolicy />} />
-      <Route path="/aviso-legal" element={<LegalNotice />} />
-      <Route path="/pago-exitoso" element={<PagoExitoso />} />
-      <Route path="/pago-cancelado" element={<PagoCancelado />} />
-      
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
-};
+const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -136,7 +29,92 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AppContent />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/abogados/auth" element={<AuthAbogado />} />
+            <Route path="/auth-callback" element={<AuthCallback />} />
+            <Route path="/chat" element={<Chat />} />
+            
+            {/* Rutas protegidas del dashboard de clientes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/nueva-consulta" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/casos" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/casos/:casoId" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/perfil" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/configuracion" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/facturacion" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/notificaciones" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            
+            {/* Rutas protegidas del dashboard de abogados - Enrutador inteligente */}
+            <Route path="/abogados/dashboard" element={
+              <ProtectedRoute>
+                <LawyerDashboardRouter />
+              </ProtectedRoute>
+            } />
+            <Route path="/abogados/dashboard/*" element={
+              <ProtectedRoute>
+                <LawyerDashboardRouter />
+              </ProtectedRoute>
+            } />
+            
+            {/* Rutas públicas */}
+            <Route path="/politicas-privacidad" element={<PrivacyPolicy />} />
+            <Route path="/aviso-legal" element={<LegalNotice />} />
+            <Route path="/pago-exitoso" element={<PagoExitoso />} />
+            <Route path="/pago-cancelado" element={<PagoCancelado />} />
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
