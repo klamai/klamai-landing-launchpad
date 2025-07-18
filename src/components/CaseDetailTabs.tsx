@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +30,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
 import DocumentManager from "@/components/DocumentManager";
 import ClientDocumentManager from "@/components/ClientDocumentManager";
+import LawyerDocumentViewer from "@/components/LawyerDocumentViewer";
 
 const CaseDetailTabs = () => {
   const { casoId } = useParams();
@@ -419,10 +419,7 @@ const CaseDetailTabs = () => {
                     <strong>Documentos oficiales:</strong> Aquí encontrarás todas las resoluciones, dictámenes e informes que el abogado ha preparado para tu caso.
                   </p>
                 </div>
-                <DocumentManager 
-                  casoId={casoId!} 
-                  readOnly={true}
-                />
+                <LawyerDocumentViewer casoId={casoId!} />
               </CardContent>
             </Card>
           </TabsContent>
