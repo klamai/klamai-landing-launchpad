@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +20,8 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  GavelIcon
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -261,13 +263,15 @@ const CaseDetailTabs = () => {
       </div>
 
       <Tabs defaultValue="resumen" className="space-y-4">
-        <TabsList className={`grid w-full ${userRole === 'abogado' ? 'grid-cols-5' : 'grid-cols-4'}`}>
+        <TabsList className={`grid w-full ${userRole === 'abogado' ? 'grid-cols-5' : 'grid-cols-5'}`}>
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="documentos">
             {userRole === 'cliente' ? 'Mis Documentos' : 'Documentos Cliente'}
           </TabsTrigger>
-          {userRole === 'abogado' && (
+          {userRole === 'abogado' ? (
             <TabsTrigger value="resoluciones">Resoluciones</TabsTrigger>
+          ) : (
+            <TabsTrigger value="documentos-abogado">Documentos del Abogado</TabsTrigger>
           )}
           <TabsTrigger value="interacciones">Interacciones</TabsTrigger>
           <TabsTrigger value="pagos">Pagos</TabsTrigger>
@@ -393,12 +397,34 @@ const CaseDetailTabs = () => {
           )}
         </TabsContent>
 
-        {userRole === 'abogado' && (
+        {userRole === 'abogado' ? (
           <TabsContent value="resoluciones" className="space-y-4">
             <DocumentManager 
               casoId={casoId!} 
               readOnly={false} 
             />
+          </TabsContent>
+        ) : (
+          <TabsContent value="documentos-abogado" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GavelIcon className="h-5 w-5 text-green-600" />
+                  Documentos del Abogado
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-sm text-green-800 dark:text-green-200">
+                    <strong>Documentos oficiales:</strong> Aquí encontrarás todas las resoluciones, dictámenes e informes que el abogado ha preparado para tu caso.
+                  </p>
+                </div>
+                <DocumentManager 
+                  casoId={casoId!} 
+                  readOnly={true}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
         )}
 
