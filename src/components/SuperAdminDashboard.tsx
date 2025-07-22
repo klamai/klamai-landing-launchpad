@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { SidebarDashboard, SidebarBody, SidebarLink, Logo, LogoIcon } from "@/components/ui/sidebar-dashboard";
 import { 
@@ -13,7 +12,8 @@ import {
   Sun,
   UserCheck,
   Briefcase,
-  Bot
+  Bot,
+  UserPlus
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ import { useSuperAdminStats } from "@/hooks/useSuperAdminStats";
 import SuperAdminMetrics from "@/components/SuperAdminMetrics";
 import CasesManagement from "@/components/CasesManagement";
 import LawyersManagement from "@/components/LawyersManagement";
+import LawyerApplicationsManagement from "@/components/LawyerApplicationsManagement";
 import { Button } from "@/components/ui/button";
 
 const SuperAdminDashboard = () => {
@@ -56,6 +57,8 @@ const SuperAdminDashboard = () => {
       setActiveSection("casos");
     } else if (path.includes('/abogados')) {
       setActiveSection("abogados");
+    } else if (path.includes('/solicitudes-abogado')) {
+      setActiveSection("solicitudes-abogado");
     } else if (path.includes('/hojas-encargo')) {
       setActiveSection("hojas-encargo");
     } else if (path.includes('/reportes')) {
@@ -133,6 +136,13 @@ const SuperAdminDashboard = () => {
       href: "/abogados/dashboard/abogados",
       icon: (
         <Users className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Solicitudes de Abogado",
+      href: "/abogados/dashboard/solicitudes-abogado",
+      icon: (
+        <UserPlus className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
@@ -234,6 +244,8 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
         return <CasesManagementSection />;
       case "abogados":
         return <LawyersManagementSection />;
+      case "solicitudes-abogado":
+        return <LawyerApplicationsSection />;
       case "hojas-encargo":
         return <HojasEncargoSection />;
       case "reportes":
@@ -346,6 +358,18 @@ const LawyersManagementSection = () => {
     >
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Abogados</h1>
       <LawyersManagement />
+    </motion.div>
+  );
+};
+
+const LawyerApplicationsSection = () => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <LawyerApplicationsManagement />
     </motion.div>
   );
 };
