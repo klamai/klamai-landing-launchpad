@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRef } from "react";
+import LawyerApplicationForm from "@/components/LawyerApplicationForm";
 
 // Animated Background Component (mismo que Auth.tsx)
 const AnimatedBackground = () => {
@@ -187,13 +188,6 @@ const AuthAbogado = () => {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  // Estados para el formulario de registro
-  const [signupNombre, setSignupNombre] = useState("");
-  const [signupApellido, setSignupApellido] = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
-  const [acceptPolicies, setAcceptPolicies] = useState(false);
-
   // Estados para recuperar contraseña
   const [forgotEmail, setForgotEmail] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -248,28 +242,11 @@ const AuthAbogado = () => {
   }, [navigate]);
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/abogados/dashboard`
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-    } catch (error: any) {
-      console.error("Error con Google Sign In:", error.message);
-      toast({
-        title: "Error con Google",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    toast({
+      title: "Función no disponible",
+      description: "El registro con Google para abogados no está disponible. Por favor, solicita acceso a través del formulario.",
+      variant: "destructive",
+    });
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -322,69 +299,11 @@ const AuthAbogado = () => {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!acceptPolicies) {
-      toast({
-        title: "Políticas requeridas",
-        description: "Debes aceptar las políticas de privacidad y términos de servicio para continuar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const redirectUrl = `${window.location.origin}/abogados/dashboard`;
-      
-      const { data, error } = await supabase.auth.signUp({
-        email: signupEmail,
-        password: signupPassword,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            nombre: signupNombre,
-            apellido: signupApellido,
-            acepta_politicas: acceptPolicies,
-            role: 'abogado',
-            tipo_abogado: 'regular' // Solo permitir regular desde frontend
-          }
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data.user) {
-        toast({
-          title: "¡Registro exitoso!",
-          description: "Por favor, revisa tu correo para confirmar tu cuenta de abogado.",
-        });
-        
-        // Limpiar formulario
-        setSignupNombre("");
-        setSignupApellido("");
-        setSignupEmail("");
-        setSignupPassword("");
-        setAcceptPolicies(false);
-        
-        // Cambiar a tab de login
-        setActiveTab("login");
-      }
-
-    } catch (error: any) {
-      console.error("Error al registrar:", error.message);
-      toast({
-        title: "Error al registrar",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleApplicationSuccess = () => {
+    // Cambiar a tab de login después de enviar solicitud exitosamente
+    setTimeout(() => {
+      setActiveTab("login");
+    }, 3000);
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -499,7 +418,7 @@ const AuthAbogado = () => {
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-100 dark:bg-gray-700">
                     <TabsTrigger value="login" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Iniciar Sesión</TabsTrigger>
-                    <TabsTrigger value="signup" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Registrarse</TabsTrigger>
+                    <TabsTrigger value="signup" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Solicitar Acceso</TabsTrigger>
                   </TabsList>
 
                   {/* Login Tab */}
@@ -512,12 +431,12 @@ const AuthAbogado = () => {
                       <h1 className="text-2xl md:text-3xl font-bold mb-1 text-gray-800 dark:text-white">Portal de Abogados</h1>
                       <p className="text-gray-500 dark:text-gray-400 mb-8">Accede a tu dashboard profesional</p>
                       
-                      {/* Google Sign In Button */}
+                      {/* Disabled Google Sign In Button */}
                       <div className="mb-6">
                         <button 
                           onClick={handleGoogleSignIn}
-                          disabled={isLoading}
-                          className="w-full flex items-center justify-center gap-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300 text-gray-700 dark:text-gray-200 shadow-sm"
+                          disabled={true}
+                          className="w-full flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg p-3 cursor-not-allowed opacity-50 text-gray-500 dark:text-gray-400"
                         >
                           <svg className="h-5 w-5" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -525,7 +444,7 @@ const AuthAbogado = () => {
                             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                           </svg>
-                          <span>{isLoading ? "Conectando..." : "Continuar con Google"}</span>
+                          <span>Google no disponible para abogados</span>
                         </button>
                       </div>
                       
@@ -534,7 +453,7 @@ const AuthAbogado = () => {
                           <div className="w-full border-t border-gray-200 dark:border-gray-600"></div>
                         </div>
                         <div className="relative flex justify-center text-sm">
-                          <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">O continúa con email</span>
+                          <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Continúa con email</span>
                         </div>
                       </div>
                       
@@ -622,145 +541,17 @@ const AuthAbogado = () => {
                     </motion.div>
                   </TabsContent>
 
-                  {/* Signup Tab */}
+                  {/* Application Tab */}
                   <TabsContent value="signup">
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5 }}
                     >
-                      <h1 className="text-2xl md:text-3xl font-bold mb-1 text-gray-800 dark:text-white">Únete como Abogado</h1>
-                      <p className="text-gray-500 dark:text-gray-400 mb-8">Crea tu cuenta profesional en klamAI</p>
+                      <h1 className="text-2xl md:text-3xl font-bold mb-1 text-gray-800 dark:text-white">Solicitar Acceso</h1>
+                      <p className="text-gray-500 dark:text-gray-400 mb-8">Aplica para unirte como abogado a klamAI</p>
 
-                      {/* Google Sign Up Button */}
-                      <div className="mb-6">
-                        <button 
-                          onClick={handleGoogleSignIn}
-                          disabled={isLoading}
-                          className="w-full flex items-center justify-center gap-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300 text-gray-700 dark:text-gray-200 shadow-sm"
-                        >
-                          <svg className="h-5 w-5" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                          </svg>
-                          <span>{isLoading ? "Conectando..." : "Registrarse con Google"}</span>
-                        </button>
-                      </div>
-
-                      <div className="relative my-6">
-                        <div className="absolute inset-0 flex items-center">
-                          <div className="w-full border-t border-gray-200 dark:border-gray-600"></div>
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                          <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">O regístrate con email</span>
-                        </div>
-                      </div>
-
-                      <form onSubmit={handleSignUp} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="signup-nombre" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</Label>
-                            <Input
-                              id="signup-nombre"
-                              type="text"
-                              value={signupNombre}
-                              onChange={(e) => setSignupNombre(e.target.value)}
-                              placeholder="Tu nombre"
-                              required
-                              className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="signup-apellido" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Apellido</Label>
-                            <Input
-                              id="signup-apellido"
-                              type="text"
-                              value={signupApellido}
-                              onChange={(e) => setSignupApellido(e.target.value)}
-                              placeholder="Tu apellido"
-                              required
-                              className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Correo electrónico</Label>
-                          <Input
-                            id="signup-email"
-                            type="email"
-                            value={signupEmail}
-                            onChange={(e) => setSignupEmail(e.target.value)}
-                            placeholder="tu@email.com"
-                            required
-                            className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña</Label>
-                          <div className="relative">
-                            <Input
-                              id="signup-password"
-                              type={showPassword ? "text" : "password"}
-                              value={signupPassword}
-                              onChange={(e) => setSignupPassword(e.target.value)}
-                              placeholder="Mínimo 6 caracteres"
-                              required
-                              minLength={6}
-                              className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white pr-10"
-                            />
-                            <button
-                              type="button"
-                              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                              onClick={() => setShowPassword(!showPassword)}
-                            >
-                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start space-x-2">
-                          <input
-                            type="checkbox"
-                            id="accept-policies"
-                            checked={acceptPolicies}
-                            onChange={(e) => setAcceptPolicies(e.target.checked)}
-                            className="mt-1"
-                            required
-                          />
-                          <Label htmlFor="accept-policies" className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                            He leído y acepto las{" "}
-                            <Link to="/politicas-privacidad" className="text-blue-600 dark:text-blue-400 hover:underline">
-                              Políticas de Privacidad
-                            </Link>
-                            {" "}y los{" "}
-                            <Link to="/aviso-legal" className="text-blue-600 dark:text-blue-400 hover:underline">
-                              Términos de Servicio
-                            </Link>
-                            .
-                          </Label>
-                        </div>
-
-                        <motion.div 
-                          whileHover={{ scale: 1.01 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="pt-2"
-                        >
-                          <Button
-                            type="submit"
-                            disabled={isLoading || !acceptPolicies}
-                            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-2 rounded-lg transition-all duration-300"
-                          >
-                            <span className="flex items-center justify-center">
-                              {isLoading ? "Registrando..." : "Crear Cuenta de Abogado"}
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </span>
-                          </Button>
-                        </motion.div>
-                      </form>
+                      <LawyerApplicationForm onSuccess={handleApplicationSuccess} />
                     </motion.div>
                   </TabsContent>
                 </Tabs>

@@ -23,6 +23,30 @@ export interface Profile {
   created_at: string;
 }
 
+export interface SolicitudAbogado {
+  id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono?: string;
+  colegio_profesional?: string;
+  numero_colegiado?: string;
+  especialidades?: number[];
+  experiencia_anos?: number;
+  cv_url?: string;
+  carta_motivacion?: string;
+  documentos_verificacion?: any;
+  estado: 'pendiente' | 'en_revision' | 'aprobada' | 'rechazada';
+  motivo_rechazo?: string;
+  revisado_por?: string;
+  fecha_revision?: string;
+  notas_admin?: string;
+  acepta_politicas: boolean;
+  acepta_comunicacion: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Caso {
   id: string;
   cliente_id: string | null;

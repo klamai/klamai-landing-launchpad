@@ -69,6 +69,45 @@ export type Database = {
           },
         ]
       }
+      auditoria_seguridad: {
+        Row: {
+          accion: string
+          created_at: string
+          datos_anteriores: Json | null
+          datos_nuevos: Json | null
+          id: string
+          ip_address: unknown | null
+          registro_id: string | null
+          tabla_afectada: string
+          user_agent: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          accion: string
+          created_at?: string
+          datos_anteriores?: Json | null
+          datos_nuevos?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          registro_id?: string | null
+          tabla_afectada: string
+          user_agent?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          accion?: string
+          created_at?: string
+          datos_anteriores?: Json | null
+          datos_nuevos?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          registro_id?: string | null
+          tabla_afectada?: string
+          user_agent?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       casos: {
         Row: {
           acepto_politicas_inicial: boolean | null
@@ -514,6 +553,86 @@ export type Database = {
         }
         Relationships: []
       }
+      solicitudes_abogado: {
+        Row: {
+          acepta_comunicacion: boolean
+          acepta_politicas: boolean
+          apellido: string
+          carta_motivacion: string | null
+          colegio_profesional: string | null
+          created_at: string
+          cv_url: string | null
+          documentos_verificacion: Json | null
+          email: string
+          especialidades: number[] | null
+          estado: string
+          experiencia_anos: number | null
+          fecha_revision: string | null
+          id: string
+          motivo_rechazo: string | null
+          nombre: string
+          notas_admin: string | null
+          numero_colegiado: string | null
+          revisado_por: string | null
+          telefono: string | null
+          updated_at: string
+        }
+        Insert: {
+          acepta_comunicacion?: boolean
+          acepta_politicas?: boolean
+          apellido: string
+          carta_motivacion?: string | null
+          colegio_profesional?: string | null
+          created_at?: string
+          cv_url?: string | null
+          documentos_verificacion?: Json | null
+          email: string
+          especialidades?: number[] | null
+          estado?: string
+          experiencia_anos?: number | null
+          fecha_revision?: string | null
+          id?: string
+          motivo_rechazo?: string | null
+          nombre: string
+          notas_admin?: string | null
+          numero_colegiado?: string | null
+          revisado_por?: string | null
+          telefono?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acepta_comunicacion?: boolean
+          acepta_politicas?: boolean
+          apellido?: string
+          carta_motivacion?: string | null
+          colegio_profesional?: string | null
+          created_at?: string
+          cv_url?: string | null
+          documentos_verificacion?: Json | null
+          email?: string
+          especialidades?: number[] | null
+          estado?: string
+          experiencia_anos?: number | null
+          fecha_revision?: string | null
+          id?: string
+          motivo_rechazo?: string | null
+          nombre?: string
+          notas_admin?: string | null
+          numero_colegiado?: string | null
+          revisado_por?: string | null
+          telefono?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitudes_abogado_revisado_por_fkey"
+            columns: ["revisado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stripe_webhook_events: {
         Row: {
           created_at: string | null
@@ -687,6 +806,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aprobar_solicitud_abogado: {
+        Args: { p_solicitud_id: string; p_notas_admin?: string }
+        Returns: boolean
+      }
       assign_anonymous_case_to_user: {
         Args: { p_caso_id: string; p_session_token: string; p_user_id: string }
         Returns: boolean
@@ -703,6 +826,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      crear_abogado_desde_solicitud: {
+        Args: {
+          p_solicitud_id: string
+          p_password: string
+          p_tipo_abogado?: Database["public"]["Enums"]["abogado_tipo_enum"]
+        }
+        Returns: string
+      }
       get_current_user_lawyer_type: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -710,6 +841,14 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      rechazar_solicitud_abogado: {
+        Args: {
+          p_solicitud_id: string
+          p_motivo_rechazo: string
+          p_notas_admin?: string
+        }
+        Returns: boolean
       }
     }
     Enums: {
