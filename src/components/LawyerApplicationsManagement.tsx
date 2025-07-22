@@ -52,6 +52,17 @@ interface SolicitudAbogadoFromDB {
   updated_at: string;
 }
 
+// Tipo para el resultado de la función automatizada
+interface AutomatedApprovalResult {
+  success: boolean;
+  solicitud_id: string;
+  email: string;
+  nombre: string;
+  apellido: string;
+  activation_token: string;
+  temp_password: string;
+}
+
 const LawyerApplicationsManagement = () => {
   const [applications, setApplications] = useState<SolicitudAbogadoFromDB[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,8 +120,8 @@ const LawyerApplicationsManagement = () => {
     try {
       console.log('Iniciando aprobación automatizada para:', applicationId);
       
-      // Usar llamada directa a la función RPC
-      const { data, error } = await supabase.rpc('aprobar_solicitud_abogado_automatizado', {
+      // Usar llamada directa a la función RPC con casting de tipos
+      const { data, error } = await (supabase as any).rpc('aprobar_solicitud_abogado_automatizado', {
         p_solicitud_id: applicationId,
         p_notas_admin: adminNotes || null
       });
@@ -123,16 +134,17 @@ const LawyerApplicationsManagement = () => {
       console.log('Resultado de aprobación automatizada:', data);
 
       // Enviar email de aprobación a través del Edge Function
-      if (data && data.success) {
+      if (data && (data as AutomatedApprovalResult).success) {
         try {
+          const result = data as AutomatedApprovalResult;
           const emailResponse = await supabase.functions.invoke('send-lawyer-approval-email', {
             body: {
               tipo: 'aprobacion',
-              email: data.email,
-              nombre: data.nombre,
-              apellido: data.apellido,
-              activationToken: data.activation_token,
-              tempPassword: data.temp_password
+              email: result.email,
+              nombre: result.nombre,
+              apellido: result.apellido,
+              activationToken: result.activation_token,
+              tempPassword: result.temp_password
             }
           });
 

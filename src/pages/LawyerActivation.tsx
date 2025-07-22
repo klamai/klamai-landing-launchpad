@@ -52,8 +52,8 @@ const LawyerActivation = () => {
   const validateToken = async () => {
     try {
       // Usar consulta SQL directa para evitar problemas de tipos
-      const { data, error } = await supabase
-        .from('lawyer_activation_tokens' as any)
+      const { data, error } = await (supabase as any)
+        .from('lawyer_activation_tokens')
         .select('*')
         .eq('token', token)
         .is('used_at', null)
@@ -64,7 +64,7 @@ const LawyerActivation = () => {
         throw new Error('Token inválido o expirado');
       }
 
-      setTokenData(data);
+      setTokenData(data as ActivationToken);
       setTokenValid(true);
     } catch (error: any) {
       console.error('Error validating token:', error);
@@ -122,9 +122,9 @@ const LawyerActivation = () => {
       }
 
       // Marcar el token como usado usando consulta directa
-      const { error: tokenError } = await supabase
-        .from('lawyer_activation_tokens' as any)
-        .update({ used_at: new Date().toISOString() } as any)
+      const { error: tokenError } = await (supabase as any)
+        .from('lawyer_activation_tokens')
+        .update({ used_at: new Date().toISOString() })
         .eq('token', token);
 
       if (tokenError) {
