@@ -65,6 +65,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// KLAMAI Brand Colors
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
 				}
 			},
 			borderRadius: {
@@ -108,6 +117,37 @@ export default {
 						transform: "translate(calc(100cqw - 100%), 0)",
 					},
 				},
+				// KLAMAI Custom animations
+				"slide-in-up": {
+					from: {
+						opacity: "0",
+						transform: "translateY(20px)"
+					},
+					to: {
+						opacity: "1",
+						transform: "translateY(0)"
+					}
+				},
+				"slide-in-right": {
+					from: {
+						opacity: "0",
+						transform: "translateX(20px)"
+					},
+					to: {
+						opacity: "1",
+						transform: "translateX(0)"
+					}
+				},
+				"scale-in": {
+					from: {
+						opacity: "0",
+						transform: "scale(0.95)"
+					},
+					to: {
+						opacity: "1",
+						transform: "scale(1)"
+					}
+				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
@@ -115,6 +155,10 @@ export default {
 				"shimmer-slide":
 					"shimmer-slide var(--speed) ease-in-out infinite alternate",
 				"spin-around": "spin-around calc(var(--speed) * 2) infinite linear",
+				// KLAMAI Custom animations
+				"slide-in-up": "slide-in-up 0.3s ease-out",
+				"slide-in-right": "slide-in-right 0.3s ease-out",
+				"scale-in": "scale-in 0.2s ease-out"
 			},
 			typography: {
 				DEFAULT: {
@@ -155,6 +199,11 @@ export default {
 					},
 				},
 			},
+			// KLAMAI Custom utilities
+			backgroundImage: {
+				'klamai-gradient': 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%)',
+				'klamai-gradient-subtle': 'linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--accent) / 0.1) 100%)',
+			}
 		}
 	},
 	plugins: [
