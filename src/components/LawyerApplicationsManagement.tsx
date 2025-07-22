@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +16,8 @@ import {
   Mail,
   Phone,
   GraduationCap,
-  Calendar
+  Calendar,
+  Loader2
 } from "lucide-react";
 import {
   Dialog,
@@ -57,7 +57,7 @@ const LawyerApplicationsManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedApp, setSelectedApp] = useState<SolicitudAbogadoFromDB | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const { toast } = useToast();
@@ -104,33 +104,40 @@ const LawyerApplicationsManagement = () => {
     }
   };
 
-  const handleApprove = async (applicationId: string) => {
-    setActionLoading(true);
+  const handleApproveAutomated = async (applicationId: string) => {
+    setActionLoading(applicationId);
     try {
-      const { error } = await supabase.rpc('aprobar_solicitud_abogado', {
+      console.log('Iniciando aprobación automatizada para:', applicationId);
+      
+      const { data, error } = await supabase.rpc('aprobar_solicitud_abogado_automatizado', {
         p_solicitud_id: applicationId,
         p_notas_admin: adminNotes || null
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error en RPC:', error);
+        throw error;
+      }
+
+      console.log('Resultado de aprobación automatizada:', data);
 
       toast({
-        title: "Solicitud aprobada",
-        description: "La solicitud ha sido aprobada exitosamente",
+        title: "¡Solicitud aprobada!",
+        description: "Se ha creado la cuenta del abogado y enviado las credenciales por email",
       });
 
       fetchApplications();
       setSelectedApp(null);
       setAdminNotes("");
     } catch (error: any) {
-      console.error('Error approving application:', error);
+      console.error('Error en aprobación automatizada:', error);
       toast({
         title: "Error",
         description: error.message || "Error al aprobar la solicitud",
         variant: "destructive",
       });
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
@@ -144,7 +151,7 @@ const LawyerApplicationsManagement = () => {
       return;
     }
 
-    setActionLoading(true);
+    setActionLoading(applicationId);
     try {
       const { error } = await supabase.rpc('rechazar_solicitud_abogado', {
         p_solicitud_id: applicationId,
@@ -154,9 +161,29 @@ const LawyerApplicationsManagement = () => {
 
       if (error) throw error;
 
+      // Enviar email de rechazo
+      const app = applications.find(a => a.id === applicationId);
+      if (app) {
+        try {
+          await supabase.functions.invoke('send-lawyer-approval-email', {
+            body: {
+              tipo: 'rechazo',
+              email: app.email,
+              nombre: app.nombre,
+              apellido: app.apellido,
+              motivoRechazo: rejectionReason
+            }
+          });
+          console.log('Email de rechazo enviado');
+        } catch (emailError) {
+          console.error('Error enviando email de rechazo:', emailError);
+          // No fallar la operación por error de email
+        }
+      }
+
       toast({
         title: "Solicitud rechazada",
-        description: "La solicitud ha sido rechazada",
+        description: "La solicitud ha sido rechazada y se ha notificado al solicitante",
       });
 
       fetchApplications();
@@ -171,7 +198,7 @@ const LawyerApplicationsManagement = () => {
         variant: "destructive",
       });
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
@@ -340,32 +367,56 @@ const LawyerApplicationsManagement = () => {
                                   />
                                 </div>
 
-                                <div className="flex space-x-2">
+                                <div className="space-y-3">
                                   <Button
-                                    onClick={() => handleApprove(app.id)}
-                                    disabled={actionLoading}
-                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => handleApproveAutomated(app.id)}
+                                    disabled={actionLoading === app.id}
+                                    className="w-full bg-green-600 hover:bg-green-700"
                                   >
-                                    <CheckCircle2 className="w-4 h-4 mr-1" />
-                                    Aprobar
+                                    {actionLoading === app.id ? (
+                                      <div className="flex items-center">
+                                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                        Procesando aprobación...
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center">
+                                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                                        Aprobar y Crear Cuenta
+                                      </div>
+                                    )}
                                   </Button>
                                   
-                                  <div className="flex-1">
+                                  <div className="space-y-2">
                                     <Input
                                       value={rejectionReason}
                                       onChange={(e) => setRejectionReason(e.target.value)}
                                       placeholder="Motivo de rechazo..."
-                                      className="mb-2"
                                     />
                                     <Button
                                       onClick={() => handleReject(app.id)}
-                                      disabled={actionLoading || !rejectionReason.trim()}
+                                      disabled={actionLoading === app.id || !rejectionReason.trim()}
                                       variant="destructive"
+                                      className="w-full"
                                     >
-                                      <XCircle className="w-4 h-4 mr-1" />
-                                      Rechazar
+                                      {actionLoading === app.id ? (
+                                        <div className="flex items-center">
+                                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                          Procesando...
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-center">
+                                          <XCircle className="w-4 h-4 mr-2" />
+                                          Rechazar y Notificar
+                                        </div>
+                                      )}
                                     </Button>
                                   </div>
+                                </div>
+
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                                    <strong>💡 Proceso automatizado:</strong> Al aprobar se creará automáticamente la cuenta del abogado y se enviarán las credenciales por email.
+                                  </p>
                                 </div>
                               </div>
                             )}
@@ -411,11 +462,18 @@ const LawyerApplicationsManagement = () => {
                   <div className="flex space-x-2">
                     <Button
                       size="sm"
-                      onClick={() => handleApprove(app.id)}
-                      disabled={actionLoading}
+                      onClick={() => handleApproveAutomated(app.id)}
+                      disabled={actionLoading === app.id}
                       className="bg-green-600 hover:bg-green-700"
                     >
-                      Aprobar
+                      {actionLoading === app.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                          Aprobar
+                        </>
+                      )}
                     </Button>
                   </div>
                 )}

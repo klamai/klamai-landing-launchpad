@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import Auth from "./pages/Auth";
 import AuthAbogado from "./pages/AuthAbogado";
+import LawyerActivation from "./pages/LawyerActivation";
 import Dashboard from "./pages/Dashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import LegalNotice from "./pages/LegalNotice";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/abogados/auth" element={<AuthAbogado />} />
+            <Route path="/abogados/activate" element={<LawyerActivation />} />
             <Route path="/auth-callback" element={<AuthCallback />} />
             <Route path="/chat" element={<Chat />} />
             
