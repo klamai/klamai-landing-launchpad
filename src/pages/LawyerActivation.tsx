@@ -9,6 +9,17 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff, CheckCircle, XCircle, Loader2 } from "lucide-react";
 
+interface ActivationToken {
+  id: string;
+  token: string;
+  email: string;
+  temp_password: string;
+  created_at: string;
+  expires_at: string;
+  used_at: string | null;
+  solicitud_id: string;
+}
+
 const LawyerActivation = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -16,7 +27,7 @@ const LawyerActivation = () => {
   const [loading, setLoading] = useState(false);
   const [validatingToken, setValidatingToken] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
-  const [tokenData, setTokenData] = useState<any>(null);
+  const [tokenData, setTokenData] = useState<ActivationToken | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     newPassword: '',
@@ -40,8 +51,9 @@ const LawyerActivation = () => {
 
   const validateToken = async () => {
     try {
+      // Usar consulta SQL directa para evitar problemas de tipos
       const { data, error } = await supabase
-        .from('lawyer_activation_tokens')
+        .from('lawyer_activation_tokens' as any)
         .select('*')
         .eq('token', token)
         .is('used_at', null)
@@ -92,8 +104,8 @@ const LawyerActivation = () => {
     try {
       // Primero iniciar sesión con las credenciales temporales
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: tokenData.email,
-        password: tokenData.temp_password,
+        email: tokenData!.email,
+        password: tokenData!.temp_password,
       });
 
       if (signInError) {
@@ -109,10 +121,10 @@ const LawyerActivation = () => {
         throw new Error('Error al actualizar la contraseña');
       }
 
-      // Marcar el token como usado
+      // Marcar el token como usado usando consulta directa
       const { error: tokenError } = await supabase
-        .from('lawyer_activation_tokens')
-        .update({ used_at: new Date().toISOString() })
+        .from('lawyer_activation_tokens' as any)
+        .update({ used_at: new Date().toISOString() } as any)
         .eq('token', token);
 
       if (tokenError) {

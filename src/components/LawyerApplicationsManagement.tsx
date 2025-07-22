@@ -109,6 +109,7 @@ const LawyerApplicationsManagement = () => {
     try {
       console.log('Iniciando aprobación automatizada para:', applicationId);
       
+      // Usar llamada directa a la función RPC
       const { data, error } = await supabase.rpc('aprobar_solicitud_abogado_automatizado', {
         p_solicitud_id: applicationId,
         p_notas_admin: adminNotes || null
@@ -120,6 +121,32 @@ const LawyerApplicationsManagement = () => {
       }
 
       console.log('Resultado de aprobación automatizada:', data);
+
+      // Enviar email de aprobación a través del Edge Function
+      if (data && data.success) {
+        try {
+          const emailResponse = await supabase.functions.invoke('send-lawyer-approval-email', {
+            body: {
+              tipo: 'aprobacion',
+              email: data.email,
+              nombre: data.nombre,
+              apellido: data.apellido,
+              activationToken: data.activation_token,
+              tempPassword: data.temp_password
+            }
+          });
+
+          if (emailResponse.error) {
+            console.error('Error enviando email:', emailResponse.error);
+            // No fallar la operación por error de email
+          } else {
+            console.log('Email de aprobación enviado exitosamente');
+          }
+        } catch (emailError) {
+          console.error('Error enviando email de aprobación:', emailError);
+          // No fallar la operación por error de email
+        }
+      }
 
       toast({
         title: "¡Solicitud aprobada!",
