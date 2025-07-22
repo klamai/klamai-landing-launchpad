@@ -55,10 +55,10 @@ const SuperAdminDashboard = () => {
     const path = location.pathname;
     if (path.includes('/casos')) {
       setActiveSection("casos");
-    } else if (path.includes('/abogados')) {
-      setActiveSection("abogados");
     } else if (path.includes('/solicitudes-abogado')) {
       setActiveSection("solicitudes-abogado");
+    } else if (path.includes('/abogados')) {
+      setActiveSection("abogados");
     } else if (path.includes('/hojas-encargo')) {
       setActiveSection("hojas-encargo");
     } else if (path.includes('/reportes')) {
