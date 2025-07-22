@@ -124,11 +124,11 @@ const DashboardRedirect = memo(({ children }: DashboardRedirectProps) => {
 
   // Redirección optimizada para abogados
   if (userRole === 'abogado') {
-    console.log('🚀 Usuario es abogado, redirigiendo a dashboard de abogado');
+    console.log('🚀 Redirigiendo a dashboard de abogado');
     return <Navigate to="/abogados/dashboard" replace />;
   }
 
-  console.log('🚀 Usuario es cliente, mostrando dashboard de cliente');
+  console.log('🚀 Mostrando dashboard de cliente');
   // Mostrar dashboard de cliente
   return <>{children}</>;
 });

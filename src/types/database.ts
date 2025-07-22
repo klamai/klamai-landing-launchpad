@@ -188,14 +188,3 @@ export interface DocumentoCliente {
   fecha_subida: string;
   created_at: string;
 }
-
-export interface LawyerActivationToken {
-  id: string;
-  solicitud_id: string;
-  token: string;
-  email: string;
-  temp_password: string;
-  expires_at: string;
-  used_at?: string;
-  created_at: string;
-}

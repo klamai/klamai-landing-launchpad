@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +17,7 @@ import {
   Mail,
   Phone,
   GraduationCap,
-  Calendar,
-  Loader2,
-  Zap
+  Calendar
 } from "lucide-react";
 import {
   Dialog,
@@ -27,12 +26,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 
 // Tipo que coincide exactamente con lo que devuelve Supabase
 interface SolicitudAbogadoFromDB {
@@ -108,97 +101,6 @@ const LawyerApplicationsManagement = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleApproveAutomated = async (applicationId: string) => {
-    setActionLoading(true);
-    try {
-      // Llamar al Edge Function para aprobar y enviar email automáticamente
-      const { data, error } = await supabase.functions.invoke('send-lawyer-approval-email', {
-        body: {
-          solicitudId: applicationId,
-          tipo: 'aprobada',
-          notasAdmin: adminNotes || null
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "¡Solicitud aprobada automáticamente!",
-        description: "Se ha creado la cuenta del abogado y se ha enviado el email de activación",
-      });
-
-      fetchApplications();
-      setSelectedApp(null);
-      setAdminNotes("");
-    } catch (error: any) {
-      console.error('Error approving application automatically:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Error al aprobar la solicitud automáticamente",
-        variant: "destructive",
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleRejectAutomated = async (applicationId: string) => {
-    if (!rejectionReason.trim()) {
-      toast({
-        title: "Error",
-        description: "Debes proporcionar un motivo de rechazo",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setActionLoading(true);
-    try {
-      // Primero rechazar en la base de datos
-      const { error: dbError } = await supabase.rpc('rechazar_solicitud_abogado', {
-        p_solicitud_id: applicationId,
-        p_motivo_rechazo: rejectionReason,
-        p_notas_admin: adminNotes || null
-      });
-
-      if (dbError) throw dbError;
-
-      // Luego enviar email de rechazo
-      const { data, error } = await supabase.functions.invoke('send-lawyer-approval-email', {
-        body: {
-          solicitudId: applicationId,
-          tipo: 'rechazada',
-          motivoRechazo: rejectionReason,
-          notasAdmin: adminNotes || null
-        }
-      });
-
-      if (error) {
-        console.error('Error sending rejection email:', error);
-        // No fallar si el email no se puede enviar
-      }
-
-      toast({
-        title: "Solicitud rechazada",
-        description: "Se ha enviado la notificación al solicitante",
-      });
-
-      fetchApplications();
-      setSelectedApp(null);
-      setRejectionReason("");
-      setAdminNotes("");
-    } catch (error: any) {
-      console.error('Error rejecting application:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Error al rechazar la solicitud",
-        variant: "destructive",
-      });
-    } finally {
-      setActionLoading(false);
     }
   };
 
@@ -366,171 +268,128 @@ const LawyerApplicationsManagement = () => {
                         Ver Detalles
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>
                           Solicitud de {app.nombre} {app.apellido}
                         </DialogTitle>
                       </DialogHeader>
                       
-                      <Tabs defaultValue="details" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="details">Detalles</TabsTrigger>
-                          <TabsTrigger value="actions">Acciones</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="details" className="space-y-6">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <h4 className="font-semibold mb-2">Información Personal</h4>
-                              <div className="space-y-1 text-sm">
-                                <p><strong>Nombre:</strong> {app.nombre} {app.apellido}</p>
-                                <p><strong>Email:</strong> {app.email}</p>
-                                {app.telefono && <p><strong>Teléfono:</strong> {app.telefono}</p>}
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <h4 className="font-semibold mb-2">Información Profesional</h4>
-                              <div className="space-y-1 text-sm">
-                                {app.colegio_profesional && <p><strong>Colegio:</strong> {app.colegio_profesional}</p>}
-                                {app.numero_colegiado && <p><strong>Nº Colegiado:</strong> {app.numero_colegiado}</p>}
-                                {app.experiencia_anos && <p><strong>Experiencia:</strong> {app.experiencia_anos} años</p>}
-                              </div>
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="font-semibold mb-2">Información Personal</h4>
+                            <div className="space-y-1 text-sm">
+                              <p><strong>Nombre:</strong> {app.nombre} {app.apellido}</p>
+                              <p><strong>Email:</strong> {app.email}</p>
+                              {app.telefono && <p><strong>Teléfono:</strong> {app.telefono}</p>}
                             </div>
                           </div>
-
-                          {app.especialidades && app.especialidades.length > 0 && (
-                            <div>
-                              <h4 className="font-semibold mb-2">Especialidades</h4>
-                              <div className="flex flex-wrap gap-2">
-                                {app.especialidades.map((espId) => (
-                                  <Badge key={espId} variant="outline">
-                                    {especialidades[espId] || `ID: ${espId}`}
-                                  </Badge>
-                                ))}
-                              </div>
+                          
+                          <div>
+                            <h4 className="font-semibold mb-2">Información Profesional</h4>
+                            <div className="space-y-1 text-sm">
+                              {app.colegio_profesional && <p><strong>Colegio:</strong> {app.colegio_profesional}</p>}
+                              {app.numero_colegiado && <p><strong>Nº Colegiado:</strong> {app.numero_colegiado}</p>}
+                              {app.experiencia_anos && <p><strong>Experiencia:</strong> {app.experiencia_anos} años</p>}
                             </div>
-                          )}
-
-                          {app.carta_motivacion && (
-                            <div>
-                              <h4 className="font-semibold mb-2">Carta de Motivación</h4>
-                              <p className="text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded whitespace-pre-wrap">
-                                {app.carta_motivacion}
-                              </p>
-                            </div>
-                          )}
-
-                          {app.estado === 'rechazada' && app.motivo_rechazo && (
-                            <div>
-                              <h5 className="font-medium text-red-700 dark:text-red-300 mb-2">Motivo de rechazo:</h5>
-                              <p className="text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded">
-                                {app.motivo_rechazo}
-                              </p>
-                            </div>
-                          )}
-
-                          {app.notas_admin && (
-                            <div>
-                              <h5 className="font-medium mb-2">Notas administrativas:</h5>
-                              <p className="text-sm bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
-                                {app.notas_admin}
-                              </p>
-                            </div>
-                          )}
-                        </TabsContent>
-                        
-                        <TabsContent value="actions" className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">Estado actual:</span>
-                            {getStatusBadge(app.estado)}
                           </div>
+                        </div>
 
-                          {app.estado === 'pendiente' && (
-                            <div className="space-y-4">
-                              <div>
-                                <label className="block text-sm font-medium mb-2">
-                                  Notas administrativas (opcional)
-                                </label>
-                                <Textarea
-                                  value={adminNotes}
-                                  onChange={(e) => setAdminNotes(e.target.value)}
-                                  placeholder="Agregar notas internas..."
-                                  rows={3}
-                                />
-                              </div>
+                        {app.especialidades && app.especialidades.length > 0 && (
+                          <div>
+                            <h4 className="font-semibold mb-2">Especialidades</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {app.especialidades.map((espId) => (
+                                <Badge key={espId} variant="outline">
+                                  {especialidades[espId] || `ID: ${espId}`}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                              <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 p-4 rounded-lg border">
-                                <div className="flex items-start space-x-3">
-                                  <Zap className="w-5 h-5 text-blue-600 mt-0.5" />
+                        {app.carta_motivacion && (
+                          <div>
+                            <h4 className="font-semibold mb-2">Carta de Motivación</h4>
+                            <p className="text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                              {app.carta_motivacion}
+                            </p>
+                          </div>
+                        )}
+
+                        <div>
+                          <h4 className="font-semibold mb-2">Estado y Acciones</h4>
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <span>Estado actual:</span>
+                              {getStatusBadge(app.estado)}
+                            </div>
+
+                            {app.estado === 'pendiente' && (
+                              <div className="space-y-3">
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">
+                                    Notas administrativas (opcional)
+                                  </label>
+                                  <Textarea
+                                    value={adminNotes}
+                                    onChange={(e) => setAdminNotes(e.target.value)}
+                                    placeholder="Agregar notas internas..."
+                                    rows={3}
+                                  />
+                                </div>
+
+                                <div className="flex space-x-2">
+                                  <Button
+                                    onClick={() => handleApprove(app.id)}
+                                    disabled={actionLoading}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                                    Aprobar
+                                  </Button>
+                                  
                                   <div className="flex-1">
-                                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                                      Aprobación Automatizada
-                                    </h4>
-                                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                                      El proceso automatizado creará la cuenta del abogado y enviará un email con las instrucciones de activación.
-                                    </p>
+                                    <Input
+                                      value={rejectionReason}
+                                      onChange={(e) => setRejectionReason(e.target.value)}
+                                      placeholder="Motivo de rechazo..."
+                                      className="mb-2"
+                                    />
                                     <Button
-                                      onClick={() => handleApproveAutomated(app.id)}
-                                      disabled={actionLoading}
-                                      className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                                      onClick={() => handleReject(app.id)}
+                                      disabled={actionLoading || !rejectionReason.trim()}
+                                      variant="destructive"
                                     >
-                                      {actionLoading ? (
-                                        <>
-                                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                          Procesando...
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Zap className="w-4 h-4 mr-2" />
-                                          Aprobar Automáticamente
-                                        </>
-                                      )}
+                                      <XCircle className="w-4 h-4 mr-1" />
+                                      Rechazar
                                     </Button>
                                   </div>
                                 </div>
                               </div>
-                              
-                              <div className="border-t pt-4">
-                                <h4 className="font-medium mb-3 text-red-700 dark:text-red-300">
-                                  Rechazar Solicitud
-                                </h4>
-                                <div className="space-y-3">
-                                  <div>
-                                    <label className="block text-sm font-medium mb-1">
-                                      Motivo de rechazo *
-                                    </label>
-                                    <Textarea
-                                      value={rejectionReason}
-                                      onChange={(e) => setRejectionReason(e.target.value)}
-                                      placeholder="Explica el motivo del rechazo..."
-                                      rows={3}
-                                    />
-                                  </div>
-                                  <Button
-                                    onClick={() => handleRejectAutomated(app.id)}
-                                    disabled={actionLoading || !rejectionReason.trim()}
-                                    variant="destructive"
-                                  >
-                                    {actionLoading ? (
-                                      <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Rechazando...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <XCircle className="w-4 h-4 mr-2" />
-                                        Rechazar y Notificar
-                                      </>
-                                    )}
-                                  </Button>
-                                </div>
+                            )}
+
+                            {app.estado === 'rechazada' && app.motivo_rechazo && (
+                              <div>
+                                <h5 className="font-medium text-red-700 dark:text-red-300">Motivo de rechazo:</h5>
+                                <p className="text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                                  {app.motivo_rechazo}
+                                </p>
                               </div>
-                            </div>
-                          )}
-                        </TabsContent>
-                      </Tabs>
+                            )}
+
+                            {app.notas_admin && (
+                              <div>
+                                <h5 className="font-medium">Notas administrativas:</h5>
+                                <p className="text-sm bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                                  {app.notas_admin}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </DialogContent>
                   </Dialog>
                 </div>
@@ -552,15 +411,10 @@ const LawyerApplicationsManagement = () => {
                   <div className="flex space-x-2">
                     <Button
                       size="sm"
-                      onClick={() => handleApproveAutomated(app.id)}
+                      onClick={() => handleApprove(app.id)}
                       disabled={actionLoading}
-                      className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                      className="bg-green-600 hover:bg-green-700"
                     >
-                      {actionLoading ? (
-                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                      ) : (
-                        <Zap className="w-4 h-4 mr-1" />
-                      )}
                       Aprobar
                     </Button>
                   </div>

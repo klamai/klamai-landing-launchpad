@@ -4,127 +4,120 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
-import ProtectedRoute from "./components/ProtectedRoute";
-import ProtectedLawyerRoute from "./components/ProtectedLawyerRoute";
-import DashboardRedirect from "./components/DashboardRedirect";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import DashboardRedirect from "@/components/DashboardRedirect";
+import LawyerDashboardRouter from "@/components/LawyerDashboardRouter";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
-import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
-import AuthCallback from "./pages/AuthCallback";
 import AuthAbogado from "./pages/AuthAbogado";
-import SuperAdminDashboard from "./components/SuperAdminDashboard";
-import RegularLawyerDashboard from "./components/RegularLawyerDashboard";
-import NotFound from "./pages/NotFound";
-import PagoExitoso from "./pages/PagoExitoso";
-import PagoCancelado from "./pages/PagoCancelado";
+import Dashboard from "./pages/Dashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import LegalNotice from "./pages/LegalNotice";
-import LawyerActivation from "./pages/LawyerActivation";
+import PagoExitoso from "./pages/PagoExitoso";
+import PagoCancelado from "./pages/PagoCancelado";
+import AuthCallback from "./pages/AuthCallback";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="/chat/:sessionId" element={<Chat />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/abogados/auth" element={<AuthAbogado />} />
-              <Route path="/abogados/activate" element={<LawyerActivation />} />
-              <Route path="/pago/exitoso" element={<PagoExitoso />} />
-              <Route path="/pago/cancelado" element={<PagoCancelado />} />
-              <Route path="/politica-privacidad" element={<PrivacyPolicy />} />
-              <Route path="/aviso-legal" element={<LegalNotice />} />
-              
-              {/* Protected client dashboard with role-based redirect */}
-              <Route 
-                path="/dashboard/*" 
-                element={
-                  <ProtectedRoute>
-                    <DashboardRedirect>
-                      <Dashboard />
-                    </DashboardRedirect>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Protected lawyer routes */}
-              <Route 
-                path="/abogados/dashboard" 
-                element={
-                  <ProtectedLawyerRoute>
-                    <SuperAdminDashboard />
-                  </ProtectedLawyerRoute>
-                } 
-              />
-              <Route 
-                path="/abogados/dashboard/casos" 
-                element={
-                  <ProtectedLawyerRoute>
-                    <SuperAdminDashboard />
-                  </ProtectedLawyerRoute>
-                } 
-              />
-              <Route 
-                path="/abogados/dashboard/abogados" 
-                element={
-                  <ProtectedLawyerRoute>
-                    <SuperAdminDashboard />
-                  </ProtectedLawyerRoute>
-                } 
-              />
-              <Route 
-                path="/abogados/dashboard/reportes" 
-                element={
-                  <ProtectedLawyerRoute>
-                    <SuperAdminDashboard />
-                  </ProtectedLawyerRoute>
-                } 
-              />
-              <Route 
-                path="/abogados/dashboard/configuracion" 
-                element={
-                  <ProtectedLawyerRoute>
-                    <SuperAdminDashboard />
-                  </ProtectedLawyerRoute>
-                } 
-              />
-              <Route 
-                path="/abogados/dashboard/notificaciones" 
-                element={
-                  <ProtectedLawyerRoute>
-                    <SuperAdminDashboard />
-                  </ProtectedLawyerRoute>
-                } 
-              />
-              <Route 
-                path="/abogados/dashboard/asistente-ia" 
-                element={
-                  <ProtectedLawyerRoute>
-                    <SuperAdminDashboard />
-                  </ProtectedLawyerRoute>
-                } 
-              />
-              
-              {/* 404 route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/abogados/auth" element={<AuthAbogado />} />
+            <Route path="/auth-callback" element={<AuthCallback />} />
+            <Route path="/chat" element={<Chat />} />
+            
+            {/* Rutas protegidas del dashboard de clientes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/nueva-consulta" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/casos" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/casos/:casoId" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/perfil" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/configuracion" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/facturacion" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/notificaciones" element={
+              <ProtectedRoute>
+                <DashboardRedirect>
+                  <Dashboard />
+                </DashboardRedirect>
+              </ProtectedRoute>
+            } />
+            
+            {/* Rutas protegidas del dashboard de abogados - Enrutador inteligente */}
+            <Route path="/abogados/dashboard" element={
+              <ProtectedRoute>
+                <LawyerDashboardRouter />
+              </ProtectedRoute>
+            } />
+            <Route path="/abogados/dashboard/*" element={
+              <ProtectedRoute>
+                <LawyerDashboardRouter />
+              </ProtectedRoute>
+            } />
+            
+            {/* Rutas públicas */}
+            <Route path="/politicas-privacidad" element={<PrivacyPolicy />} />
+            <Route path="/aviso-legal" element={<LegalNotice />} />
+            <Route path="/pago-exitoso" element={<PagoExitoso />} />
+            <Route path="/pago-cancelado" element={<PagoCancelado />} />
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

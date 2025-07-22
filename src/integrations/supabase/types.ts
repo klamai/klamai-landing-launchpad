@@ -405,47 +405,6 @@ export type Database = {
         }
         Relationships: []
       }
-      lawyer_activation_tokens: {
-        Row: {
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          solicitud_id: string
-          temp_password: string
-          token: string
-          used_at: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          expires_at?: string
-          id?: string
-          solicitud_id: string
-          temp_password: string
-          token: string
-          used_at?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          solicitud_id?: string
-          temp_password?: string
-          token?: string
-          used_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lawyer_activation_tokens_solicitud_id_fkey"
-            columns: ["solicitud_id"]
-            isOneToOne: false
-            referencedRelation: "solicitudes_abogado"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       notificaciones: {
         Row: {
           created_at: string
@@ -851,10 +810,6 @@ export type Database = {
         Args: { p_solicitud_id: string; p_notas_admin?: string }
         Returns: boolean
       }
-      aprobar_solicitud_abogado_automatizado: {
-        Args: { p_solicitud_id: string; p_notas_admin?: string }
-        Returns: Json
-      }
       assign_anonymous_case_to_user: {
         Args: { p_caso_id: string; p_session_token: string; p_user_id: string }
         Returns: boolean
@@ -866,10 +821,6 @@ export type Database = {
       can_access_case: {
         Args: { p_caso_id: string }
         Returns: boolean
-      }
-      cleanup_expired_activation_tokens: {
-        Args: Record<PropertyKey, never>
-        Returns: number
       }
       cleanup_expired_anonymous_cases: {
         Args: Record<PropertyKey, never>
