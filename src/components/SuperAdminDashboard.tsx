@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { SidebarDashboard, SidebarBody, SidebarLink, Logo, LogoIcon } from "@/components/ui/sidebar-dashboard";
 import { 
   LayoutDashboard, 
@@ -12,19 +13,17 @@ import {
   Sun,
   UserCheck,
   Briefcase,
-  Bot,
-  UserPlus
+  Bot
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperAdminStats } from "@/hooks/useSuperAdminStats";
 import SuperAdminMetrics from "@/components/SuperAdminMetrics";
 import CasesManagement from "@/components/CasesManagement";
 import LawyersManagement from "@/components/LawyersManagement";
-import LawyerApplicationsManagement from "@/components/LawyerApplicationsManagement";
 import { Button } from "@/components/ui/button";
 
 const SuperAdminDashboard = () => {
@@ -55,12 +54,8 @@ const SuperAdminDashboard = () => {
     const path = location.pathname;
     if (path.includes('/casos')) {
       setActiveSection("casos");
-    } else if (path.includes('/solicitudes-abogado')) {
-      setActiveSection("solicitudes-abogado");
     } else if (path.includes('/abogados')) {
       setActiveSection("abogados");
-    } else if (path.includes('/hojas-encargo')) {
-      setActiveSection("hojas-encargo");
     } else if (path.includes('/reportes')) {
       setActiveSection("reportes");
     } else if (path.includes('/configuracion')) {
@@ -102,13 +97,6 @@ const SuperAdminDashboard = () => {
     }
   };
 
-  const handleNavigation = (href: string) => {
-    navigate(href);
-    if (window.innerWidth < 768) {
-      setOpen(false);
-    }
-  };
-
   const links = [
     {
       label: "Dashboard",
@@ -125,24 +113,10 @@ const SuperAdminDashboard = () => {
       ),
     },
     {
-      label: "Hojas de Encargo",
-      href: "/abogados/dashboard/hojas-encargo",
-      icon: (
-        <FileText className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
       label: "Gestión de Abogados",
       href: "/abogados/dashboard/abogados",
       icon: (
         <Users className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Solicitudes de Abogado",
-      href: "/abogados/dashboard/solicitudes-abogado",
-      icon: (
-        <UserPlus className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
@@ -188,11 +162,9 @@ const SuperAdminDashboard = () => {
               {open ? <Logo /> : <LogoIcon />}
               <div className="mt-8 flex flex-col gap-2 ">
                 {links.map((link, idx) => (
-                  <SidebarLink 
-                    key={idx} 
-                    link={link} 
-                    onNavigate={handleNavigation}
-                  />
+                  <Link key={idx} to={link.href}>
+                    <SidebarLink link={link} />
+                  </Link>
                 ))}
                 <SidebarLink 
                   link={{
@@ -244,10 +216,6 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
         return <CasesManagementSection />;
       case "abogados":
         return <LawyersManagementSection />;
-      case "solicitudes-abogado":
-        return <LawyerApplicationsSection />;
-      case "hojas-encargo":
-        return <HojasEncargoSection />;
       case "reportes":
         return <ReportesSection />;
       case "configuracion":
@@ -273,6 +241,8 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
 };
 
 const SuperAdminDashboardSection = () => {
+  const { stats } = useSuperAdminStats();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -361,32 +331,6 @@ const LawyersManagementSection = () => {
     </motion.div>
   );
 };
-
-const LawyerApplicationsSection = () => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <LawyerApplicationsManagement />
-    </motion.div>
-  );
-};
-
-const HojasEncargoSection = () => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="space-y-6"
-  >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hojas de Encargo</h1>
-    <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <FileText className="h-16 w-16 text-indigo-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">Sistema de hojas de encargo próximamente disponible</p>
-    </div>
-  </motion.div>
-);
 
 const ReportesSection = () => (
   <motion.div
