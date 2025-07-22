@@ -19,7 +19,6 @@ import {
   GraduationCap,
   Calendar
 } from "lucide-react";
-import { SolicitudAbogado } from "@/types/database";
 import {
   Dialog,
   DialogContent,
@@ -28,11 +27,36 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+// Tipo que coincide exactamente con lo que devuelve Supabase
+interface SolicitudAbogadoFromDB {
+  id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono?: string;
+  colegio_profesional?: string;
+  numero_colegiado?: string;
+  especialidades?: number[];
+  experiencia_anos?: number;
+  cv_url?: string;
+  carta_motivacion?: string;
+  documentos_verificacion?: any;
+  estado: string; // Supabase devuelve string genérico
+  motivo_rechazo?: string;
+  revisado_por?: string;
+  fecha_revision?: string;
+  notas_admin?: string;
+  acepta_politicas: boolean;
+  acepta_comunicacion: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 const LawyerApplicationsManagement = () => {
-  const [applications, setApplications] = useState<SolicitudAbogado[]>([]);
+  const [applications, setApplications] = useState<SolicitudAbogadoFromDB[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedApp, setSelectedApp] = useState<SolicitudAbogado | null>(null);
+  const [selectedApp, setSelectedApp] = useState<SolicitudAbogadoFromDB | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
