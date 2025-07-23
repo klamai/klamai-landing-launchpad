@@ -847,6 +847,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_lawyer_account: {
+        Args: { p_token: string; p_auth_user_id: string }
+        Returns: Json
+      }
       aprobar_solicitud_abogado: {
         Args: { p_solicitud_id: string; p_notas_admin?: string }
         Returns: boolean

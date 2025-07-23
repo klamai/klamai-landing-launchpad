@@ -51,8 +51,7 @@ const LawyerActivation = () => {
 
   const validateToken = async () => {
     try {
-      // Usar consulta SQL directa para evitar problemas de tipos
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('lawyer_activation_tokens')
         .select('*')
         .eq('token', token)
@@ -102,47 +101,61 @@ const LawyerActivation = () => {
 
     setLoading(true);
     try {
-      // Primero iniciar sesión con las credenciales temporales
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      console.log('🔧 Iniciando proceso de activación...');
+
+      // Crear usuario en auth con la contraseña elegida
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: tokenData!.email,
-        password: tokenData!.temp_password,
+        password: formData.newPassword,
+        options: {
+          emailRedirectTo: `${window.location.origin}/abogados/dashboard`,
+          data: {
+            role: 'abogado',
+            approved_by_admin: 'true',
+            activation_token: token
+          }
+        }
       });
 
-      if (signInError) {
-        throw new Error('Error al iniciar sesión con credenciales temporales');
+      if (signUpError) {
+        console.error('❌ Error en signUp:', signUpError);
+        throw new Error('Error al crear la cuenta: ' + signUpError.message);
       }
 
-      // Cambiar la contraseña
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: formData.newPassword
-      });
+      console.log('✅ Usuario auth creado:', authData.user?.id);
 
-      if (updateError) {
-        throw new Error('Error al actualizar la contraseña');
+      if (!authData.user) {
+        throw new Error('No se pudo crear el usuario');
       }
 
-      // Marcar el token como usado usando consulta directa
-      const { error: tokenError } = await (supabase as any)
-        .from('lawyer_activation_tokens')
-        .update({ used_at: new Date().toISOString() })
-        .eq('token', token);
+      // Ejecutar la función para completar la activación
+      const { data: activationResult, error: activationError } = await supabase.rpc(
+        'activate_lawyer_account',
+        {
+          p_token: token,
+          p_auth_user_id: authData.user.id
+        }
+      );
 
-      if (tokenError) {
-        console.error('Error marking token as used:', tokenError);
+      if (activationError) {
+        console.error('❌ Error en activate_lawyer_account:', activationError);
+        throw new Error('Error al activar la cuenta: ' + activationError.message);
       }
+
+      console.log('✅ Activación completada:', activationResult);
 
       toast({
-        title: "¡Cuenta activada!",
-        description: "Tu cuenta ha sido activada exitosamente. Redirigiendo al dashboard...",
+        title: "¡Cuenta activada exitosamente!",
+        description: "Tu cuenta de abogado ha sido activada. Redirigiendo al dashboard...",
       });
 
-      // Redirigir al dashboard de abogados
+      // Redirigir al dashboard de abogados después de un breve delay
       setTimeout(() => {
-        navigate('/abogados/dashboard');
+        navigate('/abogados/dashboard', { replace: true });
       }, 2000);
 
     } catch (error: any) {
-      console.error('Error activating account:', error);
+      console.error('❌ Error en proceso de activación:', error);
       toast({
         title: "Error de activación",
         description: error.message || "Error al activar la cuenta",
@@ -204,7 +217,7 @@ const LawyerActivation = () => {
           </div>
           <CardTitle className="text-2xl text-gray-900">Activar Cuenta de Abogado</CardTitle>
           <p className="text-sm text-gray-600 mt-2">
-            Configura tu contraseña permanente para completar la activación
+            Configura tu contraseña para completar la activación de tu cuenta
           </p>
         </CardHeader>
         
