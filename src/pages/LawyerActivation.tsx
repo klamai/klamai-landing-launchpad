@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -101,9 +100,10 @@ const LawyerActivation = () => {
 
     setLoading(true);
     try {
-      console.log('🔧 Iniciando proceso de activación...');
+      console.log('🔧 Iniciando proceso de activación de abogado...');
 
-      // Crear usuario en auth con la contraseña elegida y el token en metadata
+      // Crear usuario en auth con la contraseña elegida
+      // IMPORTANTE: Incluir el token en metadata para que handle_new_user lo procese
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: tokenData!.email,
         password: formData.newPassword,
@@ -112,28 +112,38 @@ const LawyerActivation = () => {
           data: {
             role: 'abogado',
             approved_by_admin: 'true',
-            activation_token: token // CRÍTICO: Pasar el token en metadata
+            activation_token: token // CRÍTICO: Pasar el token para auto-confirmación
           }
         }
       });
 
       if (signUpError) {
         console.error('❌ Error en signUp:', signUpError);
+        
+        // Manejar error específico de email ya registrado
+        if (signUpError.message.includes('already registered')) {
+          throw new Error('Este email ya está registrado. Si ya tienes una cuenta, inicia sesión normalmente.');
+        }
+        
         throw new Error('Error al crear la cuenta: ' + signUpError.message);
       }
 
       console.log('✅ Usuario auth creado:', authData.user?.id);
-      console.log('✅ Token pasado en metadata:', token);
 
       if (!authData.user) {
         throw new Error('No se pudo crear el usuario');
       }
 
-      // El trigger on_auth_user_created debería ejecutar handle_new_user automáticamente
-      // que detectará el activation_token en raw_user_meta_data y creará el perfil
+      // Esperar a que el trigger procese la activación
+      console.log('⏳ Esperando confirmación automática...');
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
-      // Esperar un momento para que el trigger se ejecute
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Verificar que el email fue confirmado automáticamente
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('❌ Error obteniendo sesión:', sessionError);
+      }
 
       // Verificar que el perfil se creó correctamente
       const { data: profileData, error: profileError } = await supabase
@@ -150,12 +160,35 @@ const LawyerActivation = () => {
 
       console.log('✅ Perfil de abogado creado automáticamente:', profileData);
 
+      // Intentar iniciar sesión automáticamente si no hay sesión activa
+      if (!session) {
+        console.log('🔐 Iniciando sesión automáticamente...');
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: tokenData!.email,
+          password: formData.newPassword,
+        });
+
+        if (signInError) {
+          console.error('❌ Error en signIn automático:', signInError);
+          // No es crítico, el usuario puede iniciar sesión manualmente
+          toast({
+            title: "Cuenta activada",
+            description: "Tu cuenta ha sido activada exitosamente. Ahora puedes iniciar sesión.",
+          });
+          
+          setTimeout(() => {
+            navigate('/auth', { replace: true });
+          }, 2000);
+          return;
+        }
+      }
+
       toast({
         title: "¡Cuenta activada exitosamente!",
         description: "Tu cuenta de abogado ha sido activada. Redirigiendo al dashboard...",
       });
 
-      // Redirigir al dashboard de abogados después de un breve delay
+      // Redirigir al dashboard de abogados
       setTimeout(() => {
         navigate('/abogados/dashboard', { replace: true });
       }, 2000);
