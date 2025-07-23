@@ -60,10 +60,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('✅ Token válido encontrado:', tokenData.email);
 
-    // Verificar que no existe ya un usuario con este email
-    const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(tokenData.email);
+    // Verificar que no existe ya un usuario con este email usando listUsers
+    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
     
-    if (existingUser.user) {
+    if (listError) {
+      console.error('❌ Error verificando usuarios existentes:', listError);
+      throw new Error('Error verificando usuarios existentes');
+    }
+
+    const existingUser = existingUsers.users.find(user => user.email === tokenData.email);
+    
+    if (existingUser) {
       console.error('❌ Usuario ya existe:', tokenData.email);
       throw new Error('Ya existe una cuenta con este email');
     }
