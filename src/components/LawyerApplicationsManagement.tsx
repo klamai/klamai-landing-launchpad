@@ -137,14 +137,19 @@ const LawyerApplicationsManagement = () => {
       if (data && (data as AutomatedApprovalResult).success) {
         try {
           const result = data as AutomatedApprovalResult;
+          
+          // Corregir la estructura del payload para que coincida con el Edge Function
           const emailResponse = await supabase.functions.invoke('send-lawyer-approval-email', {
             body: {
               tipo: 'aprobacion',
               email: result.email,
               nombre: result.nombre,
               apellido: result.apellido,
-              activationToken: result.activation_token,
-              tempPassword: result.temp_password
+              credenciales: {
+                email: result.email,
+                password: result.temp_password, // Mapear temp_password a password
+                activationToken: result.activation_token
+              }
             }
           });
 
