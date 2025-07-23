@@ -103,7 +103,7 @@ const LawyerActivation = () => {
     try {
       console.log('🔧 Iniciando proceso de activación...');
 
-      // Crear usuario en auth con la contraseña elegida
+      // Crear usuario en auth con la contraseña elegida y el token en metadata
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: tokenData!.email,
         password: formData.newPassword,
@@ -112,7 +112,7 @@ const LawyerActivation = () => {
           data: {
             role: 'abogado',
             approved_by_admin: 'true',
-            activation_token: token
+            activation_token: token // CRÍTICO: Pasar el token en metadata
           }
         }
       });
@@ -123,26 +123,32 @@ const LawyerActivation = () => {
       }
 
       console.log('✅ Usuario auth creado:', authData.user?.id);
+      console.log('✅ Token pasado en metadata:', token);
 
       if (!authData.user) {
         throw new Error('No se pudo crear el usuario');
       }
 
-      // Ejecutar la función para completar la activación
-      const { data: activationResult, error: activationError } = await supabase.rpc(
-        'activate_lawyer_account',
-        {
-          p_token: token,
-          p_auth_user_id: authData.user.id
-        }
-      );
+      // El trigger on_auth_user_created debería ejecutar handle_new_user automáticamente
+      // que detectará el activation_token en raw_user_meta_data y creará el perfil
 
-      if (activationError) {
-        console.error('❌ Error en activate_lawyer_account:', activationError);
-        throw new Error('Error al activar la cuenta: ' + activationError.message);
+      // Esperar un momento para que el trigger se ejecute
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Verificar que el perfil se creó correctamente
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .eq('role', 'abogado')
+        .single();
+
+      if (profileError || !profileData) {
+        console.error('❌ Error verificando perfil:', profileError);
+        throw new Error('Error: El perfil no se creó automáticamente. Contacta al administrador.');
       }
 
-      console.log('✅ Activación completada:', activationResult);
+      console.log('✅ Perfil de abogado creado automáticamente:', profileData);
 
       toast({
         title: "¡Cuenta activada exitosamente!",
