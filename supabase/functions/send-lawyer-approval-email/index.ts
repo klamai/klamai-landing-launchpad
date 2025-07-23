@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,19 +20,6 @@ interface EmailRequest {
   motivoRechazo?: string;
 }
 
-// Función para codificar caracteres especiales de forma segura
-function safeBase64Encode(str: string): string {
-  try {
-    // Convertir a UTF-8 bytes y luego a base64
-    const encoder = new TextEncoder();
-    const data = encoder.encode(str);
-    return btoa(String.fromCharCode(...data));
-  } catch (error) {
-    console.error('Error encoding base64:', error);
-    return '';
-  }
-}
-
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -41,6 +29,14 @@ const handler = async (req: Request): Promise<Response> => {
     const { tipo, email, nombre, apellido, credenciales, motivoRechazo }: EmailRequest = await req.json();
 
     console.log(`Enviando email de ${tipo} a ${email}`);
+
+    // Inicializar Resend con la API key
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    if (!resendApiKey) {
+      throw new Error('RESEND_API_KEY no configurada');
+    }
+
+    const resend = new Resend(resendApiKey);
 
     // Configurar el contenido del email según el tipo
     let subject: string;
@@ -144,75 +140,27 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Tipo de email no válido o faltan credenciales para aprobación');
     }
 
-    // Obtener credenciales de Gmail
-    const gmailEmail = Deno.env.get('GMAIL_SMTP_EMAIL');
-    const gmailPassword = Deno.env.get('GMAIL_SMTP_PASSWORD');
-
-    if (!gmailEmail || !gmailPassword) {
-      console.log('Credenciales de Gmail no configuradas, simulando envío...');
-      
-      // En desarrollo, simular el envío exitoso
-      console.log(`Email de ${tipo} simulado para ${email}`);
-      console.log('Asunto:', subject);
-      console.log('Contenido HTML guardado correctamente');
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: `Email de ${tipo} simulado exitosamente (desarrollo)`,
-        emailSent: true,
-        simulated: true
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Intentar envío real con método simplificado
-    console.log('Intentando envío real de email...');
+    // Enviar email usando Resend
+    console.log('Enviando email a través de Resend...');
     
-    try {
-      // Crear el payload de email de forma simple
-      const emailPayload = {
-        from: gmailEmail,
-        to: email,
-        subject: subject,
-        html: htmlContent
-      };
+    const emailResponse = await resend.emails.send({
+      from: 'KlamAI <noreply@resend.dev>', // Usaremos el dominio por defecto de Resend
+      to: [email],
+      subject: subject,
+      html: htmlContent,
+    });
 
-      // Log del payload (sin contenido HTML completo)
-      console.log('Payload de email creado:', {
-        from: emailPayload.from,
-        to: emailPayload.to,
-        subject: emailPayload.subject,
-        htmlLength: emailPayload.html.length
-      });
+    console.log('Email enviado exitosamente:', emailResponse);
 
-      // Por ahora, marcar como exitoso hasta configurar SMTP real
-      console.log(`Email de ${tipo} procesado exitosamente para ${email}`);
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: `Email de ${tipo} enviado exitosamente`,
-        emailSent: true
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-
-    } catch (emailError: any) {
-      console.error('Error en envío de email:', emailError);
-      
-      // Fallback: marcar como enviado para no bloquear el flujo
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: `Email de ${tipo} procesado (fallback)`,
-        emailSent: true,
-        warning: 'Email enviado en modo fallback'
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: `Email de ${tipo} enviado exitosamente`,
+      emailSent: true,
+      emailId: emailResponse.data?.id
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error: any) {
     console.error('Error en función de email:', error);
