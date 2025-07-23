@@ -38,6 +38,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     const resend = new Resend(resendApiKey);
 
+    // Obtener la dirección de email configurada
+    const fromEmail = Deno.env.get('FROM_EMAIL') || 'KlamAI <noreply@klamai.com>';
+
     // Obtener la URL base desde la request para generar la URL de activación correcta
     const origin = req.headers.get('origin') || 'https://vwnoznuznmrdaumjyctg.supabase.co';
     
@@ -150,12 +153,13 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Tipo de email no válido o faltan credenciales para aprobación');
     }
 
-    // Enviar email usando Resend
+    // Enviar email usando Resend con el dominio configurado
     console.log('Enviando email a través de Resend...');
     console.log('URL de activación generada:', tipo === 'aprobacion' ? `${origin}/abogados/activate?token=${credenciales?.activationToken}` : 'N/A');
+    console.log('Enviando desde:', fromEmail);
     
     const emailResponse = await resend.emails.send({
-      from: 'KlamAI <noreply@resend.dev>',
+      from: fromEmail,
       to: [email],
       subject: subject,
       html: htmlContent,
@@ -168,7 +172,8 @@ const handler = async (req: Request): Promise<Response> => {
       message: `Email de ${tipo} enviado exitosamente`,
       emailSent: true,
       emailId: emailResponse.data?.id,
-      activationUrl: tipo === 'aprobacion' ? `${origin}/abogados/activate?token=${credenciales?.activationToken}` : undefined
+      activationUrl: tipo === 'aprobacion' ? `${origin}/abogados/activate?token=${credenciales?.activationToken}` : undefined,
+      fromEmail: fromEmail
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
