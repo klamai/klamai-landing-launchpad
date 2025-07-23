@@ -38,12 +38,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     const resend = new Resend(resendApiKey);
 
+    // Obtener la URL base desde la request para generar la URL de activación correcta
+    const origin = req.headers.get('origin') || 'https://vwnoznuznmrdaumjyctg.supabase.co';
+    
     // Configurar el contenido del email según el tipo
     let subject: string;
     let htmlContent: string;
 
     if (tipo === 'aprobacion' && credenciales) {
       subject = '¡Bienvenido a KlamAI - Tu cuenta de abogado ha sido aprobada!';
+      
+      // Generar la URL de activación correcta
+      const activationUrl = `${origin}/abogados/activate?token=${credenciales.activationToken}`;
+      
       htmlContent = `
         <!DOCTYPE html>
         <html>
@@ -66,7 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://vwnoznuznmrdaumjyctg.supabase.co/abogados/activate?token=${credenciales.activationToken}" 
+              <a href="${activationUrl}" 
                  style="background: #4A90E2; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
                 Activar mi cuenta ahora
               </a>
@@ -79,8 +86,7 @@ const handler = async (req: Request): Promise<Response> => {
             <h3 style="color: #4A90E2;">Próximos pasos:</h3>
             <ol style="color: #666;">
               <li>Haz clic en el botón "Activar mi cuenta ahora"</li>
-              <li>Inicia sesión con las credenciales proporcionadas</li>
-              <li>Cambia tu contraseña temporal por una permanente</li>
+              <li>Configura tu nueva contraseña</li>
               <li>Completa tu perfil profesional</li>
               <li>¡Comienza a recibir casos!</li>
             </ol>
@@ -90,6 +96,10 @@ const handler = async (req: Request): Promise<Response> => {
             <p style="color: #666; font-size: 14px; text-align: center;">
               Si tienes alguna pregunta, no dudes en contactarnos.<br>
               <strong>Equipo KlamAI</strong>
+            </p>
+            
+            <p style="color: #999; font-size: 12px; text-align: center; margin-top: 20px;">
+              URL de activación: ${activationUrl}
             </p>
           </div>
         </body>
@@ -142,9 +152,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Enviar email usando Resend
     console.log('Enviando email a través de Resend...');
+    console.log('URL de activación generada:', tipo === 'aprobacion' ? `${origin}/abogados/activate?token=${credenciales?.activationToken}` : 'N/A');
     
     const emailResponse = await resend.emails.send({
-      from: 'KlamAI <noreply@resend.dev>', // Usaremos el dominio por defecto de Resend
+      from: 'KlamAI <noreply@resend.dev>',
       to: [email],
       subject: subject,
       html: htmlContent,
@@ -156,7 +167,8 @@ const handler = async (req: Request): Promise<Response> => {
       success: true, 
       message: `Email de ${tipo} enviado exitosamente`,
       emailSent: true,
-      emailId: emailResponse.data?.id
+      emailId: emailResponse.data?.id,
+      activationUrl: tipo === 'aprobacion' ? `${origin}/abogados/activate?token=${credenciales?.activationToken}` : undefined
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
