@@ -102,91 +102,49 @@ const LawyerActivation = () => {
     try {
       console.log('🔧 Iniciando proceso de activación de abogado...');
 
-      // Crear usuario en auth con la contraseña elegida
-      // IMPORTANTE: Incluir el token en metadata para que handle_new_user lo procese
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: tokenData!.email,
-        password: formData.newPassword,
-        options: {
-          emailRedirectTo: `${window.location.origin}/abogados/dashboard`,
-          data: {
-            role: 'abogado',
-            approved_by_admin: 'true',
-            activation_token: token // CRÍTICO: Pasar el token para auto-confirmación
-          }
+      // Usar la nueva Edge Function para crear el usuario confirmado
+      const { data: activationData, error: activationError } = await supabase.functions.invoke('activate-lawyer-account', {
+        body: {
+          token: token,
+          password: formData.newPassword
         }
       });
 
-      if (signUpError) {
-        console.error('❌ Error en signUp:', signUpError);
-        
-        // Manejar error específico de email ya registrado
-        if (signUpError.message.includes('already registered')) {
-          throw new Error('Este email ya está registrado. Si ya tienes una cuenta, inicia sesión normalmente.');
-        }
-        
-        throw new Error('Error al crear la cuenta: ' + signUpError.message);
+      if (activationError) {
+        console.error('❌ Error en Edge Function:', activationError);
+        throw new Error('Error al activar la cuenta: ' + activationError.message);
       }
 
-      console.log('✅ Usuario auth creado:', authData.user?.id);
-
-      if (!authData.user) {
-        throw new Error('No se pudo crear el usuario');
+      if (!activationData.success) {
+        throw new Error(activationData.error || 'Error desconocido al activar la cuenta');
       }
 
-      // Esperar a que el trigger procese la activación
-      console.log('⏳ Esperando confirmación automática...');
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
-      // Verificar que el email fue confirmado automáticamente
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('❌ Error obteniendo sesión:', sessionError);
-      }
-
-      // Verificar que el perfil se creó correctamente
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .eq('role', 'abogado')
-        .single();
-
-      if (profileError || !profileData) {
-        console.error('❌ Error verificando perfil:', profileError);
-        throw new Error('Error: El perfil no se creó automáticamente. Contacta al administrador.');
-      }
-
-      console.log('✅ Perfil de abogado creado automáticamente:', profileData);
-
-      // Intentar iniciar sesión automáticamente si no hay sesión activa
-      if (!session) {
-        console.log('🔐 Iniciando sesión automáticamente...');
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: tokenData!.email,
-          password: formData.newPassword,
-        });
-
-        if (signInError) {
-          console.error('❌ Error en signIn automático:', signInError);
-          // No es crítico, el usuario puede iniciar sesión manualmente
-          toast({
-            title: "Cuenta activada",
-            description: "Tu cuenta ha sido activada exitosamente. Ahora puedes iniciar sesión.",
-          });
-          
-          setTimeout(() => {
-            navigate('/auth', { replace: true });
-          }, 2000);
-          return;
-        }
-      }
+      console.log('✅ Cuenta activada exitosamente:', activationData);
 
       toast({
         title: "¡Cuenta activada exitosamente!",
-        description: "Tu cuenta de abogado ha sido activada. Redirigiendo al dashboard...",
+        description: "Tu cuenta de abogado ha sido activada. Iniciando sesión...",
       });
+
+      // Iniciar sesión automáticamente con las credenciales
+      console.log('🔐 Iniciando sesión automáticamente...');
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: tokenData!.email,
+        password: formData.newPassword,
+      });
+
+      if (signInError) {
+        console.error('❌ Error en signIn automático:', signInError);
+        toast({
+          title: "Cuenta activada",
+          description: "Tu cuenta ha sido activada exitosamente. Ahora puedes iniciar sesión.",
+        });
+        
+        setTimeout(() => {
+          navigate('/abogados/auth', { replace: true });
+        }, 2000);
+        return;
+      }
 
       // Redirigir al dashboard de abogados
       setTimeout(() => {
