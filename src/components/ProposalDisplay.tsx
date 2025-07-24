@@ -1,14 +1,13 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Star, X } from 'lucide-react';
+import { Star, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PricingSection } from '@/components/ui/pricing-section';
 import AuthModal from '@/components/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { useStripePayment } from '@/hooks/useStripePayment';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProposalData {
   etiqueta_caso: string;
@@ -29,32 +28,16 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { isLoading, isProcessing, initiatePayment, resetState } = useStripePayment();
 
   const handlePlanSelect = (planId: string) => {
-    console.log('ProposalDisplay - handlePlanSelect called:', { planId, user: user?.id });
-    
     setSelectedPlan(planId);
     if (!user) {
       setAuthModalMode('signup');
       setShowAuthModal(true);
     } else {
-      // Usuario autenticado, proceder al pago directamente
+      // Proceder al pago
       handlePayment(planId);
     }
-  };
-
-  const handlePayment = async (planId: string) => {
-    console.log('ProposalDisplay - handlePayment called:', { planId, casoId });
-    
-    // Resetear estado previo
-    resetState();
-    
-    // Iniciar proceso de pago con el hook mejorado
-    await initiatePayment({
-      planId,
-      casoId
-    });
   };
 
   const handleSaveProgress = () => {
@@ -64,6 +47,40 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     } else {
       // Usuario ya autenticado, enviar resumen
       sendProgressSummary();
+    }
+  };
+
+  const handlePayment = async (planId: string) => {
+    try {
+      toast({
+        title: "Procesando pago",
+        description: "Creando sesión de pago...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
+        body: {
+          plan_id: planId,
+          caso_id: casoId
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.url) {
+        // Redirigir a Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No se recibió URL de pago');
+      }
+    } catch (error) {
+      console.error('Error al crear sesión de pago:', error);
+      toast({
+        title: "Error en el pago",
+        description: error instanceof Error ? error.message : "Error al procesar el pago. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -77,7 +94,6 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
   };
 
   const handleAuthSuccess = () => {
-    console.log('ProposalDisplay - handleAuthSuccess called:', { selectedPlan });
     setShowAuthModal(false);
     if (selectedPlan) {
       handlePayment(selectedPlan);
@@ -121,11 +137,28 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     ],
     highlight: true,
     badge: 'Oferta Especial',
-    priceId: 'price_1Rc0kkI0mIGG72Op6Rk4GulG',
-    onSelect: () => handlePlanSelect('consulta-estrategica'),
-    isLoading: isLoading || isProcessing,
-    disabled: isProcessing
+    priceId: 'price_1Rc0kkI0mIGG72Op6Rk4GulG', // Price ID real de Stripe
+    onSelect: () => handlePlanSelect('consulta-estrategica')
   };
+
+  // Planes ocultos para uso futuro
+  // const hiddenPlans = [
+  //   {
+  //     id: 'plan-asesoria',
+  //     name: 'Plan Asesoría Mensual',
+  //     price: '19,90€/mes',
+  //     description: 'Acompañamiento legal completo durante todo el proceso',
+  //     features: [
+  //       'Todo lo de Consulta Estratégica',
+  //       'Asesoría ilimitada por WhatsApp',
+  //       'Revisión de documentos',
+  //       'Representación en gestiones',
+  //       'Seguimiento continuo'
+  //     ],
+  //     popular: true,
+  //     color: 'green'
+  //   }
+  // ];
 
   return (
     <div className={cn(
@@ -145,7 +178,6 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
               variant="ghost"
               size="icon"
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              disabled={isProcessing}
             >
               <X className="h-5 w-5" />
             </Button>
@@ -182,24 +214,32 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
           <PricingSection tier={singlePlan} />
         </motion.div>
 
-        {/* Indicador de procesamiento */}
-        {isProcessing && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          >
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Procesando tu pago...
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                Por favor, no cierres esta ventana. Te redirigiremos al sistema de pago seguro.
-              </p>
-            </div>
-          </motion.div>
-        )}
+        {/* Sección de guardar progreso - comentada para uso futuro */}
+        {/* 
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700">
+            <Clock className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              ¿Necesitas más tiempo para decidir?
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Guarda tu progreso y recibe un resumen completo por email. Podrás revisar toda la información y decidir con calma.
+            </p>
+            <Button
+              onClick={handleSaveProgress}
+              variant="outline"
+              className="px-8 py-3 text-lg font-medium border-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-300"
+            >
+              Guardar Progreso y Recibir Resumen por Email
+            </Button>
+          </div>
+        </motion.div>
+        */}
       </div>
 
       {/* Modal de Autenticación */}

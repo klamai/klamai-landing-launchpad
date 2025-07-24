@@ -2,9 +2,8 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import { useStripePayment } from '@/hooks/useStripePayment';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const AuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -13,7 +12,6 @@ const AuthCallback = () => {
   const { toast } = useToast();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { isLoading, isProcessing, initiatePayment, resetState } = useStripePayment();
 
   const planId = searchParams.get('planId');
   const casoId = searchParams.get('casoId');
@@ -23,9 +21,7 @@ const AuthCallback = () => {
       loading, 
       user: user?.id, 
       planId, 
-      casoId,
-      processing,
-      isProcessing
+      casoId 
     });
 
     if (loading) return;
@@ -42,22 +38,12 @@ const AuthCallback = () => {
       return;
     }
 
-    // Prevenir múltiples ejecuciones
-    if (processing || isProcessing) {
-      console.log('AuthCallback - Ya está procesando, saltando');
-      return;
-    }
-
     console.log('AuthCallback - Iniciando proceso de pago');
     processPayment();
-  }, [user, loading, planId, casoId, processing, isProcessing]);
+  }, [user, loading, planId, casoId]);
 
   const processPayment = async () => {
-    if (processing || isProcessing) {
-      console.log('AuthCallback - Proceso ya en marcha, saltando');
-      return;
-    }
-    
+    if (processing) return;
     setProcessing(true);
     setError(null);
 
@@ -67,13 +53,32 @@ const AuthCallback = () => {
       // 1. Vincular caso al usuario y transferir datos borrador
       await linkCaseToUser(casoId!, user!.id);
       
-      console.log('AuthCallback - Paso 2: Iniciando pago con hook mejorado');
+      console.log('AuthCallback - Paso 2: Creando sesión de pago');
 
-      // 2. Usar el hook mejorado para manejar el pago
-      await initiatePayment({
-        planId: planId!,
-        casoId: casoId!
+      // 2. Crear sesión de pago en Stripe
+      const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
+        body: {
+          plan_id: planId,
+          caso_id: casoId
+        }
       });
+
+      console.log('AuthCallback - Respuesta de crear-sesion-checkout:', { data, error });
+
+      if (error) {
+        throw new Error(`Error en la función: ${error.message}`);
+      }
+
+      if (!data?.url) {
+        throw new Error('No se recibió URL de pago de Stripe');
+      }
+
+      console.log('AuthCallback - Redirigiendo a Stripe:', data.url);
+      
+      // Esperar un momento antes de redirigir para asegurar que todo esté listo
+      setTimeout(() => {
+        window.location.href = data.url;
+      }, 500);
 
     } catch (error) {
       console.error('AuthCallback - Error completo:', error);
@@ -163,7 +168,7 @@ const AuthCallback = () => {
           Procesando tu solicitud...
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          {processing || isProcessing ? 'Configurando tu pago...' : 'Te estamos redirigiendo al sistema de pago seguro.'}
+          {processing ? 'Configurando tu pago...' : 'Te estamos redirigiendo al sistema de pago seguro.'}
         </p>
         {planId && casoId && (
           <div className="text-sm text-gray-500 dark:text-gray-400">
