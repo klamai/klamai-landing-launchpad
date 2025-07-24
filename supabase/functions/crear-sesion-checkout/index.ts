@@ -100,8 +100,8 @@ serve(async (req) => {
       // Crear nuevo customer
       const newCustomer = await stripe.customers.create({
         email: user.email,
-        name: `${caso.nombre_contacto || ''} ${caso.apellido_contacto || ''}`.trim() || undefined,
-        phone: caso.telefono_contacto || undefined,
+        name: `${caso.nombre_borrador || ''} ${caso.apellido_borrador || ''}`.trim() || undefined,
+        phone: caso.telefono_borrador || undefined,
       });
       customerId = newCustomer.id;
       logStep("Nuevo customer creado", { customerId });
@@ -131,8 +131,8 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/pago-exitoso?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/pago-cancelado?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${req.headers.get("origin")}/pago-exitoso?session_id={CHECKOUT_SESSION_ID}&caso_id=${caso_id}`,
+      cancel_url: `${req.headers.get("origin")}/pago-cancelado?session_id={CHECKOUT_SESSION_ID}&caso_id=${caso_id}`,
       metadata: {
         caso_id: caso_id,
         user_id: user.id,

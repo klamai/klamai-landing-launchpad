@@ -99,11 +99,11 @@ serve(async (req) => {
 
       logStep("Caso encontrado", { casoId: caso.id, clienteId: caso.cliente_id });
 
-      // Actualizar el estado del caso a "pagado"
+      // Actualizar el estado del caso a "pagado" y luego a "disponible"
       const { error: updateError } = await supabase
         .from("casos")
         .update({
-          estado: "pagado",
+          estado: "disponible", // Cambiar directamente a disponible
           fecha_pago: new Date().toISOString(),
           stripe_payment_intent_id: session.payment_intent,
           updated_at: new Date().toISOString()
@@ -115,21 +115,23 @@ serve(async (req) => {
         throw new Error(`Error actualizando caso: ${updateError.message}`);
       }
 
-      logStep("Caso actualizado exitosamente", { casoId: caso.id, nuevoEstado: "pagado" });
+      logStep("Caso actualizado exitosamente", { casoId: caso.id, nuevoEstado: "disponible" });
 
-      // Crear registro de pago
+      // Crear registro de pago en la tabla pagos
       const { error: pagoError } = await supabase
         .from("pagos")
         .insert({
-          caso_id: caso.id,
-          cliente_id: caso.cliente_id,
-          monto: session.amount_total / 100, // Convertir de centavos a euros
-          moneda: session.currency,
-          estado: "completado",
-          stripe_session_id: session.id,
-          stripe_payment_intent_id: session.payment_intent,
-          metodo_pago: session.payment_method_types[0] || "card",
-          fecha_pago: new Date().toISOString()
+          usuario_id: caso.cliente_id,
+          stripe_payment_intent_id: session.payment_intent || session.id,
+          monto: Math.round((session.amount_total || 0) / 100), // Convertir de centavos a euros
+          moneda: session.currency || 'eur',
+          estado: 'succeeded',
+          descripcion: `Pago para caso ${caso.id.toString().slice(0, 8)}`,
+          metadata_pago: {
+            stripe_session_id: session.id,
+            caso_id: caso.id,
+            plan_id: session.metadata?.plan_id || 'consulta-estrategica'
+          }
         });
 
       if (pagoError) {
@@ -146,7 +148,7 @@ serve(async (req) => {
           .from("notificaciones")
           .insert({
             usuario_id: caso.cliente_id,
-            mensaje: `Tu pago para el caso #${caso.id.toString().slice(0, 8)} ha sido procesado exitosamente.`,
+            mensaje: `Tu pago para el caso #${caso.id.toString().slice(0, 8)} ha sido procesado exitosamente. El caso está ahora disponible para revisión por nuestros abogados.`,
             url_destino: `/dashboard/casos/${caso.id}`,
             tipo: "pago_exitoso"
           });
