@@ -123,6 +123,7 @@ export type Database = {
           email_borrador: string | null
           especialidad_id: number | null
           estado: Database["public"]["Enums"]["caso_estado_enum"]
+          fecha_pago: string | null
           fecha_ultimo_contacto: string | null
           guia_abogado: string | null
           id: string
@@ -137,6 +138,8 @@ export type Database = {
           razon_social_borrador: string | null
           resumen_caso: string | null
           session_token: string | null
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           telefono_borrador: string | null
           tiene_notificaciones_nuevas: boolean | null
           tipo_lead: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
@@ -144,6 +147,7 @@ export type Database = {
             | Database["public"]["Enums"]["profile_type_enum"]
             | null
           transcripcion_chat: Json | null
+          updated_at: string | null
           valor_estimado: string | null
         }
         Insert: {
@@ -160,6 +164,7 @@ export type Database = {
           email_borrador?: string | null
           especialidad_id?: number | null
           estado?: Database["public"]["Enums"]["caso_estado_enum"]
+          fecha_pago?: string | null
           fecha_ultimo_contacto?: string | null
           guia_abogado?: string | null
           id?: string
@@ -174,6 +179,8 @@ export type Database = {
           razon_social_borrador?: string | null
           resumen_caso?: string | null
           session_token?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           telefono_borrador?: string | null
           tiene_notificaciones_nuevas?: boolean | null
           tipo_lead?: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
@@ -181,6 +188,7 @@ export type Database = {
             | Database["public"]["Enums"]["profile_type_enum"]
             | null
           transcripcion_chat?: Json | null
+          updated_at?: string | null
           valor_estimado?: string | null
         }
         Update: {
@@ -197,6 +205,7 @@ export type Database = {
           email_borrador?: string | null
           especialidad_id?: number | null
           estado?: Database["public"]["Enums"]["caso_estado_enum"]
+          fecha_pago?: string | null
           fecha_ultimo_contacto?: string | null
           guia_abogado?: string | null
           id?: string
@@ -211,6 +220,8 @@ export type Database = {
           razon_social_borrador?: string | null
           resumen_caso?: string | null
           session_token?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           telefono_borrador?: string | null
           tiene_notificaciones_nuevas?: boolean | null
           tipo_lead?: Database["public"]["Enums"]["caso_tipo_lead_enum"] | null
@@ -218,6 +229,7 @@ export type Database = {
             | Database["public"]["Enums"]["profile_type_enum"]
             | null
           transcripcion_chat?: Json | null
+          updated_at?: string | null
           valor_estimado?: string | null
         }
         Relationships: [
