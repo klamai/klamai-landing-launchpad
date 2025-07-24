@@ -13,3 +13,6 @@ verify_jwt = false
 
 [functions.manejar-pago-exitoso]
 verify_jwt = false
+
+[functions.add-manual-case]
+verify_jwt = false
