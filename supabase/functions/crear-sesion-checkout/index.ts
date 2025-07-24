@@ -13,6 +13,39 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREAR-SESION-CHECKOUT] ${step}${detailsStr}`);
 };
 
+// Map para trackear requests por usuario
+const userRequestMap = new Map<string, { count: number; lastRequest: number }>();
+
+const isRateLimited = (userId: string): boolean => {
+  const now = Date.now();
+  const windowMs = 60000; // 1 minuto
+  const maxRequests = 5; // máximo 5 requests por minuto
+
+  const userHistory = userRequestMap.get(userId);
+  
+  if (!userHistory) {
+    userRequestMap.set(userId, { count: 1, lastRequest: now });
+    return false;
+  }
+
+  // Si han pasado más de 1 minuto, resetear contador
+  if (now - userHistory.lastRequest > windowMs) {
+    userRequestMap.set(userId, { count: 1, lastRequest: now });
+    return false;
+  }
+
+  // Incrementar contador
+  userHistory.count++;
+  userHistory.lastRequest = now;
+
+  if (userHistory.count > maxRequests) {
+    logStep("Rate limit alcanzado", { userId, count: userHistory.count });
+    return true;
+  }
+
+  return false;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -66,6 +99,18 @@ serve(async (req) => {
     const user = userData.user;
     logStep("Usuario autenticado", { userId: user.id, email: user.email });
 
+    // Verificar rate limiting por usuario
+    if (isRateLimited(user.id)) {
+      logStep("ERROR - Rate limit alcanzado para usuario", { userId: user.id });
+      return new Response(JSON.stringify({ 
+        error: "Demasiadas solicitudes. Por favor, espera un momento antes de intentar nuevamente.",
+        code: "RATE_LIMITED"
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Verificar que el caso existe y pertenece al usuario
     const { data: caso, error: casoError } = await supabase
       .from("casos")
@@ -80,6 +125,42 @@ serve(async (req) => {
     }
 
     logStep("Caso verificado", { casoId: caso.id, estado: caso.estado });
+
+    // Verificar si ya existe una sesión de Stripe activa para este caso
+    if (caso.stripe_session_id) {
+      logStep("ADVERTENCIA - Caso ya tiene sesión de Stripe", { 
+        existingSessionId: caso.stripe_session_id 
+      });
+      
+      // Verificar el estado de la sesión existente en Stripe
+      const stripe = new Stripe(stripeSecretKey, {
+        apiVersion: "2023-10-16",
+      });
+
+      try {
+        const existingSession = await stripe.checkout.sessions.retrieve(caso.stripe_session_id);
+        
+        if (existingSession.status === 'open' && existingSession.url) {
+          logStep("Sesión existente encontrada y válida", { 
+            sessionId: caso.stripe_session_id,
+            status: existingSession.status 
+          });
+          
+          return new Response(JSON.stringify({ 
+            url: existingSession.url,
+            session_id: caso.stripe_session_id,
+            reused: true
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
+      } catch (stripeError) {
+        logStep("Sesión existente no válida, creando nueva", { 
+          error: stripeError.message 
+        });
+      }
+    }
 
     // Inicializar Stripe
     const stripe = new Stripe(stripeSecretKey, {
@@ -120,25 +201,44 @@ serve(async (req) => {
       throw new Error("Plan no reconocido");
     }
 
-    // Crear sesión de checkout
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: "payment",
-      success_url: `${req.headers.get("origin")}/pago-exitoso?session_id={CHECKOUT_SESSION_ID}&caso_id=${caso_id}`,
-      cancel_url: `${req.headers.get("origin")}/pago-cancelado?session_id={CHECKOUT_SESSION_ID}&caso_id=${caso_id}`,
-      metadata: {
-        caso_id: caso_id,
-        user_id: user.id,
-        plan_id: plan_id,
-      },
-    });
+    // Crear sesión de checkout con retry logic
+    let session;
+    let retryCount = 0;
+    const maxRetries = 2;
+
+    while (retryCount <= maxRetries) {
+      try {
+        session = await stripe.checkout.sessions.create({
+          customer: customerId,
+          payment_method_types: ["card"],
+          line_items: [
+            {
+              price: priceId,
+              quantity: 1,
+            },
+          ],
+          mode: "payment",
+          success_url: `${req.headers.get("origin")}/pago-exitoso?session_id={CHECKOUT_SESSION_ID}&caso_id=${caso_id}`,
+          cancel_url: `${req.headers.get("origin")}/pago-cancelado?session_id={CHECKOUT_SESSION_ID}&caso_id=${caso_id}`,
+          metadata: {
+            caso_id: caso_id,
+            user_id: user.id,
+            plan_id: plan_id,
+          },
+        });
+        break; // Salir del loop si fue exitoso
+      } catch (stripeError) {
+        retryCount++;
+        logStep(`Intento ${retryCount} fallido`, { error: stripeError.message });
+        
+        if (retryCount > maxRetries) {
+          throw new Error(`Error creando sesión en Stripe: ${stripeError.message}`);
+        }
+        
+        // Esperar antes de reintentar (backoff exponencial)
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
+    }
 
     logStep("Sesión de checkout creada", { sessionId: session.id, url: session.url });
 
@@ -171,11 +271,21 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR en crear-sesion-checkout", { message: errorMessage });
     
+    // Determinar código de estado apropiado
+    let statusCode = 500;
+    if (errorMessage.includes("Rate limit") || errorMessage.includes("Too Many Requests")) {
+      statusCode = 429;
+    } else if (errorMessage.includes("not found") || errorMessage.includes("sin permisos")) {
+      statusCode = 404;
+    } else if (errorMessage.includes("requer")) {
+      statusCode = 400;
+    }
+    
     return new Response(JSON.stringify({ 
       error: "Error creando sesión de checkout", 
       details: errorMessage 
     }), {
-      status: 500,
+      status: statusCode,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
