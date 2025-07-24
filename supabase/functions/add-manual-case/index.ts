@@ -14,6 +14,29 @@ const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
+// Función para limpiar y parsear JSON de OpenAI
+function cleanAndParseJSON(content: string) {
+  try {
+    // Remover bloques de código markdown
+    let cleanContent = content.trim();
+    
+    // Si empieza con ```json y termina con ```, remover esos marcadores
+    if (cleanContent.startsWith('```json')) {
+      cleanContent = cleanContent.replace(/^```json\s*/i, '').replace(/```\s*$/, '');
+    } else if (cleanContent.startsWith('```')) {
+      cleanContent = cleanContent.replace(/^```\s*/, '').replace(/```\s*$/, '');
+    }
+    
+    // Limpiar saltos de línea y espacios extras
+    cleanContent = cleanContent.trim();
+    
+    return JSON.parse(cleanContent);
+  } catch (error) {
+    console.error('❌ Error parsing JSON:', content);
+    throw new Error(`Error al parsear JSON de OpenAI: ${error.message}`);
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -84,7 +107,7 @@ ${caseText}
         messages: [
           {
             role: 'system',
-            content: 'Eres un asistente legal experto en extraer información estructurada de consultas legales. Responde ÚNICAMENTE con JSON válido.'
+            content: 'Eres un asistente legal experto en extraer información estructurada de consultas legales. Responde ÚNICAMENTE con JSON válido sin bloques de código markdown.'
           },
           {
             role: 'user',
@@ -108,7 +131,7 @@ ${caseText}
 
     let extractedInfo;
     try {
-      extractedInfo = JSON.parse(extractionData.choices[0].message.content);
+      extractedInfo = cleanAndParseJSON(extractionData.choices[0].message.content);
     } catch (parseError) {
       console.error('❌ Error parsing JSON from OpenAI:', extractionData.choices[0].message.content);
       throw new Error('Error al procesar la respuesta de IA');
