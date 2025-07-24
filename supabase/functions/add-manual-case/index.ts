@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -33,11 +32,11 @@ function cleanAndParseJSON(content: string) {
     return JSON.parse(cleanContent);
   } catch (error) {
     console.error('❌ Error parsing JSON:', content);
-    throw new Error(`Error al parsear JSON de OpenAI: ${error.message}`);
+    throw new Error(`Error al parsear JSON de OpenAI: ${(error as Error).message}`);
   }
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -153,7 +152,7 @@ ${caseText}
     let especialidadId = null;
     if (extractedInfo.consulta?.especialidad_legal) {
       // Buscar por similitud (no case sensitive)
-      const especialidadEncontrada = especialidades?.find(esp => 
+      const especialidadEncontrada = especialidades?.find((esp: any) => 
         esp.nombre.toLowerCase().includes(extractedInfo.consulta.especialidad_legal.toLowerCase()) ||
         extractedInfo.consulta.especialidad_legal.toLowerCase().includes(esp.nombre.toLowerCase())
       );
@@ -227,7 +226,7 @@ ${caseText}
     console.error('❌ Error en add-manual-case:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: (error as Error).message
     }), {
       status: 500,
       headers: {
