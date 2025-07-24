@@ -25,3 +25,6 @@ dist-ssr
 
 # AI
 .roo/*
+
+# Documentos de apoyo
+.documentos_de_apollo/*

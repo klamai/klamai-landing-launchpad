@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import OpenAI from "https://deno.land/x/openai@v4.69.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,88 +13,165 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+const openai = new OpenAI({ apiKey: openAIApiKey });
 
-// Función para limpiar y parsear JSON de OpenAI
+const LISTA_ESPECIALIDADES_VALIDAS = [
+  'Derecho Civil',
+  'Derecho Penal',
+  'Derecho Laboral',
+  'Derecho Mercantil',
+  'Derecho Administrativo',
+  'Derecho Fiscal',
+  'Derecho Familiar',
+  'Derecho Inmobiliario',
+  'Derecho de Extranjería',
+  'Derecho de la Seguridad Social',
+  'Derecho Sanitario',
+  'Derecho de Seguros',
+  'Derecho Concursal',
+  'Derecho de Propiedad Intelectual',
+  'Derecho Ambiental',
+  'Consulta General'
+];
+
+// --- TIPOS E INTERFACES ---
+
+interface ClienteInfo {
+  nombre?: string;
+  apellido?: string;
+  email?: string;
+  telefono?: string;
+  ciudad?: string;
+  tipo_perfil?: 'individual' | 'empresa';
+  razon_social?: string;
+  nif_cif?: string;
+  nombre_gerente?: string;
+  direccion_fiscal?: string;
+}
+
+interface ConsultaInfo {
+  motivo_consulta?: string;
+  detalles_adicionales?: string;
+  urgencia?: 'alta' | 'media' | 'baja';
+  preferencia_horaria?: string;
+  especialidad_legal?: string;
+  tipo_lead?: 'estandar' | 'premium' | 'urgente';
+}
+
+interface ExtractedInfo {
+  cliente: ClienteInfo;
+  consulta: ConsultaInfo;
+}
+
+
+// --- FUNCIONES DE AYUDA ---
+
+function log(level: 'info' | 'warn' | 'error', message: string, context = {}) {
+  console.log(JSON.stringify({ level, message, ...context, timestamp: new Date().toISOString() }));
+}
+
+function extractJsonFromString(text: string | null): string | null {
+  if (!text) return null;
+  const match = text.match(/\{[\s\S]*\}/);
+  return match ? match[0] : null;
+}
+
+async function ejecutarAsistente(assistant_id: string, content: string): Promise<string> {
+    const assistantId = Deno.env.get(assistant_id);
+    if (!assistantId) throw new Error(`El ID para el asistente ${assistant_id} no está configurado.`);
+    
+    const thread = await openai.beta.threads.create();
+    await openai.beta.threads.messages.create(thread.id, { role: "user", content });
+    
+    const run = await openai.beta.threads.runs.create(thread.id, { assistant_id: assistantId });
+    
+    let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+    while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+    }
+
+    if (runStatus.status !== 'completed') {
+        throw new Error(`La ejecución del asistente ${assistant_id} falló con estado: ${runStatus.status}.`);
+    }
+
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const lastMessage = messages.data.find((msg) => msg.role === 'assistant');
+    
+    if (lastMessage?.content[0]?.type === 'text') {
+        return lastMessage.content[0].text.value;
+    }
+    
+    return "";
+}
+
+
 function cleanAndParseJSON(content: string) {
   try {
-    // Remover bloques de código markdown
     let cleanContent = content.trim();
-    
-    // Si empieza con ```json y termina con ```, remover esos marcadores
     if (cleanContent.startsWith('```json')) {
       cleanContent = cleanContent.replace(/^```json\s*/i, '').replace(/```\s*$/, '');
     } else if (cleanContent.startsWith('```')) {
       cleanContent = cleanContent.replace(/^```\s*/, '').replace(/```\s*$/, '');
     }
-    
-    // Limpiar saltos de línea y espacios extras
     cleanContent = cleanContent.trim();
-    
     return JSON.parse(cleanContent);
   } catch (error) {
-    console.error('❌ Error parsing JSON:', content);
+    log('error', 'Error parsing JSON', { content, error: (error as Error).message });
     throw new Error(`Error al parsear JSON de OpenAI: ${(error as Error).message}`);
   }
 }
 
+// --- FUNCIÓN PRINCIPAL ---
+
 serve(async (req: Request) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: corsHeaders
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { caseText } = await req.json();
-    
-    console.log('🔍 Procesando caso manual:', {
-      caseText: caseText?.substring(0, 100) + '...'
-    });
+    log('info', 'Procesando caso manual', { caseText: caseText?.substring(0, 100) + '...' });
 
     if (!caseText || caseText.trim().length === 0) {
       throw new Error('El texto del caso es requerido');
     }
 
-    // Paso 1: Extraer datos estructurados del texto usando OpenAI
+    // Paso 1: Extracción inicial de datos
     const extractionPrompt = `
-Analiza el siguiente texto que contiene información de un cliente y su consulta legal.
-Extrae los datos y devuelve ÚNICAMENTE un JSON válido con la siguiente estructura:
+    Analiza el siguiente texto que contiene información de un cliente y su consulta legal.
+    Extrae los datos y devuelve ÚNICAMENTE un JSON válido con la siguiente estructura:
 
-{
-  "cliente": {
-    "nombre": "string",
-    "apellido": "string", 
-    "email": "string",
-    "telefono": "string",
-    "ciudad": "string",
-    "tipo_perfil": "individual" | "empresa",
-    "razon_social": "string (solo si es empresa)",
-    "nif_cif": "string (solo si es empresa)",
-    "nombre_gerente": "string (solo si es empresa)",
-    "direccion_fiscal": "string (solo si es empresa)"
-  },
-  "consulta": {
-    "motivo_consulta": "string (resumen del problema legal)",
-    "detalles_adicionales": "string (información adicional relevante)",
-    "urgencia": "alta" | "media" | "baja",
-    "preferencia_horaria": "string (si se menciona)",
-    "especialidad_legal": "laboral" | "civil" | "penal" | "administrativo" | "fiscal" | "mercantil" | "familia" | "otra",
-    "tipo_lead": "estandar" | "premium" | "urgente"
-  }
-}
+    {
+      "cliente": {
+        "nombre": "string",
+        "apellido": "string",
+        "email": "string",
+        "telefono": "string",
+        "ciudad": "string",
+        "tipo_perfil": "individual" | "empresa",
+        "razon_social": "string (solo si es empresa)",
+        "nif_cif": "string (solo si es empresa)",
+        "nombre_gerente": "string (solo si es empresa)",
+        "direccion_fiscal": "string (solo si es empresa)"
+      },
+      "consulta": {
+        "motivo_consulta": "string (resumen del problema legal)",
+        "detalles_adicionales": "string (información adicional relevante)",
+        "urgencia": "alta" | "media" | "baja",
+        "preferencia_horaria": "string (si se menciona)",
+        "especialidad_legal": "laboral" | "civil" | "penal" | "administrativo" | "fiscal" | "mercantil" | "familia" | "otra",
+        "tipo_lead": "estandar" | "premium" | "urgente"
+      }
+    }
 
-Si no puedes extraer algún campo, usa null.
-Si es una empresa, asegúrate de marcar tipo_perfil como "empresa".
-Si es una persona individual, marca tipo_perfil como "individual".
-Para tipo_lead, considera:
-- "urgente": Casos que requieren acción inmediata (24-48h)
-- "premium": Casos de alta complejidad o valor económico
-- "estandar": Casos normales que no requieren urgencia especial
+    Si no puedes extraer algún campo, usa null.
+    Si es una empresa, asegúrate de marcar tipo_perfil como "empresa".
+    Si es una persona individual, marca tipo_perfil como "individual".
 
-Texto a analizar:
-${caseText}
-`;
+    Texto a analizar:
+    ${caseText}
+    `;
 
     const extractionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -119,292 +197,125 @@ ${caseText}
     });
 
     if (!extractionResponse.ok) {
-      throw new Error(`Error en OpenAI API: ${extractionResponse.status}`);
+      const errorBody = await extractionResponse.text();
+      throw new Error(`Error en OpenAI API (Extracción): ${extractionResponse.status} - ${errorBody}`);
     }
 
     const extractionData = await extractionResponse.json();
-    
-    if (!extractionData.choices || !extractionData.choices[0] || !extractionData.choices[0].message) {
-      throw new Error('Respuesta inválida de OpenAI API');
+    if (!extractionData.choices || extractionData.choices.length === 0) {
+      log('error', 'Respuesta inválida de OpenAI API (Extracción)', { extractionData });
+      throw new Error('Respuesta inválida de OpenAI API durante la extracción inicial.');
     }
+    const extractedInfo = cleanAndParseJSON(extractionData.choices[0].message.content);
+    log('info', 'Datos iniciales extraídos', { extractedInfo });
 
-    let extractedInfo;
-    try {
-      extractedInfo = cleanAndParseJSON(extractionData.choices[0].message.content);
-    } catch (parseError) {
-      console.error('❌ Error parsing JSON from OpenAI:', extractionData.choices[0].message.content);
-      throw new Error('Error al procesar la respuesta de IA');
-    }
 
-    console.log('✅ Datos extraídos:', extractedInfo);
-
-    // Obtener todas las especialidades de la base de datos
-    const { data: especialidades, error: especialidadesError } = await supabase
-      .from('especialidades')
-      .select('id, nombre');
-
-    if (especialidadesError) {
-      console.error('❌ Error obteniendo especialidades:', especialidadesError);
-      throw especialidadesError;
-    }
-
-    // Mapear la especialidad extraída a su ID
-    let especialidadId = null;
-    if (extractedInfo.consulta?.especialidad_legal) {
-      // Buscar por similitud (no case sensitive)
-      const especialidadEncontrada = especialidades?.find((esp: any) => 
-        esp.nombre.toLowerCase().includes(extractedInfo.consulta.especialidad_legal.toLowerCase()) ||
-        extractedInfo.consulta.especialidad_legal.toLowerCase().includes(esp.nombre.toLowerCase())
-      );
-      
-      if (especialidadEncontrada) {
-        especialidadId = especialidadEncontrada.id;
-      } else {
-        // Si no encuentra coincidencia exacta, usar una por defecto
-        especialidadId = especialidades?.[0]?.id || null;
-      }
-    }
-
-    // Obtener el tipo de lead desde la extracción o usar el valor por defecto
-    const tipoLead = extractedInfo.consulta?.tipo_lead || 'estandar';
-
-    // Paso 2: Crear el caso en la base de datos
+    // Paso 2: Crear el caso en estado 'borrador'
     const casoData = {
-      motivo_consulta: extractedInfo.consulta?.motivo_consulta || 'Consulta manual sin detalles específicos',
-      especialidad_id: especialidadId,
-      tipo_lead: tipoLead,
+      motivo_consulta: extractedInfo.consulta?.motivo_consulta || 'Consulta manual',
       estado: 'borrador',
       canal_atencion: 'manual_admin',
-      // Datos del cliente (formato borrador)
-      nombre_borrador: extractedInfo.cliente?.nombre || null,
-      apellido_borrador: extractedInfo.cliente?.apellido || null,
-      email_borrador: extractedInfo.cliente?.email || null,
-      telefono_borrador: extractedInfo.cliente?.telefono || null,
-      ciudad_borrador: extractedInfo.cliente?.ciudad || null,
-      tipo_perfil_borrador: extractedInfo.cliente?.tipo_perfil || 'individual',
-      razon_social_borrador: extractedInfo.cliente?.razon_social || null,
-      nif_cif_borrador: extractedInfo.cliente?.nif_cif || null,
-      nombre_gerente_borrador: extractedInfo.cliente?.nombre_gerente || null,
-      direccion_fiscal_borrador: extractedInfo.cliente?.direccion_fiscal || null,
-      preferencia_horaria_contacto: extractedInfo.consulta?.preferencia_horaria || null,
-      // Guardar el texto original para referencia
+      nombre_borrador: extractedInfo.cliente?.nombre,
+      apellido_borrador: extractedInfo.cliente?.apellido,
+      email_borrador: extractedInfo.cliente?.email,
+      telefono_borrador: extractedInfo.cliente?.telefono,
+      ciudad_borrador: extractedInfo.cliente?.ciudad,
+      tipo_perfil_borrador: extractedInfo.cliente?.tipo_perfil,
+      razon_social_borrador: extractedInfo.cliente?.razon_social,
+      nif_cif_borrador: extractedInfo.cliente?.nif_cif,
+      nombre_gerente_borrador: extractedInfo.cliente?.nombre_gerente,
+      direccion_fiscal_borrador: extractedInfo.cliente?.direccion_fiscal,
+      preferencia_horaria_contacto: extractedInfo.consulta?.preferencia_horaria,
       transcripcion_chat: {
         texto_original: caseText,
-        fecha_procesamiento: new Date().toISOString(),
-        procesado_por: 'manual_admin'
       }
     };
 
-    const { data: caso, error: casoError } = await supabase
-      .from('casos')
-      .insert([casoData])
-      .select()
-      .single();
+    const { data: caso, error: casoError } = await supabase.from('casos').insert([casoData]).select().single();
+    if (casoError) throw casoError;
+    log('info', 'Caso creado en estado borrador', { casoId: caso.id });
 
-    if (casoError) {
-      console.error('❌ Error creando caso:', casoError);
-      throw casoError;
-    }
 
-    console.log('✅ Caso creado:', caso.id);
+    // Paso 3: Procesamiento avanzado con asistentes de IA
+    await processWithAIAssistants(caso.id, caseText, extractedInfo);
 
-    // Paso 3: Procesar con asistentes de IA (similar al flujo normal)
-    await processWithAIAssistants(caso.id, extractedInfo, caseText);
 
-    return new Response(JSON.stringify({
-      success: true,
-      caso: caso,
-      extractedInfo: extractedInfo
-    }), {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
+    // Devolver respuesta final
+    const { data: finalCase } = await supabase.from('casos').select('*').eq('id', caso.id).single();
+    return new Response(JSON.stringify({ success: true, caso: finalCase }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('❌ Error en add-manual-case:', error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: (error as Error).message
-    }), {
+    log('error', 'Error en add-manual-case', { message: (error as Error).message, stack: (error as Error).stack });
+    return new Response(JSON.stringify({ success: false, error: (error as Error).message }), {
       status: 500,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
 
-async function processWithAIAssistants(casoId: string, extractedInfo: any, originalText: string) {
-  try {
-    console.log('🤖 Iniciando procesamiento con asistentes de IA para caso:', casoId);
 
-    // Paso 1: Asistente Auxiliar - Generar resumen del caso
-    const auxiliarPrompt = `
-Analiza la siguiente consulta legal y genera un resumen profesional del caso:
+async function processWithAIAssistants(casoId: string, originalText: string, extractedInfo: ExtractedInfo) {
+    log('info', 'Iniciando procesamiento con asistentes de IA', { casoId });
 
-Información del cliente:
-- Nombre: ${extractedInfo.cliente?.nombre || 'No especificado'} ${extractedInfo.cliente?.apellido || ''}
-- Tipo: ${extractedInfo.cliente?.tipo_perfil || 'individual'}
-- Email: ${extractedInfo.cliente?.email || 'No especificado'}
-- Ciudad: ${extractedInfo.cliente?.ciudad || 'No especificada'}
+    // 1. Generar resumen profesional a partir de los datos extraídos
+    const resumenPrompt = `Genera un resumen profesional del caso a partir de la siguiente información.
+    Información del cliente: ${JSON.stringify(extractedInfo.cliente)}
+    Consulta: ${JSON.stringify(extractedInfo.consulta)}
+    Texto original: ${originalText}`;
+    
+    const resumenCaso = await ejecutarAsistente("ASISTENTE_AUXILIAR_ID", resumenPrompt);
+    log('info', 'Resumen del caso generado', { casoId });
 
-Consulta legal:
-${extractedInfo.consulta?.motivo_consulta || 'Sin detalles específicos'}
+    // 2. Preparar prompts para los otros asistentes usando el resumen
+    const prompt_clasificador = `Analiza el resumen y devuelve ÚNICAMENTE un objeto JSON crudo (raw), sin explicaciones. La estructura debe ser: {"motivo_consulta_ia": "...", "especialidad_nombre": "...", "tipo_lead": "...", "valor_estimado": "..."}. - Para 'motivo_consulta_ia', crea un titular de caso conciso y profesional, y entendible, máximo 20 palabras. Ej: "Reclamación de indemnización por despido con posible vulneración de derechos. - Para 'especialidad_nombre', DEBES elegir uno de la lista: [${LISTA_ESPECIALIDADES_VALIDAS.join(', ')}]. Si no encaja, usa 'Consulta General'. - Para 'tipo_lead', DEBES ELEGIR OBLIGATORIAMENTE uno de los siguientes tres valores exactos: 'estandar', 'premium', 'urgente'. No inventes otros valores. Un lead es 'premium' si el caso es claro y de alto potencial; 'urgente' si requiere acción inmediata; 'estandar' en los demás casos. - Para 'valor_estimado', da una estimación en euros como texto (ej: "1.500€ - 3.000€"). Resumen del caso: ${resumenCaso}`;
+    const prompt_propuesta = `Analiza el resumen y genera un contenido de propuesta para el cliente. Su nombre es ${extractedInfo.cliente?.nombre || 'cliente'}. Tu respuesta debe ser ÚNICAMENTE un objeto JSON crudo (raw) con la estructura: {"titulo_personalizado": "...", "subtitulo_refuerzo": "...", "etiqueta_caso": "..."}. Resumen: ${resumenCaso}`;
+    const prompt_guia = `Genera una guía técnica para un abogado a partir del siguiente resumen: ${resumenCaso}`;
 
-Detalles adicionales:
-${extractedInfo.consulta?.detalles_adicionales || 'No especificados'}
+    // 3. Ejecutar asistentes en paralelo
+    const [guiaResult, propuestaResult, clasificacionResult] = await Promise.allSettled([
+      ejecutarAsistente("ASISTENTE_AUXILIAR_ID", prompt_guia),
+      ejecutarAsistente("ASISTENTE_PROPUESTAS_ID", prompt_propuesta),
+      ejecutarAsistente("ASISTENTE_CLASIFICADOR_ID", prompt_clasificador)
+    ]);
 
-Texto original:
-${originalText}
+    if (guiaResult.status === 'rejected') throw new Error(`Asistente AUXILIAR (guía) falló: ${guiaResult.reason.message}`);
+    if (propuestaResult.status === 'rejected') throw new Error(`Asistente PROPUESTAS falló: ${propuestaResult.reason.message}`);
+    if (clasificacionResult.status === 'rejected') throw new Error(`Asistente CLASIFICADOR falló: ${clasificacionResult.reason.message}`);
+    
+    log('info', 'Asistentes ejecutados en paralelo', { casoId });
 
-Genera un resumen profesional del caso que incluya:
-1. Descripción clara del problema legal
-2. Hechos relevantes
-3. Posibles áreas del derecho involucradas
-4. Información relevante del cliente
-`;
+    // 4. Procesar resultados
+    const guia_abogado = guiaResult.value;
+    const clasificacion = JSON.parse(extractJsonFromString(clasificacionResult.value) || '{}');
+    const propuesta_estructurada = JSON.parse(extractJsonFromString(propuestaResult.value) || '{}');
 
-    const auxiliarResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'Eres un asistente legal experto en analizar consultas legales y generar resúmenes profesionales para abogados.'
-          },
-          {
-            role: 'user',
-            content: auxiliarPrompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 800
-      })
-    });
-
-    const auxiliarData = await auxiliarResponse.json();
-    const resumenCaso = auxiliarData.choices?.[0]?.message?.content || 'No se pudo generar resumen';
-
-    // Paso 2: Asistente Clasificador - Generar guía para el abogado
-    const clasificadorPrompt = `
-Basándote en el siguiente caso legal, genera una guía profesional para el abogado que lo trabajará:
-
-Resumen del caso:
-${resumenCaso}
-
-Información del cliente:
-- Tipo de cliente: ${extractedInfo.cliente?.tipo_perfil || 'individual'}
-- Urgencia: ${extractedInfo.consulta?.urgencia || 'media'}
-
-Genera una guía que incluya:
-1. Estrategia legal recomendada
-2. Documentos que se deberían solicitar al cliente
-3. Pasos a seguir para el caso
-4. Posibles riesgos o consideraciones especiales
-5. Estimación de tiempo de resolución
-`;
-
-    const clasificadorResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'Eres un asistente legal experto en generar guías estratégicas para abogados.'
-          },
-          {
-            role: 'user',
-            content: clasificadorPrompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 1000
-      })
-    });
-
-    const clasificadorData = await clasificadorResponse.json();
-    const guiaAbogado = clasificadorData.choices?.[0]?.message?.content || 'No se pudo generar guía';
-
-    // Paso 3: Asistente de Propuestas - Generar valor estimado
-    const propuestasPrompt = `
-Basándote en el siguiente caso legal, genera una estimación del valor del caso:
-
-Resumen del caso:
-${resumenCaso}
-
-Guía del abogado:
-${guiaAbogado}
-
-Tipo de cliente: ${extractedInfo.cliente?.tipo_perfil || 'individual'}
-Urgencia: ${extractedInfo.consulta?.urgencia || 'media'}
-
-Genera una estimación que incluya:
-1. Valor económico estimado del caso
-2. Complejidad del caso (baja/media/alta)
-3. Justificación del valor
-4. Tiempo estimado de resolución
-`;
-
-    const propuestasResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'Eres un asistente legal experto en valorar casos legales.'
-          },
-          {
-            role: 'user',
-            content: propuestasPrompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 600
-      })
-    });
-
-    const propuestasData = await propuestasResponse.json();
-    const valorEstimado = propuestasData.choices?.[0]?.message?.content || 'No se pudo generar valoración';
-
-    // Actualizar el caso con toda la información procesada
-    const { error: updateError } = await supabase
-      .from('casos')
-      .update({
-        resumen_caso: resumenCaso,
-        guia_abogado: guiaAbogado,
-        valor_estimado: valorEstimado,
-        estado: 'disponible' // Cambiar a disponible después del procesamiento
-      })
-      .eq('id', casoId);
-
-    if (updateError) {
-      console.error('❌ Error actualizando caso:', updateError);
-      throw updateError;
+    // Mapear especialidad
+    const { data: especialidad } = await supabase.from("especialidades").select("id").eq("nombre", clasificacion.especialidad_nombre).single();
+    let especialidadId = especialidad?.id;
+    if (!especialidadId) {
+      const { data: generalSpec } = await supabase.from("especialidades").select("id").eq("nombre", "Consulta General").single();
+      especialidadId = generalSpec?.id;
     }
+    // Guardar guía del abogado en storage
+    const guiaFile = new Blob([guia_abogado], { type: 'text/plain;charset=utf-8' });
+    await supabase.storage.from('documentos_legales').upload(`casos/${casoId}/guia_para_abogado.txt`, guiaFile, { upsert: true });
 
-    console.log('✅ Caso procesado completamente con IA');
+    // 5. Actualizar el caso con todos los datos procesados
+    const datosParaActualizar = {
+      estado: "disponible",
+      resumen_caso: resumenCaso,
+      guia_abogado: guia_abogado, // Guardar contenido de la guía directamente
+      propuesta_estructurada,
+      motivo_consulta: clasificacion.motivo_consulta_ia || extractedInfo.consulta?.motivo_consulta,
+      tipo_lead: clasificacion.tipo_lead,
+      valor_estimado: clasificacion.valor_estimado,
+      especialidad_id: especialidadId,
+    };
 
-  } catch (error) {
-    console.error('❌ Error en processWithAIAssistants:', error);
-    // No lanzar el error para no bloquear la creación del caso
-    // El caso quedará en estado borrador para procesamiento manual
-  }
+    const { error: updateError } = await supabase.from("casos").update(datosParaActualizar).eq("id", casoId);
+    if (updateError) throw updateError;
+    
+    log('info', 'Caso procesado y actualizado completamente', { casoId });
 }
