@@ -10,7 +10,8 @@ import {
   Bot,
   Eye,
   Building,
-  User
+  User,
+  FileSignature
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,7 @@ interface CaseCardProps {
     cliente_id: string;
     valor_estimado?: string;
     tipo_lead?: string;
+    canal_atencion?: string;
     ciudad_borrador?: string;
     nombre_borrador?: string;
     apellido_borrador?: string;
@@ -160,6 +162,18 @@ const CaseCard: React.FC<CaseCardProps> = ({
     );
   };
 
+  const getOriginBadge = (canal: string) => {
+    if (canal !== 'manual_admin') return null;
+
+    return (
+      <Badge variant="outline" className="text-xs font-medium px-2 py-1 border-gray-300 text-white bg-gray-800">
+        <FileSignature className="h-3 w-3 mr-1" />
+        Manual
+      </Badge>
+    );
+  };
+
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -187,6 +201,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
             <div className="flex flex-wrap gap-1">
               {caso.tipo_lead && getLeadTypeBadge(caso.tipo_lead)}
               {getProfileTypeBadge(clientData.tipo_perfil)}
+              {caso.canal_atencion && getOriginBadge(caso.canal_atencion)}
             </div>
 
             <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
@@ -298,3 +313,4 @@ const CaseCard: React.FC<CaseCardProps> = ({
 };
 
 export default CaseCard;
+

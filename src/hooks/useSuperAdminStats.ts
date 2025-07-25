@@ -28,6 +28,7 @@ interface CasosSuperAdmin {
   costo_en_creditos: number;
   valor_estimado?: string;
   tipo_lead?: string;
+  canal_atencion?: string;
   ciudad_borrador?: string;
   nombre_borrador?: string;
   apellido_borrador?: string;
@@ -187,6 +188,7 @@ export const useSuperAdminStats = () => {
           costo_en_creditos,
           valor_estimado,
           tipo_lead,
+          canal_atencion,
           ciudad_borrador,
           nombre_borrador,
           apellido_borrador,

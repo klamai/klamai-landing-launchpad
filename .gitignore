@@ -28,3 +28,7 @@ dist-ssr
 
 # Documentos de apoyo
 .documentos_de_apollo/*
+
+
+# Others
+.temp/*
