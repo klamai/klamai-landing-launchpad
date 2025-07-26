@@ -20,7 +20,9 @@ import {
   CheckCircle,
   AlertCircle,
   ShieldCheck,
-  GavelIcon
+  GavelIcon,
+  Shield,
+  Eye
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -38,6 +40,8 @@ const CaseDetailTabs = () => {
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<'cliente' | 'abogado' | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -54,11 +58,12 @@ const CaseDetailTabs = () => {
     
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, tipo_abogado')
       .eq('id', user.id)
       .single();
     
     setUserRole(profile?.role || null);
+    setIsSuperAdmin(profile?.role === 'abogado' && profile?.tipo_abogado === 'super_admin');
   };
 
   const fetchCasoDetails = async () => {
@@ -166,6 +171,85 @@ const CaseDetailTabs = () => {
     return !lawyerOnlyFields.includes(fieldName);
   };
 
+  const handlePagarConsulta = async () => {
+    if (!casoId) return;
+    
+    try {
+      toast({
+        title: "Procesando pago",
+        description: "Creando sesión de pago...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
+        body: {
+          plan_id: 'consulta-estrategica',
+          caso_id: casoId
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.url) {
+        // Redirigir a Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No se recibió URL de pago');
+      }
+    } catch (error) {
+      console.error('Error al crear sesión de pago:', error);
+      toast({
+        title: "Error en el pago",
+        description: error instanceof Error ? error.message : "Error al procesar el pago. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const shouldShowPaymentButton = () => {
+    return userRole === 'cliente' && caso && ['listo_para_propuesta', 'esperando_pago'].includes(caso.estado);
+  };
+
+  const getPaymentButtonText = () => {
+    if (!caso) return 'Pagar';
+    
+    switch (caso.estado) {
+      case 'listo_para_propuesta':
+        return 'Pagar Consulta Estratégica';
+      case 'esperando_pago':
+        return 'Completar Pago';
+      default:
+        return 'Pagar';
+    }
+  };
+
+  // Acción para cerrar el caso
+  const handleCerrarCaso = async () => {
+    if (!casoId) return;
+    setIsClosing(true);
+    try {
+      const { error } = await supabase
+        .from('casos')
+        .update({ estado: 'cerrado' })
+        .eq('id', casoId);
+      if (error) throw error;
+      toast({
+        title: 'Caso cerrado',
+        description: 'El caso ha sido cerrado exitosamente.',
+      });
+      fetchCasoDetails(); // Refrescar datos
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo cerrar el caso',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsClosing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -194,73 +278,57 @@ const CaseDetailTabs = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Caso #{caso.id.substring(0, 8)}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">
-              {caso.motivo_consulta || 'Sin descripción disponible'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge className={getStatusColor(caso.estado)}>
-              {getStatusText(caso.estado)}
-            </Badge>
-            {userRole === 'abogado' && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <ShieldCheck className="h-3 w-3" />
-                Vista Abogado
-              </Badge>
+      {/* Header con información del caso y botón de pago/cerrar */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-4">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Caso #{casoId?.substring(0, 8)}
+                </h1>
+                {caso && (
+                  <Badge className={`${getStatusColor(caso.estado)} flex items-center gap-1`}>
+                    {getStatusText(caso.estado)}
+                  </Badge>
+                )}
+              </div>
+              
+              {caso && (
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  {caso.motivo_consulta || 'Sin descripción disponible'}
+                </p>
+              )}
+            </div>
+            
+            {/* Botón de pago prominente */}
+            {shouldShowPaymentButton() && (
+              <Button
+                onClick={handlePagarConsulta}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3"
+                size="lg"
+              >
+                <CreditCard className="h-5 w-5" />
+                {getPaymentButtonText()}
+              </Button>
+            )}
+            {/* Botón de cerrar caso solo para super admin y si el caso no está cerrado */}
+            {isSuperAdmin && caso?.estado !== 'cerrado' && (
+              <React.Fragment>
+                <Button
+                  onClick={handleCerrarCaso}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 ml-4"
+                  size="lg"
+                  disabled={isClosing}
+                >
+                  <ShieldCheck className="h-5 w-5" />
+                  {isClosing ? 'Cerrando...' : 'Cerrar Caso'}
+                </Button>
+              </React.Fragment>
             )}
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4 text-blue-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Fecha de Creación</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {format(new Date(caso.created_at), 'dd MMM yyyy', { locale: es })}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <CreditCard className="h-4 w-4 text-green-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Costo</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {caso.costo_en_creditos} créditos
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <User className="h-4 w-4 text-purple-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Especialidad</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {caso.especialidades?.nombre || 'No especificada'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="resumen" className="space-y-4">
         <TabsList className={`grid w-full ${userRole === 'abogado' ? 'grid-cols-5' : 'grid-cols-5'}`}>
