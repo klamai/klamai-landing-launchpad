@@ -71,6 +71,33 @@ const CasesManagement = () => {
     );
   };
 
+  // 1. Actualizar los estados en el filtro
+  const estadosVisibles = [
+    'listo_para_propuesta',
+    'esperando_pago',
+    'disponible',
+    'agotado',
+    'cerrado'
+  ];
+
+  // 2. Mejorar el filtro de estado
+  const statusOptions = [
+    { value: 'all', label: 'Todos' },
+    { value: 'listo_para_propuesta', label: 'Listo para Propuesta' },
+    { value: 'esperando_pago', label: 'Esperando Pago' },
+    { value: 'disponible', label: 'Disponible' },
+    { value: 'agotado', label: 'Atendido' },
+    { value: 'cerrado', label: 'Cerrado' }
+  ];
+
+  // 3. Badge de pago
+  const getPaymentBadge = (estado: string) => {
+    if (estado === 'disponible' || estado === 'agotado' || estado === 'cerrado') {
+      return <Badge variant="default">Pagado</Badge>;
+    }
+    return <Badge variant="outline">Pendiente</Badge>;
+  };
+
   // Get unique filter options
   const specialties = Array.from(new Set(casos.map(c => c.especialidades?.nombre).filter(Boolean)));
   const cities = Array.from(new Set(casos.map(c => c.ciudad_borrador || c.profiles?.ciudad).filter(Boolean)));
@@ -105,8 +132,8 @@ const CasesManagement = () => {
     return matchesSearch && matchesStatus && matchesSpecialty && matchesType && matchesCity && matchesProfileType;
   });
 
-  // Filter out closed cases for main view
-  const activeCasos = filteredCasos.filter(caso => caso.estado !== 'cerrado');
+  // Show all filtered cases including closed ones
+  const activeCasos = filteredCasos;
 
   const handleViewDetails = (casoId: string) => {
     const caso = casos.find(c => c.id === casoId);
@@ -187,14 +214,13 @@ const CasesManagement = () => {
           
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Estado" />
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="disponible">Disponible</SelectItem>
-                <SelectItem value="agotado">Agotado</SelectItem>
-                <SelectItem value="esperando_pago">Esperando Pago</SelectItem>
+                {statusOptions.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -313,7 +339,9 @@ const CasesManagement = () => {
                     <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Tipo</TableHead>
                     <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Especialidad</TableHead>
                     <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Estado</TableHead>
-                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Fecha</TableHead>
+                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Pago</TableHead>
+                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Fecha de cierre</TableHead>
+                    <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Cerrado por</TableHead>
                     <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Asignado a</TableHead>
                     <TableHead className="h-14 text-base font-bold text-gray-900 dark:text-white">Acciones</TableHead>
                   </TableRow>
@@ -357,12 +385,13 @@ const CasesManagement = () => {
                         {getStatusBadge(caso.estado)}
                       </TableCell>
                       <TableCell className="py-4">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                          <Calendar className="h-4 w-4" />
-                          <span className="font-medium">
-                            {format(new Date(caso.created_at), 'dd/MM/yy', { locale: es })}
-                          </span>
-                        </div>
+                        {getPaymentBadge(caso.estado)}
+                      </TableCell>
+                      <TableCell className="py-4">
+                        {caso.fecha_cierre ? format(new Date(caso.fecha_cierre), 'dd/MM/yyyy HH:mm', { locale: es }) : '-'}
+                      </TableCell>
+                      <TableCell className="py-4">
+                        {caso.cerrado_por ? `${caso.cerrado_por}` : '-'}
                       </TableCell>
                       <TableCell className="py-4">
                         {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
