@@ -153,6 +153,61 @@ export const useClientDocumentManagement = (casoId?: string) => {
     }
 
     try {
+      console.log('=== SUBIENDO DOCUMENTO CLIENTE ===');
+      console.log('Caso ID:', casoId);
+      console.log('Usuario ID:', user.id);
+      console.log('Usuario email:', user.email);
+
+      // Verificar el contexto de autenticación
+      const { data: authUser, error: authError } = await supabase.auth.getUser();
+      if (authError) {
+        console.error('Error de autenticación:', authError);
+        return { success: false, error: 'Usuario no autenticado correctamente' };
+      }
+
+      // Verificar el perfil del usuario
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, tipo_abogado, id, email')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error obteniendo perfil:', profileError);
+        return { success: false, error: 'No se pudo obtener el perfil del usuario' };
+      }
+
+      console.log('Perfil del usuario:', profile);
+
+      // Obtener información del caso para determinar el cliente_id correcto
+      const { data: casoData, error: casoError } = await supabase
+        .from('casos')
+        .select('id, cliente_id, estado')
+        .eq('id', casoId)
+        .single();
+
+      if (casoError) {
+        console.error('Error obteniendo caso:', casoError);
+        return { success: false, error: 'No se pudo obtener información del caso' };
+      }
+
+      console.log('Caso encontrado:', casoData);
+
+      // Determinar el cliente_id correcto
+      let clienteIdToUse: string;
+      
+      if (profile.role === 'cliente') {
+        // Si es cliente, usar su propio ID
+        clienteIdToUse = user.id;
+      } else if (profile.role === 'abogado' && profile.tipo_abogado === 'super_admin') {
+        // Si es super admin, usar el cliente_id del caso
+        clienteIdToUse = casoData.cliente_id;
+      } else {
+        return { success: false, error: 'No tienes permisos para subir documentos del cliente' };
+      }
+
+      console.log('Cliente ID a usar:', clienteIdToUse);
+
       // Generar nombre único para el archivo
       const timestamp = Date.now();
       const fileName = `${timestamp}_${file.name}`;
@@ -176,12 +231,13 @@ export const useClientDocumentManagement = (casoId?: string) => {
         .from('documentos_cliente')
         .insert({
           caso_id: casoId,
-          cliente_id: user.id,
+          cliente_id: clienteIdToUse, // Usar el cliente_id correcto
           tipo_documento: tipoDocumento,
-          nombre_archivo: file.name,
+          nombre_archivo: fileName,
           ruta_archivo: filePath,
           tamaño_archivo: file.size,
-          descripcion: descripcion || null
+          descripcion: descripcion || null,
+          fecha_subida: new Date().toISOString()
         });
 
       if (dbError) {
@@ -193,14 +249,14 @@ export const useClientDocumentManagement = (casoId?: string) => {
         throw dbError;
       }
 
-      console.log('Documento del cliente subido exitosamente');
-
-      // Refrescar la lista de documentos
+      console.log('✅ Documento subido exitosamente');
+      
+      // Refetch documentos
       await fetchDocumentosCliente();
 
       return { success: true };
     } catch (error) {
-      console.error('Error uploading client document:', error);
+      console.error('❌ Error general subiendo documento:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Error desconocido'
@@ -252,54 +308,104 @@ export const useClientDocumentManagement = (casoId?: string) => {
   };
 
   const deleteDocument = async (documentoId: string): Promise<{ success: boolean; error?: string }> => {
-    if (!user) {
-      return { success: false, error: 'Usuario no autenticado' };
+    if (!casoId || !user) {
+      return { success: false, error: 'No se puede eliminar - casoId o usuario no válidos' };
     }
 
     try {
-      // Obtener información del documento para eliminar el archivo
-      const { data: documento } = await supabase
-        .from('documentos_cliente')
-        .select('ruta_archivo, cliente_id')
-        .eq('id', documentoId)
-        .single();
+      console.log('=== ELIMINANDO DOCUMENTO CLIENTE ===');
+      console.log('Documento ID:', documentoId);
+      console.log('Caso ID:', casoId);
+      console.log('Usuario ID:', user.id);
 
-      if (!documento) {
-        return { success: false, error: 'Documento no encontrado' };
+      // Verificar el contexto de autenticación
+      const { data: authUser, error: authError } = await supabase.auth.getUser();
+      if (authError) {
+        console.error('Error de autenticación:', authError);
+        return { success: false, error: 'Usuario no autenticado correctamente' };
       }
 
-      // Verificar que el usuario es el propietario
-      if (documento.cliente_id !== user.id) {
+      // Verificar el perfil del usuario
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, tipo_abogado, id, email')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error obteniendo perfil:', profileError);
+        return { success: false, error: 'No se pudo obtener el perfil del usuario' };
+      }
+
+      console.log('Perfil del usuario:', profile);
+
+      // Verificar acceso al caso
+      const { data: casoData, error: casoError } = await supabase
+        .from('casos')
+        .select('id, cliente_id, estado')
+        .eq('id', casoId)
+        .single();
+
+      if (casoError) {
+        console.error('Error obteniendo caso:', casoError);
+        return { success: false, error: 'No se pudo obtener información del caso' };
+      }
+
+      console.log('Caso encontrado:', casoData);
+
+      // Verificar permisos: cliente propietario o super admin
+      const isOwner = profile.role === 'cliente' && casoData.cliente_id === user.id;
+      const isSuperAdmin = profile.role === 'abogado' && profile.tipo_abogado === 'super_admin';
+
+      if (!isOwner && !isSuperAdmin) {
+        console.error('Acceso denegado - no es propietario ni super admin');
         return { success: false, error: 'No tienes permisos para eliminar este documento' };
       }
 
-      // Eliminar de la base de datos
-      const { error: dbError } = await supabase
+      // Obtener información del documento antes de eliminar
+      const { data: documentoData, error: documentoError } = await supabase
+        .from('documentos_cliente')
+        .select('*')
+        .eq('id', documentoId)
+        .single();
+
+      if (documentoError) {
+        console.error('Error obteniendo documento:', documentoError);
+        return { success: false, error: 'No se pudo obtener información del documento' };
+      }
+
+      console.log('Documento a eliminar:', documentoData);
+
+      // Eliminar archivo de storage
+      const { error: storageError } = await supabase.storage
+        .from('documentos_legales')
+        .remove([documentoData.ruta_archivo]);
+
+      if (storageError) {
+        console.error('Error eliminando archivo de storage:', storageError);
+        // Continuar aunque falle storage, para eliminar el registro
+      }
+
+      // Eliminar registro de la base de datos
+      const { error: deleteError } = await supabase
         .from('documentos_cliente')
         .delete()
         .eq('id', documentoId);
 
-      if (dbError) {
-        throw dbError;
+      if (deleteError) {
+        console.error('Error eliminando registro:', deleteError);
+        return { success: false, error: 'Error al eliminar el documento de la base de datos' };
       }
 
-      console.log('Eliminando archivo con path:', documento.ruta_archivo);
-
-      // Eliminar archivo del storage
-      await supabase.storage
-        .from('documentos_legales')
-        .remove([documento.ruta_archivo]);
-
-      // Refrescar la lista
+      console.log('✅ Documento eliminado exitosamente');
+      
+      // Refetch documentos
       await fetchDocumentosCliente();
 
       return { success: true };
     } catch (error) {
-      console.error('Error deleting document:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Error desconocido'
-      };
+      console.error('❌ Error general eliminando documento:', error);
+      return { success: false, error: 'Error inesperado al eliminar el documento' };
     }
   };
 

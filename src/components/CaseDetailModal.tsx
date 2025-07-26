@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   X, 
@@ -17,7 +17,9 @@ import {
   UserPlus,
   Eye,
   Building,
-  Trash2
+  Trash2,
+  AlertCircle,
+  ShieldCheck
 } from 'lucide-react';
 import {
   Dialog,
@@ -42,6 +44,10 @@ import DocumentUploadModal from '@/components/DocumentUploadModal';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import ClientDocumentUploadModal from './ClientDocumentUploadModal';
+import CaseEditModal from './CaseEditModal';
 
 interface CaseDetailModalProps {
   caso: {
@@ -108,7 +114,12 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   const [messageText, setMessageText] = useState('');
   const [selectedDocument, setSelectedDocument] = useState<{name: string; url: string; type?: string; size?: number} | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showClientUploadModal, setShowClientUploadModal] = useState(false);
+  const [userRole, setUserRole] = useState<'cliente' | 'abogado' | null>(null);
+  const [lawyerType, setLawyerType] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const { 
     documentosResolucion, 
@@ -123,8 +134,31 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     documentosCliente,
     loading: loadingClientDocs,
     downloadDocument: downloadClientDocument,
-    getSignedUrl: getClientSignedUrl
+    getSignedUrl: getClientSignedUrl,
+    refetch: refetchClientDocuments,
+    deleteDocument: deleteClientDocument
   } = useClientDocumentManagement(caso?.id);
+
+  // Agregar el estado para el botón de cerrar
+  const [isClosing, setIsClosing] = useState(false);
+
+  // Verificar rol y tipo de abogado
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!user) return;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, tipo_abogado')
+        .eq('id', user.id)
+        .single();
+      
+      setUserRole(profile?.role || null);
+      setLawyerType(profile?.tipo_abogado || null);
+    };
+
+    fetchUserRole();
+  }, [user]);
 
   if (!caso) return null;
 
@@ -221,6 +255,47 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     }
   };
 
+  const handleDeleteClientDocument = async (docId: string) => {
+    if (!isSuperAdmin) {
+      toast({
+        title: "Error",
+        description: "No tienes permisos para eliminar documentos del cliente",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (window.confirm('¿Estás seguro de que quieres eliminar este documento del cliente?')) {
+      try {
+        // Usar el hook de client document management para eliminar
+        const result = await deleteClientDocument(docId);
+        if (result.success) {
+          toast({
+            title: "Éxito",
+            description: "Documento del cliente eliminado correctamente",
+          });
+          // Refetch client documents
+          if (refetchClientDocuments) {
+            refetchClientDocuments();
+          }
+        } else {
+          toast({
+            title: "Error",
+            description: result.error || "Error al eliminar el documento",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting client document:', error);
+        toast({
+          title: "Error",
+          description: "Error al eliminar el documento del cliente",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const handleUploadSuccess = () => {
     refetchDocuments();
     setShowUploadModal(false);
@@ -228,6 +303,52 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
       title: "Éxito",
       description: "Documento subido correctamente",
     });
+  };
+
+  const handleClientUploadSuccess = () => {
+    // Refetch client documents
+    if (refetchClientDocuments) {
+      refetchClientDocuments();
+    }
+    setShowClientUploadModal(false);
+    toast({
+      title: "Éxito",
+      description: "Documento del cliente subido correctamente",
+    });
+  };
+
+  const isSuperAdmin = userRole === 'abogado' && lawyerType === 'super_admin';
+
+  // Agregar la función para cerrar el caso
+  const handleCerrarCaso = async () => {
+    if (!caso) return;
+    setIsClosing(true);
+    try {
+      const { error } = await supabase
+        .from('casos')
+        .update({ estado: 'cerrado' })
+        .eq('id', caso.id);
+      if (error) throw error;
+      toast({
+        title: 'Caso cerrado',
+        description: 'El caso ha sido cerrado exitosamente.',
+      });
+      onClose(); // Cerrar el modal
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo cerrar el caso',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsClosing(false);
+    }
+  };
+
+  const handleEditSuccess = () => {
+    // Recargar los datos del caso
+    // Esto se puede implementar con un callback o recargando la página
+    window.location.reload();
   };
 
   return (
@@ -509,29 +630,45 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base">Documentos del Cliente</CardTitle>
+                      <CardTitle className="text-base flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-blue-600" />
+                          Documentos del Cliente
+                        </div>
+                        {/* Botón para super admin subir documentos del cliente */}
+                        {isSuperAdmin && (
+                          <Button
+                            onClick={() => setShowClientUploadModal(true)}
+                            variant="outline"
+                            size="sm"
+                            className="gap-1"
+                          >
+                            <Upload className="h-3 w-3" />
+                            Subir
+                          </Button>
+                        )}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {loadingClientDocs ? (
-                        <div className="text-center py-4 text-muted-foreground">
-                          <p className="text-sm">Cargando documentos del cliente...</p>
-                        </div>
-                      ) : documentosCliente.length > 0 ? (
-                        <div className="space-y-2">
-                          <p className="text-sm text-muted-foreground mb-2">Documentos subidos por el cliente:</p>
+                      <div className="space-y-2">
+                        {loadingClientDocs ? (
+                          <div className="text-center py-4 text-muted-foreground">
+                            <p className="text-sm">Cargando documentos...</p>
+                          </div>
+                        ) : documentosCliente.length > 0 ? (
                           <div className="space-y-2">
                             {documentosCliente.map((doc) => (
-                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                <FileText className="h-4 w-4 text-muted-foreground" />
+                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                                <FileText className="h-4 w-4 text-blue-600" />
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate cursor-pointer" onClick={() => handleViewClientDocument(doc)}>
+                                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
                                     {doc.nombre_archivo}
                                   </p>
-                                  <p className="text-xs text-muted-foreground">
+                                  <p className="text-xs text-blue-700 dark:text-blue-300">
                                     {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
                                   </p>
                                   {doc.descripcion && (
-                                    <p className="text-xs text-muted-foreground truncate">
+                                    <p className="text-xs text-blue-600 dark:text-blue-400 truncate">
                                       {doc.descripcion}
                                     </p>
                                   )}
@@ -550,17 +687,33 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                                 >
                                   <Download className="h-3 w-3" />
                                 </Button>
+                                {/* Solo super admin puede eliminar documentos del cliente */}
+                                {isSuperAdmin && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleDeleteClientDocument(doc.id)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                )}
                               </div>
                             ))}
                           </div>
-                        </div>
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">No hay documentos del cliente</p>
-                          <p className="text-xs">El cliente no ha subido documentos aún</p>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No hay documentos del cliente</p>
+                            <p className="text-xs">
+                              {isSuperAdmin 
+                                ? "Puedes subir documentos en nombre del cliente usando el botón de arriba"
+                                : "El cliente no ha subido documentos aún"
+                              }
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -643,44 +796,77 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
           {/* Action buttons */}
           {caso.estado !== 'cerrado' && (
             <>
-              <Separator />
-              <div className="flex flex-wrap gap-2 pt-4">
-                <Button
-                  onClick={() => onAssignLawyer(caso.id)}
-                  variant="default"
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Asignar Abogado
-                </Button>
-                
-                <Button
-                  onClick={() => onGenerateResolution(caso.id)}
-                  variant="outline"
-                >
+              <Separator className="mt-6" />
+              <div className="flex flex-col gap-2 p-2 md:flex-row md:flex-wrap md:gap-3 md:justify-start">
+                {/* Botón de editar - visible para super admin y abogados asignados */}
+                {(isSuperAdmin || (caso.asignaciones_casos && caso.asignaciones_casos.some(asignacion => 
+                  asignacion.abogado_id === user?.id && asignacion.estado_asignacion === 'activa'
+                ))) && (
+                  <Button 
+                    className="w-full md:w-auto"
+                    onClick={() => setShowEditModal(true)}
+                    variant="outline"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Editar Caso
+                  </Button>
+                )}
+
+                {isSuperAdmin && (
+                  <Button className="w-full md:w-auto" onClick={() => onAssignLawyer(caso.id)}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Asignar Abogado
+                  </Button>
+                )}
+                <Button className="w-full md:w-auto" onClick={() => onGenerateResolution(caso.id)} variant="outline">
                   <Bot className="h-4 w-4 mr-2" />
                   Generar Resolución IA
                 </Button>
                 
                 <Button
+                  className="w-full md:w-auto"
                   onClick={() => setShowUploadModal(true)}
                   variant="outline"
                 >
                   <Upload className="h-4 w-4 mr-2" />
                   Subir Documento
                 </Button>
-                
+
+                {/* Otro botón visible para todos */}
                 <Button
+                  className="w-full md:w-auto"
                   onClick={() => onSendMessage(caso.id)}
                   variant="outline"
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Enviar Mensaje
                 </Button>
+
+                {/* Otro botón solo para super admin */}
+                {isSuperAdmin && (
+                  <Button
+                    className="w-full md:w-auto"
+                    onClick={handleCerrarCaso}
+                    variant="destructive"
+                    disabled={isClosing}
+                  >
+                    <ShieldCheck className="h-4 w-4 mr-2" />
+                    {isClosing ? 'Cerrando...' : 'Cerrar Caso'}
+                  </Button>
+                )}
               </div>
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Case Edit Modal */}
+      <CaseEditModal
+        caso={caso}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleEditSuccess}
+      />
 
       {/* Document Viewer Modal */}
       <DocumentViewer
@@ -689,12 +875,20 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
         document={selectedDocument}
       />
 
-      {/* Document Upload Modal */}
+      {/* Document Upload Modal (para documentos de resolución) */}
       <DocumentUploadModal
         isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}
         casoId={caso.id}
         onUploadSuccess={handleUploadSuccess}
+      />
+
+      {/* Client Document Upload Modal (para super admin) */}
+      <ClientDocumentUploadModal
+        isOpen={showClientUploadModal}
+        onClose={() => setShowClientUploadModal(false)}
+        casoId={caso.id}
+        onUploadSuccess={handleClientUploadSuccess}
       />
     </>
   );

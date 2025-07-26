@@ -25,6 +25,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
 import { Caso } from "@/types/database";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useToast } from "@/components/ui/use-toast";
 
 const MisCasos = () => {
   const { casos, loading } = useCasesByRole();
@@ -35,6 +36,7 @@ const MisCasos = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<'cliente' | 'abogado' | null>(null);
+  const { toast } = useToast();
 
   // Obtener el rol del usuario
   useEffect(() => {
@@ -123,6 +125,55 @@ const MisCasos = () => {
 
   const handleVerCaso = (casoId: string) => {
     navigate(`/dashboard/casos/${casoId}`);
+  };
+
+  const handlePagarConsulta = async (casoId: string) => {
+    try {
+      toast({
+        title: "Procesando pago",
+        description: "Creando sesión de pago...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
+        body: {
+          plan_id: 'consulta-estrategica',
+          caso_id: casoId
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.url) {
+        // Redirigir a Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No se recibió URL de pago');
+      }
+    } catch (error) {
+      console.error('Error al crear sesión de pago:', error);
+      toast({
+        title: "Error en el pago",
+        description: error instanceof Error ? error.message : "Error al procesar el pago. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const shouldShowPaymentButton = (estado: string) => {
+    return userRole === 'cliente' && ['listo_para_propuesta', 'esperando_pago'].includes(estado);
+  };
+
+  const getPaymentButtonText = (estado: string) => {
+    switch (estado) {
+      case 'listo_para_propuesta':
+        return 'Pagar Consulta';
+      case 'esperando_pago':
+        return 'Completar Pago';
+      default:
+        return 'Pagar';
+    }
   };
 
   if (loading) {
@@ -318,7 +369,7 @@ const MisCasos = () => {
                       </div>
                     </div>
                     
-                    <div className="ml-4">
+                    <div className="ml-4 flex flex-col gap-2">
                       <Button
                         variant="outline"
                         size="sm"
@@ -328,6 +379,21 @@ const MisCasos = () => {
                         <Eye className="h-4 w-4" />
                         {userRole === 'abogado' ? 'Ver/Comprar' : 'Ver Detalle'}
                       </Button>
+                      
+                      {/* Botón de pago para casos que requieren pago */}
+                      {shouldShowPaymentButton(caso.estado) && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePagarConsulta(caso.id);
+                          }}
+                          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                          size="sm"
+                        >
+                          <CreditCard className="h-4 w-4" />
+                          {getPaymentButtonText(caso.estado)}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>

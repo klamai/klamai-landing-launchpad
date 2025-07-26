@@ -40,6 +40,8 @@ interface CasosSuperAdmin {
   nombre_gerente_borrador?: string;
   direccion_fiscal_borrador?: string;
   preferencia_horaria_contacto?: string;
+  fecha_cierre?: string;
+  cerrado_por?: string;
   documentos_adjuntos?: any;
   especialidades?: { nombre: string };
   profiles?: { 
@@ -125,7 +127,7 @@ export const useSuperAdminStats = () => {
       const { data: casoStats } = await supabase
         .from('casos')
         .select('estado')
-        .in('estado', ['disponible', 'agotado', 'cerrado', 'esperando_pago']);
+        .in('estado', ['listo_para_propuesta', 'esperando_pago', 'disponible', 'agotado', 'cerrado']);
 
       // Obtener estadísticas de abogados
       const { data: abogadoStats } = await supabase
@@ -200,6 +202,8 @@ export const useSuperAdminStats = () => {
           nombre_gerente_borrador,
           direccion_fiscal_borrador,
           preferencia_horaria_contacto,
+          fecha_cierre,
+          cerrado_por,
           documentos_adjuntos,
           especialidades (nombre),
           profiles!casos_cliente_id_fkey (
@@ -221,7 +225,7 @@ export const useSuperAdminStats = () => {
             profiles!asignaciones_casos_abogado_id_fkey (nombre, apellido, email)
           )
         `)
-        .in('estado', ['disponible', 'agotado', 'cerrado', 'esperando_pago'])
+        .in('estado', ['listo_para_propuesta', 'esperando_pago', 'disponible', 'agotado', 'cerrado'])
         .order('created_at', { ascending: false });
 
       if (error) {
