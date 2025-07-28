@@ -244,7 +244,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
             </div>
 
             {caso.valor_estimado && (
-              <div className="flex items-center gap-1 text-xs bg-green-50 dark:bg-green-900/20 p-1 rounded">
+              <div className="flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-900/20 p-1 rounded">
                 <span className="font-medium truncate">Valor Estimado:</span>
                 <Euro className="h-3 w-3 text-green-600" />
                 <span className="font-medium text-green-700 dark:text-green-300 truncate">
@@ -254,7 +254,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
             )}
 
             {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
-              <div className="text-xs  dark:bg-green-900/20 p-1 rounded text-blue-700 dark:text-green-300 flex items-center gap-1">
+              <div className="text-xs  dark:bg-blue-900/20 p-1 rounded text-blue-700 dark:text-blue-300 flex items-center gap-1">
                 <UserPlus className="h-3 w-3" />
                 <span className="font-medium truncate">Asignado a: {caso.asignaciones_casos[0].profiles?.nombre} {caso.asignaciones_casos[0].profiles?.apellido}</span>
               </div>
@@ -286,7 +286,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={() => onAssignLawyer(caso.id)}
-                    className="flex-1 h-8 text-xs font-medium hover:bg-green-50"
+                    className="flex-1 h-8 text-xs font-medium hover:bg-blue-50"
                   >
                     <UserPlus className="h-3 w-3 mr-1" />
                     Asignar

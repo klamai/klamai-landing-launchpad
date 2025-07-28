@@ -45,7 +45,7 @@ const DashboardLayout = memo(({
       toast({
         title: "✅ Sesión cerrada",
         description: "Has cerrado sesión exitosamente",
-        className: "bg-success text-success-foreground",
+        variant: "default"
       });
       navigate('/');
     } catch (error: any) {

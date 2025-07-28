@@ -253,7 +253,7 @@ const LawyerApplicationsManagement = () => {
       case 'en_revision':
         return <Badge variant="secondary" className="bg-blue-100 text-blue-800"><Eye className="w-3 h-3 mr-1" />En Revisión</Badge>;
       case 'aprobada':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800"><CheckCircle2 className="w-3 h-3 mr-1" />Aprobada</Badge>;
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800"><CheckCircle2 className="w-3 h-3 mr-1" />Aprobada</Badge>;
       case 'rechazada':
         return <Badge variant="secondary" className="bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" />Rechazada</Badge>;
       default:
@@ -415,7 +415,7 @@ const LawyerApplicationsManagement = () => {
                                   <Button
                                     onClick={() => handleApproveAutomated(app.id)}
                                     disabled={actionLoading === app.id}
-                                    className="w-full bg-green-600 hover:bg-green-700"
+                                    className="w-full bg-blue-600 hover:bg-blue-700"
                                   >
                                     {actionLoading === app.id ? (
                                       <div className="flex items-center">
@@ -508,7 +508,7 @@ const LawyerApplicationsManagement = () => {
                       size="sm"
                       onClick={() => handleApproveAutomated(app.id)}
                       disabled={actionLoading === app.id}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-blue-600 hover:bg-blue-700"
                     >
                       {actionLoading === app.id ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

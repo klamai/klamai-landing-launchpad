@@ -183,7 +183,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     const statusConfig = {
       'disponible': { 
         label: 'Disponible', 
-        className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+        className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
       },
       'agotado': { 
         label: 'Agotado', 
@@ -422,8 +422,8 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                         )}
                         {caso.valor_estimado && (
                           <div className="flex items-center gap-1 text-sm">
-                            <Euro className="h-4 w-4 text-green-600" />
-                            <span className="font-medium text-green-700 dark:text-green-400">
+                            <Euro className="h-4 w-4 text-blue-600" />
+                            <span className="font-medium text-blue-700 dark:text-blue-400">
                               Valor estimado: {caso.valor_estimado}
                             </span>
                           </div>
@@ -445,9 +445,9 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                         <div>
                           <p className="text-sm font-medium text-muted-foreground mb-2">Asignado a:</p>
                           {caso.asignaciones_casos.map((asignacion, idx) => (
-                            <div key={idx} className="bg-green-50 dark:bg-green-900/20 p-2 rounded-md">
+                            <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-md">
                               <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-green-600" />
+                                <User className="h-4 w-4 text-blue-600" />
                                 <span className="font-medium">
                                   {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
                                 </span>
