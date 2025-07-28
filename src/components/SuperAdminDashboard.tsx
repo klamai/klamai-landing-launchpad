@@ -25,6 +25,7 @@ import SuperAdminMetrics from "@/components/SuperAdminMetrics";
 import CasesManagement from "@/components/CasesManagement";
 import LawyersManagement from "@/components/LawyersManagement";
 import LawyerApplicationsManagement from "@/components/LawyerApplicationsManagement";
+import ClientsManagement from "@/components/ClientsManagement";
 import { Button } from "@/components/ui/button";
 
 const SuperAdminDashboard = () => {
@@ -57,6 +58,8 @@ const SuperAdminDashboard = () => {
       setActiveSection("casos");
     } else if (path.includes('/solicitudes-abogado')) {
       setActiveSection("solicitudes-abogado");
+    } else if (path.includes('/clientes')) {
+      setActiveSection("clientes");
     } else if (path.includes('/abogados')) {
       setActiveSection("abogados");
     } else if (path.includes('/hojas-encargo')) {
@@ -134,6 +137,13 @@ const SuperAdminDashboard = () => {
     {
       label: "Gestión de Abogados",
       href: "/abogados/dashboard/abogados",
+      icon: (
+        <Users className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Clientes",
+      href: "/abogados/dashboard/clientes",
       icon: (
         <Users className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
@@ -244,6 +254,8 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
         return <CasesManagementSection />;
       case "abogados":
         return <LawyersManagementSection />;
+      case "clientes":
+        return <ClientsManagementSection />;
       case "solicitudes-abogado":
         return <LawyerApplicationsSection />;
       case "hojas-encargo":
@@ -358,6 +370,19 @@ const LawyersManagementSection = () => {
     >
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Abogados</h1>
       <LawyersManagement />
+    </motion.div>
+  );
+};
+
+const ClientsManagementSection = () => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Clientes</h1>
+      <ClientsManagement />
     </motion.div>
   );
 };
