@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { FileText, Sparkles, AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AddManualCaseModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
   const [caseText, setCaseText] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth(); // Obtener usuario actual
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
