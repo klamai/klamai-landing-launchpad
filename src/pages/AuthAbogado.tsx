@@ -412,24 +412,26 @@ const AuthAbogado = () => {
             </div>
             
             {/* Right side - Auth Forms */}
-            <div className="w-full lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center bg-white dark:bg-gray-800">
+            <div className="w-full lg:w-1/2 p-4 lg:p-12 flex flex-col justify-center bg-white dark:bg-gray-800 h-auto lg:h-[700px]">
               
               {!showForgotPassword ? (
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-100 dark:bg-gray-700">
-                    <TabsTrigger value="login" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Iniciar Sesión</TabsTrigger>
-                    <TabsTrigger value="signup" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Solicitar Acceso</TabsTrigger>
-                  </TabsList>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col">
+                  <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 pb-2">
+                    <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                      <TabsTrigger value="login" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Iniciar Sesión</TabsTrigger>
+                      <TabsTrigger value="signup" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Solicitar Acceso</TabsTrigger>
+                    </TabsList>
+                  </div>
 
                   {/* Login Tab */}
-                  <TabsContent value="login">
+                  <TabsContent value="login" className="flex-1 px-2 lg:px-4 pb-4">
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5 }}
                     >
-                      <h1 className="text-2xl md:text-3xl font-bold mb-1 text-gray-800 dark:text-white">Portal de Abogados</h1>
-                      <p className="text-gray-500 dark:text-gray-400 mb-8">Accede a tu dashboard profesional</p>
+                      <h1 className="text-2xl md:text-3xl font-bold mb-1 text-gray-800 dark:text-white mt-4">Portal de Abogados</h1>
+                      <p className="text-gray-500 dark:text-gray-400 mb-4">Accede a tu dashboard profesional</p>
                       
                       {/* Disabled Google Sign In Button */}
                       <div className="mb-6">
@@ -542,15 +544,14 @@ const AuthAbogado = () => {
                   </TabsContent>
 
                   {/* Application Tab */}
-                  <TabsContent value="signup">
+                  <TabsContent value="signup" className="flex-1 px-2 lg:px-4 pb-4 overflow-y-auto" style={{ maxHeight: 'calc(700px - 60px)' }}>
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5 }}
                     >
-                      <h1 className="text-2xl md:text-3xl font-bold mb-1 text-gray-800 dark:text-white">Solicitar Acceso</h1>
-                      <p className="text-gray-500 dark:text-gray-400 mb-8">Aplica para unirte como abogado a klamAI</p>
-
+                      <h1 className="text-2xl md:text-3xl font-bold mb-1 text-gray-800 dark:text-white mt-4">Solicitar Acceso</h1>
+                      <p className="text-gray-500 dark:text-gray-400 mb-4">Aplica para unirte como abogado a klamAI</p>
                       <LawyerApplicationForm onSuccess={handleApplicationSuccess} />
                     </motion.div>
                   </TabsContent>

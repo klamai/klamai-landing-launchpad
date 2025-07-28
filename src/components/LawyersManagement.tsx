@@ -10,8 +10,25 @@ import {
   Mail,
   Phone,
   MapPin,
-  Briefcase
+  Briefcase,
+  Eye,
+  Edit,
+  Layers,
+  PlusCircle,
+  List,
+  Shield,
+  Ban,
+  RefreshCw,
+  Trash2
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import { useSuperAdminStats } from '@/hooks/useSuperAdminStats';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,22 +61,25 @@ const LawyersManagement = () => {
     return Math.min((casos_activos / maxCases) * 100, 100);
   };
 
-  const getSpecialtiesText = (especialidades: number[] | null) => {
+  // Las especialidades deben venir ya como nombres desde el backend/hook
+  const renderSpecialties = (especialidades: { id: number, nombre: string }[] | number[] | null) => {
     if (!especialidades || especialidades.length === 0) {
-      return 'Sin especialidades definidas';
+      return <span className="italic text-gray-500">Sin especialidades definidas</span>;
     }
-    
-    // Mapeo básico de especialidades (esto debería venir de la base de datos)
-    const especialidadesMap: { [key: number]: string } = {
-      1: 'Derecho Laboral',
-      2: 'Derecho Civil',
-      3: 'Derecho Mercantil',
-      4: 'Derecho Penal',
-      5: 'Derecho Fiscal',
-      6: 'Derecho Familiar'
-    };
-    
-    return especialidades.map(id => especialidadesMap[id] || `Especialidad ${id}`).join(', ');
+    // Si es un array de objetos con nombre, renderiza normalmente
+    if (typeof especialidades[0] === 'object' && 'nombre' in (especialidades[0] as any)) {
+      return (
+        <div className="flex flex-wrap gap-1">
+          {(especialidades as {id:number, nombre:string}[]).map((esp) => (
+            <Badge key={esp.id} variant="outline" className="text-xs break-words max-w-xs">
+              {esp.nombre}
+            </Badge>
+          ))}
+        </div>
+      );
+    }
+    // Si es un array de números (ids), solo muestra la cantidad
+    return <span className="italic text-gray-500">{especialidades.length} especialidad(es)</span>;
   };
 
   if (loadingAbogados) {
@@ -161,7 +181,8 @@ const LawyersManagement = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Desktop: tabla, móvil: cards */}
+          <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -200,12 +221,8 @@ const LawyersManagement = () => {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="max-w-xs">
-                        <Badge variant="outline" className="text-xs">
-                          {getSpecialtiesText(abogado.especialidades)}
-                        </Badge>
-                      </div>
+                    <TableCell className="align-top min-w-[120px] max-w-xs">
+                      {renderSpecialties(abogado.especialidades)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -247,14 +264,140 @@ const LawyersManagement = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" /> Ver Perfil
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" /> Editar Datos
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Layers className="h-4 w-4 mr-2" /> Cambiar Especialidades
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <PlusCircle className="h-4 w-4 mr-2" /> Asignar Caso
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <List className="h-4 w-4 mr-2" /> Ver Casos Asignados
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>
+                            <Shield className="h-4 w-4 mr-2" /> Cambiar Rol
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Ban className="h-4 w-4 mr-2" /> Suspender / Reactivar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <RefreshCw className="h-4 w-4 mr-2" /> Resetear Contraseña
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600">
+                            <Trash2 className="h-4 w-4 mr-2" /> Eliminar Abogado
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </motion.tr>
                 ))}
               </TableBody>
             </Table>
+          </div>
+          {/* Móvil: cards */}
+          <div className="block md:hidden space-y-4">
+            {abogados.map((abogado) => (
+              <div key={abogado.id} className="rounded-lg bg-white dark:bg-gray-900 p-4 flex flex-col gap-2 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarFallback>
+                      {abogado.nombre[0]}{abogado.apellido[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium text-base">
+                      {abogado.nombre} {abogado.apellido}
+                    </div>
+                    <div className="text-xs text-gray-400 flex items-center gap-1">
+                      <Mail className="h-3 w-3" />
+                      {abogado.email}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {renderSpecialties(abogado.especialidades)}
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs mt-2">
+                  <div className="flex items-center gap-1">
+                    <Briefcase className="h-3 w-3 text-gray-500" />
+                    <span>{abogado.casos_asignados} asignados</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Award className="h-3 w-3 text-yellow-500" />
+                    <span>{abogado.creditos_disponibles} créditos</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3 text-gray-500" />
+                    <span>{format(new Date(abogado.created_at), 'dd/MM/yy', { locale: es })}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className={getWorkloadColor(abogado.casos_activos)}>
+                    {abogado.casos_activos === 0 ? 'Sin carga' :
+                     abogado.casos_activos <= 3 ? 'Baja' :
+                     abogado.casos_activos <= 6 ? 'Media' : 'Alta'}
+                  </span>
+                  <Progress value={getWorkloadPercentage(abogado.casos_activos)} className="h-2 flex-1" />
+                  <span className="text-gray-500 text-xs">{abogado.casos_activos}/10</span>
+                </div>
+                <div className="flex justify-end mt-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                      <DropdownMenuItem>
+                        <Eye className="h-4 w-4 mr-2" /> Ver Perfil
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Edit className="h-4 w-4 mr-2" /> Editar Datos
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Layers className="h-4 w-4 mr-2" /> Cambiar Especialidades
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <PlusCircle className="h-4 w-4 mr-2" /> Asignar Caso
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <List className="h-4 w-4 mr-2" /> Ver Casos Asignados
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <Shield className="h-4 w-4 mr-2" /> Cambiar Rol
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Ban className="h-4 w-4 mr-2" /> Suspender / Reactivar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <RefreshCw className="h-4 w-4 mr-2" /> Resetear Contraseña
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-red-600">
+                        <Trash2 className="h-4 w-4 mr-2" /> Eliminar Abogado
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

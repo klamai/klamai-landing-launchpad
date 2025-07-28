@@ -250,7 +250,7 @@ export const useClientDocumentManagement = (casoId?: string) => {
       }
 
       console.log('✅ Documento subido exitosamente');
-      
+
       // Refetch documentos
       await fetchDocumentosCliente();
 
