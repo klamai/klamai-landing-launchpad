@@ -7,6 +7,7 @@ interface AssignedCase {
   id: string;
   motivo_consulta: string | null;
   resumen_caso: string | null;
+  guia_abogado: string | null;
   estado: 'borrador' | 'esperando_pago' | 'disponible' | 'agotado' | 'cerrado' | 'listo_para_propuesta';
   created_at: string;
   nombre_borrador: string | null;
@@ -45,7 +46,7 @@ export const useAssignedCases = () => {
       setLoading(true);
       setError(null);
 
-      // Obtener casos asignados al abogado actual
+      // Obtener casos asignados al abogado actual (incluyendo casos cerrados)
       const { data, error } = await supabase
         .from('asignaciones_casos')
         .select(`
@@ -57,6 +58,7 @@ export const useAssignedCases = () => {
             id,
             motivo_consulta,
             resumen_caso,
+            guia_abogado,
             estado,
             created_at,
             nombre_borrador,
@@ -71,7 +73,7 @@ export const useAssignedCases = () => {
           )
         `)
         .eq('abogado_id', user.id)
-        .eq('estado_asignacion', 'activa')
+        .in('estado_asignacion', ['activa', 'completada'])
         .order('fecha_asignacion', { ascending: false });
 
       if (error) {
@@ -85,6 +87,7 @@ export const useAssignedCases = () => {
         id: assignment.casos.id,
         motivo_consulta: assignment.casos.motivo_consulta,
         resumen_caso: assignment.casos.resumen_caso,
+        guia_abogado: assignment.casos.guia_abogado,
         estado: assignment.casos.estado,
         created_at: assignment.casos.created_at,
         nombre_borrador: assignment.casos.nombre_borrador,

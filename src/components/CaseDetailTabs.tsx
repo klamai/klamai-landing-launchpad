@@ -33,6 +33,8 @@ import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUti
 import DocumentManager from "@/components/DocumentManager";
 import ClientDocumentManager from "@/components/ClientDocumentManager";
 import LawyerDocumentViewer from "@/components/LawyerDocumentViewer";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const CaseDetailTabs = () => {
   const { casoId } = useParams();
@@ -40,10 +42,12 @@ const CaseDetailTabs = () => {
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<'cliente' | 'abogado' | null>(null);
+  const [lawyerType, setLawyerType] = useState<'regular' | 'super_admin' | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const [isAssignedLawyer, setIsAssignedLawyer] = useState(false);
 
   useEffect(() => {
     if (casoId && user) {
@@ -63,6 +67,7 @@ const CaseDetailTabs = () => {
       .single();
     
     setUserRole(profile?.role || null);
+    setLawyerType(profile?.tipo_abogado || null);
     setIsSuperAdmin(profile?.role === 'abogado' && profile?.tipo_abogado === 'super_admin');
   };
 
@@ -224,30 +229,74 @@ const CaseDetailTabs = () => {
     }
   };
 
-  // Acción para cerrar el caso
+  // Acción para cerrar el caso usando Edge Function
   const handleCerrarCaso = async () => {
     if (!casoId) return;
     setIsClosing(true);
     try {
-      const { error } = await supabase
-        .from('casos')
-        .update({ estado: 'cerrado' })
-        .eq('id', casoId);
-      if (error) throw error;
-      toast({
-        title: 'Caso cerrado',
-        description: 'El caso ha sido cerrado exitosamente.',
+      const { data, error } = await supabase.functions.invoke('close-case', {
+        body: { caso_id: casoId },
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        }
       });
-      fetchCasoDetails(); // Refrescar datos
-    } catch (error) {
+
+      if (error) throw error;
+      
+      if (data.success) {
+        toast({
+          title: 'Caso cerrado',
+          description: data.data.mensaje || 'El caso ha sido cerrado exitosamente.',
+        });
+        fetchCasoDetails(); // Refrescar datos
+      } else {
+        throw new Error(data.error || 'Error desconocido');
+      }
+    } catch (error: any) {
+      console.error('Error cerrando caso:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo cerrar el caso',
+        description: error.message || 'No se pudo cerrar el caso',
         variant: 'destructive',
       });
     } finally {
       setIsClosing(false);
     }
+  };
+
+  // Verificar si el abogado está asignado al caso
+  useEffect(() => {
+    const checkAssignment = async () => {
+      if (!user || userRole !== 'abogado' || lawyerType !== 'regular') return;
+      
+      const { data: asignacion } = await supabase
+        .from('asignaciones_casos')
+        .select('estado_asignacion')
+        .eq('caso_id', casoId)
+        .eq('abogado_id', user.id)
+        .eq('estado_asignacion', 'activa')
+        .single();
+      
+      setIsAssignedLawyer(!!asignacion);
+    };
+
+    checkAssignment();
+  }, [user, userRole, lawyerType, casoId]);
+
+  // Determinar si el usuario puede cerrar el caso
+  const canCloseCase = () => {
+    if (!user || !caso) return false;
+    
+    // No se puede cerrar si ya está cerrado
+    if (caso.estado === 'cerrado') return false;
+    
+    // Super admin puede cerrar cualquier caso
+    if (userRole === 'abogado' && lawyerType === 'super_admin') return true;
+    
+    // Abogado regular puede cerrar casos asignados
+    if (userRole === 'abogado' && lawyerType === 'regular' && isAssignedLawyer) return true;
+    
+    return false;
   };
 
   if (loading) {
@@ -313,18 +362,16 @@ const CaseDetailTabs = () => {
               </Button>
             )}
             {/* Botón de cerrar caso solo para super admin y si el caso no está cerrado */}
-            {isSuperAdmin && caso?.estado !== 'cerrado' && (
-              <React.Fragment>
-                <Button
-                  onClick={handleCerrarCaso}
-                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 ml-4"
-                  size="lg"
-                  disabled={isClosing}
-                >
-                  <ShieldCheck className="h-5 w-5" />
-                  {isClosing ? 'Cerrando...' : 'Cerrar Caso'}
-                </Button>
-              </React.Fragment>
+            {canCloseCase() && (
+              <Button
+                onClick={handleCerrarCaso}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 ml-4"
+                size="lg"
+                disabled={isClosing}
+              >
+                <ShieldCheck className="h-5 w-5" />
+                {isClosing ? 'Cerrando...' : 'Cerrar Caso'}
+              </Button>
             )}
           </div>
         </CardContent>
@@ -372,13 +419,25 @@ const CaseDetailTabs = () => {
                     </div>
                   )}
                   
-                  {shouldShowField('guia_abogado') && caso.guia_abogado && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Guía para Abogados:</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {caso.guia_abogado}
-                      </p>
-                    </div>
+                  {/* Sección dedicada para la Guía del Abogado - FUERA de la tarjeta de información */}
+                  {userRole === 'abogado' && caso.guia_abogado && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <ShieldCheck className="h-5 w-5 text-blue-600" />
+                          Guía para el Abogado
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="prose prose-slate bg-gray-50 max-w-none dark:prose-invert dark:bg-gray-800 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden">                        
+                          <ScrollArea className="h-64">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {caso.guia_abogado}
+                            </ReactMarkdown>
+                          </ScrollArea>
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
                   
                   {shouldShowField('propuesta_cliente') && caso.propuesta_cliente && (

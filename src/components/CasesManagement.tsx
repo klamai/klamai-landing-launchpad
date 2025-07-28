@@ -13,6 +13,7 @@ import {
   List,
   Plus,
   FileText,
+  ShieldCheck,
 } from 'lucide-react';
 import { useSuperAdminStats } from '@/hooks/useSuperAdminStats';
 import { Button } from '@/components/ui/button';

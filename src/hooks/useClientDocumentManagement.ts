@@ -202,6 +202,22 @@ export const useClientDocumentManagement = (casoId?: string) => {
       } else if (profile.role === 'abogado' && profile.tipo_abogado === 'super_admin') {
         // Si es super admin, usar el cliente_id del caso
         clienteIdToUse = casoData.cliente_id;
+      } else if (profile.role === 'abogado' && profile.tipo_abogado === 'regular') {
+        // Verificar si el abogado regular está asignado al caso
+        const { data: asignacion, error: asignacionError } = await supabase
+          .from('asignaciones_casos')
+          .select('estado_asignacion')
+          .eq('caso_id', casoId)
+          .eq('abogado_id', user.id)
+          .eq('estado_asignacion', 'activa')
+          .single();
+
+        if (asignacionError || !asignacion) {
+          return { success: false, error: 'No tienes permisos para subir documentos del cliente' };
+        }
+
+        // Si está asignado, usar el cliente_id del caso
+        clienteIdToUse = casoData.cliente_id;
       } else {
         return { success: false, error: 'No tienes permisos para subir documentos del cliente' };
       }
@@ -353,12 +369,25 @@ export const useClientDocumentManagement = (casoId?: string) => {
 
       console.log('Caso encontrado:', casoData);
 
-      // Verificar permisos: cliente propietario o super admin
+      // Verificar permisos: cliente propietario, super admin o abogado regular asignado
       const isOwner = profile.role === 'cliente' && casoData.cliente_id === user.id;
       const isSuperAdmin = profile.role === 'abogado' && profile.tipo_abogado === 'super_admin';
+      
+      let isAssignedLawyer = false;
+      if (profile.role === 'abogado' && profile.tipo_abogado === 'regular') {
+        const { data: asignacion } = await supabase
+          .from('asignaciones_casos')
+          .select('estado_asignacion')
+          .eq('caso_id', casoId)
+          .eq('abogado_id', user.id)
+          .eq('estado_asignacion', 'activa')
+          .single();
+        
+        isAssignedLawyer = !!asignacion;
+      }
 
-      if (!isOwner && !isSuperAdmin) {
-        console.error('Acceso denegado - no es propietario ni super admin');
+      if (!isOwner && !isSuperAdmin && !isAssignedLawyer) {
+        console.error('Acceso denegado - no es propietario, super admin ni abogado asignado');
         return { success: false, error: 'No tienes permisos para eliminar este documento' };
       }
 
