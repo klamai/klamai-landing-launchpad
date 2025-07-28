@@ -57,51 +57,47 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 222 28% 13%; /* #181f2a */
+    --foreground: 220 60% 92%; /* #e5eaf3 */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 28% 20%; /* #232b3b */
+    --card-foreground: 220 60% 92%; /* #e5eaf3 */
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 28% 20%;
+    --popover-foreground: 220 60% 92%;
 
-    /* Dark mode - Azul corporativo ajustado */
-    --primary: 210 80% 65%; /* Azul más claro para dark mode */
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 217 91% 60%; /* #3b82f6 */
+    --primary-foreground: 220 60% 92%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 215 20% 35%; /* #334155 */
+    --secondary-foreground: 220 60% 92%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 16% 24%; /* #283046 */
+    --muted-foreground: 220 30% 70%; /* #a3adc2 */
 
-    /* Dark mode - Verde menta ajustado */
-    --accent: 158 64% 60%; /* Verde menta más brillante para dark mode */
-    --accent-foreground: 210 40% 98%;
+    --accent: 184 72% 56%; /* #22d3ee */
+    --accent-foreground: 220 60% 92%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 91% 71%; /* #f87171 */
+    --destructive-foreground: 220 60% 92%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 210 80% 65%;
+    --border: 215 20% 35%; /* #334155 */
+    --input: 215 20% 35%;
+    --ring: 217 91% 60%;
 
-    /* Dark sidebar */
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 210 80% 65%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 210 80% 65%;
+    --sidebar-background: 220 28% 13%;
+    --sidebar-foreground: 220 60% 92%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 220 60% 92%;
+    --sidebar-accent: 220 16% 24%;
+    --sidebar-accent-foreground: 220 60% 92%;
+    --sidebar-border: 215 20% 35%;
+    --sidebar-ring: 217 91% 60%;
 
-    /* Dark success/warning */
-    --success: 158 64% 60%;
-    --success-foreground: 0 0% 100%;
-    --warning: 45 93% 65%;
-    --warning-foreground: 45 30% 11%;
+    --success: 184 72% 56%; /* #22d3ee */
+    --success-foreground: 220 60% 92%;
+    --warning: 48 97% 80%; /* #fde68a */
+    --warning-foreground: 220 60% 92%;
   }
 }
 

@@ -250,8 +250,15 @@ export const useSuperAdminStats = () => {
     setErrorAbogados(null);
 
     try {
-      console.log('🔍 Iniciando fetchAbogados con política RLS actualizada...');
-      
+      // Obtener todas las especialidades para mapear ids a nombres
+      const { data: especialidadesData } = await supabase
+        .from('especialidades')
+        .select('id, nombre');
+      const especialidadesMap = new Map();
+      especialidadesData?.forEach((esp) => {
+        especialidadesMap.set(esp.id, esp.nombre);
+      });
+
       // Con la nueva política RLS, los super admins pueden ver todos los abogados
       const { data: abogadosData, error } = await supabase
         .from('profiles')
@@ -266,15 +273,12 @@ export const useSuperAdminStats = () => {
         return;
       }
 
-      console.log('✅ Abogados obtenidos exitosamente:', abogadosData?.length || 0);
-
       if (!abogadosData || abogadosData.length === 0) {
-        console.log('⚠️ No se encontraron abogados');
         setAbogados([]);
         return;
       }
 
-      // Para cada abogado, obtener estadísticas de casos asignados
+      // Para cada abogado, obtener estadísticas de casos asignados y mapear especialidades
       const abogadosConStats = await Promise.all(
         abogadosData.map(async (abogado) => {
           try {
@@ -286,23 +290,30 @@ export const useSuperAdminStats = () => {
             const casos_asignados = asignaciones?.length || 0;
             const casos_activos = asignaciones?.filter(a => a.estado_asignacion === 'activa').length || 0;
 
+            // Mapear especialidades ids a objetos {id, nombre}
+            const especialidadesArr = (abogado.especialidades || []).map((id) => ({
+              id,
+              nombre: especialidadesMap.get(id) || `Especialidad ${id}`
+            }));
+
             return {
               ...abogado,
               casos_asignados,
-              casos_activos
+              casos_activos,
+              especialidades: especialidadesArr
             };
           } catch (error) {
             console.error(`Error obteniendo stats para abogado ${abogado.id}:`, error);
             return {
               ...abogado,
               casos_asignados: 0,
-              casos_activos: 0
+              casos_activos: 0,
+              especialidades: []
             };
           }
         })
       );
 
-      console.log('✅ Abogados con estadísticas completados:', abogadosConStats.length);
       setAbogados(abogadosConStats);
     } catch (error) {
       console.error('❌ Error general en fetchAbogados:', error);

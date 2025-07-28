@@ -237,7 +237,7 @@ const LawyerApplicationForm = ({ onSuccess }: LawyerApplicationFormProps) => {
 
       <div>
         <Label className="text-gray-700 dark:text-gray-300">Especialidades *</Label>
-        <div className="grid grid-cols-2 gap-2 mt-2 max-h-32 overflow-y-auto bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+        <div className="grid grid-cols-2 gap-2 mt-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
           {availableEspecialidades.map((esp) => (
             <div key={esp.id} className="flex items-center space-x-2">
               <Checkbox
