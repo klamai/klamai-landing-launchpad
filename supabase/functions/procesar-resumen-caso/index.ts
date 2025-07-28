@@ -218,6 +218,7 @@ serve(async (req)=>{
       estado: "listo_para_propuesta",
       motivo_consulta: clasificacion.motivo_consulta_ia || motivo_inicial || "Consulta General",
       resumen_caso,
+      guia_abogado: guia_abogado,
       propuesta_estructurada,
       tipo_lead: clasificacion.tipo_lead,
       valor_estimado: clasificacion.valor_estimado,

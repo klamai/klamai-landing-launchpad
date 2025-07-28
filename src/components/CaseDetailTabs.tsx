@@ -333,22 +333,22 @@ const CaseDetailTabs = () => {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-4">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Caso #{casoId?.substring(0, 8)}
-                </h1>
+            </h1>
                 {caso && (
                   <Badge className={`${getStatusColor(caso.estado)} flex items-center gap-1`}>
-                    {getStatusText(caso.estado)}
-                  </Badge>
-                )}
+              {getStatusText(caso.estado)}
+              </Badge>
+            )}
               </div>
               
               {caso && (
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
                   {caso.motivo_consulta || 'Sin descripción disponible'}
-                </p>
+                  </p>
               )}
-            </div>
+              </div>
             
             {/* Botón de pago prominente */}
             {shouldShowPaymentButton() && (
@@ -373,9 +373,9 @@ const CaseDetailTabs = () => {
                 {isClosing ? 'Cerrando...' : 'Cerrar Caso'}
               </Button>
             )}
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+            </CardContent>
+          </Card>
 
       <Tabs defaultValue="resumen" className="space-y-4">
         <TabsList className={`grid w-full ${userRole === 'abogado' ? 'grid-cols-5' : 'grid-cols-5'}`}>
@@ -432,10 +432,10 @@ const CaseDetailTabs = () => {
                         <div className="prose prose-slate bg-gray-50 max-w-none dark:prose-invert dark:bg-gray-800 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden">                        
                           <ScrollArea className="h-64">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {caso.guia_abogado}
+                        {caso.guia_abogado}
                             </ReactMarkdown>
                           </ScrollArea>
-                        </div>
+                    </div>
                       </CardContent>
                     </Card>
                   )}

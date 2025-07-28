@@ -418,9 +418,9 @@ const AuthAbogado = () => {
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col">
                   <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 pb-2">
                     <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                      <TabsTrigger value="login" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Iniciar Sesión</TabsTrigger>
-                      <TabsTrigger value="signup" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Solicitar Acceso</TabsTrigger>
-                    </TabsList>
+                    <TabsTrigger value="login" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Iniciar Sesión</TabsTrigger>
+                    <TabsTrigger value="signup" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Solicitar Acceso</TabsTrigger>
+                  </TabsList>
                   </div>
 
                   {/* Login Tab */}

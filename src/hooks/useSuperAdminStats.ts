@@ -263,7 +263,7 @@ export const useSuperAdminStats = () => {
       especialidadesData?.forEach((esp) => {
         especialidadesMap.set(esp.id, esp.nombre);
       });
-
+      
       // Con la nueva política RLS, los super admins pueden ver todos los abogados
       const { data: abogadosData, error } = await supabase
         .from('profiles')
