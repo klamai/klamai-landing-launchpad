@@ -87,7 +87,7 @@ const MisCasos = () => {
       case 'agotado':
         return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'cerrado':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'listo_para_propuesta':
         return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
@@ -199,7 +199,7 @@ const MisCasos = () => {
             {userRole === 'abogado' ? 'Casos Disponibles' : 'Mis Casos'}
           </h1>
           <div title="Datos protegidos por RLS">
-            <Shield className="h-5 w-5 text-green-600" />
+            <Shield className="h-5 w-5 text-blue-600" />
           </div>
         </div>
         <p className="text-gray-600 dark:text-gray-300">
@@ -343,7 +343,7 @@ const MisCasos = () => {
                         )}
                         {userRole === 'cliente' && (
                           <div title="Tu información está protegida">
-                            <Shield className="h-4 w-4 text-green-600" />
+                            <Shield className="h-4 w-4 text-blue-600" />
                           </div>
                         )}
                       </div>
@@ -387,7 +387,7 @@ const MisCasos = () => {
                             e.stopPropagation();
                             handlePagarConsulta(caso.id);
                           }}
-                          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
                           size="sm"
                         >
                           <CreditCard className="h-4 w-4" />

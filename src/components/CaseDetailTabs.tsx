@@ -305,7 +305,7 @@ const CaseDetailTabs = () => {
             {shouldShowPaymentButton() && (
               <Button
                 onClick={handlePagarConsulta}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3"
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3"
                 size="lg"
               >
                 <CreditCard className="h-5 w-5" />
@@ -422,7 +422,7 @@ const CaseDetailTabs = () => {
                   {getTimelineSteps(caso.estado).map((step, index) => (
                     <div key={step.id} className="flex items-center space-x-3">
                       <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-                        step.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                        step.completed ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
                       }`}>
                         {step.completed ? (
                           <CheckCircle className="h-4 w-4" />
@@ -482,8 +482,8 @@ const CaseDetailTabs = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                  <p className="text-sm text-green-800 dark:text-green-200">
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
                     <strong>Documentos oficiales:</strong> Aquí encontrarás todas las resoluciones, dictámenes e informes que el abogado ha preparado para tu caso.
                   </p>
                 </div>

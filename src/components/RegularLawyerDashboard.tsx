@@ -81,6 +81,7 @@ const RegularLawyerDashboard = () => {
       toast({
         title: "Sesión cerrada",
         description: "Has cerrado sesión exitosamente",
+        variant: "default"
       });
       navigate('/');
     } catch (error: any) {
