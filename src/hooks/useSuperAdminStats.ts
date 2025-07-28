@@ -223,6 +223,11 @@ export const useSuperAdminStats = () => {
             estado_asignacion,
             fecha_asignacion,
             profiles!asignaciones_casos_abogado_id_fkey (nombre, apellido, email)
+          ),
+          cerrado_por_profile:profiles!casos_cerrado_por_fkey (
+            nombre,
+            apellido,
+            email
           )
         `)
         .in('estado', ['listo_para_propuesta', 'esperando_pago', 'disponible', 'agotado', 'cerrado'])

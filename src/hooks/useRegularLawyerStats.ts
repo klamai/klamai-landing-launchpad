@@ -33,7 +33,7 @@ export const useRegularLawyerStats = () => {
     try {
       setLoading(true);
 
-      // Obtener casos asignados
+      // Obtener casos asignados (incluyendo casos cerrados)
       const { data: assignedCases, error: assignedError } = await supabase
         .from('asignaciones_casos')
         .select(`
@@ -45,7 +45,7 @@ export const useRegularLawyerStats = () => {
           )
         `)
         .eq('abogado_id', user.id)
-        .eq('estado_asignacion', 'activa');
+        .in('estado_asignacion', ['activa', 'completada']);
 
       if (assignedError) {
         console.error('Error fetching assigned cases stats:', assignedError);

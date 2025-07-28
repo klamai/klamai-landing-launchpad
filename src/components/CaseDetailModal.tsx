@@ -117,6 +117,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   const [showClientUploadModal, setShowClientUploadModal] = useState(false);
   const [userRole, setUserRole] = useState<'cliente' | 'abogado' | null>(null);
   const [lawyerType, setLawyerType] = useState<string | null>(null);
+  const [isAssignedLawyer, setIsAssignedLawyer] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const [showEditModal, setShowEditModal] = useState(false);
@@ -155,10 +156,23 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
       
       setUserRole(profile?.role || null);
       setLawyerType(profile?.tipo_abogado || null);
+
+      // Verificar si el abogado está asignado al caso
+      if (profile?.role === 'abogado' && caso) {
+        const { data: asignacion } = await supabase
+          .from('asignaciones_casos')
+          .select('estado_asignacion')
+          .eq('caso_id', caso.id)
+          .eq('abogado_id', user.id)
+          .eq('estado_asignacion', 'activa')
+          .single();
+        
+        setIsAssignedLawyer(!!asignacion);
+      }
     };
 
     fetchUserRole();
-  }, [user]);
+  }, [user, caso]);
 
   if (!caso) return null;
 
@@ -319,25 +333,34 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
 
   const isSuperAdmin = userRole === 'abogado' && lawyerType === 'super_admin';
 
-  // Agregar la función para cerrar el caso
+  // Función para cerrar el caso usando la función segura
   const handleCerrarCaso = async () => {
-    if (!caso) return;
+    if (!caso || !user) return;
     setIsClosing(true);
     try {
-      const { error } = await supabase
-        .from('casos')
-        .update({ estado: 'cerrado' })
-        .eq('id', caso.id);
-      if (error) throw error;
-      toast({
-        title: 'Caso cerrado',
-        description: 'El caso ha sido cerrado exitosamente.',
+      const { data, error } = await supabase.functions.invoke('close-case', {
+        body: { caso_id: caso.id },
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        }
       });
-      onClose(); // Cerrar el modal
-    } catch (error) {
+
+      if (error) throw error;
+      
+      if (data.success) {
+        toast({
+          title: 'Caso cerrado',
+          description: data.data.mensaje || 'El caso ha sido cerrado exitosamente.',
+        });
+        onClose(); // Cerrar el modal
+      } else {
+        throw new Error(data.error || 'Error desconocido');
+      }
+    } catch (error: any) {
+      console.error('Error cerrando caso:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo cerrar el caso',
+        description: error.message || 'No se pudo cerrar el caso',
         variant: 'destructive',
       });
     } finally {
@@ -349,6 +372,48 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     // Recargar los datos del caso
     // Esto se puede implementar con un callback o recargando la página
     window.location.reload();
+  };
+
+  // Determinar si el usuario puede cerrar el caso
+  const canCloseCase = () => {
+    if (!user || !caso) return false;
+    
+    // No se puede cerrar si ya está cerrado
+    if (caso.estado === 'cerrado') return false;
+    
+    // Super admin puede cerrar cualquier caso
+    if (userRole === 'abogado' && lawyerType === 'super_admin') return true;
+    
+    // Abogado regular puede cerrar casos asignados
+    if (userRole === 'abogado' && lawyerType === 'regular' && isAssignedLawyer) return true;
+    
+    return false;
+  };
+
+  // Determinar si el usuario puede subir documentos del cliente
+  const canUploadClientDocuments = () => {
+    if (!user || !caso) return false;
+    
+    // Super admin puede subir documentos del cliente a cualquier caso
+    if (userRole === 'abogado' && lawyerType === 'super_admin') return true;
+    
+    // Abogado regular puede subir documentos del cliente solo a casos asignados
+    if (userRole === 'abogado' && lawyerType === 'regular' && isAssignedLawyer) return true;
+    
+    return false;
+  };
+
+  // Determinar si el usuario puede eliminar documentos del cliente
+  const canDeleteClientDocuments = () => {
+    if (!user || !caso) return false;
+    
+    // Super admin puede eliminar documentos del cliente de cualquier caso
+    if (userRole === 'abogado' && lawyerType === 'super_admin') return true;
+    
+    // Abogado regular puede eliminar documentos del cliente solo de casos asignados
+    if (userRole === 'abogado' && lawyerType === 'regular' && isAssignedLawyer) return true;
+    
+    return false;
   };
 
   return (
@@ -373,7 +438,8 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
 
             <ScrollArea className="h-[60vh] mt-4">
               <TabsContent value="overview" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Columna izquierda: Información del Caso */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-base">Información del Caso</CardTitle>
@@ -420,7 +486,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                             <Badge variant="secondary" className="capitalize">{caso.tipo_lead}</Badge>
                           </div>
                         )}
-                        {caso.valor_estimado && (
+                        {userRole === 'abogado' && caso.valor_estimado && (
                           <div className="flex items-center gap-1 text-sm">
                             <Euro className="h-4 w-4 text-blue-600" />
                             <span className="font-medium text-blue-700 dark:text-blue-400">
@@ -432,86 +498,90 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Estado y Asignación</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Estado actual:</p>
-                        {getStatusBadge(caso.estado)}
-                      </div>
-                      {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-2">Asignado a:</p>
-                          {caso.asignaciones_casos.map((asignacion, idx) => (
-                            <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-md">
-                              <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-blue-600" />
-                                <span className="font-medium">
-                                  {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
-                                </span>
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                Asignado el {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy', { locale: es })}
-                              </p>
-                              {asignacion.notas_asignacion && (
-                                <p className="text-xs mt-1">{asignacion.notas_asignacion}</p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Sin asignar</span>
+                  {/* Columna derecha: Guía del Abogado y Estado/Asignación */}
+                  <div className="space-y-4">
+                    {/* Guía para el Abogado - solo visible para abogados */}
+                    {userRole === 'abogado' && caso.guia_abogado && (
+                      <Card className="h-full">
+                        <CardHeader>
+                          <CardTitle className="text-base">Guía para el Abogado</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="prose prose-slate bg-gray-50 max-w-none dark:prose-invert dark:bg-gray-800 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden h-full">                        
+                            <ScrollArea className="h-96">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {caso.guia_abogado}
+                              </ReactMarkdown>
+                            </ScrollArea>
                           </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Estado y Asignación - abajo */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Estado y Asignación</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Estado actual:</p>
+                          {getStatusBadge(caso.estado)}
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                        {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground mb-2">Asignado a:</p>
+                            {caso.asignaciones_casos.map((asignacion, idx) => (
+                              <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-md">
+                                <div className="flex items-center gap-2">
+                                  <User className="h-4 w-4 text-blue-600" />
+                                  <span className="font-medium">
+                                    {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  Asignado el {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy', { locale: es })}
+                                </p>
+                                {asignacion.notas_asignacion && (
+                                  <p className="text-xs mt-1">{asignacion.notas_asignacion}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm text-gray-600 dark:text-gray-400">Sin asignar</span>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {caso.guia_abogado && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Guía para el Abogado</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                      <div className="prose prose-slate bg-gray-50 max-w-none dark:prose-invert dark:bg-gray-800 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden">                        
-                        <ScrollArea className="h-48">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {caso.guia_abogado}
-                          </ReactMarkdown>
-                          </ScrollArea>
+                {/* Propuesta del Cliente (si existe) - solo visible para abogados */}
+                {userRole === 'abogado' && caso.propuesta_estructurada && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Propuesta del Cliente</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ScrollArea className="h-32">
+                        <div className="text-sm">
+                          {typeof caso.propuesta_estructurada === 'string' ? (
+                            <p className="whitespace-pre-wrap">{caso.propuesta_estructurada}</p>
+                          ) : (
+                            <pre className="text-xs bg-gray-50 dark:bg-gray-800 p-2 rounded overflow-auto">
+                              {JSON.stringify(caso.propuesta_estructurada, null, 2)}
+                            </pre>
+                          )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                  
-                  {caso.propuesta_estructurada && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Propuesta del Cliente</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ScrollArea className="h-32">
-                          <div className="text-sm">
-                            {typeof caso.propuesta_estructurada === 'string' ? (
-                              <p className="whitespace-pre-wrap">{caso.propuesta_estructurada}</p>
-                            ) : (
-                              <pre className="text-xs bg-gray-50 dark:bg-gray-800 p-2 rounded overflow-auto">
-                                {JSON.stringify(caso.propuesta_estructurada, null, 2)}
-                              </pre>
-                            )}
-                          </div>
-                        </ScrollArea>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               <TabsContent value="client" className="space-y-4">
@@ -607,23 +677,38 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
               </TabsContent>
 
               <TabsContent value="chat" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {caso.transcripcion_chat ? (
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {JSON.stringify(caso.transcripcion_chat, null, 2)}
-                      </div>
-                    ) : (
+                {/* Solo mostrar transcripción para abogados */}
+                {userRole === 'abogado' ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {caso.transcripcion_chat ? (
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {JSON.stringify(caso.transcripcion_chat, null, 2)}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                          <p>No hay transcripción disponible</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Conversación</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       <div className="text-center py-8 text-muted-foreground">
                         <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>No hay transcripción disponible</p>
+                        <p>La transcripción de la conversación solo está disponible para abogados</p>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               <TabsContent value="documents" className="space-y-4">
@@ -635,8 +720,8 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                           <User className="h-4 w-4 text-blue-600" />
                           Documentos del Cliente
                         </div>
-                        {/* Botón para super admin subir documentos del cliente */}
-                        {isSuperAdmin && (
+                        {/* Botón para super admin y abogados asignados subir documentos del cliente */}
+                        {canUploadClientDocuments() && (
                           <Button
                             onClick={() => setShowClientUploadModal(true)}
                             variant="outline"
@@ -687,8 +772,8 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                                 >
                                   <Download className="h-3 w-3" />
                                 </Button>
-                                {/* Solo super admin puede eliminar documentos del cliente */}
-                                {isSuperAdmin && (
+                                {/* Super admin y abogados asignados pueden eliminar documentos del cliente */}
+                                {canDeleteClientDocuments() && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
@@ -706,7 +791,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                             <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
                             <p className="text-sm">No hay documentos del cliente</p>
                             <p className="text-xs">
-                              {isSuperAdmin 
+                              {canUploadClientDocuments() 
                                 ? "Puedes subir documentos en nombre del cliente usando el botón de arriba"
                                 : "El cliente no ha subido documentos aún"
                               }
@@ -842,8 +927,8 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                   Enviar Mensaje
                 </Button>
 
-                {/* Otro botón solo para super admin */}
-                {isSuperAdmin && (
+                {/* Botón de cerrar caso - visible para super admin y abogados asignados */}
+                {canCloseCase() && (
                   <Button
                     className="w-full md:w-auto"
                     onClick={handleCerrarCaso}
