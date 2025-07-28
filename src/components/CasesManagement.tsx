@@ -16,6 +16,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useSuperAdminStats } from '@/hooks/useSuperAdminStats';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const CasesManagement = () => {
   const { casos, loadingCasos, refetchCasos } = useSuperAdminStats();
+  const { user } = useAuth(); // Obtener usuario actual
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [specialtyFilter, setSpecialtyFilter] = useState('all');
@@ -55,10 +57,12 @@ const CasesManagement = () => {
   const { toast } = useToast();
   const [processingCases, setProcessingCases] = useState<Set<string>>(new Set());
 
-  // Sistema de notificaciones en tiempo real
+  // Sistema de notificaciones en tiempo real SEGURO
   useEffect(() => {
+    if (!user) return; // Solo si hay usuario autenticado
+
     const channel = supabase
-      .channel('casos_changes')
+      .channel(`casos_changes_${user.id}`) // Canal único por usuario
       .on(
         'postgres_changes',
         {
@@ -70,9 +74,12 @@ const CasesManagement = () => {
         (payload) => {
           console.log('Cambio detectado en caso:', payload);
           
-          // Verificar si el caso estaba en borrador antes
-          if (payload.old?.estado === 'borrador' && payload.new?.estado === 'disponible') {
-            console.log('Caso procesado:', payload.new);
+          // Verificar si el caso estaba en borrador antes Y si está en nuestra lista de procesamiento
+          if (payload.old?.estado === 'borrador' && 
+              payload.new?.estado === 'disponible' &&
+              processingCases.has(payload.new.id)) {
+            
+            console.log('Caso procesado por este usuario:', payload.new);
             
             toast({
               title: "¡Caso procesado!",
@@ -97,15 +104,17 @@ const CasesManagement = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [toast, refetchCasos]);
+  }, [user, processingCases, toast, refetchCasos]);
 
   // Función para agregar caso a la lista de procesamiento
   const addToProcessing = (casoId: string) => {
+    console.log('Agregando caso a procesamiento:', casoId);
     setProcessingCases(prev => new Set(prev).add(casoId));
   };
 
   // Función para remover caso de la lista de procesamiento
   const removeFromProcessing = (casoId: string) => {
+    console.log('Removiendo caso de procesamiento:', casoId);
     setProcessingCases(prev => {
       const newSet = new Set(prev);
       newSet.delete(casoId);
@@ -113,7 +122,7 @@ const CasesManagement = () => {
     });
   };
 
-  // Polling de respaldo (verificar cada 15 segundos)
+  // Polling de respaldo SEGURO (solo verifica casos en nuestra lista)
   useEffect(() => {
     if (processingCases.size === 0) return;
 
@@ -290,18 +299,22 @@ const CasesManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Indicador de casos en procesamiento */}
+      {/* Indicador de casos en procesamiento MEJORADO */}
       {processingCases.size > 0 && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <div className="flex items-center gap-3">
             <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <div>
+            <div className="flex-1">
               <h4 className="font-medium text-blue-900 dark:text-blue-100">
-                Procesando {processingCases.size} caso{processingCases.size > 1 ? 's' : ''}
+                Procesando {processingCases.size} caso{processingCases.size > 1 ? 's' : ''} con IA
               </h4>
               <p className="text-sm text-blue-700 dark:text-blue-300">
                 La IA está analizando y generando resúmenes. Te notificaremos cuando estén listos.
               </p>
+            </div>
+            <div className="text-xs text-blue-600 dark:text-blue-400 font-mono">
+              {Array.from(processingCases).slice(0, 3).join(', ')}
+              {processingCases.size > 3 && ` +${processingCases.size - 3} más`}
             </div>
           </div>
         </div>
