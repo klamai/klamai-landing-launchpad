@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Search, 
@@ -36,6 +36,7 @@ import CaseCard from './CaseCard';
 import CaseDetailModal from './CaseDetailModal';
 import CaseAssignmentModal from './CaseAssignmentModal';
 import AddManualCaseModal from './AddManualCaseModal';
+import { supabase } from '@/integrations/supabase/client';
 
 const CasesManagement = () => {
   const { casos, loadingCasos, refetchCasos } = useSuperAdminStats();
@@ -52,6 +53,97 @@ const CasesManagement = () => {
   const [selectedCaseForAssignment, setSelectedCaseForAssignment] = useState<any | null>(null);
   const [addManualCaseOpen, setAddManualCaseOpen] = useState(false);
   const { toast } = useToast();
+  const [processingCases, setProcessingCases] = useState<Set<string>>(new Set());
+
+  // Sistema de notificaciones en tiempo real
+  useEffect(() => {
+    const channel = supabase
+      .channel('casos_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'casos',
+          filter: 'estado=eq.disponible'
+        },
+        (payload) => {
+          console.log('Cambio detectado en caso:', payload);
+          
+          // Verificar si el caso estaba en borrador antes
+          if (payload.old?.estado === 'borrador' && payload.new?.estado === 'disponible') {
+            console.log('Caso procesado:', payload.new);
+            
+            toast({
+              title: "¡Caso procesado!",
+              description: `El caso "${payload.new.motivo_consulta}" ha sido procesado completamente con IA y está listo para asignar.`,
+              duration: 8000,
+            });
+            
+            // Remover de la lista de procesamiento
+            setProcessingCases(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(payload.new.id);
+              return newSet;
+            });
+            
+            // Actualizar la lista de casos
+            refetchCasos();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [toast, refetchCasos]);
+
+  // Función para agregar caso a la lista de procesamiento
+  const addToProcessing = (casoId: string) => {
+    setProcessingCases(prev => new Set(prev).add(casoId));
+  };
+
+  // Función para remover caso de la lista de procesamiento
+  const removeFromProcessing = (casoId: string) => {
+    setProcessingCases(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(casoId);
+      return newSet;
+    });
+  };
+
+  // Polling de respaldo (verificar cada 15 segundos)
+  useEffect(() => {
+    if (processingCases.size === 0) return;
+
+    const interval = setInterval(async () => {
+      console.log('Verificando casos en procesamiento:', Array.from(processingCases));
+      
+      const { data: casosActualizados } = await supabase
+        .from('casos')
+        .select('id, estado, motivo_consulta')
+        .in('id', Array.from(processingCases))
+        .eq('estado', 'disponible');
+
+      if (casosActualizados && casosActualizados.length > 0) {
+        console.log('Casos actualizados encontrados:', casosActualizados);
+        
+        casosActualizados.forEach(caso => {
+          toast({
+            title: "¡Caso procesado!",
+            description: `El caso "${caso.motivo_consulta}" ha sido procesado completamente con IA y está listo para asignar.`,
+            duration: 8000,
+          });
+          removeFromProcessing(caso.id);
+        });
+        
+        refetchCasos();
+      }
+    }, 15000); // Verificar cada 15 segundos como respaldo
+
+    return () => clearInterval(interval);
+  }, [processingCases, toast, refetchCasos]);
 
   const getStatusBadge = (estado: string) => {
     const statusConfig = {
@@ -171,10 +263,12 @@ const CasesManagement = () => {
 
   const handleManualCaseSuccess = () => {
     refetchCasos();
-    toast({
-      title: "¡Caso creado!",
-      description: "El caso ha sido creado exitosamente y se está procesando con IA",
-    });
+    // No mostrar toast aquí, ya se muestra en el modal
+  };
+
+  const handleCaseCreated = (casoId: string) => {
+    console.log('Caso agregado a procesamiento:', casoId);
+    addToProcessing(casoId);
   };
 
   if (loadingCasos) {
@@ -196,6 +290,23 @@ const CasesManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Indicador de casos en procesamiento */}
+      {processingCases.size > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div>
+              <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                Procesando {processingCases.size} caso{processingCases.size > 1 ? 's' : ''}
+              </h4>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                La IA está analizando y generando resúmenes. Te notificaremos cuando estén listos.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Card className="border shadow-sm bg-gray-50 dark:bg-black">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -492,6 +603,7 @@ const CasesManagement = () => {
         isOpen={addManualCaseOpen}
         onClose={() => setAddManualCaseOpen(false)}
         onSuccess={handleManualCaseSuccess}
+        onCaseCreated={handleCaseCreated}
         especialidades={specialties.map((nombre, idx) => ({ id: idx + 1, nombre }))}
       />
     </div>

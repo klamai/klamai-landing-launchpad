@@ -8,19 +8,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { FileText, Sparkles, AlertTriangle } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface AddManualCaseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   especialidades: Array<{ id: number; nombre: string }>;
+  onCaseCreated?: (casoId: string) => void; // Nueva prop
 }
 
 const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  especialidades
+  especialidades,
+  onCaseCreated
 }) => {
   const [caseText, setCaseText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,7 +41,6 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
       return;
     }
 
-
     setLoading(true);
 
     try {
@@ -49,30 +51,77 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
       });
 
       if (error) {
+        // Si hay error pero el caso se creó, mostrar mensaje especial
+        if (error.message?.includes('504') || error.message?.includes('timeout')) {
+          // Cerrar modal inmediatamente
+          setCaseText('');
+          onClose();
+          
+          toast({
+            title: "Caso creado con procesamiento pendiente",
+            description: "El caso se creó exitosamente pero el procesamiento con IA está en curso. Te notificaremos cuando esté listo.",
+            duration: 6000,
+          });
+          
+          // Actualizar la lista de casos
+          onSuccess();
+          
+          // Agregar a la lista de procesamiento (si tenemos el ID del caso)
+          if (data?.caso?.id) {
+            onCaseCreated?.(data.caso.id);
+          }
+          return;
+        }
         throw error;
       }
 
       if (data?.success) {
+        // Cerrar modal inmediatamente
+        setCaseText('');
+        onClose();
+        
+        // Mostrar toast de procesamiento
         toast({
-          title: "¡Éxito!",
-          description: "Caso creado exitosamente. Se está procesando con IA...",
+          title: "IA procesando el caso",
+          description: "La IA está analizando el texto y generando el resumen profesional. Te notificaremos cuando esté listo.",
+          duration: 5000,
         });
         
-        // Limpiar formulario
-        setCaseText('');
-        
+        // Actualizar la lista de casos
         onSuccess();
-        onClose();
+        
+        // Agregar a la lista de procesamiento
+        if (data.caso?.id) {
+          onCaseCreated?.(data.caso.id);
+        }
+        
       } else {
         throw new Error(data?.error || 'Error desconocido');
       }
     } catch (error) {
       console.error('Error creando caso:', error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo crear el caso",
-        variant: "destructive",
-      });
+      
+      // Manejar errores específicos
+      if (error.message?.includes('504') || error.message?.includes('timeout')) {
+        // Cerrar modal inmediatamente
+        setCaseText('');
+        onClose();
+        
+        toast({
+          title: "Caso creado con procesamiento pendiente",
+          description: "El caso se creó exitosamente pero el procesamiento con IA está en curso. Te notificaremos cuando esté listo.",
+          duration: 6000,
+        });
+        
+        // Actualizar la lista de casos
+        onSuccess();
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "No se pudo crear el caso",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -136,7 +185,6 @@ Consulta sobre despido improcedente. Trabajo en empresa X desde hace 3 años, me
               {caseText.length}/5000 caracteres
             </p>
           </div>
-
 
           <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
             <div className="flex items-start gap-3">
