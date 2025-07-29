@@ -644,7 +644,12 @@ const CaseDetailTabs = () => {
         </TabsContent>
 
         <TabsContent value="notas" className="space-y-4 mt-0">
-          {caso?.id && <CaseNotesSection casoId={caso.id} onlyForClient />}
+          {caso?.id && (
+            <CaseNotesSection
+              casoId={caso.id}
+              onlyForClient={userRole === 'cliente'}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </motion.div>
