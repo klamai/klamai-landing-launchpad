@@ -14,6 +14,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotificacionesNoLeidas } from "@/hooks/useNotificacionesNoLeidas";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarDashboard, SidebarBody, SidebarLink, Logo, LogoIcon } from "@/components/ui/sidebar-dashboard";
@@ -37,6 +38,7 @@ const DashboardLayout = memo(({
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { count: notificacionesNoLeidas } = useNotificacionesNoLeidas();
 
   // Función optimizada para manejo de cierre de sesión
   const handleSignOut = useCallback(async () => {
@@ -107,7 +109,14 @@ const DashboardLayout = memo(({
     {
       label: "Notificaciones",
       href: "/dashboard/notificaciones",
-      icon: <Bell className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+      icon: (
+        <div className="relative">
+          <Bell className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+          {notificacionesNoLeidas > 0 && (
+            <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full border border-white dark:border-gray-800"></span>
+          )}
+        </div>
+      ),
       description: "Alertas y avisos"
     }
   ], []);

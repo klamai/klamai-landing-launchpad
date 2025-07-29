@@ -29,6 +29,7 @@ import { es } from "date-fns/locale";
 import { Caso, Pago } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotificacionesNoLeidas } from "@/hooks/useNotificacionesNoLeidas";
 import { getClientFriendlyStatus, getLawyerStatus } from "@/utils/caseDisplayUtils";
 import DocumentManager from "@/components/DocumentManager";
 import ClientDocumentManager from "@/components/ClientDocumentManager";
@@ -48,6 +49,7 @@ const CaseDetailTabs = () => {
   const [isClosing, setIsClosing] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { count: notificacionesNoLeidas } = useNotificacionesNoLeidas();
   const [isAssignedLawyer, setIsAssignedLawyer] = useState(false);
 
   useEffect(() => {
@@ -379,19 +381,24 @@ const CaseDetailTabs = () => {
           </Card>
 
       <Tabs defaultValue="resumen" className="space-y-4">
-        <TabsList className={`grid w-full ${userRole === 'abogado' ? 'grid-cols-5' : 'grid-cols-5'}`}>
-          <TabsTrigger value="resumen">Resumen</TabsTrigger>
-          <TabsTrigger value="documentos">
+        <TabsList className="flex overflow-x-auto no-scrollbar flex-nowrap w-full">
+          <TabsTrigger value="resumen" className="min-w-[120px] flex-shrink-0 whitespace-nowrap">Resumen</TabsTrigger>
+          <TabsTrigger value="documentos" className="min-w-[120px] flex-shrink-0 whitespace-nowrap">
             {userRole === 'cliente' ? 'Mis Documentos' : 'Documentos Cliente'}
           </TabsTrigger>
           {userRole === 'abogado' ? (
-            <TabsTrigger value="resoluciones">Resoluciones</TabsTrigger>
+            <TabsTrigger value="resoluciones" className="min-w-[120px] flex-shrink-0 whitespace-nowrap">Resoluciones</TabsTrigger>
           ) : (
-            <TabsTrigger value="documentos-abogado">Documentos del Abogado</TabsTrigger>
+            <TabsTrigger value="documentos-abogado" className="min-w-[120px] flex-shrink-0 whitespace-nowrap">Documentos del Abogado</TabsTrigger>
           )}
-          <TabsTrigger value="interacciones">Interacciones</TabsTrigger>
-          <TabsTrigger value="pagos">Pagos</TabsTrigger>
-          <TabsTrigger value="notas" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
+          <TabsTrigger value="interacciones" className="relative min-w-[120px] flex-shrink-0 whitespace-nowrap">
+            Interacciones
+            {notificacionesNoLeidas > 0 && (
+              <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full border border-white dark:border-gray-800"></span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="pagos" className="min-w-[120px] flex-shrink-0 whitespace-nowrap">Pagos</TabsTrigger>
+          <TabsTrigger value="notas" className="flex items-center gap-1 px-4 py-2 min-w-[120px] flex-shrink-0 whitespace-nowrap">
             <MessageCircle className="h-4 w-4" /> Notas
           </TabsTrigger>
         </TabsList>

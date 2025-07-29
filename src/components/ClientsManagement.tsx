@@ -46,6 +46,7 @@ const ClientsManagement = () => {
   const [showClientCases, setShowClientCases] = useState(false);
   const [clientCases, setClientCases] = useState<any[]>([]);
   const [loadingCases, setLoadingCases] = useState(false);
+  const [openMenuClientId, setOpenMenuClientId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -264,7 +265,14 @@ const ClientsManagement = () => {
               </TableHeader>
               <TableBody>
                 {filteredClients.map((client) => (
-                  <TableRow key={client.id} className="hover:bg-gray-50">
+                  <TableRow
+                    key={client.id}
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => {
+                      setSelectedClient(client);
+                      setShowClientDetails(true);
+                    }}
+                  >
                     <TableCell>
                       <div>
                         <div className="font-medium">
@@ -343,7 +351,7 @@ const ClientsManagement = () => {
                         <span className="text-gray-400 text-sm">€0.00</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={e => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">

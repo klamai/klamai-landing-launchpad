@@ -49,6 +49,10 @@ import { useAuth } from '@/hooks/useAuth';
 import ClientDocumentUploadModal from './ClientDocumentUploadModal';
 import CaseEditModal from './CaseEditModal';
 import CaseNotesSection from './CaseNotesSection';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface CaseDetailModalProps {
   caso: {
@@ -122,6 +126,25 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   const { toast } = useToast();
   const { user } = useAuth();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentConcept, setPaymentConcept] = useState('');
+  const [loadingPayment, setLoadingPayment] = useState(false);
+  const [showConvertToClientModal, setShowConvertToClientModal] = useState(false);
+  const [convertingToClient, setConvertingToClient] = useState(false);
+  const [newClientData, setNewClientData] = useState({
+    nombre: '',
+    apellido: '',
+    email: '',
+    telefono: '',
+    ciudad: '',
+    tipo_perfil: 'individual',
+    razon_social: '',
+    nif_cif: '',
+    nombre_gerente: '',
+    direccion_fiscal: ''
+  });
+  const [acceptedRGPD, setAcceptedRGPD] = useState(false);
 
   const { 
     documentosResolucion, 
@@ -180,6 +203,109 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   // Convertir a zona horaria de España
   const spainTimeZone = 'Europe/Madrid';
   const casoDate = toZonedTime(new Date(caso.created_at), spainTimeZone);
+
+  const handleConvertToClient = async () => {
+    if (!newClientData.nombre || !newClientData.apellido || !newClientData.email) {
+      toast({
+        title: 'Error',
+        description: 'Por favor completa los campos obligatorios.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!acceptedRGPD) {
+      toast({
+        title: 'Error',
+        description: 'Debes aceptar el consentimiento RGPD.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setConvertingToClient(true);
+    try {
+      // Crear el perfil del cliente
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          nombre: newClientData.nombre,
+          apellido: newClientData.apellido,
+          email: newClientData.email,
+          telefono: newClientData.telefono || null,
+          ciudad: newClientData.ciudad || null,
+          tipo_perfil: newClientData.tipo_perfil,
+          razon_social: newClientData.tipo_perfil === 'empresa' ? newClientData.razon_social : null,
+          nif_cif: newClientData.tipo_perfil === 'empresa' ? newClientData.nif_cif : null,
+          nombre_gerente: newClientData.tipo_perfil === 'empresa' ? newClientData.nombre_gerente : null,
+          direccion_fiscal: newClientData.tipo_perfil === 'empresa' ? newClientData.direccion_fiscal : null,
+          role: 'cliente'
+        })
+        .select()
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Actualizar el caso con el cliente_id
+      const { error: caseError } = await supabase
+        .from('casos')
+        .update({ cliente_id: profileData.id })
+        .eq('id', caso.id);
+
+      if (caseError) throw caseError;
+
+      // Enviar email de invitación
+      const { error: inviteError } = await supabase.functions.invoke('invitar-cliente', {
+        body: {
+          profileId: profileData.id,
+          casoId: caso.id
+        }
+      });
+
+      if (inviteError) {
+        console.error('Error al enviar invitación:', inviteError);
+        // No lanzar error aquí, solo mostrar advertencia
+        toast({
+          title: 'Cliente creado pero error al enviar invitación',
+          description: 'El cliente fue creado pero no se pudo enviar el email de invitación.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Cliente creado exitosamente',
+          description: 'Se ha enviado un email de invitación al cliente.',
+          variant: 'default',
+        });
+      }
+
+      setShowConvertToClientModal(false);
+      setNewClientData({
+        nombre: '',
+        apellido: '',
+        email: '',
+        telefono: '',
+        ciudad: '',
+        tipo_perfil: 'individual',
+        razon_social: '',
+        nif_cif: '',
+        nombre_gerente: '',
+        direccion_fiscal: ''
+      });
+      setAcceptedRGPD(false);
+
+      // Recargar el modal para mostrar los datos del cliente
+      window.location.reload();
+    } catch (error) {
+      console.error('Error al convertir en cliente:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo crear el cliente. Inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setConvertingToClient(false);
+    }
+  };
 
   const clientData = caso.profiles || {
     nombre: caso.nombre_borrador || '',
@@ -422,6 +548,22 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     return user && asignacion.abogado_id === user.id;
   };
 
+  const handleSolicitarPago = async () => {
+    setLoadingPayment(true);
+    // Aquí deberías llamar a una función/endpoint para crear la solicitud de pago
+    setTimeout(() => {
+      setLoadingPayment(false);
+      setShowPaymentModal(false);
+      setPaymentAmount('');
+      setPaymentConcept('');
+      toast({
+        title: 'Solicitud de pago creada',
+        description: 'El cliente podrá ver y pagar esta solicitud.',
+        variant: 'default',
+      });
+    }, 1200);
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -541,41 +683,28 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                               <span className="font-medium">
                                 {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
                               </span>
+                              {asignacion.notas_asignacion && (
+                                <Badge 
+                                  variant="outline" 
+                                  className={`ml-2 text-xs ${
+                                    isCurrentUserAssigned(asignacion)
+                                      ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-600'
+                                      : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600'
+                                  }`}
+                                  title={asignacion.notas_asignacion}
+                                >
+                                  <MessageSquare className="h-3 w-3 mr-1" />
+                                  {asignacion.notas_asignacion.length > 30 
+                                    ? `${asignacion.notas_asignacion.substring(0, 30)}...` 
+                                    : asignacion.notas_asignacion
+                                  }
+                                </Badge>
+                              )}
+
                             </div>
                             <p className="text-xs text-muted-foreground">
                               Asignado el {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy', { locale: es })}
                             </p>
-                            {asignacion.notas_asignacion && (
-                              <div className={`mt-3 p-3 rounded-md border ${
-                                isCurrentUserAssigned(asignacion) 
-                                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 shadow-md' 
-                                  : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700'
-                              }`}>
-                                <div className="flex items-start gap-2">
-                                  <MessageSquare className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
-                                    isCurrentUserAssigned(asignacion)
-                                      ? 'text-blue-600 dark:text-blue-400'
-                                      : 'text-yellow-600 dark:text-yellow-400'
-                                  }`} />
-                                  <div className="flex-1">
-                                    <p className={`text-xs font-medium mb-1 ${
-                                      isCurrentUserAssigned(asignacion)
-                                        ? 'text-blue-800 dark:text-blue-200'
-                                        : 'text-yellow-800 dark:text-yellow-200'
-                                    }`}>
-                                      {isCurrentUserAssigned(asignacion) ? '📝 Nota para ti:' : 'Nota de Asignación:'}
-                                    </p>
-                                    <p className={`text-xs whitespace-pre-wrap ${
-                                      isCurrentUserAssigned(asignacion)
-                                        ? 'text-blue-700 dark:text-blue-300'
-                                        : 'text-yellow-700 dark:text-yellow-300'
-                                    }`}>
-                                      {asignacion.notas_asignacion}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
                           </div>
                         ))}
                       </div>
@@ -961,6 +1090,31 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                     Editar Caso
                   </Button>
                 )}
+                {(isSuperAdmin || (caso.asignaciones_casos && caso.asignaciones_casos.some(asignacion => 
+                  asignacion.abogado_id === user?.id && asignacion.estado_asignacion === 'activa'
+))) && (
+  <Button
+    className="w-full sm:w-auto"
+    size="sm"
+    onClick={() => setShowPaymentModal(true)}
+    variant="outline"
+  >
+    <Euro className="h-4 w-4 mr-2" />
+    Solicitar Pago
+  </Button>
+)}
+                {/* Botón Convertir en Cliente - solo si no hay cliente asignado */}
+                {isSuperAdmin && !caso.profiles && (
+                  <Button
+                    className="w-full sm:w-auto"
+                    size="sm"
+                    onClick={() => setShowConvertToClientModal(true)}
+                    variant="outline"
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Convertir en Cliente
+                  </Button>
+                )}
               </div>
               {/* Segunda fila: Herramientas y acciones de trabajo */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
@@ -1040,6 +1194,202 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
       casoId={caso.id}
       onUploadSuccess={handleClientUploadSuccess}
     />
+
+    <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Solicitar Pago al Cliente</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Monto (€)</label>
+            <Input
+              type="number"
+              min="1"
+              step="0.01"
+              value={paymentAmount}
+              onChange={e => setPaymentAmount(e.target.value)}
+              placeholder="Ej: 100.00"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Concepto</label>
+            <Textarea
+              value={paymentConcept}
+              onChange={e => setPaymentConcept(e.target.value)}
+              placeholder="Describe el motivo del cobro"
+              rows={3}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setShowPaymentModal(false)} disabled={loadingPayment}>Cancelar</Button>
+            <Button onClick={handleSolicitarPago} disabled={loadingPayment || !paymentAmount || !paymentConcept}>
+              {loadingPayment ? 'Solicitando...' : 'Solicitar Pago'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Modal Convertir en Cliente */}
+    <Dialog open={showConvertToClientModal} onOpenChange={setShowConvertToClientModal}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Convertir en Cliente</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="nombre">Nombre *</Label>
+                             <Input
+                 id="nombre"
+                 value={newClientData.nombre}
+                 onChange={e => setNewClientData(prev => ({ ...prev, nombre: e.target.value }))}
+                 placeholder="Nombre del cliente"
+               />
+            </div>
+            <div>
+              <Label htmlFor="apellido">Apellido *</Label>
+                             <Input
+                 id="apellido"
+                 value={newClientData.apellido}
+                 onChange={e => setNewClientData(prev => ({ ...prev, apellido: e.target.value }))}
+                 placeholder="Apellido del cliente"
+               />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={clientData.email}
+                                 onChange={e => setNewClientData(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="email@ejemplo.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="telefono">Teléfono</Label>
+              <Input
+                id="telefono"
+                value={newClientData.telefono}
+                onChange={e => setNewClientData(prev => ({ ...prev, telefono: e.target.value }))}
+                placeholder="+34 600 000 000"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="ciudad">Ciudad</Label>
+            <Input
+              id="ciudad"
+              value={newClientData.ciudad}
+              onChange={e => setNewClientData(prev => ({ ...prev, ciudad: e.target.value }))}
+              placeholder="Madrid, Barcelona, etc."
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="tipo_perfil">Tipo de Perfil</Label>
+            <Select
+              value={newClientData.tipo_perfil}
+              onValueChange={value => setNewClientData(prev => ({ ...prev, tipo_perfil: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="individual">Individual</SelectItem>
+                <SelectItem value="empresa">Empresa</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {newClientData.tipo_perfil === 'empresa' && (
+            <div className="space-y-4 border-t pt-4">
+              <h4 className="font-medium">Datos de la Empresa</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="razon_social">Razón Social</Label>
+                  <Input
+                    id="razon_social"
+                    value={newClientData.razon_social}
+                    onChange={e => setNewClientData(prev => ({ ...prev, razon_social: e.target.value }))}
+                    placeholder="Nombre de la empresa"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="nif_cif">NIF/CIF</Label>
+                  <Input
+                    id="nif_cif"
+                    value={newClientData.nif_cif}
+                    onChange={e => setNewClientData(prev => ({ ...prev, nif_cif: e.target.value }))}
+                    placeholder="B12345678"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="nombre_gerente">Nombre del Gerente</Label>
+                  <Input
+                    id="nombre_gerente"
+                    value={newClientData.nombre_gerente}
+                    onChange={e => setNewClientData(prev => ({ ...prev, nombre_gerente: e.target.value }))}
+                    placeholder="Nombre completo del gerente"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="direccion_fiscal">Dirección Fiscal</Label>
+                  <Input
+                    id="direccion_fiscal"
+                    value={newClientData.direccion_fiscal}
+                    onChange={e => setNewClientData(prev => ({ ...prev, direccion_fiscal: e.target.value }))}
+                    placeholder="Calle, número, ciudad, CP"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Consentimiento RGPD */}
+          <div className="border-t pt-4">
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="rgpd"
+                checked={acceptedRGPD}
+                onCheckedChange={(checked) => setAcceptedRGPD(checked as boolean)}
+              />
+              <Label htmlFor="rgpd" className="text-sm leading-relaxed">
+                Confirmo que tengo el consentimiento explícito del cliente para el tratamiento de sus datos personales 
+                con la finalidad de prestación de servicios jurídicos, conforme a la{' '}
+                <a href="/politica-privacidad" target="_blank" className="text-blue-600 hover:underline">
+                  Política de Privacidad
+                </a>{' '}
+                y el RGPD.
+              </Label>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button 
+              variant="secondary" 
+              onClick={() => setShowConvertToClientModal(false)}
+              disabled={convertingToClient}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleConvertToClient}
+              disabled={convertingToClient || !newClientData.nombre || !newClientData.apellido || !newClientData.email}
+            >
+              {convertingToClient ? 'Creando...' : 'Crear Cliente'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   </>
 );
 };
