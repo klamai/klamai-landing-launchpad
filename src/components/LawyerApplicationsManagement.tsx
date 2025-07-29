@@ -276,64 +276,85 @@ const LawyerApplicationsManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 max-w-6xl mx-auto px-2 sm:px-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
           Solicitudes de Abogados
         </h2>
-        <div className="flex items-center space-x-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar por nombre o email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
-            />
-          </div>
+        <div className="relative w-full sm:w-auto">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Buscar por nombre o email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 w-full sm:w-64"
+          />
         </div>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-center">
         {filteredApplications.map((app) => (
           <Card key={app.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">
-                    {app.nombre} {app.apellido}
-                  </CardTitle>
-                  <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300 mt-2">
+            <CardHeader className="relative">
+              <div className="flex flex-col gap-2">
+                <CardTitle className="text-lg">
+                  {app.nombre} {app.apellido}
+                </CardTitle>
+                <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-300 mt-2">
+                  <div className="flex items-center">
+                    <Mail className="w-4 h-4 mr-1" />
+                    {app.email}
+                  </div>
+                  {app.telefono && (
                     <div className="flex items-center">
-                      <Mail className="w-4 h-4 mr-1" />
-                      {app.email}
+                      <Phone className="w-4 h-4 mr-1" />
+                      {app.telefono}
                     </div>
-                    {app.telefono && (
-                      <div className="flex items-center">
-                        <Phone className="w-4 h-4 mr-1" />
-                        {app.telefono}
-                      </div>
-                    )}
-                    {app.experiencia_anos && (
-                      <div className="flex items-center">
-                        <GraduationCap className="w-4 h-4 mr-1" />
-                        {app.experiencia_anos} años
-                      </div>
-                    )}
+                  )}
+                  {app.experiencia_anos && (
                     <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      {new Date(app.created_at).toLocaleDateString()}
+                      <GraduationCap className="w-4 h-4 mr-1" />
+                      {app.experiencia_anos} años
                     </div>
+                  )}
+                  <div className="flex items-center">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    {new Date(app.created_at).toLocaleDateString()}
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {getStatusBadge(app.estado)}
+              </div>
+              <div className="absolute top-4 right-4">
+                {getStatusBadge(app.estado)}
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex flex-wrap gap-2">
+                  {app.especialidades && app.especialidades.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {app.especialidades.slice(0, 2).map((espId) => (
+                        <Badge key={espId} variant="outline" className="text-xs">
+                          {especialidades[espId] || `ID: ${espId}`}
+                        </Badge>
+                      ))}
+                      {app.especialidades.length > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{app.especialidades.length - 2} más
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => setSelectedApp(app)}
+                        className="w-full sm:w-auto"
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         Ver Detalles
@@ -487,40 +508,27 @@ const LawyerApplicationsManagement = () => {
                       </div>
                     </DialogContent>
                   </Dialog>
-                </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
-                  {app.especialidades && app.especialidades.length > 0 && (
-                    <div>
-                      <strong>Especialidades:</strong> {app.especialidades.slice(0, 2).map(id => especialidades[id]).join(', ')}
-                      {app.especialidades.length > 2 && ` +${app.especialidades.length - 2} más`}
+
+                  {app.estado === 'pendiente' && (
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+                      <Button
+                        size="sm"
+                        onClick={() => handleApproveAutomated(app.id)}
+                        disabled={actionLoading === app.id}
+                        className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+                      >
+                        {actionLoading === app.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            Aprobar
+                          </>
+                        )}
+                      </Button>
                     </div>
                   )}
                 </div>
-                
-                {app.estado === 'pendiente' && (
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleApproveAutomated(app.id)}
-                      disabled={actionLoading === app.id}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {actionLoading === app.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-4 h-4 mr-1" />
-                          Aprobar
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
