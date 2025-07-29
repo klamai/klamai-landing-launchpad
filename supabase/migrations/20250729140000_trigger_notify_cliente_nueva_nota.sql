@@ -6,7 +6,7 @@ declare
 begin
   -- Solo notificar si la nota es para el cliente o ambos y la escribe un abogado
   if (new.destinatario = 'cliente' or new.destinatario = 'ambos') and new.autor_rol = 'abogado' then
-    select cliente_id into cliente_id from casos where id = new.caso_id;
+    select casos.cliente_id into cliente_id from casos where casos.id = new.caso_id;
     if cliente_id is not null then
       insert into notificaciones (usuario_id, mensaje, leida, url_destino, created_at)
       values (
