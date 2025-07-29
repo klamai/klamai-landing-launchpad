@@ -48,6 +48,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import ClientDocumentUploadModal from './ClientDocumentUploadModal';
 import CaseEditModal from './CaseEditModal';
+import CaseNotesSection from './CaseNotesSection';
 
 interface CaseDetailModalProps {
   caso: {
@@ -455,6 +456,9 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                   </TabsTrigger>
                   <TabsTrigger value="documents" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     <FileText className="h-4 w-4" /> Documentos
+                  </TabsTrigger>
+                  <TabsTrigger value="notes" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
+                    <MessageSquare className="h-4 w-4" /> Notas
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -918,6 +922,10 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                     </CardContent>
                   </Card>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="notes" className="space-y-4 mt-0">
+                {caso?.id && <CaseNotesSection casoId={caso.id} />}
               </TabsContent>
             </Tabs>
           </ScrollArea>
