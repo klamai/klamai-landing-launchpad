@@ -35,6 +35,7 @@ import ClientDocumentManager from "@/components/ClientDocumentManager";
 import LawyerDocumentViewer from "@/components/LawyerDocumentViewer";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import CaseNotesSection from './CaseNotesSection';
 
 const CaseDetailTabs = () => {
   const { casoId } = useParams();
@@ -390,6 +391,9 @@ const CaseDetailTabs = () => {
           )}
           <TabsTrigger value="interacciones">Interacciones</TabsTrigger>
           <TabsTrigger value="pagos">Pagos</TabsTrigger>
+          <TabsTrigger value="notas" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
+            <MessageCircle className="h-4 w-4" /> Notas
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="resumen" className="space-y-4">
@@ -637,6 +641,10 @@ const CaseDetailTabs = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="notas" className="space-y-4 mt-0">
+          {caso?.id && <CaseNotesSection casoId={caso.id} onlyForClient />}
         </TabsContent>
       </Tabs>
     </motion.div>
