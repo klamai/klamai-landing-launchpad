@@ -143,7 +143,7 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
                   {clientData.tipo_perfil === 'empresa' ? (
                     <Building className="h-4 w-4 text-blue-600" />
                   ) : (
-                    <User className="h-4 w-4 text-green-600" />
+                    <User className="h-4 w-4 text-blue-600" />
                   )}
                   <span className="font-medium text-gray-900 dark:text-white">
                     {clientData.nombre} {clientData.apellido}
@@ -241,24 +241,27 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
                   <SelectTrigger className="h-12 text-base border-2">
                     <SelectValue placeholder="Selecciona un abogado..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-72">
                     {abogados.map((abogado) => (
-                      <SelectItem key={abogado.id} value={abogado.id} className="text-base py-3">
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">
-                              {abogado.nombre} {abogado.apellido}
-                            </span>
-                            {abogado.tipo_abogado === 'super_admin' && (
-                              <Badge variant="secondary" className="text-xs">
-                                Super Admin
-                              </Badge>
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-500">
-                            {abogado.casos_activos} casos activos • {abogado.creditos_disponibles} créditos
+                      <SelectItem
+                        key={abogado.id}
+                        value={abogado.id}
+                        className="text-base py-3 px-3 rounded-lg transition-colors data-[state=checked]:bg-blue-600 data-[state=checked]:text-white data-[state=checked]:font-semibold hover:bg-blue-100 hover:text-blue-700 flex flex-col gap-1"
+                      >
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-blue-500" />
+                          <span className="font-semibold">
+                            {abogado.nombre} {abogado.apellido}
                           </span>
+                          {abogado.tipo_abogado === 'super_admin' && (
+                            <Badge variant="secondary" className="text-xs">
+                              Super Admin
+                            </Badge>
+                          )}
                         </div>
+                        <span className="text-xs text-gray-500">
+                          {abogado.casos_activos} casos activos • {abogado.creditos_disponibles} créditos
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>

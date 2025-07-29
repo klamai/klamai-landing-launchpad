@@ -11,6 +11,7 @@ import DocumentViewer from '@/components/DocumentViewer';
 import { useToast } from '@/hooks/use-toast';
 import { useDocumentManagement } from '@/hooks/useDocumentManagement';
 import { useClientDocumentManagement } from '@/hooks/useClientDocumentManagement';
+import { useAuth } from '@/hooks/useAuth';
 
 const AssignedCasesManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,6 +28,7 @@ const AssignedCasesManagement = () => {
   
   const { cases, loading, error } = useAssignedCases();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // Document management hooks - only initialize when we have a selected case
   const { 
@@ -61,7 +63,22 @@ const AssignedCasesManagement = () => {
       // Find the case in our current cases array
       const caseDetails = cases.find(c => c.id === casoId);
       if (caseDetails) {
-        setSelectedCaseDetail(caseDetails);
+        setSelectedCaseDetail({
+          ...caseDetails,
+          asignaciones_casos: [
+            {
+              abogado_id: user.id,
+              estado_asignacion: caseDetails.estado_asignacion,
+              fecha_asignacion: caseDetails.fecha_asignacion,
+              notas_asignacion: caseDetails.notas_asignacion,
+              profiles: {
+                nombre: user.user_metadata?.nombre || user.email,
+                apellido: user.user_metadata?.apellido || '',
+                email: user.email,
+              }
+            }
+          ]
+        });
         setDetailModalOpen(true);
       } else {
         toast({

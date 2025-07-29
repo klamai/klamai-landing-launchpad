@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   X, 
@@ -73,7 +73,7 @@ interface CaseDetailModalProps {
     nombre_gerente_borrador?: string;
     direccion_fiscal_borrador?: string;
     preferencia_horaria_contacto?: string;
-    especialidades?: { nombre: string };
+    especialidades?: { id: number; nombre: string };
     profiles?: { 
       nombre: string; 
       apellido: string; 
@@ -121,30 +121,6 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   const { toast } = useToast();
   const { user } = useAuth();
   const [showEditModal, setShowEditModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
-  const resumenTabRef = useRef<HTMLButtonElement>(null);
-  const guiaTabRef = useRef<HTMLButtonElement>(null);
-  const clientTabRef = useRef<HTMLButtonElement>(null);
-  const chatTabRef = useRef<HTMLButtonElement>(null);
-  const documentsTabRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (activeTab === 'overview' && resumenTabRef.current) {
-      resumenTabRef.current.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-    }
-    if (activeTab === 'guia' && guiaTabRef.current) {
-      guiaTabRef.current.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-    }
-    if (activeTab === 'client' && clientTabRef.current) {
-      clientTabRef.current.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-    }
-    if (activeTab === 'chat' && chatTabRef.current) {
-      chatTabRef.current.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-    }
-    if (activeTab === 'documents' && documentsTabRef.current) {
-      documentsTabRef.current.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-    }
-  }, [activeTab]);
 
   const { 
     documentosResolucion, 
@@ -440,6 +416,11 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     return false;
   };
 
+  // Función para verificar si el usuario actual es el abogado asignado específico
+  const isCurrentUserAssigned = (asignacion: any) => {
+    return user && asignacion.abogado_id === user.id;
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -454,32 +435,32 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
 
           {/* ÁREA SCROLLABLE: todo el contenido relevante, incluyendo tabs y guía */}
           <ScrollArea className="flex-1 px-6 py-4 h-[calc(90vh-110px)] min-h-0">
-            <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+            <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
               {/* Barra de tabs sticky con iconos y mejor color */}
               <div className="sticky top-0 z-10 bg-background pb-2">
                 <TabsList className="flex w-full rounded-lg shadow-sm border mb-2 overflow-x-auto no-scrollbar flex-nowrap">
-                  <TabsTrigger ref={resumenTabRef} value="overview" className="flex items-center gap-1 px-4 py-2 min-w-[120px] flex-shrink-0 whitespace-nowrap">
+                  <TabsTrigger value="overview" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     <FileText className="h-4 w-4" /> Resumen
                   </TabsTrigger>
                   {userRole === 'abogado' && caso.guia_abogado && (
-                    <TabsTrigger ref={guiaTabRef} value="guia" className="flex items-center gap-1 px-4 py-2 min-w-[120px] flex-shrink-0 whitespace-nowrap">
+                    <TabsTrigger value="guia" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                       <ShieldCheck className="h-4 w-4" /> Guía Abogado
                     </TabsTrigger>
                   )}
-                  <TabsTrigger ref={clientTabRef} value="client" className="flex items-center gap-1 px-4 py-2 min-w-[120px] flex-shrink-0 whitespace-nowrap">
+                  <TabsTrigger value="client" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     <User className="h-4 w-4" /> Cliente
                   </TabsTrigger>
-                  <TabsTrigger ref={chatTabRef} value="chat" className="flex items-center gap-1 px-4 py-2 min-w-[120px] flex-shrink-0 whitespace-nowrap">
+                  <TabsTrigger value="chat" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     <MessageSquare className="h-4 w-4" /> Conversación
                   </TabsTrigger>
-                  <TabsTrigger ref={documentsTabRef} value="documents" className="flex items-center gap-1 px-4 py-2 min-w-[120px] flex-shrink-0 whitespace-nowrap">
+                  <TabsTrigger value="documents" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     <FileText className="h-4 w-4" /> Documentos
                   </TabsTrigger>
                 </TabsList>
               </div>
 
               <TabsContent value="overview" className="space-y-4 mt-0">
-                {/* Información del Caso (Resumen) ocupa todo el ancho */}
+                {/* Información del Caso (Resumen) ocupa todo el ancho y altura aumentada */}
                 <Card className="shadow-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                   <CardHeader>
                     <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-200">Información del Caso</CardTitle>
@@ -561,7 +542,35 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                               Asignado el {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy', { locale: es })}
                             </p>
                             {asignacion.notas_asignacion && (
-                              <p className="text-xs mt-1">{asignacion.notas_asignacion}</p>
+                              <div className={`mt-3 p-3 rounded-md border ${
+                                isCurrentUserAssigned(asignacion) 
+                                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 shadow-md' 
+                                  : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700'
+                              }`}>
+                                <div className="flex items-start gap-2">
+                                  <MessageSquare className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
+                                    isCurrentUserAssigned(asignacion)
+                                      ? 'text-blue-600 dark:text-blue-400'
+                                      : 'text-yellow-600 dark:text-yellow-400'
+                                  }`} />
+                                  <div className="flex-1">
+                                    <p className={`text-xs font-medium mb-1 ${
+                                      isCurrentUserAssigned(asignacion)
+                                        ? 'text-blue-800 dark:text-blue-200'
+                                        : 'text-yellow-800 dark:text-yellow-200'
+                                    }`}>
+                                      {isCurrentUserAssigned(asignacion) ? '📝 Nota para ti:' : 'Nota de Asignación:'}
+                                    </p>
+                                    <p className={`text-xs whitespace-pre-wrap ${
+                                      isCurrentUserAssigned(asignacion)
+                                        ? 'text-blue-700 dark:text-blue-300'
+                                        : 'text-yellow-700 dark:text-yellow-300'
+                                    }`}>
+                                      {asignacion.notas_asignacion}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
                             )}
                           </div>
                         ))}
