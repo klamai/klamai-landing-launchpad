@@ -19,6 +19,8 @@ interface AssignedCase {
   especialidades?: {
     nombre: string;
   };
+  valor_estimado?: string | null;
+  ciudad_borrador?: string | null;
   fecha_asignacion: string;
   estado_asignacion: string;
   notas_asignacion?: string;
@@ -67,6 +69,8 @@ export const useAssignedCases = () => {
             telefono_borrador,
             tipo_lead,
             especialidad_id,
+            valor_estimado,
+            ciudad_borrador,
             especialidades (
               nombre
             )
@@ -97,6 +101,8 @@ export const useAssignedCases = () => {
         tipo_lead: assignment.casos.tipo_lead,
         especialidad_id: assignment.casos.especialidad_id,
         especialidades: assignment.casos.especialidades,
+        valor_estimado: assignment.casos.valor_estimado,
+        ciudad_borrador: assignment.casos.ciudad_borrador,
         fecha_asignacion: assignment.fecha_asignacion,
         estado_asignacion: assignment.estado_asignacion,
         notas_asignacion: assignment.notas_asignacion,
