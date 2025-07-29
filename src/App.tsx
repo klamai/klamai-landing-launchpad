@@ -19,6 +19,7 @@ import LegalNotice from "./pages/LegalNotice";
 import PagoExitoso from "./pages/PagoExitoso";
 import PagoCancelado from "./pages/PagoCancelado";
 import AuthCallback from "./pages/AuthCallback";
+import ActivarCliente from "./pages/ActivarCliente";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -113,6 +114,7 @@ const App = () => (
             <Route path="/aviso-legal" element={<LegalNotice />} />
             <Route path="/pago-exitoso" element={<PagoExitoso />} />
             <Route path="/pago-cancelado" element={<PagoCancelado />} />
+            <Route path="/activar-cliente" element={<ActivarCliente />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
