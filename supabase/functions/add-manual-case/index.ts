@@ -230,66 +230,66 @@ async function processWithAIAssistantsAsync(casoId: string, originalText: string
     log('info', 'Iniciando procesamiento asíncrono con asistentes de IA', { casoId });
 
     try {
-        // 1. Generar resumen profesional a partir de los datos extraídos
-        const resumenPrompt = `Genera un resumen profesional del caso a partir de la siguiente información.
-        Información del cliente: ${JSON.stringify(extractedInfo.cliente)}
-        Consulta: ${JSON.stringify(extractedInfo.consulta)}
-        Texto original: ${originalText}`;
+    // 1. Generar resumen profesional a partir de los datos extraídos
+    const resumenPrompt = `Genera un resumen profesional del caso a partir de la siguiente información.
+    Información del cliente: ${JSON.stringify(extractedInfo.cliente)}
+    Consulta: ${JSON.stringify(extractedInfo.consulta)}
+    Texto original: ${originalText}`;
+    
+    const resumenCaso = await ejecutarAsistente("ASISTENTE_AUXILIAR_ID", resumenPrompt);
+    log('info', 'Resumen del caso generado', { casoId });
+
+    // 2. Preparar prompts para los otros asistentes usando el resumen
+    const prompt_clasificador = `Analiza el resumen y devuelve ÚNICAMENTE un objeto JSON crudo (raw), sin explicaciones. La estructura debe ser: {"motivo_consulta_ia": "...", "especialidad_nombre": "...", "tipo_lead": "...", "valor_estimado": "..."}. - Para 'motivo_consulta_ia', crea un titular de caso conciso y profesional, y entendible, máximo 20 palabras. Ej: "Reclamación de indemnización por despido con posible vulneración de derechos. - Para 'especialidad_nombre', DEBES elegir uno de la lista: [${LISTA_ESPECIALIDADES_VALIDAS.join(', ')}]. Si no encaja, usa 'Consulta General'. - Para 'tipo_lead', DEBES ELEGIR OBLIGATORIAMENTE uno de los siguientes tres valores exactos: 'estandar', 'premium', 'urgente'. No inventes otros valores. Un lead es 'premium' si el caso es claro y de alto potencial; 'urgente' si requiere acción inmediata; 'estandar' en los demás casos. - Para 'valor_estimado', da una estimación en euros como texto (ej: "1.500€ - 3.000€"). Resumen del caso: ${resumenCaso}`;
+    const prompt_propuesta = `Analiza el resumen y genera un contenido de propuesta para el cliente. Su nombre es ${extractedInfo.cliente?.nombre || 'cliente'}. Tu respuesta debe ser ÚNICAMENTE un objeto JSON crudo (raw) con la estructura: {"titulo_personalizado": "...", "subtitulo_refuerzo": "...", "etiqueta_caso": "..."}. Resumen: ${resumenCaso}`;
+    const prompt_guia = `Genera una guía técnica para un abogado a partir del siguiente resumen: ${resumenCaso}`;
+
+    // 3. Ejecutar asistentes en paralelo
+    const [guiaResult, propuestaResult, clasificacionResult] = await Promise.allSettled([
+      ejecutarAsistente("ASISTENTE_AUXILIAR_ID", prompt_guia),
+      ejecutarAsistente("ASISTENTE_PROPUESTAS_ID", prompt_propuesta),
+      ejecutarAsistente("ASISTENTE_CLASIFICADOR_ID", prompt_clasificador)
+    ]);
+
+    if (guiaResult.status === 'rejected') throw new Error(`Asistente AUXILIAR (guía) falló: ${guiaResult.reason.message}`);
+    if (propuestaResult.status === 'rejected') throw new Error(`Asistente PROPUESTAS falló: ${propuestaResult.reason.message}`);
+    if (clasificacionResult.status === 'rejected') throw new Error(`Asistente CLASIFICADOR falló: ${clasificacionResult.reason.message}`);
+    
+    log('info', 'Asistentes ejecutados en paralelo', { casoId });
+
+    // 4. Procesar resultados
+    const guia_abogado = guiaResult.value;
+    const clasificacion = JSON.parse(extractJsonFromString(clasificacionResult.value) || '{}');
+    const propuesta_estructurada = JSON.parse(extractJsonFromString(propuestaResult.value) || '{}');
+
+    // Mapear especialidad
+    const { data: especialidad } = await supabase.from("especialidades").select("id").eq("nombre", clasificacion.especialidad_nombre).single();
+    let especialidadId = especialidad?.id;
+    if (!especialidadId) {
+      const { data: generalSpec } = await supabase.from("especialidades").select("id").eq("nombre", "Consulta General").single();
+      especialidadId = generalSpec?.id;
+    }
         
-        const resumenCaso = await ejecutarAsistente("ASISTENTE_AUXILIAR_ID", resumenPrompt);
-        log('info', 'Resumen del caso generado', { casoId });
+    // Guardar guía del abogado en storage
+    const guiaFile = new Blob([guia_abogado], { type: 'text/plain;charset=utf-8' });
+    await supabase.storage.from('documentos_legales').upload(`casos/${casoId}/guia_para_abogado.txt`, guiaFile, { upsert: true });
 
-        // 2. Preparar prompts para los otros asistentes usando el resumen
-        const prompt_clasificador = `Analiza el resumen y devuelve ÚNICAMENTE un objeto JSON crudo (raw), sin explicaciones. La estructura debe ser: {"motivo_consulta_ia": "...", "especialidad_nombre": "...", "tipo_lead": "...", "valor_estimado": "..."}. - Para 'motivo_consulta_ia', crea un titular de caso conciso y profesional, y entendible, máximo 20 palabras. Ej: "Reclamación de indemnización por despido con posible vulneración de derechos. - Para 'especialidad_nombre', DEBES elegir uno de la lista: [${LISTA_ESPECIALIDADES_VALIDAS.join(', ')}]. Si no encaja, usa 'Consulta General'. - Para 'tipo_lead', DEBES ELEGIR OBLIGATORIAMENTE uno de los siguientes tres valores exactos: 'estandar', 'premium', 'urgente'. No inventes otros valores. Un lead es 'premium' si el caso es claro y de alto potencial; 'urgente' si requiere acción inmediata; 'estandar' en los demás casos. - Para 'valor_estimado', da una estimación en euros como texto (ej: "1.500€ - 3.000€"). Resumen del caso: ${resumenCaso}`;
-        const prompt_propuesta = `Analiza el resumen y genera un contenido de propuesta para el cliente. Su nombre es ${extractedInfo.cliente?.nombre || 'cliente'}. Tu respuesta debe ser ÚNICAMENTE un objeto JSON crudo (raw) con la estructura: {"titulo_personalizado": "...", "subtitulo_refuerzo": "...", "etiqueta_caso": "..."}. Resumen: ${resumenCaso}`;
-        const prompt_guia = `Genera una guía técnica para un abogado a partir del siguiente resumen: ${resumenCaso}`;
+    // 5. Actualizar el caso con todos los datos procesados
+    const datosParaActualizar = {
+      estado: "disponible",
+      resumen_caso: resumenCaso,
+      guia_abogado: guia_abogado, // Guardar contenido de la guía directamente
+      propuesta_estructurada,
+      motivo_consulta: clasificacion.motivo_consulta_ia || extractedInfo.consulta?.motivo_consulta,
+      tipo_lead: clasificacion.tipo_lead,
+      valor_estimado: clasificacion.valor_estimado,
+      especialidad_id: especialidadId,
+    };
 
-        // 3. Ejecutar asistentes en paralelo
-        const [guiaResult, propuestaResult, clasificacionResult] = await Promise.allSettled([
-          ejecutarAsistente("ASISTENTE_AUXILIAR_ID", prompt_guia),
-          ejecutarAsistente("ASISTENTE_PROPUESTAS_ID", prompt_propuesta),
-          ejecutarAsistente("ASISTENTE_CLASIFICADOR_ID", prompt_clasificador)
-        ]);
-
-        if (guiaResult.status === 'rejected') throw new Error(`Asistente AUXILIAR (guía) falló: ${guiaResult.reason.message}`);
-        if (propuestaResult.status === 'rejected') throw new Error(`Asistente PROPUESTAS falló: ${propuestaResult.reason.message}`);
-        if (clasificacionResult.status === 'rejected') throw new Error(`Asistente CLASIFICADOR falló: ${clasificacionResult.reason.message}`);
-        
-        log('info', 'Asistentes ejecutados en paralelo', { casoId });
-
-        // 4. Procesar resultados
-        const guia_abogado = guiaResult.value;
-        const clasificacion = JSON.parse(extractJsonFromString(clasificacionResult.value) || '{}');
-        const propuesta_estructurada = JSON.parse(extractJsonFromString(propuestaResult.value) || '{}');
-
-        // Mapear especialidad
-        const { data: especialidad } = await supabase.from("especialidades").select("id").eq("nombre", clasificacion.especialidad_nombre).single();
-        let especialidadId = especialidad?.id;
-        if (!especialidadId) {
-          const { data: generalSpec } = await supabase.from("especialidades").select("id").eq("nombre", "Consulta General").single();
-          especialidadId = generalSpec?.id;
-        }
-        
-        // Guardar guía del abogado en storage
-        const guiaFile = new Blob([guia_abogado], { type: 'text/plain;charset=utf-8' });
-        await supabase.storage.from('documentos_legales').upload(`casos/${casoId}/guia_para_abogado.txt`, guiaFile, { upsert: true });
-
-        // 5. Actualizar el caso con todos los datos procesados
-        const datosParaActualizar = {
-          estado: "disponible",
-          resumen_caso: resumenCaso,
-          guia_abogado: guia_abogado, // Guardar contenido de la guía directamente
-          propuesta_estructurada,
-          motivo_consulta: clasificacion.motivo_consulta_ia || extractedInfo.consulta?.motivo_consulta,
-          tipo_lead: clasificacion.tipo_lead,
-          valor_estimado: clasificacion.valor_estimado,
-          especialidad_id: especialidadId,
-        };
-
-        const { error: updateError } = await supabase.from("casos").update(datosParaActualizar).eq("id", casoId);
-        if (updateError) throw updateError;
-        
-        log('info', 'Caso procesado y actualizado completamente', { casoId });
+    const { error: updateError } = await supabase.from("casos").update(datosParaActualizar).eq("id", casoId);
+    if (updateError) throw updateError;
+    
+    log('info', 'Caso procesado y actualizado completamente', { casoId });
 
     } catch (error) {
         log('error', 'Error en procesamiento asíncrono', { casoId, error: (error as Error).message });
