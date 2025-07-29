@@ -118,11 +118,11 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
         // Actualizar la lista de casos
         onSuccess();
       } else {
-        toast({
-          title: "Error",
-          description: error.message || "No se pudo crear el caso",
-          variant: "destructive",
-        });
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo crear el caso",
+        variant: "destructive",
+      });
       }
     } finally {
       setLoading(false);
