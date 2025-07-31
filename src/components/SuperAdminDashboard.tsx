@@ -107,10 +107,14 @@ const SuperAdminDashboard = () => {
   };
 
   const handleNavigation = (href: string) => {
-    navigate(href);
+    setActiveSection(href.split('/').pop() || "dashboard");
+    
+    // Cerrar sidebar en móvil ANTES de navegar
     if (window.innerWidth < 768) {
       setOpen(false);
     }
+    
+    navigate(href);
   };
 
   const links = [
@@ -231,13 +235,14 @@ const SuperAdminDashboard = () => {
               <SidebarLink
                 link={{
                   label: `${user?.user_metadata?.nombre || "Super"} Admin`,
-                  href: "#",
+                  href: "/abogados/dashboard",
                   icon: (
                     <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
                       <UserCheck className="h-4 w-4" />
                     </div>
                   ),
                 }}
+                onNavigate={handleNavigation}
               />
             </div>
           </SidebarBody>

@@ -13,9 +13,12 @@ const useIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
 
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    return () => window.removeEventListener('resize', checkIsMobile);
+    // Verificar si estamos en el navegador
+    if (typeof window !== 'undefined') {
+      checkIsMobile();
+      window.addEventListener('resize', checkIsMobile);
+      return () => window.removeEventListener('resize', checkIsMobile);
+    }
   }, []);
 
   return isMobile;
@@ -166,12 +169,14 @@ export const MobileSidebar = ({
                   className
                 )}
               >
-                <div
-                  className="absolute right-4 top-4 z-50 text-white dark:text-white cursor-pointer"
+                <button
+                  type="button"
+                  className="absolute right-4 top-4 z-50 text-white dark:text-white cursor-pointer hover:bg-white hover:bg-opacity-10 rounded-full p-1 transition-colors"
                   onClick={() => setOpen(false)}
+                  aria-label="Cerrar sidebar"
                 >
                   <X className="h-6 w-6" />
-                </div>
+                </button>
                 <div className="mt-12">
                   {children}
                 </div>
@@ -204,11 +209,15 @@ export const SidebarLink = ({
   
   // Función para cerrar el sidebar en móvil
   const handleClick = () => {
-    if (isMobile && open) {
+    const isMobileScreen = window.innerWidth < 768;
+    console.log('handleClick ejecutado, isMobileScreen:', isMobileScreen, 'open:', open);
+    if (isMobileScreen && open) {
+      console.log('Cerrando sidebar móvil');
       setOpen(false);
     }
   };
   
+  // Si tiene onClick, usar button
   if (onClick) {
     return (
       <button
@@ -236,12 +245,13 @@ export const SidebarLink = ({
     );
   }
 
+  // Si tiene onNavigate, usar button
   if (onNavigate) {
     return (
       <button
         onClick={() => {
+          handleClick(); // Siempre ejecutar handleClick primero
           onNavigate(link.href);
-          handleClick();
         }}
         className={cn(
           "flex items-center justify-start gap-2 group/sidebar py-2 w-full text-left",
@@ -263,10 +273,13 @@ export const SidebarLink = ({
     );
   }
 
+  // Si no tiene onClick ni onNavigate, usar Link pero con handleClick
   return (
     <Link
       to={link.href}
-      onClick={handleClick}
+      onClick={() => {
+        handleClick(); // Siempre ejecutar handleClick
+      }}
       className={cn(
         "flex items-center justify-start gap-2 group/sidebar py-2",
         className
