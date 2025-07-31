@@ -54,6 +54,13 @@ export const useClientCases = () => {
           *,
           especialidades (
             nombre
+          ),
+          profiles!casos_cliente_id_fkey (
+            nombre,
+            apellido,
+            email,
+            telefono,
+            ciudad
           )
         `)
         .eq('cliente_id', user.id) // Filtro estricto: solo casos del cliente

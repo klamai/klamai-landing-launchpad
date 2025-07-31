@@ -1,28 +1,8 @@
-import React, { useState, createContext, useContext, useEffect } from "react";
+import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, Scale } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-
-// Hook para detectar el tamaño de pantalla
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    // Verificar si estamos en el navegador
-    if (typeof window !== 'undefined') {
-      checkIsMobile();
-      window.addEventListener('resize', checkIsMobile);
-      return () => window.removeEventListener('resize', checkIsMobile);
-    }
-  }, []);
-
-  return isMobile;
-};
 
 interface Links {
   label: string;
@@ -146,42 +126,27 @@ export const MobileSidebar = ({
         </div>
         <AnimatePresence>
           {open && (
-            <>
-              {/* Overlay para cerrar el sidebar */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black bg-opacity-50 z-40"
-                onClick={() => setOpen(false)}
-              />
-              {/* Sidebar móvil */}
-              <motion.div
-                initial={{ x: "-100%", opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: "-100%", opacity: 0 }}
-                transition={{
-                  duration: 0.3,
-                  ease: "easeInOut",
-                }}
-                className={cn(
-                  "fixed h-full w-80 max-w-[80vw] inset-y-0 left-0 bg-black dark:bg-black p-6 z-50 flex flex-col",
-                  className
-                )}
+            <motion.div
+              initial={{ x: "-100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "-100%", opacity: 0 }}
+              transition={{
+                duration: 0.3,
+                ease: "easeInOut",
+              }}
+              className={cn(
+                "fixed h-full w-full inset-0 bg-black dark:bg-black p-10 z-[100] flex flex-col justify-between",
+                className
+              )}
+            >
+              <div
+                className="absolute right-10 top-10 z-50 text-white dark:text-white cursor-pointer"
+                onClick={() => setOpen(!open)}
               >
-                <button
-                  type="button"
-                  className="absolute right-4 top-4 z-50 text-white dark:text-white cursor-pointer hover:bg-white hover:bg-opacity-10 rounded-full p-1 transition-colors"
-                  onClick={() => setOpen(false)}
-                  aria-label="Cerrar sidebar"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-                <div className="mt-12">
-                  {children}
-                </div>
-              </motion.div>
-            </>
+                <X />
+              </div>
+              {children}
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
@@ -201,30 +166,12 @@ export const SidebarLink = ({
   onClick?: () => void;
   onNavigate?: (href: string) => void;
 }) => {
-  const { open, setOpen, animate } = useSidebarDashboard();
-  const isMobile = useIsMobile();
+  const { open, animate } = useSidebarDashboard();
   
-  // En móvil siempre mostrar el texto
-  const shouldShowText = isMobile || open || !animate;
-  
-  // Función para cerrar el sidebar en móvil
-  const handleClick = () => {
-    const isMobileScreen = window.innerWidth < 768;
-    console.log('handleClick ejecutado, isMobileScreen:', isMobileScreen, 'open:', open);
-    if (isMobileScreen && open) {
-      console.log('Cerrando sidebar móvil');
-      setOpen(false);
-    }
-  };
-  
-  // Si tiene onClick, usar button
   if (onClick) {
     return (
       <button
-        onClick={() => {
-          onClick();
-          handleClick();
-        }}
+        onClick={onClick}
         className={cn(
           "flex items-center justify-start gap-2 group/sidebar py-2 w-full text-left",
           className
@@ -234,8 +181,8 @@ export const SidebarLink = ({
         {link.icon}
         <motion.span
           animate={{
-            display: shouldShowText ? "inline-block" : "none",
-            opacity: shouldShowText ? 1 : 0,
+            display: animate ? (open ? "inline-block" : "none") : "inline-block",
+            opacity: animate ? (open ? 1 : 0) : 1,
           }}
           className="text-white dark:text-white text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
         >
@@ -245,14 +192,10 @@ export const SidebarLink = ({
     );
   }
 
-  // Si tiene onNavigate, usar button
   if (onNavigate) {
     return (
       <button
-        onClick={() => {
-          handleClick(); // Siempre ejecutar handleClick primero
-          onNavigate(link.href);
-        }}
+        onClick={() => onNavigate(link.href)}
         className={cn(
           "flex items-center justify-start gap-2 group/sidebar py-2 w-full text-left",
           className
@@ -262,8 +205,8 @@ export const SidebarLink = ({
         {link.icon}
         <motion.span
           animate={{
-            display: shouldShowText ? "inline-block" : "none",
-            opacity: shouldShowText ? 1 : 0,
+            display: animate ? (open ? "inline-block" : "none") : "inline-block",
+            opacity: animate ? (open ? 1 : 0) : 1,
           }}
           className="text-white dark:text-white text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
         >
@@ -273,13 +216,9 @@ export const SidebarLink = ({
     );
   }
 
-  // Si no tiene onClick ni onNavigate, usar Link pero con handleClick
   return (
     <Link
       to={link.href}
-      onClick={() => {
-        handleClick(); // Siempre ejecutar handleClick
-      }}
       className={cn(
         "flex items-center justify-start gap-2 group/sidebar py-2",
         className
@@ -289,8 +228,8 @@ export const SidebarLink = ({
       {link.icon}
       <motion.span
         animate={{
-          display: shouldShowText ? "inline-block" : "none",
-          opacity: shouldShowText ? 1 : 0,
+          display: animate ? (open ? "inline-block" : "none") : "inline-block",
+          opacity: animate ? (open ? 1 : 0) : 1,
         }}
         className="text-white dark:text-white text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
       >
@@ -301,19 +240,9 @@ export const SidebarLink = ({
 };
 
 export const Logo = () => {
-  const { setOpen } = useSidebarDashboard();
-  const isMobile = useIsMobile();
-  
-  const handleLogoClick = () => {
-    if (isMobile) {
-      setOpen(false);
-    }
-  };
-
   return (
     <Link
       to="/abogados/dashboard"
-      onClick={handleLogoClick}
       className="font-normal flex space-x-2 items-center text-sm text-white py-1 relative z-20"
     >
       <img src="/logo2.svg" alt="klamAI Logo" className="h-8" />      
@@ -329,22 +258,12 @@ export const Logo = () => {
 };
 
 export const LogoIcon = () => {
-  const { setOpen } = useSidebarDashboard();
-  const isMobile = useIsMobile();
-  
-  const handleLogoClick = () => {
-    if (isMobile) {
-      setOpen(false);
-    }
-  };
-
   return (
     <Link
       to="/abogados/dashboard"
-      onClick={handleLogoClick}
       className="font-normal flex space-x-2 items-center text-sm text-white py-1 relative z-20"
     >
       <img src="/logo.svg" alt="klamAI Logo" className="h-8" />      
-    </Link>
+      </Link>
   );
 };

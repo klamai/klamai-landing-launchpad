@@ -42,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
     const fromEmail = Deno.env.get('FROM_EMAIL') || 'KlamAI <noreply@klamai.com>';
 
     // Obtener la URL base desde la request para generar la URL de activación correcta
-    const origin = req.headers.get('origin') || 'https://vwnoznuznmrdaumjyctg.supabase.co';
+    const origin = req.headers.get('origin') || Deno.env.get('SITE_URL') || 'https://klamai.com';
     
     // Configurar el contenido del email según el tipo
     let subject: string;

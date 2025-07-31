@@ -261,20 +261,19 @@ export default function SuperAdminMetrics() {
       const { count: totalClientes } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .eq('role', 'client');
+        .eq('role', 'cliente');
 
       // Obtener total de abogados
       const { count: totalAbogados } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .eq('role', 'lawyer');
+        .eq('role', 'abogado');
 
-      // Obtener abogados activos
+      // Obtener abogados activos (todos los abogados por ahora)
       const { count: abogadosActivos } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .eq('role', 'lawyer')
-        .eq('is_active', true);
+        .eq('role', 'abogado');
 
       // Obtener total de casos
       const { count: totalCasos } = await supabase
