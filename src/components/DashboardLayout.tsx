@@ -62,11 +62,7 @@ const DashboardLayout = memo(({
   // Función optimizada para navegación
   const handleNavigation = useCallback((href: string) => {
     navigate(href);
-    // Cerrar sidebar en móvil después de navegación
-    if (window.innerWidth < 768) { // md breakpoint
-      setOpen(false);
-    }
-  }, [navigate, setOpen]);
+  }, [navigate]);
 
   // Links memoizados con mejores iconos y organización
   const links = React.useMemo(() => [

@@ -99,10 +99,14 @@ const RegularLawyerDashboard = () => {
   };
 
   const handleNavigation = (href: string) => {
-    navigate(href);
+    setActiveSection(href.split('/').pop() || "dashboard");
+    
+    // Cerrar sidebar en móvil ANTES de navegar
     if (window.innerWidth < 768) {
       setOpen(false);
     }
+    
+    navigate(href);
   };
 
   const links = [
