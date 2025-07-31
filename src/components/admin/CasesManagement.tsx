@@ -14,13 +14,21 @@ import {
   Plus,
   FileText,
   ShieldCheck,
+  ChevronDown,
+  Bot,
 } from 'lucide-react';
-import { useSuperAdminStats } from '@/hooks/useSuperAdminStats';
+import { useAdminCases } from '@/hooks/admin/useAdminCases';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Table, 
@@ -33,15 +41,41 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import CaseCard from './CaseCard';
-import CaseDetailModal from './CaseDetailModal';
-import CaseAssignmentModal from './CaseAssignmentModal';
-import AddManualCaseModal from './AddManualCaseModal';
+import CaseCard from '@/components/CaseCard';
+import CaseDetailModal from '@/components/admin/CaseDetailModal';
+import CaseAssignmentModal from '@/components/CaseAssignmentModal';
+import AddManualCaseModal from '@/components/AddManualCaseModal';
+import AddAICaseModal from '@/components/AddAICaseModal';
 import { supabase } from '@/integrations/supabase/client';
 
-const CasesManagement = () => {
-  const { casos, loadingCasos, refetchCasos } = useSuperAdminStats();
-  const { user } = useAuth(); // Obtener usuario actual
+// Componente de acceso no autorizado
+const UnauthorizedAccess = () => (
+  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+    <div className="text-center">
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
+        <h2 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+          Acceso No Autorizado
+        </h2>
+        <p className="text-red-600 dark:text-red-300 mb-4">
+          Solo los super administradores pueden gestionar todos los casos.
+        </p>
+        <button
+          onClick={() => window.location.href = '/abogados/dashboard'}
+          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+        >
+          Volver al Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const AdminCasesManagement = () => {
+  const { casos, loading, error, accessDenied, refetch } = useAdminCases();
+  const { user } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [lawyerType, setLawyerType] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [specialtyFilter, setSpecialtyFilter] = useState('all');
@@ -54,12 +88,68 @@ const CasesManagement = () => {
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
   const [selectedCaseForAssignment, setSelectedCaseForAssignment] = useState<any | null>(null);
   const [addManualCaseOpen, setAddManualCaseOpen] = useState(false);
+  const [addAICaseOpen, setAddAICaseOpen] = useState(false);
   const { toast } = useToast();
   const [processingCases, setProcessingCases] = useState<Set<string>>(new Set());
+  const [especialidades, setEspecialidades] = useState<Array<{ id: number; nombre: string }>>([]);
+
+  // Validación de seguridad para super_admin
+  useEffect(() => {
+    const validateAccess = async () => {
+      if (!user) {
+        setRoleLoading(false);
+        return;
+      }
+
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role, tipo_abogado')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error obteniendo perfil:', error);
+          throw error;
+        }
+
+        console.log('Perfil obtenido para validación:', profile);
+        setUserRole(profile.role);
+        setLawyerType(profile.tipo_abogado);
+        
+        console.log('Roles establecidos:', { role: profile.role, tipo_abogado: profile.tipo_abogado });
+      } catch (error) {
+        console.error('Error validating access:', error);
+      } finally {
+        setRoleLoading(false);
+      }
+    };
+
+    validateAccess();
+  }, [user]);
+
+  // Cargar especialidades desde la base de datos
+  useEffect(() => {
+    const loadEspecialidades = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('especialidades')
+          .select('id, nombre')
+          .order('nombre');
+
+        if (error) throw error;
+        setEspecialidades(data || []);
+      } catch (error) {
+        console.error('Error loading especialidades:', error);
+      }
+    };
+
+    loadEspecialidades();
+  }, []);
 
   // Sistema de notificaciones en tiempo real SEGURO
   useEffect(() => {
-    if (!user) return; // Solo si hay usuario autenticado
+    if (!user || userRole !== 'abogado' || lawyerType !== 'super_admin') return;
 
     const channel = supabase
       .channel(`casos_changes_${user.id}`) // Canal único por usuario
@@ -95,7 +185,7 @@ const CasesManagement = () => {
             });
             
             // Actualizar la lista de casos
-            refetchCasos();
+            refetch();
           }
         }
       )
@@ -104,7 +194,7 @@ const CasesManagement = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, processingCases, toast, refetchCasos]);
+  }, [user, userRole, lawyerType, processingCases, toast, refetch]);
 
   // Función para agregar caso a la lista de procesamiento
   const addToProcessing = (casoId: string) => {
@@ -124,7 +214,7 @@ const CasesManagement = () => {
 
   // Polling de respaldo SEGURO (solo verifica casos en nuestra lista)
   useEffect(() => {
-    if (processingCases.size === 0) return;
+    if (processingCases.size === 0 || userRole !== 'abogado' || lawyerType !== 'super_admin') return;
 
     const interval = setInterval(async () => {
       console.log('Verificando casos en procesamiento:', Array.from(processingCases));
@@ -147,140 +237,30 @@ const CasesManagement = () => {
           removeFromProcessing(caso.id);
         });
         
-        refetchCasos();
+        refetch();
       }
     }, 15000); // Verificar cada 15 segundos como respaldo
 
     return () => clearInterval(interval);
-  }, [processingCases, toast, refetchCasos]);
+  }, [processingCases, userRole, lawyerType, toast, refetch]);
 
-  const getStatusBadge = (estado: string) => {
-    const statusConfig = {
-      'disponible': { label: 'Disponible', variant: 'default' as const, icon: AlertCircle },
-      'agotado': { label: 'Agotado', variant: 'destructive' as const, icon: Clock },
-      'cerrado': { label: 'Cerrado', variant: 'secondary' as const, icon: CheckCircle },
-      'esperando_pago': { label: 'Esperando Pago', variant: 'outline' as const, icon: Clock }
-    };
-    
-    const config = statusConfig[estado as keyof typeof statusConfig] || statusConfig.disponible;
-    const IconComponent = config.icon;
-    
+  // Loading state
+  if (roleLoading) {
     return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
-        <IconComponent className="h-3 w-3" />
-        {config.label}
-      </Badge>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Verificando permisos...</p>
+        </div>
+      </div>
     );
-  };
+  }
 
-  // 1. Actualizar los estados en el filtro
-  const estadosVisibles = [
-    'listo_para_propuesta',
-    'esperando_pago',
-    'disponible',
-    'agotado',
-    'cerrado'
-  ];
+  if (accessDenied) {
+    return <UnauthorizedAccess />;
+  }
 
-  // 2. Mejorar el filtro de estado
-  const statusOptions = [
-    { value: 'all', label: 'Todos' },
-    { value: 'listo_para_propuesta', label: 'Listo para Propuesta' },
-    { value: 'esperando_pago', label: 'Esperando Pago' },
-    { value: 'disponible', label: 'Disponible' },
-    { value: 'agotado', label: 'Atendido' },
-    { value: 'cerrado', label: 'Cerrado' }
-  ];
-
-  // 3. Badge de pago
-  const getPaymentBadge = (estado: string) => {
-    if (estado === 'disponible' || estado === 'agotado' || estado === 'cerrado') {
-      return <Badge variant="default">Pagado</Badge>;
-    }
-    return <Badge variant="outline">Pendiente</Badge>;
-  };
-
-  // Get unique filter options
-  const specialties = Array.from(new Set(casos.map(c => c.especialidades?.nombre).filter(Boolean)));
-  const cities = Array.from(new Set(casos.map(c => c.ciudad_borrador || c.profiles?.ciudad).filter(Boolean)));
-  const leadTypes = Array.from(new Set(casos.map(c => c.tipo_lead).filter(Boolean)));
-  const profileTypes = Array.from(new Set(casos.map(c => c.tipo_perfil_borrador || c.profiles?.tipo_perfil).filter(Boolean)));
-
-  const filteredCasos = casos.filter(caso => {
-    const clientData = {
-      nombre: caso.profiles?.nombre || caso.nombre_borrador || '',
-      apellido: caso.profiles?.apellido || caso.apellido_borrador || '',
-      email: caso.profiles?.email || caso.email_borrador || '',
-      ciudad: caso.profiles?.ciudad || caso.ciudad_borrador || '',
-      tipo_perfil: caso.profiles?.tipo_perfil || caso.tipo_perfil_borrador || 'individual',
-      razon_social: caso.profiles?.razon_social || caso.razon_social_borrador || ''
-    };
-
-    const matchesSearch = caso.motivo_consulta?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         clientData.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         clientData.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         clientData.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         clientData.ciudad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         clientData.razon_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         caso.resumen_caso?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         caso.valor_estimado?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || caso.estado === statusFilter;
-    const matchesSpecialty = specialtyFilter === 'all' || caso.especialidades?.nombre === specialtyFilter;
-    const matchesType = typeFilter === 'all' || caso.tipo_lead === typeFilter;
-    const matchesCity = cityFilter === 'all' || clientData.ciudad === cityFilter;
-    const matchesProfileType = profileTypeFilter === 'all' || clientData.tipo_perfil === profileTypeFilter;
-    
-    return matchesSearch && matchesStatus && matchesSpecialty && matchesType && matchesCity && matchesProfileType;
-  });
-
-  // Show all filtered cases including closed ones
-  const activeCasos = filteredCasos;
-
-  const handleViewDetails = (casoId: string) => {
-    const caso = casos.find(c => c.id === casoId);
-    setSelectedCaseDetail(caso);
-    setDetailModalOpen(true);
-  };
-
-  const handleAssignLawyer = (casoId: string) => {
-    const caso = casos.find(c => c.id === casoId);
-    setSelectedCaseForAssignment(caso);
-    setAssignmentModalOpen(true);
-  };
-
-  const handleGenerateResolution = async (casoId: string) => {
-    toast({
-      title: "Función en desarrollo",
-      description: "La generación automática de resolución estará disponible pronto",
-    });
-  };
-
-  const handleUploadDocument = (casoId: string) => {
-    toast({
-      title: "Función en desarrollo", 
-      description: "La subida de documentos estará disponible pronto",
-    });
-  };
-
-  const handleSendMessage = (casoId: string) => {
-    toast({
-      title: "Función en desarrollo",
-      description: "El sistema de mensajería estará disponible pronto", 
-    });
-  };
-
-  const handleManualCaseSuccess = () => {
-    refetchCasos();
-    // No mostrar toast aquí, ya se muestra en el modal
-  };
-
-  const handleCaseCreated = (casoId: string) => {
-    console.log('Caso agregado a procesamiento:', casoId);
-    addToProcessing(casoId);
-  };
-
-  if (loadingCasos) {
+  if (loading) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -296,6 +276,169 @@ const CasesManagement = () => {
       </Card>
     );
   }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Error al cargar casos
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Bloquear acceso no autorizado
+  if (userRole !== 'abogado' || lawyerType !== 'super_admin') {
+    console.log('🚫 Acceso denegado a AdminCasesManagement:', { 
+      userRole, 
+      lawyerType, 
+      roleLoading,
+      user: user?.id 
+    });
+    return <UnauthorizedAccess />;
+  }
+
+  const getStatusBadge = (estado: string) => {
+    const statusConfig = {
+      disponible: { label: 'Disponible', className: 'bg-green-100 text-green-800 border-green-200' },
+      asignado: { label: 'Asignado', className: 'bg-purple-100 text-purple-800 border-purple-200' },
+      agotado: { label: 'Agotado', className: 'bg-red-100 text-red-800 border-red-200' },
+      cerrado: { label: 'Cerrado', className: 'bg-blue-100 text-blue-800 border-blue-200' },
+      listo_para_propuesta: { label: 'Listo para Propuesta', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+      esperando_pago: { label: 'Esperando Pago', className: 'bg-orange-100 text-orange-800 border-orange-200' }
+    };
+
+    const config = statusConfig[estado as keyof typeof statusConfig] || statusConfig.disponible;
+    
+    return (
+      <Badge variant="outline" className={config.className}>
+        {config.label}
+      </Badge>
+    );
+  };
+
+  const estadosVisibles = [
+    'disponible', 'asignado', 'agotado', 'cerrado', 'listo_para_propuesta', 'esperando_pago'
+  ];
+
+  const statusOptions = [
+    { value: 'all', label: 'Todos los estados' },
+    { value: 'disponible', label: 'Disponible' },
+    { value: 'asignado', label: 'Asignado' },
+    { value: 'agotado', label: 'Agotado' },
+    { value: 'cerrado', label: 'Cerrado' },
+    { value: 'listo_para_propuesta', label: 'Listo para Propuesta' },
+    { value: 'esperando_pago', label: 'Esperando Pago' }
+  ];
+
+  const getPaymentBadge = (estado: string) => {
+    if (estado === 'esperando_pago') {
+      return <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200">Pendiente</Badge>;
+    }
+    return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Pagado</Badge>;
+  };
+
+  // Extraer datos únicos para filtros
+  const specialties = Array.from(new Set(casos.map(c => c.especialidades?.nombre).filter(Boolean)));
+  const cities = Array.from(new Set(casos.map(c => c.ciudad_borrador || c.profiles?.ciudad).filter(Boolean)));
+  const leadTypes = Array.from(new Set(casos.map(c => c.tipo_lead).filter(Boolean)));
+  const profileTypes = Array.from(new Set(casos.map(c => c.tipo_perfil_borrador || c.profiles?.tipo_perfil).filter(Boolean)));
+
+  // Filtrar casos
+  const filteredCasos = casos.filter(caso => {
+    const clientData = {
+      nombre: caso.profiles?.nombre || caso.nombre_borrador || '',
+      apellido: caso.profiles?.apellido || caso.apellido_borrador || '',
+      email: caso.profiles?.email || caso.email_borrador || '',
+      ciudad: caso.profiles?.ciudad || caso.ciudad_borrador || '',
+      tipo_perfil: caso.profiles?.tipo_perfil || caso.tipo_perfil_borrador || ''
+    };
+
+    const matchesSearch = caso.motivo_consulta?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         clientData.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         clientData.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         clientData.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = statusFilter === 'all' || caso.estado === statusFilter;
+    const matchesSpecialty = specialtyFilter === 'all' || caso.especialidades?.nombre === specialtyFilter;
+    const matchesType = typeFilter === 'all' || caso.tipo_lead === typeFilter;
+    const matchesCity = cityFilter === 'all' || clientData.ciudad === cityFilter;
+    const matchesProfileType = profileTypeFilter === 'all' || clientData.tipo_perfil === profileTypeFilter;
+
+    return matchesSearch && matchesStatus && matchesSpecialty && matchesType && matchesCity && matchesProfileType;
+  });
+
+  const activeCasos = filteredCasos; // Show all filtered cases including closed ones
+
+  const handleViewDetails = (casoId: string) => {
+    const caso = casos.find(c => c.id === casoId);
+    if (caso) {
+      setSelectedCaseDetail(caso);
+      setDetailModalOpen(true);
+    }
+  };
+
+  const handleAssignLawyer = (casoId: string) => {
+    const caso = casos.find(c => c.id === casoId);
+    if (caso) {
+      setSelectedCaseForAssignment(caso);
+      setAssignmentModalOpen(true);
+    }
+  };
+
+  const handleGenerateResolution = async (casoId: string) => {
+    // Lógica existente para generar resolución
+    console.log('Generando resolución para caso:', casoId);
+  };
+
+  const handleGenerateResolutionWithAgent = async (casoId: string, agent: string) => {
+    console.log(`Generando resolución con agente ${agent} para caso:`, casoId);
+    
+    // Aquí puedes implementar la lógica específica para cada agente
+    const agentConfig = {
+      resolucion: { name: 'Generar Resolución', type: 'basic' },
+      estrategia: { name: 'Estrategia Legal', type: 'premium' },
+      documentos: { name: 'Generar Documentos', type: 'pro' },
+      analisis: { name: 'Análisis Completo', type: 'expert' }
+    };
+
+    const config = agentConfig[agent as keyof typeof agentConfig];
+    
+    toast({
+      title: `${config.name} iniciado`,
+      description: `El agente de IA está procesando el caso con ${config.type}...`,
+      duration: 3000,
+    });
+  };
+
+  const handleUploadDocument = (casoId: string) => {
+    // Implementar subida de documentos
+    toast({
+      title: "Funcionalidad en desarrollo",
+      description: "La subida de documentos estará disponible pronto",
+    });
+  };
+
+  const handleSendMessage = (casoId: string) => {
+    // Implementar envío de mensajes
+    toast({
+      title: "Funcionalidad en desarrollo",
+      description: "El sistema de mensajes estará disponible pronto",
+    });
+  };
+
+  const handleManualCaseSuccess = () => {
+    refetch();
+    // Removed duplicate toast - already shown in modal
+  };
+
+  const handleCaseCreated = (casoId: string) => {
+    addToProcessing(casoId);
+  };
 
   return (
     <div className="space-y-6">
@@ -355,8 +498,8 @@ const CasesManagement = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas las ramas</SelectItem>
-                {specialties.map(specialty => (
-                  <SelectItem key={specialty} value={specialty}>{specialty}</SelectItem>
+                {especialidades.map(specialty => (
+                  <SelectItem key={specialty.id} value={specialty.nombre}>{specialty.nombre}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -387,12 +530,13 @@ const CasesManagement = () => {
 
             <Select value={profileTypeFilter} onValueChange={setProfileTypeFilter}>
               <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Perfil" />
+                <SelectValue placeholder="Tipo de perfil" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="individual">Individual</SelectItem>
-                <SelectItem value="empresa">Empresa</SelectItem>
+                <SelectItem value="all">Todos los perfiles</SelectItem>
+                {profileTypes.map(type => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -430,13 +574,28 @@ const CasesManagement = () => {
                 {activeCasos.length} casos activos encontrados para gestionar
               </CardDescription>
             </div>
-            <Button
-              onClick={() => setAddManualCaseOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Añadir Caso
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Añadir Caso
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-48">
+                <DropdownMenuItem onClick={() => setAddManualCaseOpen(true)}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Añadir Caso Manual
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setAddAICaseOpen(true)} className="relative">
+                  <Bot className="h-4 w-4 mr-2" />
+                  Añadir Caso con IA
+                  <Badge className="ml-auto bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    Premium
+                  </Badge>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent>
@@ -451,6 +610,7 @@ const CasesManagement = () => {
                   onGenerateResolution={handleGenerateResolution}
                   onUploadDocument={handleUploadDocument}
                   onSendMessage={handleSendMessage}
+                  onGenerateResolutionWithAgent={handleGenerateResolutionWithAgent}
                 />
               ))}
             </div>
@@ -498,13 +658,13 @@ const CasesManagement = () => {
                       </TableCell>
                       <TableCell className="py-4">
                         <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {caso.tipo_lead}
+                          {caso.tipo_lead || 'N/A'}
                         </div>
                       </TableCell>
                       <TableCell className="py-4">
-                        <Badge variant="outline" className="text-sm px-3 py-1 font-medium">
-                          {caso.especialidades?.nombre || 'Sin especialidad'}
-                        </Badge>
+                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {caso.especialidades?.nombre || 'N/A'}
+                        </div>
                       </TableCell>
                       <TableCell className="py-4">
                         {getStatusBadge(caso.estado)}
@@ -513,17 +673,20 @@ const CasesManagement = () => {
                         {getPaymentBadge(caso.estado)}
                       </TableCell>
                       <TableCell className="py-4">
-                        {caso.fecha_cierre ? format(new Date(caso.fecha_cierre), 'dd/MM/yyyy HH:mm', { locale: es }) : '-'}
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {caso.fecha_cierre ? format(new Date(caso.fecha_cierre), 'dd/MM/yyyy', { locale: es }) : 'N/A'}
+                        </div>
                       </TableCell>
                       <TableCell className="py-4">
-                        {caso.cerrado_por ? `${caso.cerrado_por}` : '-'}
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {caso.cerrado_por || 'N/A'}
+                        </div>
                       </TableCell>
                       <TableCell className="py-4">
                         {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
-                          <div className="text-sm">
-                            {caso.asignaciones_casos.map((asignacion, idx) => (
-                              <div key={idx} className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 p-2 rounded">
-                                <CheckCircle className="h-4 w-4 text-green-600" />
+                          <div className="space-y-1">
+                            {caso.asignaciones_casos.map((asignacion: any, index: number) => (
+                              <div key={index} className="text-sm">
                                 <span className="font-medium text-green-800 dark:text-green-200">
                                   {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
                                 </span>
@@ -597,7 +760,6 @@ const CasesManagement = () => {
           setDetailModalOpen(false);
           setSelectedCaseDetail(null);
         }}
-        onAssignLawyer={handleAssignLawyer}
         onGenerateResolution={handleGenerateResolution}
         onUploadDocument={handleUploadDocument}
         onSendMessage={handleSendMessage}
@@ -617,10 +779,18 @@ const CasesManagement = () => {
         onClose={() => setAddManualCaseOpen(false)}
         onSuccess={handleManualCaseSuccess}
         onCaseCreated={handleCaseCreated}
-        especialidades={specialties.map((nombre, idx) => ({ id: idx + 1, nombre }))}
+        especialidades={especialidades}
+      />
+
+      <AddAICaseModal
+        isOpen={addAICaseOpen}
+        onClose={() => setAddAICaseOpen(false)}
+        onSuccess={handleManualCaseSuccess}
+        onCaseCreated={handleCaseCreated}
+        especialidades={especialidades}
       />
     </div>
   );
 };
 
-export default CasesManagement;
+export default AdminCasesManagement; 

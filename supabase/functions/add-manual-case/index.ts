@@ -16,22 +16,21 @@ const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 const openai = new OpenAI({ apiKey: openAIApiKey });
 
 const LISTA_ESPECIALIDADES_VALIDAS = [
-  'Derecho Civil',
-  'Derecho Penal',
-  'Derecho Laboral',
-  'Derecho Mercantil',
   'Derecho Administrativo',
-  'Derecho Fiscal',
-  'Derecho Familiar',
-  'Derecho Inmobiliario',
+  'Derecho Ambiental',
+  'Derecho Civil',
+  'Derecho Concursal',
   'Derecho de Extranjería',
   'Derecho de la Seguridad Social',
-  'Derecho Sanitario',
-  'Derecho de Seguros',
-  'Derecho Concursal',
   'Derecho de Propiedad Intelectual',
-  'Derecho Ambiental',
-  'Consulta General'
+  'Derecho de Seguros',
+  'Derecho Familiar',
+  'Derecho Fiscal',
+  'Derecho Inmobiliario',
+  'Derecho Laboral',
+  'Derecho Mercantil',
+  'Derecho Penal',
+  'Derecho Sanitario'
 ];
 
 // --- TIPOS E INTERFACES ---
@@ -124,85 +123,105 @@ function cleanAndParseJSON(content: string) {
 
 // --- FUNCIÓN PRINCIPAL ---
 
-serve(async (req: Request) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { caseText } = await req.json();
-    log('info', 'Procesando caso manual', { caseText: caseText?.substring(0, 100) + '...' });
-
-    if (!caseText || caseText.trim().length === 0) {
-      throw new Error('El texto del caso es requerido');
+    const { caseText, caseData } = await req.json();
+    
+    // Determinar el modo de operación
+    const isFormMode = caseData && !caseText;
+    const isTextMode = caseText && !caseData;
+    
+    if (!isFormMode && !isTextMode) {
+      throw new Error('Debe proporcionar caseText (modo texto libre) o caseData (modo formulario)');
     }
 
-    // Paso 1: Extracción inicial de datos (mantener esto síncrono para validación básica)
-    const extractionPrompt = `
-    Analiza el siguiente texto que contiene información de un cliente y su consulta legal.
-    Extrae los datos y devuelve ÚNICAMENTE un JSON válido con la siguiente estructura:
+    let extractedInfo: ExtractedInfo;
+    let originalText: string;
 
-    {
-      "cliente": {
-        "nombre": "string",
-        "apellido": "string",
-        "email": "string",
-        "telefono": "string",
-        "ciudad": "string",
-        "tipo_perfil": "individual" | "empresa",
-        "razon_social": "string (solo si es empresa)",
-        "nif_cif": "string (solo si es empresa)",
-        "nombre_gerente": "string (solo si es empresa)",
-        "direccion_fiscal": "string (solo si es empresa)"
-      },
-      "consulta": {
-        "motivo_consulta": "string (resumen del problema legal)",
-        "detalles_adicionales": "string (información adicional relevante)",
-        "urgencia": "alta" | "media" | "baja",
-        "preferencia_horaria": "string (si se menciona)",
-        "especialidad_legal": "laboral" | "civil" | "penal" | "administrativo" | "fiscal" | "mercantil" | "familia" | "otra",
-        "tipo_lead": "estandar" | "premium" | "urgente"
+    if (isFormMode) {
+      // Modo formulario: usar datos proporcionados directamente
+      extractedInfo = {
+        cliente: {
+          nombre: caseData.nombre,
+          apellido: caseData.apellido,
+          email: caseData.email,
+          telefono: caseData.telefono,
+          ciudad: caseData.ciudad,
+          tipo_perfil: caseData.tipo_perfil,
+          razon_social: caseData.razon_social,
+          nif_cif: caseData.nif_cif,
+          nombre_gerente: caseData.nombre_gerente,
+          direccion_fiscal: caseData.direccion_fiscal
+        },
+        consulta: {
+          motivo_consulta: caseData.motivo_consulta,
+          tipo_lead: caseData.tipo_lead,
+          preferencia_horaria: caseData.preferencia_horaria_contacto
+        }
+      };
+      originalText = `Caso creado manualmente: ${caseData.motivo_consulta}`;
+    } else {
+      // Modo texto libre: extraer información con IA
+      log('info', 'Procesando texto libre con IA', { textLength: caseText.length });
+      
+      const extractionPrompt = `Extrae la información del siguiente texto de consulta legal y devuelve ÚNICAMENTE un objeto JSON crudo (raw), sin explicaciones. La estructura debe ser: {"cliente": {"nombre": "...", "apellido": "...", "email": "...", "telefono": "...", "ciudad": "...", "tipo_perfil": "individual|empresa", "razon_social": "...", "nif_cif": "...", "nombre_gerente": "...", "direccion_fiscal": "..."}, "consulta": {"motivo_consulta": "...", "detalles_adicionales": "...", "urgencia": "alta|media|baja", "preferencia_horaria": "...", "especialidad_legal": "...", "tipo_lead": "estandar|premium|urgente"}}. Si no encuentras algún dato, déjalo vacío. Texto: ${caseText}`;
+      
+      const extractionResult = await ejecutarAsistente("ASISTENTE_AUXILIAR_ID", extractionPrompt);
+      const jsonString = extractJsonFromString(extractionResult);
+      
+      if (!jsonString) {
+        throw new Error('No se pudo extraer información válida del texto');
       }
+      
+      extractedInfo = JSON.parse(cleanAndParseJSON(jsonString));
+      originalText = caseText;
     }
 
-    Si no puedes extraer algún campo, usa null.
-    Si es una empresa, asegúrate de marcar tipo_perfil como "empresa".
-    Si es una persona individual, marca tipo_perfil como "individual".
+    // Validar información mínima requerida
+    if (!extractedInfo.cliente?.nombre || !extractedInfo.cliente?.apellido || !extractedInfo.cliente?.email) {
+      throw new Error('Información del cliente incompleta: se requiere nombre, apellido y email');
+    }
 
-    Texto a analizar:
-    ${caseText}
-    `;
+    if (!extractedInfo.consulta?.motivo_consulta) {
+      throw new Error('Se requiere el motivo de la consulta');
+    }
 
-    const extractionResult = await ejecutarAsistente("ASISTENTE_AUXILIAR_ID", extractionPrompt);
-    const extractedInfo: ExtractedInfo = cleanAndParseJSON(extractionResult);
-
-    // Paso 2: Crear el caso en estado 'borrador'
+    // Crear el caso en la base de datos
     const casoData = {
-      motivo_consulta: extractedInfo.consulta?.motivo_consulta || 'Consulta manual',
-      estado: 'borrador',
-      canal_atencion: 'manual_admin',
-      nombre_borrador: extractedInfo.cliente?.nombre,
-      apellido_borrador: extractedInfo.cliente?.apellido,
-      email_borrador: extractedInfo.cliente?.email,
-      telefono_borrador: extractedInfo.cliente?.telefono,
-      ciudad_borrador: extractedInfo.cliente?.ciudad,
-      tipo_perfil_borrador: extractedInfo.cliente?.tipo_perfil,
-      razon_social_borrador: extractedInfo.cliente?.razon_social,
-      nif_cif_borrador: extractedInfo.cliente?.nif_cif,
-      nombre_gerente_borrador: extractedInfo.cliente?.nombre_gerente,
-      direccion_fiscal_borrador: extractedInfo.cliente?.direccion_fiscal,
-      preferencia_horaria_contacto: extractedInfo.consulta?.preferencia_horaria,
-      transcripcion_chat: {
-        texto_original: caseText,
-      }
+      motivo_consulta: extractedInfo.consulta.motivo_consulta,
+      estado: "borrador",
+      canal_atencion: "manual_admin",
+      nombre_borrador: extractedInfo.cliente.nombre,
+      apellido_borrador: extractedInfo.cliente.apellido,
+      email_borrador: extractedInfo.cliente.email,
+      telefono_borrador: extractedInfo.cliente.telefono,
+      ciudad_borrador: extractedInfo.cliente.ciudad,
+      tipo_perfil_borrador: extractedInfo.cliente.tipo_perfil,
+      razon_social_borrador: extractedInfo.cliente.razon_social,
+      nif_cif_borrador: extractedInfo.cliente.nif_cif,
+      nombre_gerente_borrador: extractedInfo.cliente.nombre_gerente,
+      direccion_fiscal_borrador: extractedInfo.cliente.direccion_fiscal,
+      preferencia_horaria_contacto: extractedInfo.consulta.preferencia_horaria,
+      tipo_lead: extractedInfo.consulta.tipo_lead,
+      valor_estimado: caseData?.valor_estimado || null,
+      especialidad_id: caseData?.especialidad_id || null
     };
 
-    const { data: caso, error: casoError } = await supabase.from('casos').insert([casoData]).select().single();
-    if (casoError) throw casoError;
-    log('info', 'Caso creado en estado borrador', { casoId: caso.id });
+    const { data: caso, error: insertError } = await supabase.from("casos").insert(casoData).select().single();
+    
+    if (insertError) {
+      log('error', 'Error al insertar caso', { error: insertError.message });
+      throw insertError;
+    }
+
+    log('info', 'Caso creado exitosamente', { casoId: caso.id, modo: isFormMode ? 'formulario' : 'texto' });
 
     // Paso 3: Iniciar procesamiento asíncrono (NO esperar)
-    processWithAIAssistantsAsync(caso.id, caseText, extractedInfo).catch(error => {
+    processWithAIAssistantsAsync(caso.id, originalText, extractedInfo).catch(error => {
       log('error', 'Error en procesamiento asíncrono', { casoId: caso.id, error: error.message });
     });
 

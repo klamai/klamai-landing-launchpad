@@ -25,10 +25,88 @@ interface DocumentoResolucion {
 export const useDocumentManagement = (casoId?: string) => {
   const [documentosResolucion, setDocumentosResolucion] = useState<DocumentoResolucion[]>([]);
   const [loading, setLoading] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
   const { user } = useAuth();
 
+  // Validación de seguridad para abogados y super admins
+  useEffect(() => {
+    const validateAccess = async () => {
+      if (!user || !casoId) {
+        setAccessDenied(true);
+        return;
+      }
+
+      try {
+        console.log('🔍 Validando acceso a useDocumentManagement:', user.id, 'caso:', casoId);
+        
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role, tipo_abogado, id, email')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('❌ Error obteniendo perfil:', profileError);
+          setAccessDenied(true);
+          return;
+        }
+
+        console.log('Perfil del usuario:', profile);
+
+        // Solo abogados pueden acceder a documentos de resolución
+        if (profile.role !== 'abogado') {
+          console.log('🚫 Solo abogados pueden acceder a documentos de resolución');
+          setAccessDenied(true);
+          return;
+        }
+
+        // Verificar acceso al caso
+        const { data: casoData, error: casoError } = await supabase
+          .from('casos')
+          .select('id, cliente_id, estado')
+          .eq('id', casoId)
+          .single();
+
+        if (casoError) {
+          console.error('❌ Error obteniendo datos del caso:', casoError);
+          setAccessDenied(true);
+          return;
+        }
+
+        console.log('Datos del caso:', casoData);
+
+        if (profile.tipo_abogado === 'super_admin') {
+          console.log('✅ Acceso autorizado para super admin');
+          setAccessDenied(false);
+        } else {
+          // Verificar asignación para abogados regulares
+          const { data: asignacion, error: asignacionError } = await supabase
+            .from('asignaciones_casos')
+            .select('*')
+            .eq('caso_id', casoId)
+            .eq('abogado_id', user.id)
+            .in('estado_asignacion', ['activa', 'completada'])
+            .single();
+
+          if (asignacionError || !asignacion) {
+            console.log('🚫 Abogado regular no tiene asignación activa para este caso');
+            setAccessDenied(true);
+          } else {
+            console.log('✅ Acceso autorizado para abogado regular asignado');
+            setAccessDenied(false);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error general en validación:', error);
+        setAccessDenied(true);
+      }
+    };
+
+    validateAccess();
+  }, [user, casoId]);
+
   const fetchDocumentosResolucion = async () => {
-    if (!casoId) return;
+    if (!casoId || accessDenied) return;
 
     setLoading(true);
     try {
@@ -63,11 +141,42 @@ export const useDocumentManagement = (casoId?: string) => {
     tipoDocumento: string,
     descripcion?: string
   ): Promise<{ success: boolean; error?: string }> => {
-    if (!casoId || !user) {
-      return { success: false, error: 'Usuario no autenticado o caso no especificado' };
+    if (!casoId || !user || accessDenied) {
+      return { success: false, error: 'Acceso no autorizado' };
     }
 
     try {
+      // Verificar permisos de subida
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, tipo_abogado, id, email')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || profile?.role !== 'abogado') {
+        return { success: false, error: 'Solo abogados pueden subir documentos de resolución' };
+      }
+
+      let canUpload = false;
+      if (profile.tipo_abogado === 'super_admin') {
+        canUpload = true;
+      } else {
+        // Verificar asignación para abogados regulares
+        const { data: asignacion, error: asignacionError } = await supabase
+          .from('asignaciones_casos')
+          .select('*')
+          .eq('caso_id', casoId)
+          .eq('abogado_id', user.id)
+          .in('estado_asignacion', ['activa', 'completada'])
+          .single();
+
+        canUpload = !asignacionError && asignacion;
+      }
+
+      if (!canUpload) {
+        return { success: false, error: 'No tienes permisos para subir documentos a este caso' };
+      }
+
       // Generar nombre único para el archivo usando la estructura correcta
       const timestamp = Date.now();
       const fileExtension = file.name.split('.').pop();
@@ -127,6 +236,10 @@ export const useDocumentManagement = (casoId?: string) => {
   };
 
   const getSignedUrl = async (documento: DocumentoResolucion): Promise<string | null> => {
+    if (!user || accessDenied) {
+      return null;
+    }
+
     try {
       const { data, error } = await supabase.storage
         .from('documentos_legales')
@@ -145,6 +258,10 @@ export const useDocumentManagement = (casoId?: string) => {
   };
 
   const downloadDocument = async (documento: DocumentoResolucion) => {
+    if (!user || accessDenied) {
+      return;
+    }
+
     try {
       const signedUrl = await getSignedUrl(documento);
       if (!signedUrl) {
@@ -167,8 +284,8 @@ export const useDocumentManagement = (casoId?: string) => {
   };
 
   const deleteDocument = async (documentoId: string): Promise<{ success: boolean; error?: string }> => {
-    if (!user) {
-      return { success: false, error: 'Usuario no autenticado' };
+    if (!user || accessDenied) {
+      return { success: false, error: 'Acceso no autorizado' };
     }
 
     try {
@@ -230,19 +347,21 @@ export const useDocumentManagement = (casoId?: string) => {
     }
   };
 
+  // Fetch documents when access is validated
   useEffect(() => {
-    if (casoId) {
+    if (!accessDenied && casoId) {
       fetchDocumentosResolucion();
     }
-  }, [casoId]);
+  }, [accessDenied, casoId]);
 
   return {
     documentosResolucion,
     loading,
+    accessDenied,
     uploadDocument,
     downloadDocument,
     deleteDocument,
     getSignedUrl,
     refetch: fetchDocumentosResolucion
   };
-};
+}; 

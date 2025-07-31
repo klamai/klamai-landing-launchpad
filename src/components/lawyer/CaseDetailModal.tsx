@@ -14,7 +14,6 @@ import {
   Upload,
   Download,
   Bot,
-  UserPlus,
   Eye,
   Building,
   Trash2,
@@ -37,8 +36,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toZonedTime } from 'date-fns-tz';
-import { useDocumentManagement } from '@/hooks/useDocumentManagement';
-import { useClientDocumentManagement } from '@/hooks/useClientDocumentManagement';
+import { useDocumentManagement } from '@/hooks/shared/useDocumentManagement';
+import { useClientDocumentManagement } from '@/hooks/client/useClientDocumentManagement';
 import DocumentViewer from '@/components/DocumentViewer';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
 import { useToast } from '@/hooks/use-toast';
@@ -46,15 +45,11 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import ClientDocumentUploadModal from './ClientDocumentUploadModal';
-import CaseEditModal from './CaseEditModal';
-import CaseNotesSection from './CaseNotesSection';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import ClientDocumentUploadModal from '@/components/ClientDocumentUploadModal';
+import CaseEditModal from '@/components/CaseEditModal';
+import CaseNotesSection from '@/components/CaseNotesSection';
 
-interface CaseDetailModalProps {
+interface LawyerCaseDetailModalProps {
   caso: {
     id: string;
     motivo_consulta: string;
@@ -101,22 +96,19 @@ interface CaseDetailModalProps {
   } | null;
   isOpen: boolean;
   onClose: () => void;
-  onAssignLawyer: (casoId: string) => void;
   onGenerateResolution: (casoId: string) => void;
   onUploadDocument: (casoId: string) => void;
   onSendMessage: (casoId: string) => void;
 }
 
-const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
+const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
   caso,
   isOpen,
   onClose,
-  onAssignLawyer,
   onGenerateResolution,
   onUploadDocument,
   onSendMessage
 }) => {
-  const [messageText, setMessageText] = useState('');
   const [selectedDocument, setSelectedDocument] = useState<{name: string; url: string; type?: string; size?: number} | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showClientUploadModal, setShowClientUploadModal] = useState(false);
@@ -126,25 +118,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   const { toast } = useToast();
   const { user } = useAuth();
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentConcept, setPaymentConcept] = useState('');
-  const [loadingPayment, setLoadingPayment] = useState(false);
-  const [showConvertToClientModal, setShowConvertToClientModal] = useState(false);
-  const [convertingToClient, setConvertingToClient] = useState(false);
-  const [newClientData, setNewClientData] = useState({
-    nombre: '',
-    apellido: '',
-    email: '',
-    telefono: '',
-    ciudad: '',
-    tipo_perfil: 'individual',
-    razon_social: '',
-    nif_cif: '',
-    nombre_gerente: '',
-    direccion_fiscal: ''
-  });
-  const [acceptedRGPD, setAcceptedRGPD] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   const { 
     documentosResolucion, 
@@ -164,9 +138,6 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     deleteDocument: deleteClientDocument
   } = useClientDocumentManagement(caso?.id);
 
-  // Agregar el estado para el botón de cerrar
-  const [isClosing, setIsClosing] = useState(false);
-
   // Verificar rol y tipo de abogado
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -181,144 +152,41 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
       setUserRole(profile?.role || null);
       setLawyerType(profile?.tipo_abogado || null);
 
-      // Verificar si el abogado está asignado al caso
-      if (profile?.role === 'abogado' && caso) {
-        const { data: asignacion } = await supabase
-          .from('asignaciones_casos')
-          .select('estado_asignacion')
-          .eq('caso_id', caso.id)
-          .eq('abogado_id', user.id)
-          .eq('estado_asignacion', 'activa')
-          .single();
-        
-        setIsAssignedLawyer(!!asignacion);
+      // Para abogados regulares, asumimos que están asignados si llegan aquí
+      if (profile?.role === 'abogado' && profile?.tipo_abogado === 'regular') {
+        setIsAssignedLawyer(true);
       }
     };
 
     fetchUserRole();
-  }, [user, caso]);
+  }, [user]);
+
+  // Verificar que el usuario es un abogado regular
+  useEffect(() => {
+    // Solo validar si ya tenemos toda la información necesaria
+    if (caso && user && userRole && lawyerType !== undefined) {
+      if (userRole !== 'abogado' || lawyerType !== 'regular') {
+        console.error('Acceso denegado:', { 
+          userRole, 
+          lawyerType,
+          userId: user.id,
+          casoId: caso.id 
+        });
+        toast({
+          title: 'Error',
+          description: 'No tienes permisos para ver este caso',
+          variant: 'destructive',
+        });
+        onClose();
+      }
+    }
+  }, [caso, user, userRole, lawyerType, onClose, toast]);
 
   if (!caso) return null;
 
   // Convertir a zona horaria de España
   const spainTimeZone = 'Europe/Madrid';
   const casoDate = toZonedTime(new Date(caso.created_at), spainTimeZone);
-
-  const handleConvertToClient = async () => {
-    if (!newClientData.nombre || !newClientData.apellido || !newClientData.email) {
-      toast({
-        title: 'Error',
-        description: 'Por favor completa los campos obligatorios.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!acceptedRGPD) {
-      toast({
-        title: 'Error',
-        description: 'Debes aceptar el consentimiento RGPD.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setConvertingToClient(true);
-    try {
-      // Crear el perfil del cliente
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          nombre: newClientData.nombre,
-          apellido: newClientData.apellido,
-          email: newClientData.email,
-          telefono: newClientData.telefono || null,
-          ciudad: newClientData.ciudad || null,
-          tipo_perfil: newClientData.tipo_perfil,
-          razon_social: newClientData.tipo_perfil === 'empresa' ? newClientData.razon_social : null,
-          nif_cif: newClientData.tipo_perfil === 'empresa' ? newClientData.nif_cif : null,
-          nombre_gerente: newClientData.tipo_perfil === 'empresa' ? newClientData.nombre_gerente : null,
-          direccion_fiscal: newClientData.tipo_perfil === 'empresa' ? newClientData.direccion_fiscal : null,
-          role: 'cliente'
-        })
-        .select()
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Actualizar el caso con el cliente_id
-      const { error: caseError } = await supabase
-        .from('casos')
-        .update({ cliente_id: profileData.id })
-        .eq('id', caso.id);
-
-      if (caseError) throw caseError;
-
-      // Enviar email de invitación
-      const { error: inviteError } = await supabase.functions.invoke('invitar-cliente', {
-        body: {
-          profileId: profileData.id,
-          casoId: caso.id
-        }
-      });
-
-      if (inviteError) {
-        console.error('Error al enviar invitación:', inviteError);
-        // No lanzar error aquí, solo mostrar advertencia
-        toast({
-          title: 'Cliente creado pero error al enviar invitación',
-          description: 'El cliente fue creado pero no se pudo enviar el email de invitación.',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Cliente creado exitosamente',
-          description: 'Se ha enviado un email de invitación al cliente.',
-          variant: 'default',
-        });
-      }
-
-      setShowConvertToClientModal(false);
-      setNewClientData({
-        nombre: '',
-        apellido: '',
-        email: '',
-        telefono: '',
-        ciudad: '',
-        tipo_perfil: 'individual',
-        razon_social: '',
-        nif_cif: '',
-        nombre_gerente: '',
-        direccion_fiscal: ''
-      });
-      setAcceptedRGPD(false);
-
-      // Recargar el modal para mostrar los datos del cliente
-      window.location.reload();
-    } catch (error) {
-      console.error('Error al convertir en cliente:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo crear el cliente. Inténtalo de nuevo.',
-        variant: 'destructive',
-      });
-    } finally {
-      setConvertingToClient(false);
-    }
-  };
-
-  const clientData = caso.profiles || {
-    nombre: caso.nombre_borrador || '',
-    apellido: caso.apellido_borrador || '',
-    email: caso.email_borrador || '',
-    telefono: caso.telefono_borrador || '',
-    ciudad: caso.ciudad_borrador || '',
-    tipo_perfil: caso.tipo_perfil_borrador || 'individual',
-    razon_social: caso.razon_social_borrador || '',
-    nif_cif: caso.nif_cif_borrador || '',
-    nombre_gerente: caso.nombre_gerente_borrador || '',
-    direccion_fiscal: caso.direccion_fiscal_borrador || ''
-  };
 
   const getStatusBadge = (estado: string) => {
     const statusConfig = {
@@ -387,53 +255,30 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
         title: "Éxito",
         description: "Documento eliminado correctamente",
       });
+      refetchDocuments();
     } else {
       toast({
         title: "Error",
         description: result.error || "Error al eliminar el documento",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
 
   const handleDeleteClientDocument = async (docId: string) => {
-    if (!isSuperAdmin) {
+    const result = await deleteClientDocument(docId);
+    if (result.success) {
+      toast({
+        title: "Éxito",
+        description: "Documento del cliente eliminado correctamente",
+      });
+      refetchClientDocuments();
+    } else {
       toast({
         title: "Error",
-        description: "No tienes permisos para eliminar documentos del cliente",
-        variant: "destructive",
+        description: result.error || "Error al eliminar el documento",
+        variant: "destructive"
       });
-      return;
-    }
-
-    if (window.confirm('¿Estás seguro de que quieres eliminar este documento del cliente?')) {
-      try {
-        // Usar el hook de client document management para eliminar
-        const result = await deleteClientDocument(docId);
-        if (result.success) {
-          toast({
-            title: "Éxito",
-            description: "Documento del cliente eliminado correctamente",
-          });
-          // Refetch client documents
-          if (refetchClientDocuments) {
-            refetchClientDocuments();
-          }
-        } else {
-          toast({
-            title: "Error",
-            description: result.error || "Error al eliminar el documento",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error('Error deleting client document:', error);
-        toast({
-          title: "Error",
-          description: "Error al eliminar el documento del cliente",
-          variant: "destructive",
-        });
-      }
     }
   };
 
@@ -447,10 +292,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   };
 
   const handleClientUploadSuccess = () => {
-    // Refetch client documents
-    if (refetchClientDocuments) {
-      refetchClientDocuments();
-    }
+    refetchClientDocuments();
     setShowClientUploadModal(false);
     toast({
       title: "Éxito",
@@ -458,11 +300,9 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     });
   };
 
-  const isSuperAdmin = userRole === 'abogado' && lawyerType === 'super_admin';
-
-  // Función para cerrar el caso usando la función segura
   const handleCerrarCaso = async () => {
-    if (!caso || !user) return;
+    if (!caso) return;
+    
     setIsClosing(true);
     try {
       const { data, error } = await supabase.functions.invoke('close-case', {
@@ -476,19 +316,19 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
       
       if (data.success) {
         toast({
-          title: 'Caso cerrado',
-          description: data.data.mensaje || 'El caso ha sido cerrado exitosamente.',
+          title: "Éxito",
+          description: data.data.mensaje || "Caso cerrado correctamente",
         });
-        onClose(); // Cerrar el modal
+        onClose();
       } else {
         throw new Error(data.error || 'Error desconocido');
       }
     } catch (error: any) {
-      console.error('Error cerrando caso:', error);
+      console.error('Error al cerrar caso:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'No se pudo cerrar el caso',
-        variant: 'destructive',
+        title: "Error",
+        description: error.message || "No se pudo cerrar el caso",
+        variant: "destructive"
       });
     } finally {
       setIsClosing(false);
@@ -496,8 +336,6 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   };
 
   const handleEditSuccess = () => {
-    // Recargar los datos del caso
-    // Esto se puede implementar con un callback o recargando la página
     window.location.reload();
   };
 
@@ -507,9 +345,6 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     
     // No se puede cerrar si ya está cerrado
     if (caso.estado === 'cerrado') return false;
-    
-    // Super admin puede cerrar cualquier caso
-    if (userRole === 'abogado' && lawyerType === 'super_admin') return true;
     
     // Abogado regular puede cerrar casos asignados
     if (userRole === 'abogado' && lawyerType === 'regular' && isAssignedLawyer) return true;
@@ -521,9 +356,6 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   const canUploadClientDocuments = () => {
     if (!user || !caso) return false;
     
-    // Super admin puede subir documentos del cliente a cualquier caso
-    if (userRole === 'abogado' && lawyerType === 'super_admin') return true;
-    
     // Abogado regular puede subir documentos del cliente solo a casos asignados
     if (userRole === 'abogado' && lawyerType === 'regular' && isAssignedLawyer) return true;
     
@@ -533,9 +365,6 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
   // Determinar si el usuario puede eliminar documentos del cliente
   const canDeleteClientDocuments = () => {
     if (!user || !caso) return false;
-    
-    // Super admin puede eliminar documentos del cliente de cualquier caso
-    if (userRole === 'abogado' && lawyerType === 'super_admin') return true;
     
     // Abogado regular puede eliminar documentos del cliente solo de casos asignados
     if (userRole === 'abogado' && lawyerType === 'regular' && isAssignedLawyer) return true;
@@ -548,20 +377,17 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
     return user && asignacion.abogado_id === user.id;
   };
 
-  const handleSolicitarPago = async () => {
-    setLoadingPayment(true);
-    // Aquí deberías llamar a una función/endpoint para crear la solicitud de pago
-    setTimeout(() => {
-      setLoadingPayment(false);
-      setShowPaymentModal(false);
-      setPaymentAmount('');
-      setPaymentConcept('');
-      toast({
-        title: 'Solicitud de pago creada',
-        description: 'El cliente podrá ver y pagar esta solicitud.',
-        variant: 'default',
-      });
-    }, 1200);
+  const clientData = {
+    nombre: caso.nombre_borrador || '',
+    apellido: caso.apellido_borrador || '',
+    email: caso.email_borrador || '',
+    telefono: caso.telefono_borrador || '',
+    ciudad: caso.ciudad_borrador || '',
+    tipo_perfil: caso.tipo_perfil_borrador || 'individual',
+    razon_social: caso.razon_social_borrador || '',
+    nif_cif: caso.nif_cif_borrador || '',
+    nombre_gerente: caso.nombre_gerente_borrador || '',
+    direccion_fiscal: caso.direccion_fiscal_borrador || ''
   };
 
   return (
@@ -576,16 +402,14 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
             </DialogTitle>
           </DialogHeader>
 
-          {/* ÁREA SCROLLABLE: todo el contenido relevante, incluyendo tabs y guía */}
           <ScrollArea className="flex-1 px-6 py-4 h-[calc(90vh-110px)] min-h-0">
             <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
-              {/* Barra de tabs sticky con iconos y mejor color */}
               <div className="sticky top-0 z-10 bg-background pb-2">
                 <TabsList className="flex w-full rounded-lg shadow-sm border mb-2 overflow-x-auto no-scrollbar flex-nowrap">
                   <TabsTrigger value="overview" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     <FileText className="h-4 w-4" /> Resumen
                   </TabsTrigger>
-                  {userRole === 'abogado' && caso.guia_abogado && (
+                  {caso.guia_abogado && (
                     <TabsTrigger value="guia" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                       <ShieldCheck className="h-4 w-4" /> Guía Abogado
                     </TabsTrigger>
@@ -596,8 +420,9 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                   <TabsTrigger value="chat" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     <MessageSquare className="h-4 w-4" /> Conversación
                   </TabsTrigger>
-                  <TabsTrigger value="documents" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
-                    <FileText className="h-4 w-4" /> Documentos
+                  <TabsTrigger value="documentos-resolucion" className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Documentos de Resolución
                   </TabsTrigger>
                   <TabsTrigger value="notes" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     <MessageSquare className="h-4 w-4" /> Notas
@@ -606,24 +431,23 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
               </div>
 
               <TabsContent value="overview" className="space-y-4 mt-0">
-                {/* Información del Caso (Resumen) ocupa todo el ancho y altura aumentada */}
-                <Card className="shadow-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                <Card className="shadow-md border border-gray-200 dark:border-gray-700">
                   <CardHeader>
-                    <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-200">Información del Caso</CardTitle>
+                    <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      Información del Caso
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Motivo de consulta:</p>
-                      <p className="text-base">{caso.motivo_consulta}</p>
-                    </div>
                     {caso.resumen_caso && (
                       <div>
-                        <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Resumen del caso:</p>
-                        <div className="prose prose-slate bg-blue-50 max-w-none dark:prose-invert dark:bg-blue-950 p-5 rounded text-sm border border-blue-200 dark:border-blue-700 overflow-hidden">
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Resumen del caso:</p>
+                        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                           <ScrollArea className="h-96">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {caso.resumen_caso}
-                            </ReactMarkdown>
+                            <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {caso.resumen_caso}
+                              </ReactMarkdown>
+                            </div>
                           </ScrollArea>
                         </div>
                       </div>
@@ -652,7 +476,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                           <Badge variant="secondary" className="capitalize">{caso.tipo_lead}</Badge>
                         </div>
                       )}
-                      {userRole === 'abogado' && caso.valor_estimado && (
+                      {caso.valor_estimado && (
                         <div className="flex items-center gap-1 text-sm">
                           <Euro className="h-4 w-4 text-blue-600" />
                           <span className="font-medium text-blue-700 dark:text-blue-400">
@@ -663,7 +487,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                     </div>
                   </CardContent>
                 </Card>
-                {/* Estado y Asignación debajo del resumen */}
+
                 <Card className="shadow border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                   <CardHeader>
                     <CardTitle className="text-base font-semibold text-gray-700 dark:text-gray-200">Estado y Asignación</CardTitle>
@@ -677,9 +501,9 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-2">Asignado a:</p>
                         {caso.asignaciones_casos.map((asignacion, idx) => (
-                            <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-md">
+                          <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-md">
                             <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-blue-600" />
+                              <User className="h-4 w-4 text-blue-600" />
                               <span className="font-medium">
                                 {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
                               </span>
@@ -700,7 +524,6 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                                   }
                                 </Badge>
                               )}
-
                             </div>
                             <p className="text-xs text-muted-foreground">
                               Asignado el {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy', { locale: es })}
@@ -720,29 +543,7 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                 </Card>
               </TabsContent>
 
-              {/* Propuesta del Cliente (si existe) - solo visible para abogados */}
-              {userRole === 'abogado' && caso.propuesta_estructurada && (
-                  <Card className="shadow border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-950">
-                    <CardHeader>
-                      <CardTitle className="text-base font-semibold text-blue-900 dark:text-blue-200">Propuesta del Cliente</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ScrollArea className="h-32">
-                        <div className="text-sm">
-                          {typeof caso.propuesta_estructurada === 'string' ? (
-                            <p className="whitespace-pre-wrap">{caso.propuesta_estructurada}</p>
-                          ) : (
-                            <pre className="text-xs bg-gray-50 dark:bg-gray-800 p-2 rounded overflow-auto">
-                              {JSON.stringify(caso.propuesta_estructurada, null, 2)}
-                            </pre>
-                          )}
-                        </div>
-                      </ScrollArea>
-                    </CardContent>
-                  </Card>
-                )}
-
-              {userRole === 'abogado' && caso.guia_abogado && (
+              {caso.guia_abogado && (
                 <TabsContent value="guia" className="space-y-4 mt-0">
                   <Card className="shadow-md border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950">
                     <CardHeader>
@@ -854,8 +655,6 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
               </TabsContent>
 
               <TabsContent value="chat" className="space-y-4">
-                {/* Solo mostrar transcripción para abogados */}
-                {userRole === 'abogado' ? (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
@@ -873,22 +672,9 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                     )}
                   </CardContent>
                 </Card>
-                ) : (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Conversación</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-center py-8 text-muted-foreground">
-                        <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>La transcripción de la conversación solo está disponible para abogados</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
               </TabsContent>
 
-              <TabsContent value="documents" className="space-y-4">
+              <TabsContent value="documentos-resolucion" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Card>
                     <CardHeader>
@@ -897,7 +683,6 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                           <User className="h-4 w-4 text-blue-600" />
                           Documentos del Cliente
                         </div>
-                        {/* Botón para super admin y abogados asignados subir documentos del cliente */}
                         {canUploadClientDocuments() && (
                           <Button
                             onClick={() => setShowClientUploadModal(true)}
@@ -913,11 +698,11 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                      {loadingClientDocs ? (
-                        <div className="text-center py-4 text-muted-foreground">
+                        {loadingClientDocs ? (
+                          <div className="text-center py-4 text-muted-foreground">
                             <p className="text-sm">Cargando documentos...</p>
-                        </div>
-                      ) : documentosCliente.length > 0 ? (
+                          </div>
+                        ) : documentosCliente.length > 0 ? (
                           <div className="space-y-2">
                             {documentosCliente.map((doc) => (
                               <div key={doc.id} className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
@@ -949,7 +734,6 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                                 >
                                   <Download className="h-3 w-3" />
                                 </Button>
-                                {/* Super admin y abogados asignados pueden eliminar documentos del cliente */}
                                 {canDeleteClientDocuments() && (
                                   <Button 
                                     variant="ghost" 
@@ -962,19 +746,19 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                                 )}
                               </div>
                             ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">No hay documentos del cliente</p>
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No hay documentos del cliente</p>
                             <p className="text-xs">
                               {canUploadClientDocuments() 
                                 ? "Puedes subir documentos en nombre del cliente usando el botón de arriba"
                                 : "El cliente no ha subido documentos aún"
                               }
                             </p>
-                        </div>
-                      )}
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -987,8 +771,9 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                           onClick={() => setShowUploadModal(true)}
                           variant="outline"
                           size="sm"
+                          className="gap-1"
                         >
-                          <Upload className="h-4 w-4 mr-1" />
+                          <Upload className="h-3 w-3" />
                           Subir
                         </Button>
                       </CardTitle>
@@ -1000,51 +785,53 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
                             <p className="text-sm">Cargando documentos...</p>
                           </div>
                         ) : documentosResolucion.length > 0 ? (
-                          documentosResolucion.map((doc) => (
-                            <div key={doc.id} className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                              <FileText className="h-4 w-4 text-blue-600" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
-                                  {doc.nombre_archivo}
-                                </p>
-                                <p className="text-xs text-blue-700 dark:text-blue-300">
-                                  {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
-                                </p>
-                                {doc.descripcion && (
-                                  <p className="text-xs text-blue-600 dark:text-blue-400 truncate">
-                                    {doc.descripcion}
+                          <div className="space-y-2">
+                            {documentosResolucion.map((doc) => (
+                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                                <FileText className="h-4 w-4 text-green-600" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-green-900 dark:text-green-100 truncate">
+                                    {doc.nombre_archivo}
                                   </p>
-                                )}
+                                  <p className="text-xs text-green-700 dark:text-green-300">
+                                    {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
+                                  </p>
+                                  {doc.descripcion && (
+                                    <p className="text-xs text-green-600 dark:text-green-400 truncate">
+                                      {doc.descripcion}
+                                    </p>
+                                  )}
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleViewResolutionDocument(doc)}
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => downloadDocument(doc)}
+                                >
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleDeleteDocument(doc.id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
                               </div>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleViewResolutionDocument(doc)}
-                              >
-                                <Eye className="h-3 w-3" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => downloadDocument(doc)}
-                              >
-                                <Download className="h-3 w-3" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleDeleteDocument(doc.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))
+                            ))}
+                          </div>
                         ) : (
                           <div className="text-center py-8 text-muted-foreground">
-                            <Upload className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
                             <p className="text-sm">No hay documentos de resolución</p>
-                            <p className="text-xs">Sube el primer documento usando el botón de arriba</p>
+                            <p className="text-xs">Puedes subir documentos usando el botón de arriba</p>
                           </div>
                         )}
                       </div>
@@ -1059,339 +846,94 @@ const CaseDetailModal: React.FC<CaseDetailModalProps> = ({
             </Tabs>
           </ScrollArea>
 
-        {/* BOTONES DE ACCIÓN - compactos y siempre visibles */}
-        {caso.estado !== 'cerrado' && (
-          <div className="border-t bg-background">
-            <Separator />
-            <div className="flex flex-col gap-2 p-2">
-              {/* Primera fila: Acciones principales de gestión */}
-              <div className="flex flex-col sm:flex-row gap-2">
-                {isSuperAdmin && (
-                  <Button 
-                    className="w-full sm:w-auto"
-                    size="sm"
-                    onClick={() => onAssignLawyer(caso.id)}
-                    variant="default"
-                  >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Asignar Abogado
-                  </Button>
-                )}
-                {(isSuperAdmin || (caso.asignaciones_casos && caso.asignaciones_casos.some(asignacion => 
-                  asignacion.abogado_id === user?.id && asignacion.estado_asignacion === 'activa'
-                ))) && (
+          {caso.estado !== 'cerrado' && (
+            <div className="border-t bg-background">
+              <Separator />
+              <div className="p-4">
+                <div className="flex flex-wrap gap-3 justify-center">
                   <Button
-                    className="w-full sm:w-auto"
                     size="sm"
                     onClick={() => setShowEditModal(true)}
                     variant="outline"
+                    className="flex items-center gap-2"
                   >
-                    <User className="h-4 w-4 mr-2" />
+                    <User className="h-4 w-4" />
                     Editar Caso
                   </Button>
-                )}
-                {(isSuperAdmin || (caso.asignaciones_casos && caso.asignaciones_casos.some(asignacion => 
-                  asignacion.abogado_id === user?.id && asignacion.estado_asignacion === 'activa'
-))) && (
-  <Button
-    className="w-full sm:w-auto"
-    size="sm"
-    onClick={() => setShowPaymentModal(true)}
-    variant="outline"
-  >
-    <Euro className="h-4 w-4 mr-2" />
-    Solicitar Pago
-  </Button>
-)}
-                {/* Botón Convertir en Cliente - solo si no hay cliente asignado */}
-                {isSuperAdmin && !caso.profiles && (
-                  <Button
-                    className="w-full sm:w-auto"
+                  <Button 
                     size="sm"
-                    onClick={() => setShowConvertToClientModal(true)}
+                    onClick={() => onGenerateResolution(caso.id)} 
                     variant="outline"
+                    className="flex items-center gap-2"
                   >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Convertir en Cliente
+                    <Bot className="h-4 w-4" />
+                    IA
                   </Button>
-                )}
-              </div>
-              {/* Segunda fila: Herramientas y acciones de trabajo */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                <Button 
-                  className="w-full"
-                  size="sm"
-                  onClick={() => onGenerateResolution(caso.id)} 
-                  variant="outline"
-                >
-                  <Bot className="h-4 w-4 mr-2" />
-                  Generar Resolución IA
-                </Button>
-                <Button
-                  className="w-full"
-                  size="sm"
-                  onClick={() => setShowUploadModal(true)}
-                  variant="outline"
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Subir Documento
-                </Button>
-                <Button
-                  className="w-full"
-                  size="sm"
-                  onClick={() => onSendMessage(caso.id)}
-                  variant="outline"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Enviar Mensaje
-                </Button>
-                {canCloseCase() && (
                   <Button
-                    className="w-full"
                     size="sm"
-                    onClick={handleCerrarCaso}
-                    variant="destructive"
-                    disabled={isClosing}
+                    onClick={() => setShowUploadModal(true)}
+                    variant="outline"
+                    className="flex items-center gap-2"
                   >
-                    <ShieldCheck className="h-4 w-4 mr-2" />
-                    {isClosing ? 'Cerrando...' : 'Cerrar Caso'}
+                    <Upload className="h-4 w-4" />
+                    Subir Documento
                   </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-
-    {/* Case Edit Modal */}
-    <CaseEditModal
-      caso={caso}
-      isOpen={showEditModal}
-      onClose={() => setShowEditModal(false)}
-      onSave={handleEditSuccess}
-    />
-
-    {/* Document Viewer Modal */}
-    <DocumentViewer
-      isOpen={!!selectedDocument}
-      onClose={() => setSelectedDocument(null)}
-      document={selectedDocument}
-    />
-
-    {/* Document Upload Modal (para documentos de resolución) */}
-    <DocumentUploadModal
-      isOpen={showUploadModal}
-      onClose={() => setShowUploadModal(false)}
-      casoId={caso.id}
-      onUploadSuccess={handleUploadSuccess}
-    />
-
-    {/* Client Document Upload Modal (para super admin) */}
-    <ClientDocumentUploadModal
-      isOpen={showClientUploadModal}
-      onClose={() => setShowClientUploadModal(false)}
-      casoId={caso.id}
-      onUploadSuccess={handleClientUploadSuccess}
-    />
-
-    <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Solicitar Pago al Cliente</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Monto (€)</label>
-            <Input
-              type="number"
-              min="1"
-              step="0.01"
-              value={paymentAmount}
-              onChange={e => setPaymentAmount(e.target.value)}
-              placeholder="Ej: 100.00"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Concepto</label>
-            <Textarea
-              value={paymentConcept}
-              onChange={e => setPaymentConcept(e.target.value)}
-              placeholder="Describe el motivo del cobro"
-              rows={3}
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setShowPaymentModal(false)} disabled={loadingPayment}>Cancelar</Button>
-            <Button onClick={handleSolicitarPago} disabled={loadingPayment || !paymentAmount || !paymentConcept}>
-              {loadingPayment ? 'Solicitando...' : 'Solicitar Pago'}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-
-    {/* Modal Convertir en Cliente */}
-    <Dialog open={showConvertToClientModal} onOpenChange={setShowConvertToClientModal}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Convertir en Cliente</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="nombre">Nombre *</Label>
-                             <Input
-                 id="nombre"
-                 value={newClientData.nombre}
-                 onChange={e => setNewClientData(prev => ({ ...prev, nombre: e.target.value }))}
-                 placeholder="Nombre del cliente"
-               />
-            </div>
-            <div>
-              <Label htmlFor="apellido">Apellido *</Label>
-                             <Input
-                 id="apellido"
-                 value={newClientData.apellido}
-                 onChange={e => setNewClientData(prev => ({ ...prev, apellido: e.target.value }))}
-                 placeholder="Apellido del cliente"
-               />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={clientData.email}
-                                 onChange={e => setNewClientData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="email@ejemplo.com"
-              />
-            </div>
-            <div>
-              <Label htmlFor="telefono">Teléfono</Label>
-              <Input
-                id="telefono"
-                value={newClientData.telefono}
-                onChange={e => setNewClientData(prev => ({ ...prev, telefono: e.target.value }))}
-                placeholder="+34 600 000 000"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="ciudad">Ciudad</Label>
-            <Input
-              id="ciudad"
-              value={newClientData.ciudad}
-              onChange={e => setNewClientData(prev => ({ ...prev, ciudad: e.target.value }))}
-              placeholder="Madrid, Barcelona, etc."
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="tipo_perfil">Tipo de Perfil</Label>
-            <Select
-              value={newClientData.tipo_perfil}
-              onValueChange={value => setNewClientData(prev => ({ ...prev, tipo_perfil: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="individual">Individual</SelectItem>
-                <SelectItem value="empresa">Empresa</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {newClientData.tipo_perfil === 'empresa' && (
-            <div className="space-y-4 border-t pt-4">
-              <h4 className="font-medium">Datos de la Empresa</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="razon_social">Razón Social</Label>
-                  <Input
-                    id="razon_social"
-                    value={newClientData.razon_social}
-                    onChange={e => setNewClientData(prev => ({ ...prev, razon_social: e.target.value }))}
-                    placeholder="Nombre de la empresa"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="nif_cif">NIF/CIF</Label>
-                  <Input
-                    id="nif_cif"
-                    value={newClientData.nif_cif}
-                    onChange={e => setNewClientData(prev => ({ ...prev, nif_cif: e.target.value }))}
-                    placeholder="B12345678"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="nombre_gerente">Nombre del Gerente</Label>
-                  <Input
-                    id="nombre_gerente"
-                    value={newClientData.nombre_gerente}
-                    onChange={e => setNewClientData(prev => ({ ...prev, nombre_gerente: e.target.value }))}
-                    placeholder="Nombre completo del gerente"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="direccion_fiscal">Dirección Fiscal</Label>
-                  <Input
-                    id="direccion_fiscal"
-                    value={newClientData.direccion_fiscal}
-                    onChange={e => setNewClientData(prev => ({ ...prev, direccion_fiscal: e.target.value }))}
-                    placeholder="Calle, número, ciudad, CP"
-                  />
+                  <Button
+                    size="sm"
+                    onClick={() => onSendMessage(caso.id)}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Enviar Mensaje
+                  </Button>
+                  {canCloseCase() && (
+                    <Button
+                      size="sm"
+                      onClick={handleCerrarCaso}
+                      variant="destructive"
+                      disabled={isClosing}
+                      className="flex items-center gap-2"
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                      {isClosing ? 'Cerrando...' : 'Cerrar Caso'}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
 
-          {/* Consentimiento RGPD */}
-          <div className="border-t pt-4">
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="rgpd"
-                checked={acceptedRGPD}
-                onCheckedChange={(checked) => setAcceptedRGPD(checked as boolean)}
-              />
-              <Label htmlFor="rgpd" className="text-sm leading-relaxed">
-                Confirmo que tengo el consentimiento explícito del cliente para el tratamiento de sus datos personales 
-                con la finalidad de prestación de servicios jurídicos, conforme a la{' '}
-                <a href="/politica-privacidad" target="_blank" className="text-blue-600 hover:underline">
-                  Política de Privacidad
-                </a>{' '}
-                y el RGPD.
-              </Label>
-            </div>
-          </div>
+      <DocumentUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        casoId={caso?.id || ''}
+        onUploadSuccess={handleUploadSuccess}
+      />
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button 
-              variant="secondary" 
-              onClick={() => setShowConvertToClientModal(false)}
-              disabled={convertingToClient}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleConvertToClient}
-              disabled={convertingToClient || !newClientData.nombre || !newClientData.apellido || !newClientData.email}
-            >
-              {convertingToClient ? 'Creando...' : 'Crear Cliente'}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  </>
-);
+      <ClientDocumentUploadModal
+        isOpen={showClientUploadModal}
+        onClose={() => setShowClientUploadModal(false)}
+        casoId={caso?.id || ''}
+        onUploadSuccess={handleClientUploadSuccess}
+      />
+
+      <DocumentViewer
+        isOpen={!!selectedDocument}
+        onClose={() => setSelectedDocument(null)}
+        document={selectedDocument}
+      />
+
+      <CaseEditModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        caso={caso}
+        onSave={handleEditSuccess}
+      />
+    </>
+  );
 };
 
-export default CaseDetailModal;
+export default LawyerCaseDetailModal; 

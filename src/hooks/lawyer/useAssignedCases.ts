@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,20 +24,58 @@ interface AssignedCase {
   estado_asignacion: string;
   notas_asignacion?: string;
   asignacion_id: string;
+  cerrado_por_profile?: {
+    nombre: string;
+    apellido: string;
+    email: string;
+  };
 }
 
 export const useAssignedCases = () => {
   const [cases, setCases] = useState<AssignedCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const { user } = useAuth();
 
+  // Validación de seguridad para abogados regulares
   useEffect(() => {
-    fetchAssignedCases();
+    const validateAccess = async () => {
+      if (!user) {
+        setAccessDenied(true);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role, tipo_abogado')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('❌ Error validando acceso:', error);
+          setAccessDenied(true);
+        } else if (profile && profile.role === 'abogado' && profile.tipo_abogado === 'regular') {
+          setAccessDenied(false);
+        } else {
+          setAccessDenied(true);
+        }
+      } catch (error) {
+        console.error('❌ Error general en validación:', error);
+        setAccessDenied(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    validateAccess();
   }, [user]);
 
   const fetchAssignedCases = async () => {
-    if (!user) {
+    if (!user || accessDenied) {
       setCases([]);
       setLoading(false);
       return;
@@ -106,7 +143,8 @@ export const useAssignedCases = () => {
         fecha_asignacion: assignment.fecha_asignacion,
         estado_asignacion: assignment.estado_asignacion,
         notas_asignacion: assignment.notas_asignacion,
-        asignacion_id: assignment.id
+        asignacion_id: assignment.id,
+        cerrado_por_profile: null // No mostrar información de quién cerró el caso para abogados regulares
       }));
 
       setCases(transformedCases);
@@ -118,5 +156,18 @@ export const useAssignedCases = () => {
     }
   };
 
-  return { cases, loading, error, refetch: fetchAssignedCases };
-};
+  // Fetch cases when access is validated
+  useEffect(() => {
+    if (!accessDenied && user) {
+      fetchAssignedCases();
+    }
+  }, [accessDenied, user]);
+
+  return { 
+    cases, 
+    loading, 
+    error, 
+    accessDenied,
+    refetch: fetchAssignedCases 
+  };
+}; 

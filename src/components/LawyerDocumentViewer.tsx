@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { useDocumentManagement } from '@/hooks/useDocumentManagement';
+import { useDocumentManagement } from '@/hooks/shared/useDocumentManagement';
 import DocumentViewer from '@/components/DocumentViewer';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -100,7 +100,7 @@ const LawyerDocumentViewer: React.FC<LawyerDocumentViewerProps> = ({ casoId }) =
       <div className="flex items-center justify-center h-32">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando documentos del abogado...</p>
+          <p className="text-muted-foreground">Cargando documentos de resolución...</p>
         </div>
       </div>
     );
@@ -114,7 +114,7 @@ const LawyerDocumentViewer: React.FC<LawyerDocumentViewerProps> = ({ casoId }) =
           No hay documentos disponibles
         </h3>
         <p className="text-muted-foreground">
-          Los documentos del abogado aparecerán aquí cuando estén disponibles.
+          Los documentos de resolución aparecerán aquí cuando estén disponibles.
         </p>
       </div>
     );

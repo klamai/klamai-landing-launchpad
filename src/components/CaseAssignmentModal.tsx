@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useSuperAdminStats } from '@/hooks/useSuperAdminStats';
+import { useSuperAdminStats } from '@/hooks/admin/useSuperAdminStats';
 import { UserPlus, Scale, MapPin, Building, User, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 
 interface CaseAssignmentModalProps {
@@ -68,7 +68,7 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
       if (result.success) {
         toast({
           title: "¡Caso asignado exitosamente!",
-          description: `El caso ha sido asignado al abogado seleccionado`,
+          description: `El caso ha sido asignado al abogado seleccionado${assignmentNotes ? ' con las notas especificadas' : ''}`,
         });
         
         // Reset form and close modal

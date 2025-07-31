@@ -22,10 +22,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperAdminStats } from "@/hooks/useSuperAdminStats";
 import SuperAdminMetrics from "@/components/SuperAdminMetrics";
-import CasesManagement from "@/components/CasesManagement";
-import LawyersManagement from "@/components/LawyersManagement";
-import LawyerApplicationsManagement from "@/components/LawyerApplicationsManagement";
-import ClientsManagement from "@/components/ClientsManagement";
+import CashflowChart from "@/components/CashflowChart";
+import CasesManagement from "@/components/admin/CasesManagement";
+import LawyersManagement from "@/components/admin/LawyersManagement";
+import LawyerApplicationsManagement from "@/components/admin/LawyerApplicationsManagement";
+import ClientsManagement from "@/components/admin/ClientsManagement";
 import { Button } from "@/components/ui/button";
 
 const SuperAdminDashboard = () => {
@@ -60,8 +61,6 @@ const SuperAdminDashboard = () => {
       setActiveSection("solicitudes-abogado");
     } else if (path.includes('/clientes')) {
       setActiveSection("clientes");
-    } else if (path.includes('/abogados')) {
-      setActiveSection("abogados");
     } else if (path.includes('/hojas-encargo')) {
       setActiveSection("hojas-encargo");
     } else if (path.includes('/reportes')) {
@@ -72,6 +71,8 @@ const SuperAdminDashboard = () => {
       setActiveSection("notificaciones");
     } else if (path.includes('/asistente-ia')) {
       setActiveSection("asistente-ia");
+    } else if (path.includes('/abogados') && !path.endsWith('/dashboard')) {
+      setActiveSection("abogados");
     } else {
       setActiveSection("dashboard");
     }
@@ -275,7 +276,7 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
         <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 min-h-full">
           {renderContent()}
         </div>
@@ -292,17 +293,26 @@ const SuperAdminDashboardSection = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6"
     >
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="mb-4">
+        <h1 className="text-lg font-semibold text-foreground mb-2">
           Panel de Administración - KlamAI
         </h1>
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className="text-sm text-muted-foreground">
           Dashboard para la gestión completa de casos y abogados del bufete.
         </p>
       </div>
 
-      <SuperAdminMetrics />
+      {/* Componente de métricas moderno */}
+      <div className="w-full">
+        <SuperAdminMetrics />
+      </div>
 
+      {/* Gráfico de Cashflow */}
+      <div className="w-full">
+        <CashflowChart />
+      </div>
+
+      {/* Sección de estadísticas adicionales */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -310,16 +320,16 @@ const SuperAdminDashboardSection = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6"
         >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
             <Briefcase className="h-5 w-5 mr-2 text-indigo-600" />
             Casos Recientes
           </h3>
           <div className="space-y-3">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-muted-foreground">
               Últimos casos ingresados al sistema
             </div>
             <div className="h-32 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-              <p className="text-gray-500 dark:text-gray-400">Cargando casos recientes...</p>
+              <p className="text-sm text-muted-foreground">Cargando casos recientes...</p>
             </div>
           </div>
         </motion.div>
@@ -330,16 +340,16 @@ const SuperAdminDashboardSection = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6"
         >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
             <UserCheck className="h-5 w-5 mr-2 text-green-600" />
             Actividad de Abogados
           </h3>
           <div className="space-y-3">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-muted-foreground">
               Rendimiento y asignaciones activas
             </div>
             <div className="h-32 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-              <p className="text-gray-500 dark:text-gray-400">Cargando actividad...</p>
+              <p className="text-sm text-muted-foreground">Cargando actividad...</p>
             </div>
           </div>
         </motion.div>
@@ -355,7 +365,7 @@ const CasesManagementSection = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Casos</h1>
+      <h1 className="text-lg font-semibold text-foreground">Gestión de Casos</h1>
       <CasesManagement />
     </motion.div>
   );
@@ -368,7 +378,7 @@ const LawyersManagementSection = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Abogados</h1>
+      <h1 className="text-lg font-semibold text-foreground">Gestión de Abogados</h1>
       <LawyersManagement />
     </motion.div>
   );
@@ -381,7 +391,7 @@ const ClientsManagementSection = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Clientes</h1>
+      <h1 className="text-lg font-semibold text-foreground">Gestión de Clientes</h1>
       <ClientsManagement />
     </motion.div>
   );
@@ -394,6 +404,7 @@ const LawyerApplicationsSection = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
+      <h1 className="text-lg font-semibold text-foreground">Solicitudes de Abogados</h1>
       <LawyerApplicationsManagement />
     </motion.div>
   );
@@ -405,11 +416,10 @@ const HojasEncargoSection = () => (
     animate={{ opacity: 1, y: 0 }}
     className="space-y-6"
   >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hojas de Encargo</h1>
-    <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <FileText className="h-16 w-16 text-indigo-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">Sistema de hojas de encargo próximamente disponible</p>
-    </div>
+    <h1 className="text-lg font-semibold text-foreground">Hojas de Encargo</h1>
+    <p className="text-sm text-muted-foreground">
+      Gestión de hojas de encargo y documentos legales.
+    </p>
   </motion.div>
 );
 
@@ -419,11 +429,10 @@ const ReportesSection = () => (
     animate={{ opacity: 1, y: 0 }}
     className="space-y-6"
   >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reportes y Analytics</h1>
-    <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <FileText className="h-16 w-16 text-indigo-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">Sistema de reportes próximamente disponible</p>
-    </div>
+    <h1 className="text-lg font-semibold text-foreground">Reportes</h1>
+    <p className="text-sm text-muted-foreground">
+      Generación y visualización de reportes del sistema.
+    </p>
   </motion.div>
 );
 
@@ -433,11 +442,10 @@ const ConfiguracionSection = () => (
     animate={{ opacity: 1, y: 0 }}
     className="space-y-6"
   >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Configuración del Sistema</h1>
-    <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <Settings className="h-16 w-16 text-indigo-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">Panel de configuración próximamente disponible</p>
-    </div>
+    <h1 className="text-lg font-semibold text-foreground">Configuración</h1>
+    <p className="text-sm text-muted-foreground">
+      Configuración general del sistema y preferencias.
+    </p>
   </motion.div>
 );
 
@@ -447,11 +455,10 @@ const NotificacionesSection = () => (
     animate={{ opacity: 1, y: 0 }}
     className="space-y-6"
   >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Centro de Notificaciones</h1>
-    <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <Bell className="h-16 w-16 text-indigo-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">Centro de notificaciones próximamente disponible</p>
-    </div>
+    <h1 className="text-lg font-semibold text-foreground">Notificaciones</h1>
+    <p className="text-sm text-muted-foreground">
+      Gestión de notificaciones y alertas del sistema.
+    </p>
   </motion.div>
 );
 
@@ -461,79 +468,10 @@ const AsistenteIASection = () => (
     animate={{ opacity: 1, y: 0 }}
     className="space-y-6"
   >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Asistente IA Legal</h1>
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg p-8 text-center border border-indigo-200 dark:border-indigo-800">
-          <Bot className="h-20 w-20 text-indigo-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Chat con IA Legal Especializada
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Obtén asistencia instantánea para análisis de casos, redacción de documentos y consultas legales especializadas.
-          </p>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              🚀 Próximamente se integrará aquí el chat Typebot con IA especializada
-            </p>
-            <div className="space-y-2 text-left">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                <span>Análisis automático de casos</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                <span>Generación de documentos legales</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                <span>Consultas de jurisprudencia</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                <span>Asistencia en resoluciones</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="space-y-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Estadísticas de IA</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Consultas hoy</span>
-              <span className="font-medium">0</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Documentos generados</span>
-              <span className="font-medium">0</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Casos analizados</span>
-              <span className="font-medium">0</span>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Accesos Rápidos</h3>
-          <div className="space-y-2">
-            <Button variant="outline" size="sm" className="w-full justify-start">
-              <FileText className="h-4 w-4 mr-2" />
-              Generar contrato
-            </Button>
-            <Button variant="outline" size="sm" className="w-full justify-start">
-              <Scale className="h-4 w-4 mr-2" />
-              Analizar jurisprudencia
-            </Button>
-            <Button variant="outline" size="sm" className="w-full justify-start">
-              <Bot className="h-4 w-4 mr-2" />
-              Chat especializado
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <h1 className="text-lg font-semibold text-foreground">Asistente IA</h1>
+    <p className="text-sm text-muted-foreground">
+      Configuración y gestión del asistente de inteligencia artificial.
+    </p>
   </motion.div>
 );
 
