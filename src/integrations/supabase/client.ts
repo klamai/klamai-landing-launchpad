@@ -2,8 +2,20 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://vwnoznuznmrdaumjyctg.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bm96bnV6bm1yZGF1bWp5Y3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTA2MzEsImV4cCI6MjA2NDQyNjYzMX0.DjW-_UqsNDp23rdfTS3jXftx75o_dt67hfPBxG0kldc";
+// Use environment variables for security - NO FALLBACK VALUES
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Validate environment variables - FAIL FAST if not configured
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  throw new Error(
+    '❌ CRÍTICO: Variables de entorno de Supabase no configuradas.\n' +
+    'Por favor, crea un archivo .env.local en la raíz del proyecto con:\n' +
+    'VITE_SUPABASE_URL=https://your-project.supabase.co\n' +
+    'VITE_SUPABASE_ANON_KEY=your-anon-key\n' +
+    '\nConsulta SECURITY_SETUP.md para más información.'
+  );
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";

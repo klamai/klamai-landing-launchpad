@@ -62,7 +62,11 @@ const DashboardLayout = memo(({
   // Función optimizada para navegación
   const handleNavigation = useCallback((href: string) => {
     navigate(href);
-  }, [navigate]);
+    // Cerrar sidebar en móvil después de navegación
+    if (window.innerWidth < 768) { // md breakpoint
+      setOpen(false);
+    }
+  }, [navigate, setOpen]);
 
   // Links memoizados con mejores iconos y organización
   const links = React.useMemo(() => [
@@ -142,72 +146,46 @@ const DashboardLayout = memo(({
         <SidebarDashboard open={open} setOpen={setOpen}>
           <SidebarBody className="justify-between gap-10">
             <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
+              <div className="flex items-center">
                 {open ? <Logo /> : <LogoIcon />}
-              </motion.div>
+              </div>
               
               <div className="mt-8 flex flex-col gap-2">
                 {/* Sección principal de navegación */}
                 <div className="mb-4">
                   {open && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                      className="px-3 mb-2"
-                    >
+                    <div className="px-3 mb-2">
                       <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         Navegación
                       </span>
-                    </motion.div>
+                    </div>
                   )}
                   {links.slice(0, 3).map((link, idx) => (
-                    <motion.div
+                    <SidebarLink 
                       key={idx}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: idx * 0.1 }}
-                    >
-                      <SidebarLink 
-                        link={link} 
-                        onNavigate={handleNavigation}
-                        className="group hover:bg-primary/10 rounded-lg transition-all duration-200 mb-1"
-                      />
-                    </motion.div>
+                      link={link} 
+                      onNavigate={handleNavigation}
+                      className="group hover:bg-primary/10 rounded-lg transition-all duration-200 mb-1"
+                    />
                   ))}
                 </div>
 
                 {/* Sección de gestión */}
                 <div className="mb-4">
                   {open && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                      className="px-3 mb-2"
-                    >
+                    <div className="px-3 mb-2">
                       <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         Gestión
                       </span>
-                    </motion.div>
+                    </div>
                   )}
                   {links.slice(3).map((link, idx) => (
-                    <motion.div
+                    <SidebarLink 
                       key={idx + 3}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: (idx + 3) * 0.1 }}
-                    >
-                      <SidebarLink 
-                        link={link} 
-                        onNavigate={handleNavigation}
-                        className="group hover:bg-primary/10 rounded-lg transition-all duration-200 mb-1"
-                      />
-                    </motion.div>
+                      link={link} 
+                      onNavigate={handleNavigation}
+                      className="group hover:bg-primary/10 rounded-lg transition-all duration-200 mb-1"
+                    />
                   ))}
                 </div>
 

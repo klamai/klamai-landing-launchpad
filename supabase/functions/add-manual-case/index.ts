@@ -168,7 +168,7 @@ serve(async (req) => {
       // Modo texto libre: extraer información con IA
       log('info', 'Procesando texto libre con IA', { textLength: caseText.length });
       
-      const extractionPrompt = `Extrae la información del siguiente texto de consulta legal y devuelve ÚNICAMENTE un objeto JSON crudo (raw), sin explicaciones. La estructura debe ser: {"cliente": {"nombre": "...", "apellido": "...", "email": "...", "telefono": "...", "ciudad": "...", "tipo_perfil": "individual|empresa", "razon_social": "...", "nif_cif": "...", "nombre_gerente": "...", "direccion_fiscal": "..."}, "consulta": {"motivo_consulta": "...", "detalles_adicionales": "...", "urgencia": "alta|media|baja", "preferencia_horaria": "...", "especialidad_legal": "...", "tipo_lead": "estandar|premium|urgente"}}. Si no encuentras algún dato, déjalo vacío. Texto: ${caseText}`;
+      const extractionPrompt = `Extrae la información del siguiente texto de consulta legal y devuelve ÚNICAMENTE una cadena JSON válida, sin explicaciones ni texto adicional. IMPORTANTE: Debes devolver SOLO la cadena JSON, no un objeto JavaScript. La estructura debe ser: {"cliente": {"nombre": "...", "apellido": "...", "email": "...", "telefono": "...", "ciudad": "...", "tipo_perfil": "individual|empresa", "razon_social": "...", "nif_cif": "...", "nombre_gerente": "...", "direccion_fiscal": "..."}, "consulta": {"motivo_consulta": "...", "detalles_adicionales": "...", "urgencia": "alta|media|baja", "preferencia_horaria": "...", "especialidad_legal": "...", "tipo_lead": "estandar|premium|urgente"}}. Si no encuentras algún dato, déjalo vacío. Texto: ${caseText}`;
       
       const extractionResult = await ejecutarAsistente("ASISTENTE_AUXILIAR_ID", extractionPrompt);
       const jsonString = extractJsonFromString(extractionResult);
@@ -177,17 +177,18 @@ serve(async (req) => {
         throw new Error('No se pudo extraer información válida del texto');
       }
       
-      extractedInfo = JSON.parse(cleanAndParseJSON(jsonString));
+      extractedInfo = cleanAndParseJSON(jsonString);
       originalText = caseText;
     }
 
     // Validar información mínima requerida
-    if (!extractedInfo.cliente?.nombre || !extractedInfo.cliente?.apellido || !extractedInfo.cliente?.email) {
-      throw new Error('Información del cliente incompleta: se requiere nombre, apellido y email');
-    }
-
     if (!extractedInfo.consulta?.motivo_consulta) {
       throw new Error('Se requiere el motivo de la consulta');
+    }
+
+    // Validar información del cliente (más flexible)
+    if (!extractedInfo.cliente?.nombre && !extractedInfo.cliente?.apellido && !extractedInfo.cliente?.email) {
+      throw new Error('Se requiere al menos un dato de contacto del cliente (nombre, apellido o email)');
     }
 
     // Crear el caso en la base de datos
@@ -195,18 +196,18 @@ serve(async (req) => {
       motivo_consulta: extractedInfo.consulta.motivo_consulta,
       estado: "borrador",
       canal_atencion: "manual_admin",
-      nombre_borrador: extractedInfo.cliente.nombre,
-      apellido_borrador: extractedInfo.cliente.apellido,
-      email_borrador: extractedInfo.cliente.email,
-      telefono_borrador: extractedInfo.cliente.telefono,
-      ciudad_borrador: extractedInfo.cliente.ciudad,
-      tipo_perfil_borrador: extractedInfo.cliente.tipo_perfil,
-      razon_social_borrador: extractedInfo.cliente.razon_social,
-      nif_cif_borrador: extractedInfo.cliente.nif_cif,
-      nombre_gerente_borrador: extractedInfo.cliente.nombre_gerente,
-      direccion_fiscal_borrador: extractedInfo.cliente.direccion_fiscal,
-      preferencia_horaria_contacto: extractedInfo.consulta.preferencia_horaria,
-      tipo_lead: extractedInfo.consulta.tipo_lead,
+      nombre_borrador: extractedInfo.cliente.nombre || null,
+      apellido_borrador: extractedInfo.cliente.apellido || null,
+      email_borrador: extractedInfo.cliente.email || null,
+      telefono_borrador: extractedInfo.cliente.telefono || null,
+      ciudad_borrador: extractedInfo.cliente.ciudad || null,
+      tipo_perfil_borrador: extractedInfo.cliente.tipo_perfil || null,
+      razon_social_borrador: extractedInfo.cliente.razon_social || null,
+      nif_cif_borrador: extractedInfo.cliente.nif_cif || null,
+      nombre_gerente_borrador: extractedInfo.cliente.nombre_gerente || null,
+      direccion_fiscal_borrador: extractedInfo.cliente.direccion_fiscal || null,
+      preferencia_horaria_contacto: extractedInfo.consulta.preferencia_horaria || null,
+      tipo_lead: extractedInfo.consulta.tipo_lead || null,
       valor_estimado: caseData?.valor_estimado || null,
       especialidad_id: caseData?.especialidad_id || null
     };

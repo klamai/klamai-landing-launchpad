@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRef } from "react";
+import { validatePassword } from "@/utils/passwordValidation";
+import { logError, logAuth } from "@/utils/secureLogging";
 
 // Animated Background Component
 const AnimatedBackground = () => {
@@ -273,6 +275,9 @@ const Auth = () => {
         throw error;
       }
 
+      // Log de autenticación exitosa
+      logAuth('login', true, 'Auth.tsx');
+
       toast({
         title: "¡Sesión iniciada con éxito!",
         description: "Redirigiendo a tu dashboard...",
@@ -283,7 +288,10 @@ const Auth = () => {
       }, 1000);
 
     } catch (error: any) {
-      console.error("Error al iniciar sesión:", error.message);
+      // Log de error sanitizado
+      logError(error, 'Auth.tsx - handleLogin');
+      logAuth('login', false, 'Auth.tsx');
+
       toast({
         title: "Error al iniciar sesión",
         description: error.message,
@@ -301,6 +309,17 @@ const Auth = () => {
       toast({
         title: "Políticas requeridas",
         description: "Debes aceptar las políticas de privacidad y términos de servicio para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar fortaleza de la contraseña
+    const passwordValidation = validatePassword(signupPassword);
+    if (!passwordValidation.isValid) {
+      toast({
+        title: "Contraseña débil",
+        description: passwordValidation.errors.join(", "),
         variant: "destructive",
       });
       return;
@@ -330,6 +349,9 @@ const Auth = () => {
       }
 
       if (data.user) {
+        // Log de registro exitoso
+        logAuth('register', true, 'Auth.tsx');
+
         toast({
           title: "¡Registro exitoso!",
           description: "Por favor, revisa tu correo para confirmar tu cuenta.",
@@ -347,7 +369,10 @@ const Auth = () => {
       }
 
     } catch (error: any) {
-      console.error("Error al registrar:", error.message);
+      // Log de error sanitizado
+      logError(error, 'Auth.tsx - handleSignUp');
+      logAuth('register', false, 'Auth.tsx');
+
       toast({
         title: "Error al registrar",
         description: error.message,
@@ -466,9 +491,9 @@ const Auth = () => {
               
               {!showForgotPassword ? (
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-100 dark:bg-gray-700">
-                    <TabsTrigger value="login" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Iniciar Sesión</TabsTrigger>
-                    <TabsTrigger value="signup" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Registrarse</TabsTrigger>
+                  <TabsList className="flex w-full mb-8 bg-gray-100 dark:bg-gray-700">
+                    <TabsTrigger value="login" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Iniciar Sesión</TabsTrigger>
+                    <TabsTrigger value="signup" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Registrarse</TabsTrigger>
                   </TabsList>
 
                   {/* Login Tab */}

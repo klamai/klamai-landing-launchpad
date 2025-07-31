@@ -14,6 +14,7 @@ import Auth from "./pages/Auth";
 import AuthAbogado from "./pages/AuthAbogado";
 import LawyerActivation from "./pages/LawyerActivation";
 import Dashboard from "./pages/Dashboard";
+import ClientDashboard from "./components/ClientDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import LegalNotice from "./pages/LegalNotice";
 import PagoExitoso from "./pages/PagoExitoso";
@@ -43,56 +44,56 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <DashboardRedirect>
-                  <Dashboard />
+                  <ClientDashboard />
                 </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/nueva-consulta" element={
               <ProtectedRoute>
                 <DashboardRedirect>
-                  <Dashboard />
+                  <ClientDashboard />
                 </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/casos" element={
               <ProtectedRoute>
                 <DashboardRedirect>
-                  <Dashboard />
+                  <ClientDashboard />
                 </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/casos/:casoId" element={
               <ProtectedRoute>
                 <DashboardRedirect>
-                  <Dashboard />
+                  <ClientDashboard />
                 </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/perfil" element={
               <ProtectedRoute>
                 <DashboardRedirect>
-                  <Dashboard />
+                  <ClientDashboard />
                 </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/configuracion" element={
               <ProtectedRoute>
                 <DashboardRedirect>
-                  <Dashboard />
+                  <ClientDashboard />
                 </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/facturacion" element={
               <ProtectedRoute>
                 <DashboardRedirect>
-                  <Dashboard />
+                  <ClientDashboard />
                 </DashboardRedirect>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/notificaciones" element={
               <ProtectedRoute>
                 <DashboardRedirect>
-                  <Dashboard />
+                  <ClientDashboard />
                 </DashboardRedirect>
               </ProtectedRoute>
             } />

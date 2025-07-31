@@ -3,7 +3,22 @@ import * as TabsPrimitive from "@radix-ui/react-tabs"
 
 import { cn } from "@/lib/utils"
 
-const Tabs = TabsPrimitive.Root
+const Tabs = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Root
+    ref={ref}
+    className={cn(className)}
+    style={{ 
+      display: 'block',
+      width: '100%',
+      overflow: 'hidden' // Forzar que no desborde
+    }}
+    {...props}
+  />
+))
+Tabs.displayName = TabsPrimitive.Root.displayName
 
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
@@ -12,9 +27,21 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
+      "flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
+      "scrollbar-hide", // Ocultar scrollbar visual pero mantener funcionalidad
+      "overflow-x-auto overflow-y-hidden", // Scroll horizontal
+      "flex-nowrap", // No wrap
       className
     )}
+    style={{ 
+      display: 'flex',
+      flexDirection: 'row',
+      width: '100%',
+      maxWidth: '100%',
+      scrollbarWidth: 'none', // Firefox
+      msOverflowStyle: 'none', // IE/Edge
+      WebkitOverflowScrolling: 'touch' // Smooth scroll en iOS
+    }}
     {...props}
   />
 ))
@@ -30,6 +57,10 @@ const TabsTrigger = React.forwardRef<
       "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
       className
     )}
+    style={{
+      minWidth: 'fit-content',
+      flexShrink: 0
+    }}
     {...props}
   />
 ))
