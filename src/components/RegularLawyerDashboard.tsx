@@ -3,23 +3,28 @@ import { SidebarDashboard, SidebarBody, SidebarLink, Logo, LogoIcon } from "@/co
 import { 
   LayoutDashboard, 
   Scale, 
+  Users, 
   FileText, 
+  Settings, 
   Bell, 
   LogOut, 
   Moon, 
   Sun,
-  User,
+  UserCheck,
+  Briefcase,
   Bot,
-  MessageCircle
+  UserPlus,
+  MessageSquare
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { useRegularLawyerStats } from "@/hooks/lawyer/useRegularLawyerStats";
+import { useAssignedCases } from "@/hooks/lawyer/useAssignedCases";
 import AssignedCasesManagement from "@/components/lawyer/AssignedCasesManagement";
+import RegularLawyerMetrics from "@/components/RegularLawyerMetrics";
+import { Button } from "@/components/ui/button";
 
 const RegularLawyerDashboard = () => {
   const [open, setOpen] = useState(false);
@@ -133,7 +138,7 @@ const RegularLawyerDashboard = () => {
       label: "Chat con Clientes",
       href: "/abogados/dashboard/chat-clientes",
       icon: (
-        <MessageCircle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+        <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
@@ -147,7 +152,7 @@ const RegularLawyerDashboard = () => {
       label: "Mi Perfil",
       href: "/abogados/dashboard/perfil",
       icon: (
-        <User className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+        <UserCheck className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
   ];
@@ -155,9 +160,7 @@ const RegularLawyerDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div
-        className={cn(
-          "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden h-screen"
-        )}
+        className="flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 mx-auto overflow-hidden h-screen"
       >
         <SidebarDashboard open={open} setOpen={setOpen}>
           <SidebarBody className="justify-between gap-10 ">
@@ -238,7 +241,7 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
-        <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 min-h-full">
+        <div className="p-2 md:p-10 rounded-tl-2xl bg-white dark:bg-neutral-900 min-h-full">
           {renderContent()}
         </div>
       </div>
@@ -247,137 +250,7 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
 };
 
 const RegularLawyerDashboardSection = () => {
-  const { user } = useAuth();
-  const { stats, loading } = useRegularLawyerStats();
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Bienvenido - Panel de Abogado
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300">
-          Hola {user?.user_metadata?.nombre || user?.email}, gestiona tus casos asignados y comunícate con tus clientes.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        {[
-          { 
-            title: "Casos Asignados", 
-            value: loading ? "..." : stats.totalCasosAsignados.toString(), 
-            color: "bg-blue-500", 
-            textColor: "text-blue-600" 
-          },
-          { 
-            title: "Casos Activos", 
-            value: loading ? "..." : stats.casosActivos.toString(), 
-            color: "bg-green-500", 
-            textColor: "text-green-600" 
-          },
-          { 
-            title: "Casos Completados", 
-            value: loading ? "..." : stats.casosCompletados.toString(), 
-            color: "bg-purple-500", 
-            textColor: "text-purple-600" 
-          },
-          { 
-            title: "Documentos Pendientes", 
-            value: loading ? "..." : stats.documentosPendientes.toString(), 
-            color: "bg-orange-500", 
-            textColor: "text-orange-600" 
-          },
-        ].map((stat, i) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: i * 0.1 }}
-            className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-6 border border-gray-200 dark:border-neutral-700"
-          >
-            <div className="flex items-center">
-              <div className={`${stat.color} h-3 w-3 rounded-full mr-3`}></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  {stat.title}
-                </p>
-                <p className={`text-2xl font-bold ${stat.textColor} dark:text-white`}>
-                  {stat.value}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <Scale className="h-5 w-5 mr-2 text-blue-600" />
-            Mis Casos Recientes
-          </h3>
-          <div className="space-y-4">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Casos asignados recientemente
-            </div>
-            <div className="max-h-64 overflow-y-auto">
-              <AssignedCasesManagement />
-            </div>
-          </div>
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <FileText className="h-5 w-5 mr-2 text-green-600" />
-            Acciones Pendientes
-          </h3>
-          <div className="space-y-4">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Documentos y tareas por completar
-            </div>
-            <div className="space-y-3">
-              {loading ? (
-                <div className="animate-pulse space-y-2">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 bg-white dark:bg-neutral-900 rounded border">
-                    <span className="text-sm">Documentos de resolución pendientes</span>
-                    <span className="text-sm font-medium text-orange-600">
-                      {stats.documentosPendientes}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-white dark:bg-neutral-900 rounded border">
-                    <span className="text-sm">Casos esperando respuesta</span>
-                    <span className="text-sm font-medium text-blue-600">
-                      {stats.casosActivos}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
+  return <RegularLawyerMetrics />;
 };
 
 const MisCasosAsignadosSection = () => (
@@ -440,7 +313,7 @@ const ChatClientesSection = () => (
   >
     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Chat con Clientes</h1>
     <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <MessageCircle className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+      <MessageSquare className="h-16 w-16 text-blue-500 mx-auto mb-4" />
       <p className="text-gray-500 dark:text-gray-400">Sistema de chat con clientes próximamente disponible</p>
     </div>
   </motion.div>
