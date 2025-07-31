@@ -142,7 +142,7 @@ const DashboardLayout = memo(({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-accent/5">
-      <div className="flex flex-col md:flex-row bg-background/80 backdrop-blur-sm w-full flex-1 mx-auto border border-border/50 overflow-hidden h-screen">
+      <div className="flex flex-col md:flex-row bg-background/80 backdrop-blur-sm w-full flex-1 mx-auto overflow-hidden h-screen">
         <SidebarDashboard open={open} setOpen={setOpen}>
           <SidebarBody className="justify-between gap-10">
             <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
@@ -216,7 +216,7 @@ const DashboardLayout = memo(({
                 </div>
 
                 {/* Sección de utilidades */}
-                <div className="mt-auto pt-4 border-t border-border/50">
+                <div className="mt-auto pt-4">
                   {open && (
                     <motion.div
                       initial={{ opacity: 0 }}
@@ -271,7 +271,7 @@ const DashboardLayout = memo(({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.9 }}
-              className="border-t border-border/50 pt-4"
+              className="pt-4"
             >
               <SidebarLink
                 link={userInfo}
@@ -301,7 +301,7 @@ const DashboardLayout = memo(({
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
-              className="p-4 md:p-8 rounded-tl-2xl border border-border/50 bg-background/80 backdrop-blur-sm min-h-full"
+              className="p-4 md:p-8 rounded-tl-2xl bg-background/80 backdrop-blur-sm min-h-full"
             >
               {children}
             </motion.div>

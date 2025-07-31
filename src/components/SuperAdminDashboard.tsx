@@ -190,7 +190,7 @@ const SuperAdminDashboard = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div
         className={cn(
-          "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden h-screen"
+          "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 mx-auto overflow-hidden h-screen"
         )}
       >
         <SidebarDashboard open={open} setOpen={setOpen}>
@@ -277,7 +277,7 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
-        <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 min-h-full">
+        <div className="p-2 md:p-10 rounded-tl-2xl bg-white dark:bg-neutral-900 min-h-full">
           {renderContent()}
         </div>
       </div>
