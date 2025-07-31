@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import ClientDocumentManager from '@/components/ClientDocumentManager';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
-import { useDocumentManagement } from '@/hooks/useDocumentManagement';
+import { useDocumentManagement } from '@/hooks/shared/useDocumentManagement';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 

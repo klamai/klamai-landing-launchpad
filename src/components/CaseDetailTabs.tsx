@@ -389,7 +389,7 @@ const CaseDetailTabs = () => {
           {userRole === 'abogado' ? (
             <TabsTrigger value="resoluciones" className="min-w-[120px] flex-shrink-0 whitespace-nowrap">Resoluciones</TabsTrigger>
           ) : (
-            <TabsTrigger value="documentos-abogado" className="min-w-[120px] flex-shrink-0 whitespace-nowrap">Documentos del Abogado</TabsTrigger>
+            <TabsTrigger value="documentos-abogado" className="min-w-[120px] flex-shrink-0 whitespace-nowrap">Documentos de Resolución</TabsTrigger>
           )}
           <TabsTrigger value="interacciones" className="relative min-w-[120px] flex-shrink-0 whitespace-nowrap">
             Interacciones
@@ -424,9 +424,13 @@ const CaseDetailTabs = () => {
                   {shouldShowField('resumen_caso') && caso.resumen_caso && (
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Análisis del Caso:</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {caso.resumen_caso}
-                      </p>
+                      <div className="prose prose-slate bg-gray-50 max-w-none dark:prose-invert dark:bg-gray-800 p-4 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <ScrollArea className="h-64">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {caso.resumen_caso}
+                          </ReactMarkdown>
+                        </ScrollArea>
+                      </div>
                     </div>
                   )}
                   
@@ -548,7 +552,7 @@ const CaseDetailTabs = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <GavelIcon className="h-5 w-5 text-green-600" />
-                  Documentos del Abogado
+                  Documentos de Resolución
                 </CardTitle>
               </CardHeader>
               <CardContent>

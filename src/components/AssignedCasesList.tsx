@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, User, FileText, Phone, Mail } from 'lucide-react';
-import { useAssignedCases } from '@/hooks/useAssignedCases';
+import { useAssignedCases } from '@/hooks/lawyer/useAssignedCases';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 

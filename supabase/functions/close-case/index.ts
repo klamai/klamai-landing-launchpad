@@ -97,6 +97,13 @@ serve(async (req) => {
         .eq('estado_asignacion', 'activa')
         .single()
 
+      logStep("Verificando asignación", { 
+        caso_id, 
+        abogado_id: user.id, 
+        assignment, 
+        error: assignmentError?.message 
+      });
+
       if (assignmentError) {
         logStep("ERROR - Error verificando asignación", { error: assignmentError.message });
         throw new Error('Error checking case assignment')
@@ -110,7 +117,10 @@ serve(async (req) => {
         throw new Error('No tienes permisos para cerrar este caso')
       }
     } else {
-      logStep("ERROR - Usuario no tiene permisos para cerrar casos");
+      logStep("ERROR - Usuario no tiene permisos para cerrar casos", { 
+        role: profile.role, 
+        tipo: profile.tipo_abogado 
+      });
       throw new Error('No tienes permisos para cerrar casos')
     }
 

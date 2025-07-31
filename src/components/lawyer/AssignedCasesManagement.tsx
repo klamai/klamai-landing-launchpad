@@ -1,22 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Grid3X3, List, Scale, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useAssignedCases } from '@/hooks/useAssignedCases';
+import { useLawyerCases } from '@/hooks/useLawyerCases';
 import CaseCard from '@/components/CaseCard';
-import CaseDetailModal from '@/components/CaseDetailModal';
+import CaseDetailModal from '@/components/lawyer/CaseDetailModal';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
 import DocumentViewer from '@/components/DocumentViewer';
 import { useToast } from '@/hooks/use-toast';
-import { useDocumentManagement } from '@/hooks/useDocumentManagement';
-import { useClientDocumentManagement } from '@/hooks/useClientDocumentManagement';
+import { useDocumentManagement } from '@/hooks/shared/useDocumentManagement';
+import { useClientDocumentManagement } from '@/hooks/client/useClientDocumentManagement';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
-const AssignedCasesManagement = () => {
+// Componente de acceso no autorizado
+const UnauthorizedAccess = () => (
+  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+    <div className="text-center">
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
+        <h2 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+          Acceso No Autorizado
+        </h2>
+        <p className="text-red-600 dark:text-red-300 mb-4">
+          Solo los abogados regulares pueden acceder a sus casos asignados.
+        </p>
+        <button
+          onClick={() => window.location.href = '/abogados/dashboard'}
+          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+        >
+          Volver al Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const LawyerAssignedCasesManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterState, setFilterState] = useState<string>('all');
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [lawyerType, setLawyerType] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
   
   // Modal states
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -26,7 +52,7 @@ const AssignedCasesManagement = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   
-  const { cases, loading, error } = useAssignedCases();
+  const { casos, loading, error } = useLawyerCases();
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -45,8 +71,68 @@ const AssignedCasesManagement = () => {
     refetch: refetchClientDocuments
   } = useClientDocumentManagement(selectedCaseDetail?.id);
 
+  // Validación de seguridad para abogados regulares
+  useEffect(() => {
+    const validateAccess = async () => {
+      if (!user) {
+        setRoleLoading(false);
+        return;
+      }
+
+      try {
+        console.log('🔍 Validando acceso a AssignedCasesManagement:', user.id);
+        
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role, tipo_abogado')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('❌ Error validando acceso:', error);
+          setUserRole('unauthorized');
+          setLawyerType(null);
+        } else if (profile) {
+          console.log('✅ Perfil obtenido para validación:', profile);
+          setUserRole(profile.role);
+          setLawyerType(profile.tipo_abogado);
+        } else {
+          console.log('⚠️ No se encontró perfil para validación');
+          setUserRole('unauthorized');
+          setLawyerType(null);
+        }
+      } catch (error) {
+        console.error('❌ Error general en validación:', error);
+        setUserRole('unauthorized');
+        setLawyerType(null);
+      } finally {
+        setRoleLoading(false);
+      }
+    };
+
+    validateAccess();
+  }, [user]);
+
+  // Loading state
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Verificando permisos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Bloquear acceso no autorizado
+  if (userRole !== 'abogado' || lawyerType !== 'regular') {
+    console.log('🚫 Acceso denegado a AssignedCasesManagement:', { userRole, lawyerType });
+    return <UnauthorizedAccess />;
+  }
+
   // Filtrar casos basado en búsqueda y estado
-  const filteredCases = cases.filter(caso => {
+  const filteredCases = casos.filter(caso => {
     const matchesSearch = !searchTerm || 
       caso.motivo_consulta?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       caso.nombre_borrador?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -61,16 +147,16 @@ const AssignedCasesManagement = () => {
   const handleViewDetails = async (casoId: string) => {
     try {
       // Find the case in our current cases array
-      const caseDetails = cases.find(c => c.id === casoId);
+      const caseDetails = casos.find(c => c.id === casoId);
       if (caseDetails) {
         setSelectedCaseDetail({
           ...caseDetails,
           asignaciones_casos: [
             {
               abogado_id: user.id,
-              estado_asignacion: caseDetails.estado_asignacion,
-              fecha_asignacion: caseDetails.fecha_asignacion,
-              notas_asignacion: caseDetails.notas_asignacion,
+              estado_asignacion: 'activa', // Default for assigned cases
+              fecha_asignacion: caseDetails.created_at,
+              notas_asignacion: '',
               profiles: {
                 nombre: user.user_metadata?.nombre || user.email,
                 apellido: user.user_metadata?.apellido || '',
@@ -98,9 +184,10 @@ const AssignedCasesManagement = () => {
   };
 
   const handleGenerateResolution = (casoId: string) => {
+    // Implementar generación de resolución
     toast({
-      title: "Generar Resolución",
-      description: `Funcion proximamente disponible`,
+      title: "Funcionalidad en desarrollo",
+      description: "La generación de resoluciones estará disponible pronto",
     });
   };
 
@@ -110,27 +197,39 @@ const AssignedCasesManagement = () => {
   };
 
   const handleSendMessage = (casoId: string) => {
+    // Implementar envío de mensajes
     toast({
-      title: "Enviar Mensaje",
-      description: `FUncion proximamente disponible`,
+      title: "Funcionalidad en desarrollo",
+      description: "El sistema de mensajes estará disponible pronto",
     });
   };
 
-  // Función vacía para asignar abogado (no se usa en abogados regulares)
-  const handleAssignLawyer = () => {};
+  const handleAssignLawyer = () => {
+    // Los abogados regulares no pueden asignar casos
+    toast({
+      title: "No autorizado",
+      description: "Solo los super administradores pueden asignar casos",
+      variant: "destructive",
+    });
+  };
 
   const handleDocumentUpload = async (file: File, description: string) => {
-    if (!selectedCaseForUpload) return;
-    
+    if (!selectedCaseForUpload) {
+      toast({
+        title: "Error",
+        description: "No se ha seleccionado un caso",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const result = await uploadDocument(file, 'documento_resolucion', description);
+      const result = await uploadDocument(file, description);
       if (result.success) {
         toast({
           title: "Éxito",
           description: "Documento subido correctamente",
         });
-        setUploadModalOpen(false);
-        setSelectedCaseForUpload('');
         refetchDocuments();
       } else {
         toast({
@@ -219,7 +318,7 @@ const AssignedCasesManagement = () => {
             Mis Casos Asignados
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {filteredCases.length} de {cases.length} casos
+            {filteredCases.length} de {casos.length} casos
           </p>
         </div>
         
@@ -314,9 +413,11 @@ const AssignedCasesManagement = () => {
                 documentos_adjuntos: null,
                 especialidades: caso.especialidades,
                 profiles: null,
+                cerrado_por_profile: caso.cerrado_por_profile,
                 asignaciones_casos: [{
                   abogado_id: '',
-                  estado_asignacion: caso.estado_asignacion,
+                  estado_asignacion: 'activa',
+                  notas_asignacion: caso.notas_asignacion,
                   profiles: { nombre: 'Tú', apellido: '', email: '' }
                 }]
               }}
@@ -326,6 +427,8 @@ const AssignedCasesManagement = () => {
               onUploadDocument={handleUploadDocument}
               onSendMessage={handleSendMessage}
               hideAssignButton={true}
+              showProminentNotes={true}
+              hideAssignmentStyling={true}
             />
           ))}
         </div>
@@ -339,7 +442,6 @@ const AssignedCasesManagement = () => {
           setSelectedCaseDetail(null);
         }}
         caso={selectedCaseDetail}
-        onAssignLawyer={handleAssignLawyer}
         onGenerateResolution={handleGenerateResolution}
         onUploadDocument={handleUploadDocument}
         onSendMessage={handleSendMessage}
@@ -375,4 +477,4 @@ const AssignedCasesManagement = () => {
   );
 };
 
-export default AssignedCasesManagement;
+export default LawyerAssignedCasesManagement; 

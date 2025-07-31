@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,14 +17,50 @@ export const useRegularLawyerStats = () => {
     documentosPendientes: 0
   });
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const { user } = useAuth();
 
+  // Validación de seguridad para abogados regulares
   useEffect(() => {
-    fetchStats();
+    const validateAccess = async () => {
+      if (!user) {
+        setAccessDenied(true);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        console.log('🔍 Validando acceso a useRegularLawyerStats:', user.id);
+        
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role, tipo_abogado')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('❌ Error validando acceso:', error);
+          setAccessDenied(true);
+        } else if (profile && profile.role === 'abogado' && profile.tipo_abogado === 'regular') {
+          console.log('✅ Acceso autorizado para abogado regular');
+          setAccessDenied(false);
+        } else {
+          console.log('🚫 Acceso denegado:', { role: profile?.role, tipo: profile?.tipo_abogado });
+          setAccessDenied(true);
+        }
+      } catch (error) {
+        console.error('❌ Error general en validación:', error);
+        setAccessDenied(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    validateAccess();
   }, [user]);
 
   const fetchStats = async () => {
-    if (!user) {
+    if (!user || accessDenied) {
       setLoading(false);
       return;
     }
@@ -86,5 +121,17 @@ export const useRegularLawyerStats = () => {
     }
   };
 
-  return { stats, loading, refetch: fetchStats };
-};
+  // Fetch stats when access is validated
+  useEffect(() => {
+    if (!accessDenied && user) {
+      fetchStats();
+    }
+  }, [accessDenied, user]);
+
+  return { 
+    stats, 
+    loading, 
+    accessDenied,
+    refetch: fetchStats 
+  };
+}; 

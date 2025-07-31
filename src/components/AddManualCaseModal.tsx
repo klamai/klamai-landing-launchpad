@@ -2,13 +2,13 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Sparkles, AlertTriangle } from 'lucide-react';
-import { useEffect } from 'react';
+import { FileText, User, Mail, Phone, MapPin, Building, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface AddManualCaseModalProps {
@@ -16,7 +16,7 @@ interface AddManualCaseModalProps {
   onClose: () => void;
   onSuccess: () => void;
   especialidades: Array<{ id: number; nombre: string }>;
-  onCaseCreated?: (casoId: string) => void; // Nueva prop
+  onCaseCreated?: (casoId: string) => void;
 }
 
 const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
@@ -26,18 +26,60 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
   especialidades,
   onCaseCreated
 }) => {
-  const [caseText, setCaseText] = useState('');
+  const [formData, setFormData] = useState({
+    nombre: '',
+    apellido: '',
+    email: '',
+    telefono: '',
+    ciudad: '',
+    tipo_perfil: 'individual',
+    razon_social: '',
+    nif_cif: '',
+    nombre_gerente: '',
+    direccion_fiscal: '',
+    especialidad_id: '',
+    motivo_consulta: '',
+    valor_estimado: '',
+    tipo_lead: 'estandar',
+    preferencia_horaria_contacto: ''
+  });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth(); // Obtener usuario actual
+  const { user } = useAuth();
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!caseText.trim()) {
+    // Validaciones básicas
+    if (!formData.nombre.trim() || !formData.apellido.trim() || !formData.email.trim()) {
       toast({
         title: "Error",
-        description: "Por favor, ingresa el texto del caso",
+        description: "Por favor, completa los campos obligatorios (nombre, apellido, email)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.motivo_consulta.trim()) {
+      toast({
+        title: "Error",
+        description: "Por favor, ingresa el motivo de la consulta",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.especialidad_id) {
+      toast({
+        title: "Error",
+        description: "Por favor, selecciona una especialidad",
         variant: "destructive",
       });
       return;
@@ -48,82 +90,60 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
     try {
       const { data, error } = await supabase.functions.invoke('add-manual-case', {
         body: {
-          caseText: caseText.trim()
+          caseData: {
+            ...formData,
+            especialidad_id: parseInt(formData.especialidad_id),
+            canal_atencion: 'manual_admin'
+          }
         }
       });
 
       if (error) {
-        // Si hay error pero el caso se creó, mostrar mensaje especial
-        if (error.message?.includes('504') || error.message?.includes('timeout')) {
-          // Cerrar modal inmediatamente
-          setCaseText('');
-          onClose();
-          
-          toast({
-            title: "Caso creado con procesamiento pendiente",
-            description: "El caso se creó exitosamente pero el procesamiento con IA está en curso. Te notificaremos cuando esté listo.",
-            duration: 6000,
-          });
-          
-          // Actualizar la lista de casos
-          onSuccess();
-          
-          // Agregar a la lista de procesamiento (si tenemos el ID del caso)
-          if (data?.caso?.id) {
-            onCaseCreated?.(data.caso.id);
-          }
-          return;
-        }
         throw error;
       }
 
       if (data?.success) {
-        // Cerrar modal inmediatamente
-        setCaseText('');
-        onClose();
-        
-        // Mostrar toast de procesamiento
         toast({
-          title: "IA procesando el caso",
-          description: "La IA está analizando el texto y generando el resumen profesional. Te notificaremos cuando esté listo.",
+          title: "Caso creado exitosamente",
+          description: "El caso se ha creado y está siendo procesado por la IA.",
           duration: 5000,
         });
         
-        // Actualizar la lista de casos
+        // Limpiar formulario
+        setFormData({
+          nombre: '',
+          apellido: '',
+          email: '',
+          telefono: '',
+          ciudad: '',
+          tipo_perfil: 'individual',
+          razon_social: '',
+          nif_cif: '',
+          nombre_gerente: '',
+          direccion_fiscal: '',
+          especialidad_id: '',
+          motivo_consulta: '',
+          valor_estimado: '',
+          tipo_lead: 'estandar',
+          preferencia_horaria_contacto: ''
+        });
+        
+        onClose();
         onSuccess();
         
-        // Agregar a la lista de procesamiento
         if (data.caso?.id) {
           onCaseCreated?.(data.caso.id);
         }
-        
       } else {
-        throw new Error(data?.error || 'Error desconocido');
+        throw new Error('Error al crear el caso');
       }
-    } catch (error) {
-      console.error('Error creando caso:', error);
-      
-      // Manejar errores específicos
-      if (error.message?.includes('504') || error.message?.includes('timeout')) {
-        // Cerrar modal inmediatamente
-        setCaseText('');
-        onClose();
-        
-        toast({
-          title: "Caso creado con procesamiento pendiente",
-          description: "El caso se creó exitosamente pero el procesamiento con IA está en curso. Te notificaremos cuando esté listo.",
-          duration: 6000,
-        });
-        
-        // Actualizar la lista de casos
-        onSuccess();
-      } else {
+    } catch (error: any) {
+      console.error('Error creating case:', error);
       toast({
         title: "Error",
-        description: error.message || "No se pudo crear el caso",
+        description: error.message || "Error al crear el caso",
         variant: "destructive",
       });
-      }
     } finally {
       setLoading(false);
     }
@@ -131,108 +151,251 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
 
   const handleClose = () => {
     if (!loading) {
-      setCaseText('');
+      setFormData({
+        nombre: '',
+        apellido: '',
+        email: '',
+        telefono: '',
+        ciudad: '',
+        tipo_perfil: 'individual',
+        razon_social: '',
+        nif_cif: '',
+        nombre_gerente: '',
+        direccion_fiscal: '',
+        especialidad_id: '',
+        motivo_consulta: '',
+        valor_estimado: '',
+        tipo_lead: 'estandar',
+        preferencia_horaria_contacto: ''
+      });
       onClose();
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <FileText className="h-5 w-5 text-blue-600" />
-            Añadir Caso Manual
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Crear Caso Manual
           </DialogTitle>
         </DialogHeader>
-
+        
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-            <div className="flex items-start gap-3">
-              <Sparkles className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="space-y-2">
-                <h4 className="font-medium text-blue-900 dark:text-blue-100">
-                  Procesamiento Inteligente
-                </h4>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Pega el texto completo del caso incluyendo datos del cliente y la consulta legal.
-                  Nuestro sistema de IA extraerá automáticamente toda la información necesaria, incluida la especialidad legal y el tipo de lead,
-                  generará un resumen profesional y una guía para el abogado asignado.
-                </p>
+          {/* Información del Cliente */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Información del Cliente
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="nombre">Nombre *</Label>
+                <Input
+                  id="nombre"
+                  value={formData.nombre}
+                  onChange={(e) => handleInputChange('nombre', e.target.value)}
+                  placeholder="Nombre del cliente"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="apellido">Apellido *</Label>
+                <Input
+                  id="apellido"
+                  value={formData.apellido}
+                  onChange={(e) => handleInputChange('apellido', e.target.value)}
+                  placeholder="Apellido del cliente"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="email@ejemplo.com"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="telefono">Teléfono</Label>
+                <Input
+                  id="telefono"
+                  value={formData.telefono}
+                  onChange={(e) => handleInputChange('telefono', e.target.value)}
+                  placeholder="+34 600 000 000"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="ciudad">Ciudad</Label>
+                <Input
+                  id="ciudad"
+                  value={formData.ciudad}
+                  onChange={(e) => handleInputChange('ciudad', e.target.value)}
+                  placeholder="Madrid"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="tipo_perfil">Tipo de Perfil</Label>
+                <Select value={formData.tipo_perfil} onValueChange={(value) => handleInputChange('tipo_perfil', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="individual">Individual</SelectItem>
+                    <SelectItem value="empresa">Empresa</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+
+            {/* Campos específicos para empresa */}
+            {formData.tipo_perfil === 'empresa' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="razon_social">Razón Social</Label>
+                  <Input
+                    id="razon_social"
+                    value={formData.razon_social}
+                    onChange={(e) => handleInputChange('razon_social', e.target.value)}
+                    placeholder="Nombre de la empresa"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="nif_cif">NIF/CIF</Label>
+                  <Input
+                    id="nif_cif"
+                    value={formData.nif_cif}
+                    onChange={(e) => handleInputChange('nif_cif', e.target.value)}
+                    placeholder="B12345678"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="nombre_gerente">Nombre del Gerente</Label>
+                  <Input
+                    id="nombre_gerente"
+                    value={formData.nombre_gerente}
+                    onChange={(e) => handleInputChange('nombre_gerente', e.target.value)}
+                    placeholder="Nombre completo del gerente"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="direccion_fiscal">Dirección Fiscal</Label>
+                  <Input
+                    id="direccion_fiscal"
+                    value={formData.direccion_fiscal}
+                    onChange={(e) => handleInputChange('direccion_fiscal', e.target.value)}
+                    placeholder="Calle, número, ciudad"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="caseText" className="text-sm font-medium">
-              Texto del Caso *
-            </Label>
-            <Textarea
-              id="caseText"
-              value={caseText}
-              onChange={(e) => setCaseText(e.target.value)}
-              placeholder="Pega aquí el texto completo del caso. Incluye:
-- Datos del cliente (nombre, email, teléfono, ciudad)
-- Consulta legal completa
-- Detalles adicionales relevantes
-- Cualquier información de contacto o preferencias
-
-Ejemplo:
-Juan Pérez, email: juan@email.com, teléfono: 600123456, Madrid. 
-Consulta sobre despido improcedente. Trabajo en empresa X desde hace 3 años, me despidieron sin causa justificada el 15/12/2023..."
-              className="min-h-[200px] resize-none"
-              disabled={loading}
-            />
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              {caseText.length}/5000 caracteres
-            </p>
-          </div>
-
-          <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div className="space-y-1">
-                <h4 className="font-medium text-amber-900 dark:text-amber-100">
-                  Información Importante
-                </h4>
-                <ul className="text-sm text-amber-700 dark:text-amber-300 space-y-1">
-                  <li>• El caso se creará en estado "borrador" inicialmente</li>
-                  <li>• La IA procesará el texto y extraerá los datos automáticamente</li>
-                  <li>• Una vez procesado, el caso pasará a estado "disponible"</li>
-                  <li>• Se generará un resumen profesional y guía para el abogado</li>
-                </ul>
+          {/* Información del Caso */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Información del Caso
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="especialidad_id">Especialidad *</Label>
+                <Select value={formData.especialidad_id} onValueChange={(value) => handleInputChange('especialidad_id', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona una especialidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {especialidades.map((esp) => (
+                      <SelectItem key={esp.id} value={esp.id.toString()}>
+                        {esp.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="tipo_lead">Tipo de Lead</Label>
+                <Select value={formData.tipo_lead} onValueChange={(value) => handleInputChange('tipo_lead', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="estandar">Estándar</SelectItem>
+                    <SelectItem value="premium">Premium</SelectItem>
+                    <SelectItem value="urgente">Urgente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="valor_estimado">Valor Estimado</Label>
+                <Input
+                  id="valor_estimado"
+                  value={formData.valor_estimado}
+                  onChange={(e) => handleInputChange('valor_estimado', e.target.value)}
+                  placeholder="€ 1.000 - 2.000"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="preferencia_horaria_contacto">Preferencia Horaria</Label>
+                <Input
+                  id="preferencia_horaria_contacto"
+                  value={formData.preferencia_horaria_contacto}
+                  onChange={(e) => handleInputChange('preferencia_horaria_contacto', e.target.value)}
+                  placeholder="Mañana, tarde, etc."
+                />
               </div>
             </div>
+            
+            <div>
+              <Label htmlFor="motivo_consulta">Motivo de la Consulta *</Label>
+              <Textarea
+                id="motivo_consulta"
+                value={formData.motivo_consulta}
+                onChange={(e) => handleInputChange('motivo_consulta', e.target.value)}
+                placeholder="Describe el motivo de la consulta legal..."
+                rows={4}
+                required
+              />
+            </div>
           </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={loading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || !caseText.trim()}
-              className="min-w-[140px]"
-            >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Procesando...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Crear Caso
-                </div>
-              )}
-            </Button>
-          </DialogFooter>
         </form>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Creando...
+              </>
+            ) : (
+              <>
+                <FileText className="h-4 w-4 mr-2" />
+                Crear Caso
+              </>
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

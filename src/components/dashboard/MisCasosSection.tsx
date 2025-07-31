@@ -2,7 +2,7 @@
 import React, { memo } from 'react';
 
 const MisCasosSection = memo(() => {
-  const MisCasos = React.lazy(() => import("@/components/MisCasos"));
+  const MisCasos = React.lazy(() => import("@/components/client/MisCasos"));
   
   return (
     <React.Suspense fallback={

@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { useClientDocumentManagement } from '@/hooks/useClientDocumentManagement';
+import { useClientDocumentManagement } from '@/hooks/client/useClientDocumentManagement';
 import ClientDocumentUploadModal from '@/components/ClientDocumentUploadModal';
 import DocumentViewer from '@/components/DocumentViewer';
 import { format } from 'date-fns';

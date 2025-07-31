@@ -18,8 +18,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { useRegularLawyerStats } from "@/hooks/useRegularLawyerStats";
-import AssignedCasesManagement from "@/components/AssignedCasesManagement";
+import { useRegularLawyerStats } from "@/hooks/lawyer/useRegularLawyerStats";
+import AssignedCasesManagement from "@/components/lawyer/AssignedCasesManagement";
 
 const RegularLawyerDashboard = () => {
   const [open, setOpen] = useState(false);
@@ -237,7 +237,7 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
         <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 min-h-full">
           {renderContent()}
         </div>
