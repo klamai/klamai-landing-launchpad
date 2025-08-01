@@ -45,6 +45,7 @@ import { es } from 'date-fns/locale';
 import { toZonedTime } from 'date-fns-tz';
 import { useDocumentManagement } from '@/hooks/shared/useDocumentManagement';
 import { useClientDocumentManagement } from '@/hooks/client/useClientDocumentManagement';
+import { useCloseCase, useUpdateCase, useAdminCases } from '@/hooks/queries/useAdminCases';
 import DocumentViewer from '@/components/shared/DocumentViewer';
 import DocumentUploadModal from '@/components/shared/DocumentUploadModal';
 import { useToast } from '@/hooks/use-toast';
@@ -133,6 +134,10 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [convertingToClient, setConvertingToClient] = useState(false);
 
+  // Obtener los datos actualizados del caché de React Query
+  const { data: allCases } = useAdminCases();
+  const updatedCaso = allCases?.find(c => c.id === caso?.id) || caso;
+
   const { 
     documentosResolucion, 
     loading: loadingDocs, 
@@ -140,7 +145,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
     deleteDocument,
     getSignedUrl,
     refetch: refetchDocuments 
-  } = useDocumentManagement(caso?.id);
+  } = useDocumentManagement(updatedCaso?.id);
 
   const {
     documentosCliente,
@@ -149,8 +154,11 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
     getSignedUrl: getClientSignedUrl,
     refetch: refetchClientDocuments,
     deleteDocument: deleteClientDocument
-  } = useClientDocumentManagement(caso?.id);
+  } = useClientDocumentManagement(updatedCaso?.id);
 
+  const { mutate: closeCase, isLoading: isClosingCase } = useCloseCase();
+  const { mutate: updateCase, isLoading: isUpdatingCase } = useUpdateCase();
+  
   // Verificar acceso usando el profile del contexto
   const isSuperAdmin = profile?.role === 'abogado' && profile?.tipo_abogado === 'super_admin';
   const hasAccess = isSuperAdmin;
@@ -168,7 +176,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
     }
   }, [isOpen, hasAccess, onClose, toast]);
 
-  if (!caso) return null;
+  if (!updatedCaso) return null;
 
   // Mostrar estado de carga mientras se valida el acceso
   if (!hasAccess) {
@@ -191,7 +199,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
 
   // Convertir a zona horaria de España
   const spainTimeZone = 'Europe/Madrid';
-  const casoDate = toZonedTime(new Date(caso.created_at), spainTimeZone);
+  const casoDate = toZonedTime(new Date(updatedCaso.created_at), spainTimeZone);
 
   const getStatusBadge = (estado: string) => {
     const statusConfig = {
@@ -314,46 +322,46 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
   };
 
   const handleCerrarCaso = async () => {
-    if (!caso) return;
+    if (!updatedCaso) return;
     
-    setIsClosing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('close-case', {
-        body: { caso_id: caso.id },
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+    closeCase(updatedCaso.id, {
+      onSuccess: (data) => {
+        if (data.success) {
+          toast({
+            title: "Éxito",
+            description: "Caso cerrado correctamente",
+          });
+          onClose();
+        } else {
+          toast({
+            title: "Error",
+            description: data.error || "No se pudo cerrar el caso",
+            variant: "destructive"
+          });
         }
-      });
-
-      if (error) throw error;
-      
-      if (data.success) {
+      },
+      onError: (error) => {
+        console.error('Error al cerrar caso:', error);
         toast({
-          title: "Éxito",
-          description: data.data.mensaje || "Caso cerrado correctamente",
+          title: "Error",
+          description: "Error inesperado al cerrar el caso",
+          variant: "destructive"
         });
-        onClose();
-      } else {
-        throw new Error(data.error || 'Error desconocido');
       }
-    } catch (error: any) {
-      console.error('Error al cerrar caso:', error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo cerrar el caso",
-        variant: "destructive"
-      });
-    } finally {
-      setIsClosing(false);
-    }
+    });
   };
 
   const handleEditSuccess = () => {
-    window.location.reload();
+    // Ya no necesitamos recargar la página, React Query se encarga de actualizar el caché
+    toast({
+      title: "Éxito",
+      description: "Caso actualizado correctamente",
+    });
+    setIsEditModalOpen(false);
   };
 
   const handleSolicitarPago = async () => {
-    if (!caso) return;
+    if (!updatedCaso) return;
     
     setLoadingPayment(true);
     try {
@@ -377,7 +385,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
   };
 
   const handleConvertToClient = async () => {
-    if (!caso || !clientData.email) return;
+    if (!updatedCaso || !clientData.email) return;
     
     setConvertingToClient(true);
     try {
@@ -406,14 +414,14 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
       const { error: caseError } = await supabase
         .from('casos')
         .update({ cliente_id: newProfile.id })
-        .eq('id', caso.id);
+        .eq('id', updatedCaso.id);
 
       if (caseError) throw caseError;
 
       // Enviar invitación por email
       const { error: inviteError } = await supabase.functions.invoke('invitar-cliente', {
         body: {
-          caso_id: caso.id,
+          caso_id: updatedCaso.id,
           profile_id: newProfile.id,
           email: clientData.email,
           nombre: clientData.nombre,
@@ -442,35 +450,35 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
   };
 
   const clientData = {
-    nombre: caso.nombre_borrador || '',
-    apellido: caso.apellido_borrador || '',
-    email: caso.email_borrador || '',
-    telefono: caso.telefono_borrador || '',
-    ciudad: caso.ciudad_borrador || '',
-    tipo_perfil: caso.tipo_perfil_borrador || 'individual',
-    razon_social: caso.razon_social_borrador || '',
-    nif_cif: caso.nif_cif_borrador || '',
-    nombre_gerente: caso.nombre_gerente_borrador || '',
-    direccion_fiscal: caso.direccion_fiscal_borrador || ''
+    nombre: updatedCaso.nombre_borrador || '',
+    apellido: updatedCaso.apellido_borrador || '',
+    email: updatedCaso.email_borrador || '',
+    telefono: updatedCaso.telefono_borrador || '',
+    ciudad: updatedCaso.ciudad_borrador || '',
+    tipo_perfil: updatedCaso.tipo_perfil_borrador || 'individual',
+    razon_social: updatedCaso.razon_social_borrador || '',
+    nif_cif: updatedCaso.nif_cif_borrador || '',
+    nombre_gerente: updatedCaso.nombre_gerente_borrador || '',
+    direccion_fiscal: updatedCaso.direccion_fiscal_borrador || ''
   };
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className={`max-w-4xl w-full h-[90vh] flex flex-col p-0 ${
-          caso.estado === 'asignado' ? 'border-2 border-green-200 dark:border-green-700' : ''
+          updatedCaso.estado === 'asignado' ? 'border-2 border-green-200 dark:border-green-700' : ''
         }`}>
           <DialogHeader className={`px-6 py-4 ${
-            caso.estado === 'asignado' ? 'bg-green-50 dark:bg-green-950/30 border-b border-green-200 dark:border-green-800' : ''
+            updatedCaso.estado === 'asignado' ? 'bg-green-50 dark:bg-green-950/30 border-b border-green-200 dark:border-green-800' : ''
           }`}>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Detalle del Caso #{caso.id.substring(0, 8)}
-              {getStatusBadge(caso.estado)}
-              {caso.estado === 'asignado' && caso.asignaciones_casos && caso.asignaciones_casos.length > 0 && (
+              Detalle del Caso #{updatedCaso.id.substring(0, 8)}
+              {getStatusBadge(updatedCaso.estado)}
+              {updatedCaso.estado === 'asignado' && updatedCaso.asignaciones_casos && updatedCaso.asignaciones_casos.length > 0 && (
                 <div className="flex items-center gap-1 bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs font-semibold border border-green-200 dark:border-green-700">
                   <UserPlus className="h-3 w-3" />
-                  Asignado a: {caso.asignaciones_casos[0].profiles?.nombre} {caso.asignaciones_casos[0].profiles?.apellido}
+                  Asignado a: {updatedCaso.asignaciones_casos[0].profiles?.nombre} {updatedCaso.asignaciones_casos[0].profiles?.apellido}
                 </div>
               )}
             </DialogTitle>
@@ -483,7 +491,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   <TabsTrigger value="overview" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     <FileText className="h-4 w-4" /> Resumen
                   </TabsTrigger>
-                  {caso.guia_abogado && (
+                  {updatedCaso.guia_abogado && (
                     <TabsTrigger value="guia" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                       <ShieldCheck className="h-4 w-4" /> Guía Abogado
                     </TabsTrigger>
@@ -511,14 +519,14 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {caso.resumen_caso && (
+                    {updatedCaso.resumen_caso && (
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-2">Resumen del caso:</p>
                         <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                           <ScrollArea className="h-96">
                             <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {caso.resumen_caso}
+                                {updatedCaso.resumen_caso}
                               </ReactMarkdown>
                             </div>
                           </ScrollArea>
@@ -538,22 +546,22 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                       </div>
                       <div className="flex items-center gap-1">
                         <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span>{caso.especialidades?.nombre || 'Sin especialidad'}</span>
+                        <span>{updatedCaso.especialidades?.nombre || 'Sin especialidad'}</span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {caso.tipo_lead && (
+                      {updatedCaso.tipo_lead && (
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Tipo de lead:</p>
-                          <Badge variant="secondary" className="capitalize">{caso.tipo_lead}</Badge>
+                          <Badge variant="secondary" className="capitalize">{updatedCaso.tipo_lead}</Badge>
                         </div>
                       )}
-                      {caso.valor_estimado && (
+                      {updatedCaso.valor_estimado && (
                         <div className="flex items-center gap-1 text-sm">
                           <Euro className="h-4 w-4 text-blue-600" />
                           <span className="font-medium text-blue-700 dark:text-blue-400">
-                            Valor estimado: {caso.valor_estimado}
+                            Valor estimado: {updatedCaso.valor_estimado}
                           </span>
                         </div>
                       )}
@@ -568,12 +576,12 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   <CardContent className="space-y-3">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Estado actual:</p>
-                      {getStatusBadge(caso.estado)}
+                      {getStatusBadge(updatedCaso.estado)}
                     </div>
-                    {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
+                    {updatedCaso.asignaciones_casos && updatedCaso.asignaciones_casos.length > 0 ? (
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-2">Asignado a:</p>
-                        {caso.asignaciones_casos.map((asignacion, idx) => (
+                        {updatedCaso.asignaciones_casos.map((asignacion, idx) => (
                           <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-md">
                             <div className="flex items-center gap-2">
                               <User className="h-4 w-4 text-blue-600" />
@@ -612,7 +620,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                 </Card>
               </TabsContent>
 
-              {caso.guia_abogado && (
+              {updatedCaso.guia_abogado && (
                 <TabsContent value="guia" className="space-y-4 mt-0">
                   <Card className="shadow-md border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950">
                     <CardHeader>
@@ -622,7 +630,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                       <div className="prose prose-slate bg-white max-w-none dark:prose-invert dark:bg-gray-900 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden h-full">
                         <ScrollArea className="h-96">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {caso.guia_abogado}
+                            {updatedCaso.guia_abogado}
                           </ReactMarkdown>
                         </ScrollArea>
                       </div>
@@ -729,9 +737,9 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {caso.transcripcion_chat ? (
+                    {updatedCaso.transcripcion_chat ? (
                       <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {JSON.stringify(caso.transcripcion_chat, null, 2)}
+                        {JSON.stringify(updatedCaso.transcripcion_chat, null, 2)}
                       </div>
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
@@ -901,12 +909,12 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
               </TabsContent>
 
               <TabsContent value="notes" className="space-y-4 mt-0">
-                {caso?.id && <CaseNotesSection casoId={caso.id} />}
+                {updatedCaso?.id && <CaseNotesSection casoId={updatedCaso.id} />}
               </TabsContent>
             </Tabs>
           </ScrollArea>
 
-          {caso.estado !== 'cerrado' && (
+          {updatedCaso.estado !== 'cerrado' && (
             <div className="border-t bg-background">
               <Separator />
               <div className="p-4">
@@ -931,7 +939,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   </Button>
                   <Button 
                     size="sm"
-                    onClick={() => onGenerateResolution(caso.id)} 
+                    onClick={() => onGenerateResolution(updatedCaso.id)} 
                     variant="outline"
                     className="flex items-center gap-2"
                   >
@@ -949,7 +957,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() => onSendMessage(caso.id)}
+                    onClick={() => onSendMessage(updatedCaso.id)}
                     variant="outline"
                     className="flex items-center gap-2"
                   >
@@ -978,11 +986,11 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     size="sm"
                     onClick={handleCerrarCaso}
                     variant="destructive"
-                    disabled={isClosing}
+                    disabled={isClosingCase}
                     className="flex items-center gap-2"
                   >
                     <CheckCircle className="h-4 w-4" />
-                    {isClosing ? 'Cerrando...' : 'Cerrar Caso'}
+                    {isClosingCase ? 'Cerrando...' : 'Cerrar Caso'}
                   </Button>
                 </div>
               </div>
@@ -994,14 +1002,14 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
       <DocumentUploadModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        casoId={caso?.id || ''}
+        casoId={updatedCaso?.id || ''}
         onUploadSuccess={handleUploadSuccess}
       />
 
       <ClientDocumentUploadModal
         isOpen={isClientUploadModalOpen}
         onClose={() => setIsClientUploadModalOpen(false)}
-        casoId={caso?.id || ''}
+        casoId={updatedCaso?.id || ''}
         onUploadSuccess={handleClientUploadSuccess}
       />
 
@@ -1014,14 +1022,14 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
       <CaseEditModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        caso={caso}
+        caso={updatedCaso}
         onSave={handleEditSuccess}
       />
 
       <CaseAssignmentModal
         isOpen={showAssignmentModal}
         onClose={() => setShowAssignmentModal(false)}
-        caso={caso}
+        caso={updatedCaso}
       />
     </>
   );

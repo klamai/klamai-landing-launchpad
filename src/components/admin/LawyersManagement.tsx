@@ -29,9 +29,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { useSuperAdminStats } from '@/hooks/admin/useSuperAdminStats';
+import { useAdminLawyers, useSuperAdminAccess } from '@/hooks/queries/useAdminLawyers';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,57 +71,55 @@ const UnauthorizedAccess = () => (
 
 const AdminLawyersManagement = () => {
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [lawyerType, setLawyerType] = useState<string | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true);
   
-  const { abogados, loadingAbogados } = useSuperAdminStats();
+  // Hooks optimizados con React Query
+  const { data: hasSuperAdminAccess, isLoading: accessLoading } = useSuperAdminAccess();
+  const { data: abogados, isLoading: loadingAbogados, error: abogadosError, refetch: refetchAbogados } = useAdminLawyers();
 
-  // Validación de roles
-  useEffect(() => {
-    const validateAccess = async () => {
-      if (!user) {
-        setRoleLoading(false);
-        return;
-      }
+  // Loading state
+  if (accessLoading || loadingAbogados) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Cargando gestión de abogados...</p>
+        </div>
+      </div>
+    );
+  }
 
-      try {
-        console.log('Validando acceso a AdminLawyersManagement:', user.id);
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role, tipo_abogado')
-          .eq('id', user.id)
-          .single();
+  // Unauthorized access
+  if (!hasSuperAdminAccess) {
+    return <UnauthorizedAccess />;
+  }
 
-        if (error) {
-          console.error('Error fetching profile:', error);
-          setUserRole('unauthorized');
-          setRoleLoading(false);
-          return;
-        }
-
-        console.log('Perfil obtenido para validación:', profile);
-
-        if (profile.role !== 'abogado' || profile.tipo_abogado !== 'super_admin') {
-          console.log('Acceso denegado: usuario no es super admin');
-          setUserRole('unauthorized');
-          setRoleLoading(false);
-          return;
-        }
-
-        setUserRole(profile.role);
-        setLawyerType(profile.tipo_abogado);
-        console.log('Acceso autorizado para AdminLawyersManagement');
-      } catch (error) {
-        console.error('Error en validación:', error);
-        setUserRole('unauthorized');
-      } finally {
-        setRoleLoading(false);
-      }
-    };
-
-    validateAccess();
-  }, [user]);
+  // Error state
+  if (abogadosError) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+              <Ban className="w-6 h-6 text-red-600" />
+            </div>
+            <CardTitle className="text-xl text-red-600">Error al Cargar</CardTitle>
+            <CardDescription>
+              {abogadosError.message || 'Error inesperado al cargar los abogados'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button onClick={() => refetchAbogados()} className="mr-2">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reintentar
+            </Button>
+            <Button variant="outline" onClick={() => window.history.back()}>
+              Volver
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const getWorkloadColor = (casos_activos: number) => {
     if (casos_activos === 0) return 'text-gray-500';
@@ -157,37 +154,6 @@ const AdminLawyersManagement = () => {
     return <span className="italic text-gray-500">{especialidades.length} especialidad(es)</span>;
   };
 
-  // Loading state
-  if (roleLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  // Unauthorized access
-  if (userRole !== 'abogado' || lawyerType !== 'super_admin') {
-    return <UnauthorizedAccess />;
-  }
-
-  if (loadingAbogados) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -214,7 +180,7 @@ const AdminLawyersManagement = () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Abogados</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{abogados.length}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{abogados?.length || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -229,7 +195,7 @@ const AdminLawyersManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Abogados Activos</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {abogados.filter(a => a.casos_activos > 0).length}
+                  {abogados?.filter(a => a.casos_activos > 0).length || 0}
                 </p>
               </div>
             </div>
@@ -245,7 +211,7 @@ const AdminLawyersManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Casos Asignados</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {abogados.reduce((sum, a) => sum + a.casos_asignados, 0)}
+                  {abogados?.reduce((sum, a) => sum + a.casos_asignados, 0) || 0}
                 </p>
               </div>
             </div>
@@ -261,7 +227,7 @@ const AdminLawyersManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Promedio Casos</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {abogados.length > 0 ? Math.round(abogados.reduce((sum, a) => sum + a.casos_asignados, 0) / abogados.length) : 0}
+                  {abogados?.length > 0 ? Math.round(abogados.reduce((sum, a) => sum + a.casos_asignados, 0) / abogados.length) : 0}
                 </p>
               </div>
             </div>
@@ -292,7 +258,7 @@ const AdminLawyersManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {abogados.map((abogado) => (
+                {abogados?.map((abogado) => (
                   <TableRow key={abogado.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
@@ -388,7 +354,7 @@ const AdminLawyersManagement = () => {
 
           {/* Mobile Cards */}
           <div className="lg:hidden space-y-4">
-            {abogados.map((abogado) => (
+            {abogados?.map((abogado) => (
               <Card key={abogado.id}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">

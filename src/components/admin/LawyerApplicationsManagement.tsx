@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from "@/integrations/supabase/client";
+import { useAdminLawyerApplications, useSuperAdminAccess, useEspecialidades, useApproveLawyerAutomated, useRejectLawyerApplication } from '@/hooks/queries/useAdminLawyerApplications';
 import { 
   Search, 
   FileText, 
@@ -19,7 +19,9 @@ import {
   GraduationCap,
   Calendar,
   Loader2,
-  Shield
+  Shield,
+  Ban,
+  RefreshCw
 } from "lucide-react";
 import {
   Dialog,
@@ -74,9 +76,9 @@ const UnauthorizedAccess = () => (
           <Shield className="w-6 h-6 text-red-600" />
         </div>
         <CardTitle className="text-xl text-red-600">Acceso No Autorizado</CardTitle>
-        <p className="text-gray-600 dark:text-gray-400">
+        <CardDescription>
           No tienes permisos para acceder a esta sección. Solo los super administradores pueden gestionar solicitudes de abogados.
-        </p>
+        </CardDescription>
       </CardHeader>
       <CardContent className="text-center">
         <Button variant="outline" onClick={() => window.history.back()}>
@@ -89,136 +91,81 @@ const UnauthorizedAccess = () => (
 
 const AdminLawyerApplicationsManagement = () => {
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [lawyerType, setLawyerType] = useState<string | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true);
-  
-  const [applications, setApplications] = useState<SolicitudAbogadoFromDB[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedApp, setSelectedApp] = useState<SolicitudAbogadoFromDB | null>(null);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const { toast } = useToast();
 
-  const [especialidades, setEspecialidades] = useState<{[key: number]: string}>({});
+  // Hooks optimizados con React Query
+  const { data: hasSuperAdminAccess, isLoading: accessLoading } = useSuperAdminAccess();
+  const { data: applications, isLoading: loading, error: applicationsError, refetch: refetchApplications } = useAdminLawyerApplications();
+  const { data: especialidades } = useEspecialidades();
+  const approveMutation = useApproveLawyerAutomated();
+  const rejectMutation = useRejectLawyerApplication();
 
-  // Validación de roles
-  useEffect(() => {
-    const validateAccess = async () => {
-      if (!user) {
-        setRoleLoading(false);
-        return;
-      }
-
-      try {
-        console.log('Validando acceso a AdminLawyerApplicationsManagement:', user.id);
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role, tipo_abogado')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching profile:', error);
-          setUserRole('unauthorized');
-          setRoleLoading(false);
-          return;
-        }
-
-        console.log('Perfil obtenido para validación:', profile);
-
-        if (profile.role !== 'abogado' || profile.tipo_abogado !== 'super_admin') {
-          console.log('Acceso denegado: usuario no es super admin');
-          setUserRole('unauthorized');
-          setRoleLoading(false);
-          return;
-        }
-
-        setUserRole(profile.role);
-        setLawyerType(profile.tipo_abogado);
-        console.log('Acceso autorizado para AdminLawyerApplicationsManagement');
-      } catch (error) {
-        console.error('Error en validación:', error);
-        setUserRole('unauthorized');
-      } finally {
-        setRoleLoading(false);
-      }
-    };
-
-    validateAccess();
-  }, [user]);
-
-  useEffect(() => {
-    if (userRole === 'abogado' && lawyerType === 'super_admin') {
-      fetchApplications();
-      fetchEspecialidades();
-    }
-  }, [userRole, lawyerType]);
-
-  const fetchEspecialidades = async () => {
-    const { data } = await supabase
-      .from('especialidades')
-      .select('*');
+  // Filtrar solicitudes por búsqueda
+  const filteredApplications = React.useMemo(() => {
+    if (!applications) return [];
+    if (searchTerm.trim() === "") return applications;
     
-    if (data) {
-      const espMap = data.reduce((acc, esp) => {
-        acc[esp.id] = esp.nombre;
-        return acc;
-      }, {} as {[key: number]: string});
-      setEspecialidades(espMap);
-    }
-  };
+    return applications.filter(app => 
+      app.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.colegio_profesional?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.numero_colegiado?.includes(searchTerm)
+    );
+  }, [searchTerm, applications]);
 
-  const fetchApplications = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('solicitudes_abogado')
-        .select('*')
-        .order('created_at', { ascending: false });
+  // Loading state
+  if (accessLoading || loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Cargando solicitudes de abogados...</p>
+        </div>
+      </div>
+    );
+  }
 
-      if (error) {
-        console.error('Error fetching applications:', error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar las solicitudes",
-          variant: "destructive",
-        });
-        return;
-      }
+  // Unauthorized access
+  if (!hasSuperAdminAccess) {
+    return <UnauthorizedAccess />;
+  }
 
-      setApplications(data || []);
-    } catch (error) {
-      console.error('Error:', error);
-      toast({
-        title: "Error",
-        description: "Error inesperado al cargar las solicitudes",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Error state
+  if (applicationsError) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+              <Ban className="w-6 h-6 text-red-600" />
+            </div>
+            <CardTitle className="text-xl text-red-600">Error al Cargar</CardTitle>
+            <CardDescription>
+              {applicationsError.message || 'Error inesperado al cargar las solicitudes'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button onClick={() => refetchApplications()} className="mr-2">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reintentar
+            </Button>
+            <Button variant="outline" onClick={() => window.history.back()}>
+              Volver
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleApproveAutomated = async (applicationId: string) => {
-    setActionLoading(applicationId);
     try {
-      const { data, error } = await supabase.functions.invoke('approve-lawyer-automated', {
-        body: { solicitud_id: applicationId }
-      });
-
-      if (error) {
-        console.error('Error approving application:', error);
-        toast({
-          title: "Error",
-          description: "No se pudo aprobar la solicitud automáticamente",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const result = data as AutomatedApprovalResult;
+      const result = await approveMutation.mutateAsync(applicationId);
       
       if (result.success) {
         toast({
@@ -226,15 +173,6 @@ const AdminLawyerApplicationsManagement = () => {
           description: `Se ha creado la cuenta para ${result.nombre} ${result.apellido}. Se enviará un email con las credenciales temporales.`,
           duration: 8000,
         });
-        
-        // Actualizar la lista
-        setApplications(prev => 
-          prev.map(app => 
-            app.id === applicationId 
-              ? { ...app, estado: 'aprobada', fecha_revision: new Date().toISOString() }
-              : app
-          )
-        );
       } else {
         toast({
           title: "Error en la Aprobación",
@@ -249,69 +187,43 @@ const AdminLawyerApplicationsManagement = () => {
         description: "Error inesperado durante la aprobación",
         variant: "destructive",
       });
-    } finally {
-      setActionLoading(null);
     }
   };
 
   const handleReject = async (applicationId: string) => {
     if (!rejectionReason.trim()) {
       toast({
-        title: "Error",
+        title: "Motivo Requerido",
         description: "Debes proporcionar un motivo de rechazo",
         variant: "destructive",
       });
       return;
     }
 
-    setActionLoading(applicationId);
     try {
-      const { error } = await supabase
-        .from('solicitudes_abogado')
-        .update({
-          estado: 'rechazada',
-          motivo_rechazo: rejectionReason,
-          revisado_por: user?.id,
-          fecha_revision: new Date().toISOString(),
-          notas_admin: adminNotes || null
-        })
-        .eq('id', applicationId);
-
-      if (error) {
-        console.error('Error rejecting application:', error);
-        toast({
-          title: "Error",
-          description: "No se pudo rechazar la solicitud",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Solicitud Rechazada",
-        description: "La solicitud ha sido rechazada exitosamente",
+      const result = await rejectMutation.mutateAsync({
+        applicationId,
+        rejectionReason,
+        adminNotes: adminNotes || undefined
       });
 
-      // Actualizar la lista
-      setApplications(prev => 
-        prev.map(app => 
-          app.id === applicationId 
-            ? { 
-                ...app, 
-                estado: 'rechazada', 
-                motivo_rechazo: rejectionReason,
-                revisado_por: user?.id,
-                fecha_revision: new Date().toISOString(),
-                notas_admin: adminNotes || null
-              }
-            : app
-        )
-      );
+      if (result.success) {
+        toast({
+          title: "Solicitud Rechazada",
+          description: "La solicitud ha sido rechazada exitosamente",
+        });
 
-      // Limpiar formularios
-      setRejectionReason("");
-      setAdminNotes("");
-      setSelectedApp(null);
+        // Limpiar formularios
+        setRejectionReason("");
+        setAdminNotes("");
+        setSelectedApp(null);
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Error al rechazar la solicitud",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Error:', error);
       toast({
@@ -319,8 +231,6 @@ const AdminLawyerApplicationsManagement = () => {
         description: "Error inesperado durante el rechazo",
         variant: "destructive",
       });
-    } finally {
-      setActionLoading(null);
     }
   };
 
@@ -338,35 +248,6 @@ const AdminLawyerApplicationsManagement = () => {
         return <Badge variant="outline">{estado}</Badge>;
     }
   };
-
-  const filteredApplications = applications.filter(app =>
-    app.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.estado.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Loading state
-  if (roleLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  // Unauthorized access
-  if (userRole !== 'abogado' || lawyerType !== 'super_admin') {
-    return <UnauthorizedAccess />;
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -438,7 +319,7 @@ const AdminLawyerApplicationsManagement = () => {
                       <div className="flex flex-wrap gap-1">
                         {app.especialidades.map((espId) => (
                           <Badge key={espId} variant="secondary" className="text-xs">
-                            {especialidades[espId] || `ID: ${espId}`}
+                            {especialidades?.[espId] || `ID: ${espId}`}
                           </Badge>
                         ))}
                       </div>
@@ -490,7 +371,7 @@ const AdminLawyerApplicationsManagement = () => {
                             <div className="flex flex-wrap gap-1">
                               {app.especialidades.map((espId) => (
                                 <Badge key={espId} variant="secondary">
-                                  {especialidades[espId] || `ID: ${espId}`}
+                                  {especialidades?.[espId] || `ID: ${espId}`}
                                 </Badge>
                               ))}
                             </div>
@@ -539,11 +420,11 @@ const AdminLawyerApplicationsManagement = () => {
                     <>
                       <Button
                         onClick={() => handleApproveAutomated(app.id)}
-                        disabled={actionLoading === app.id}
+                        disabled={approveMutation.isLoading}
                         className="bg-green-600 hover:bg-green-700 text-white"
                         size="sm"
                       >
-                        {actionLoading === app.id ? (
+                        {approveMutation.isLoading ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -556,7 +437,7 @@ const AdminLawyerApplicationsManagement = () => {
                           <Button
                             variant="destructive"
                             size="sm"
-                            disabled={actionLoading === app.id}
+                            disabled={rejectMutation.isLoading}
                           >
                             <XCircle className="w-4 h-4 mr-2" />
                             Rechazar
@@ -588,11 +469,11 @@ const AdminLawyerApplicationsManagement = () => {
                             <div className="flex gap-2">
                               <Button
                                 onClick={() => handleReject(app.id)}
-                                disabled={!rejectionReason.trim() || actionLoading === app.id}
+                                disabled={!rejectionReason.trim() || rejectMutation.isLoading}
                                 variant="destructive"
                                 className="flex-1"
                               >
-                                {actionLoading === app.id ? (
+                                {rejectMutation.isLoading ? (
                                   <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
                                   "Confirmar Rechazo"
