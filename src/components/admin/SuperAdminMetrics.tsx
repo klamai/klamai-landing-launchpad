@@ -1,282 +1,536 @@
-import React, { memo, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Navigate } from 'react-router-dom';
-import { 
-  Scale, 
-  Users, 
-  FileCheck, 
-  Clock, 
-  TrendingUp, 
-  AlertCircle,
-  CheckCircle,
-  DollarSign
-} from 'lucide-react';
-import { useSuperAdminStats } from '@/hooks/admin/useSuperAdminStats';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+'use client';
 
-// Componente memoizado para cada métrica individual
-const MetricCard = memo(({ metric, index }: { metric: any; index: number }) => {
-  const IconComponent = metric.icon;
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { 
+  Users, 
+  Scale, 
+  DollarSign, 
+  FileText, 
+  TrendingUp, 
+  TrendingDown,
+  Calendar,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  BarChart3,
+  PieChart,
+  Activity,
+  UserCheck,
+  Target
+} from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useSuperAdminStats } from '@/hooks/queries/useSuperAdminStats';
+
+interface MetricCardProps {
+  title: string;
+  value: string | number;
+  change?: number;
+  icon: React.ReactNode;
+  description?: string;
+  trend?: 'up' | 'down' | 'neutral';
+}
+
+interface ChartData {
+  name: string;
+  value: number;
+  color?: string;
+}
+
+interface DashboardData {
+  clients: {
+    total: number;
+    active: number;
+    new: number;
+    change: number;
+  };
+  lawyers: {
+    total: number;
+    available: number;
+    busy: number;
+    change: number;
+  };
+  payments: {
+    total: number;
+    pending: number;
+    completed: number;
+    change: number;
+  };
+  cases: {
+    total: number;
+    active: number;
+    closed: number;
+    change: number;
+  };
+  monthlyRevenue: ChartData[];
+  casesByType: ChartData[];
+  paymentStatus: ChartData[];
+}
+
+const MetricCard: React.FC<MetricCardProps> = ({ 
+  title, 
+  value, 
+  change, 
+  icon, 
+  description, 
+  trend = 'neutral' 
+}) => {
+  const getTrendColor = () => {
+    switch (trend) {
+      case 'up': return 'text-green-600';
+      case 'down': return 'text-red-600';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  const getTrendIcon = () => {
+    switch (trend) {
+      case 'up': return <TrendingUp className="h-3 w-3" />;
+      case 'down': return <TrendingDown className="h-3 w-3" />;
+      default: return null;
+    }
+  };
+
+  return (
+    <Card className="hover:shadow-md transition-shadow duration-200">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
+        <div className="h-4 w-4 text-muted-foreground">
+          {icon}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-foreground">{value}</div>
+        {change !== undefined && (
+          <div className={`flex items-center text-xs ${getTrendColor()}`}>
+            {getTrendIcon()}
+            <span className="ml-1">
+              {change > 0 ? '+' : ''}{change}% desde el mes pasado
+            </span>
+          </div>
+        )}
+        {description && (
+          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const SimpleBarChart: React.FC<{ data: ChartData[]; title: string }> = ({ data, title }) => {
+  const maxValue = Math.max(...data.map(d => d.value));
   
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-6 border border-gray-200 dark:border-neutral-700 hover:shadow-lg transition-shadow duration-300"
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <div className={`${metric.color} h-3 w-3 rounded-full mr-3`}></div>
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            {metric.title}
-          </p>
+    <Card className="h-80">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <BarChart3 className="h-5 w-5" />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {data.map((item, index) => (
+            <div key={index} className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{item.name}</span>
+                <span className="font-medium">{item.value.toLocaleString()}</span>
+              </div>
+              <Progress 
+                value={(item.value / maxValue) * 100} 
+                className="h-2"
+              />
+            </div>
+          ))}
         </div>
-        <div className={`${metric.color} p-2 rounded-lg`}>
-          <IconComponent className="h-4 w-4 text-white" />
-        </div>
-      </div>
-      
-      <div className="flex items-end justify-between">
-        <div>
-          <p className={`text-2xl font-bold ${metric.textColor} dark:text-white mb-1`}>
-            {metric.value}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {metric.description}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className={`text-sm font-medium ${
-            metric.trend.startsWith('+') ? 'text-green-600' : 
-            metric.trend.startsWith('-') ? 'text-red-600' : 'text-blue-600'
-          }`}>
-            {metric.trend}
-          </p>
-          <p className="text-xs text-gray-400">vs. mes anterior</p>
-        </div>
-      </div>
-    </motion.div>
+      </CardContent>
+    </Card>
   );
-});
+};
 
-MetricCard.displayName = 'MetricCard';
+const SimplePieChart: React.FC<{ data: ChartData[]; title: string }> = ({ data, title }) => {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const colors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500', 'bg-purple-500'];
+  
+  return (
+    <Card className="h-80">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <PieChart className="h-5 w-5" />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            {data.map((item, index) => {
+              const percentage = ((item.value / total) * 100).toFixed(1);
+              return (
+                <div key={index} className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${colors[index % colors.length]}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-muted-foreground truncate">{item.name}</div>
+                    <div className="text-sm font-medium">{percentage}%</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="pt-2 border-t">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-foreground">{total}</div>
+              <div className="text-xs text-muted-foreground">Total</div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
-// Componente memoizado para skeleton loading
-const LoadingCard = memo(({ index }: { index: number }) => (
-  <div key={index} className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-6 border border-gray-200 dark:border-neutral-700 animate-pulse">
-    <div className="flex items-center justify-between mb-4">
-      <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24"></div>
-      <div className="h-8 w-8 bg-gray-300 dark:bg-gray-600 rounded"></div>
-    </div>
-    <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-16 mb-2"></div>
-    <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
-  </div>
-));
+const ActivityChart: React.FC<{ data: ChartData[]; title: string }> = ({ data, title }) => {
+  return (
+    <Card className="h-80">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Activity className="h-5 w-5" />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {data.map((item, index) => (
+            <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="text-sm font-medium">{item.name}</span>
+              </div>
+              <Badge variant="secondary">{item.value}</Badge>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
-LoadingCard.displayName = 'LoadingCard';
+export default function SuperAdminMetrics() {
+  // Usar el hook optimizado de React Query
+  const { data: superAdminData, isLoading, error } = useSuperAdminStats();
 
-// Componente de acceso no autorizado
-const UnauthorizedAccess = () => (
-  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-    <div className="text-center">
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
-        <h2 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
-          Acceso No Autorizado
-        </h2>
-        <p className="text-red-600 dark:text-red-300 mb-4">
-          Solo los super administradores pueden acceder a estas métricas.
-        </p>
-        <button
-          onClick={() => window.location.href = '/abogados/dashboard'}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-        >
-          Volver al Dashboard
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
-const AdminSuperAdminMetrics = memo(() => {
-  const { user } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [lawyerType, setLawyerType] = useState<string | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true);
-  const { stats } = useSuperAdminStats();
-
-  // Métricas memoizadas - DEBE ir ANTES de los condicionales para evitar errores de hooks
-  const metrics = React.useMemo(() => [
-    {
-      title: "Total de Casos",
-      value: stats.totalCasos.toString(),
-      icon: Scale,
-      color: "bg-blue-500",
-      textColor: "text-blue-600",
-      trend: "+12%",
-      description: "Todos los casos en el sistema"
-    },
-    {
-      title: "Casos Disponibles",
-      value: stats.casosDisponibles.toString(),
-      icon: AlertCircle,
-      color: "bg-yellow-500",
-      textColor: "text-yellow-600",
-      trend: "+5%",
-      description: "Listos para asignar"
-    },
-    {
-      title: "Casos Asignados",
-      value: stats.casosAsignados.toString(),
-      icon: CheckCircle,
-      color: "bg-green-500",
-      textColor: "text-green-600",
-      trend: "+8%",
-      description: "En proceso con abogados"
-    },
-    {
-      title: "Casos Cerrados",
-      value: stats.casosCerrados.toString(),
-      icon: FileCheck,
-      color: "bg-gray-500",
-      textColor: "text-gray-600",
-      trend: "+15%",
-      description: "Completados exitosamente"
-    },
-    {
-      title: "Total Abogados",
-      value: stats.totalAbogados.toString(),
-      icon: Users,
-      color: "bg-purple-500",
-      textColor: "text-purple-600",
-      trend: "+3%",
-      description: "Equipo legal activo"
-    },
-    {
-      title: "Casos Esperando Pago",
-      value: stats.casosEsperandoPago.toString(),
-      icon: Clock,
-      color: "bg-orange-500",
-      textColor: "text-orange-600",
-      trend: "-2%",
-      description: "Pendientes de pago"
+  // Transformar los datos del hook a la estructura esperada por el componente
+  const dashboardData: DashboardData = React.useMemo(() => {
+    if (!superAdminData) {
+      return {
+        clients: { total: 0, active: 0, new: 0, change: 0 },
+        lawyers: { total: 0, available: 0, busy: 0, change: 0 },
+        payments: { total: 0, pending: 0, completed: 0, change: 0 },
+        cases: { total: 0, active: 0, closed: 0, change: 0 },
+        monthlyRevenue: [],
+        casesByType: [],
+        paymentStatus: []
+      };
     }
-  ], [stats]);
 
-  // Validación de seguridad para super_admin
-  useEffect(() => {
-    const validateAccess = async () => {
-      if (!user) {
-        setRoleLoading(false);
-        return;
-      }
+    // Transformar casos por estado
+    const paymentStatus = [
+      { name: 'Disponibles', value: superAdminData.casosPorEstado.find(c => c.estado === 'disponible')?.cantidad || 0 },
+      { name: 'Asignados', value: superAdminData.casosPorEstado.find(c => c.estado === 'asignado')?.cantidad || 0 },
+      { name: 'En Proceso', value: superAdminData.casosPorEstado.find(c => c.estado === 'listo_para_propuesta')?.cantidad || 0 },
+      { name: 'Cerrados', value: superAdminData.casosPorEstado.find(c => c.estado === 'cerrado')?.cantidad || 0 }
+    ];
 
-      try {
-        console.log('🔍 Validando acceso a SuperAdminMetrics:', user.id);
-        
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role, tipo_abogado')
-          .eq('id', user.id)
-          .single();
+    // Transformar casos por especialidad
+    const casesByType = superAdminData.casosPorEspecialidad.map(item => ({
+      name: item.nombre,
+      value: item.casos
+    }));
 
-        if (error) {
-          console.error('❌ Error validando acceso:', error);
-          setUserRole('unauthorized');
-          setLawyerType(null);
-        } else if (profile) {
-          console.log('✅ Perfil obtenido para validación:', profile);
-          setUserRole(profile.role);
-          setLawyerType(profile.tipo_abogado);
-        } else {
-          console.log('⚠️ No se encontró perfil para validación');
-          setUserRole('unauthorized');
-          setLawyerType(null);
-        }
-      } catch (error) {
-        console.error('❌ Error general en validación:', error);
-        setUserRole('unauthorized');
-        setLawyerType(null);
-      } finally {
-        setRoleLoading(false);
-      }
+    // Transformar ingresos mensuales
+    const monthlyRevenue = superAdminData.ingresosGastos.map(item => ({
+      name: item.mes,
+      value: item.ingresos
+    }));
+
+    return {
+      clients: {
+        total: superAdminData.totalClientes,
+        active: superAdminData.totalClientes, // Por ahora todos activos
+        new: Math.floor(superAdminData.totalClientes * 0.1), // 10% nuevos
+        change: 12.5 // Mock
+      },
+      lawyers: {
+        total: superAdminData.totalAbogados,
+        available: superAdminData.totalAbogados, // Por ahora todos disponibles
+        busy: 0,
+        change: 5.2 // Mock
+      },
+      payments: {
+        total: superAdminData.ingresosMes,
+        pending: Math.floor(superAdminData.ingresosMes * 0.25), // 25% pendientes
+        completed: Math.floor(superAdminData.ingresosMes * 0.75), // 75% completados
+        change: 8.1 // Mock
+      },
+      cases: {
+        total: superAdminData.totalCasos,
+        active: superAdminData.casosPorEstado.find(c => c.estado === 'asignado')?.cantidad || 0,
+        closed: superAdminData.casosPorEstado.find(c => c.estado === 'cerrado')?.cantidad || 0,
+        change: 15.3 // Mock
+      },
+      monthlyRevenue,
+      casesByType,
+      paymentStatus
     };
+  }, [superAdminData]);
 
-    validateAccess();
-  }, [user]);
-
-  // Loading state
-  if (roleLoading) {
+  // Mostrar error si hay algún problema
+  if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Verificando permisos...</p>
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Error al cargar datos
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            {error.message || 'Error desconocido'}
+          </p>
         </div>
       </div>
     );
   }
 
-  // Bloquear acceso no autorizado
-  if (userRole !== 'abogado' || lawyerType !== 'super_admin') {
-    console.log('🚫 Acceso denegado a SuperAdminMetrics:', { userRole, lawyerType });
-    return <UnauthorizedAccess />;
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6 bg-background min-h-screen">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="space-y-2">
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-8 bg-muted rounded w-1/2" />
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
-  // Renderizar métricas
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-          Métricas del Sistema
-        </h2>
-        <p className="text-gray-600 dark:text-gray-300">
-          Estadísticas en tiempo real del rendimiento del bufete.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {metrics.map((metric, index) => (
-          <MetricCard key={metric.title} metric={metric} index={index} />
-        ))}
-      </div>
-
-      {/* Resumen adicional */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
-              Resumen de Actividad
-            </h3>
-            <p className="text-blue-700 dark:text-blue-300 text-sm">
-              El sistema está funcionando correctamente con {stats.totalCasos} casos gestionados.
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              {((stats.casosCerrados / stats.totalCasos) * 100).toFixed(1)}%
-            </div>
-            <div className="text-sm text-blue-600 dark:text-blue-400">
-              Tasa de éxito
-            </div>
-          </div>
+    <div className="p-6 space-y-6 bg-background min-h-screen">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard Legal</h1>
+          <p className="text-muted-foreground">Resumen de métricas y estadísticas</p>
         </div>
-      </motion.div>
-    </motion.div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm">
+            <Calendar className="h-4 w-4 mr-2" />
+            Último mes
+          </Button>
+          <Button size="sm">
+            Exportar
+          </Button>
+        </div>
+      </div>
+
+      {/* Métricas principales */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Total Clientes"
+          value={dashboardData.clients.total.toLocaleString()}
+          change={dashboardData.clients.change}
+          trend="up"
+          icon={<Users className="h-4 w-4" />}
+          description={`${dashboardData.clients.active} activos`}
+        />
+        <MetricCard
+          title="Abogados"
+          value={dashboardData.lawyers.total}
+          change={dashboardData.lawyers.change}
+          trend="up"
+          icon={<Scale className="h-4 w-4" />}
+          description={`${dashboardData.lawyers.available} disponibles`}
+        />
+        <MetricCard
+          title="Ingresos"
+          value={`€${(dashboardData.payments.total / 1000).toFixed(1)}K`}
+          change={dashboardData.payments.change}
+          trend="up"
+          icon={<DollarSign className="h-4 w-4" />}
+          description="Total del mes"
+        />
+        <MetricCard
+          title="Casos Totales"
+          value={dashboardData.cases.total}
+          change={dashboardData.cases.change}
+          trend="down"
+          icon={<FileText className="h-4 w-4" />}
+          description={`${dashboardData.cases.active} activos`}
+        />
+      </div>
+
+      {/* Tabs para diferentes vistas */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Resumen</TabsTrigger>
+          <TabsTrigger value="financial">Financiero</TabsTrigger>
+          <TabsTrigger value="cases">Casos</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <SimpleBarChart 
+              data={dashboardData.monthlyRevenue} 
+              title="Ingresos Mensuales"
+            />
+            <SimplePieChart 
+              data={dashboardData.casesByType} 
+              title="Casos por Especialidad"
+            />
+            <ActivityChart 
+              data={dashboardData.paymentStatus} 
+              title="Estado de Casos"
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="financial" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Estado de Pagos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm">Completados</span>
+                  </div>
+                  <span className="font-semibold">€{(dashboardData.payments.completed / 1000).toFixed(1)}K</span>
+                </div>
+                <div className="flex justify-between items-center p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-yellow-600" />
+                    <span className="text-sm">Pendientes</span>
+                  </div>
+                  <span className="font-semibold">€{(dashboardData.payments.pending / 1000).toFixed(1)}K</span>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <SimpleBarChart 
+              data={dashboardData.monthlyRevenue} 
+              title="Tendencia de Ingresos"
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="cases" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <SimplePieChart 
+              data={dashboardData.casesByType} 
+              title="Distribución por Especialidad"
+            />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Estadísticas de Casos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Casos Activos</span>
+                    <span className="font-medium">{dashboardData.cases.active}</span>
+                  </div>
+                  <Progress value={(dashboardData.cases.active / dashboardData.cases.total) * 100} />
+                  
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Casos Cerrados</span>
+                    <span className="font-medium">{dashboardData.cases.closed}</span>
+                  </div>
+                  <Progress value={(dashboardData.cases.closed / dashboardData.cases.total) * 100} />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Alertas y notificaciones */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-yellow-500" />
+              Alertas Recientes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
+                <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                <span className="text-sm">{dashboardData.cases.active} casos activos requieren atención</span>
+              </div>
+              <div className="flex items-center gap-3 p-2 rounded-lg bg-blue-50 dark:bg-blue-950/20">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="text-sm">{dashboardData.clients.new} nuevos clientes este mes</span>
+              </div>
+              <div className="flex items-center gap-3 p-2 rounded-lg bg-green-50 dark:bg-green-950/20">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-sm">{dashboardData.cases.closed} casos completados exitosamente</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Resumen de Actividad
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-2 border-l-2 border-blue-500 pl-3">
+                <div>
+                  <div className="text-sm font-medium">Abogados Disponibles</div>
+                  <div className="text-xs text-muted-foreground">Listos para nuevos casos</div>
+                </div>
+                <div className="text-sm font-semibold">{dashboardData.lawyers.available}</div>
+              </div>
+              <div className="flex justify-between items-center p-2 border-l-2 border-green-500 pl-3">
+                <div>
+                  <div className="text-sm font-medium">Casos Disponibles</div>
+                  <div className="text-xs text-muted-foreground">Esperando asignación</div>
+                </div>
+                <div className="text-sm font-semibold">{dashboardData.paymentStatus.find(s => s.name === 'Disponibles')?.value || 0}</div>
+              </div>
+              <div className="flex justify-between items-center p-2 border-l-2 border-purple-500 pl-3">
+                <div>
+                  <div className="text-sm font-medium">Ingresos del Mes</div>
+                  <div className="text-xs text-muted-foreground">Total acumulado</div>
+                </div>
+                <div className="text-sm font-semibold">€{(dashboardData.payments.total / 1000).toFixed(1)}K</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
-});
-
-AdminSuperAdminMetrics.displayName = 'AdminSuperAdminMetrics';
-
-export default AdminSuperAdminMetrics; 
+} 

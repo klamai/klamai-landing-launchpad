@@ -45,17 +45,17 @@ import { es } from 'date-fns/locale';
 import { toZonedTime } from 'date-fns-tz';
 import { useDocumentManagement } from '@/hooks/shared/useDocumentManagement';
 import { useClientDocumentManagement } from '@/hooks/client/useClientDocumentManagement';
-import DocumentViewer from '@/components/DocumentViewer';
-import DocumentUploadModal from '@/components/DocumentUploadModal';
+import DocumentViewer from '@/components/shared/DocumentViewer';
+import DocumentUploadModal from '@/components/shared/DocumentUploadModal';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import ClientDocumentUploadModal from '@/components/ClientDocumentUploadModal';
-import CaseEditModal from '@/components/CaseEditModal';
-import CaseNotesSection from '@/components/CaseNotesSection';
-import CaseAssignmentModal from '@/components/CaseAssignmentModal';
+import ClientDocumentUploadModal from '@/components/client/ClientDocumentUploadModal';
+import CaseEditModal from '@/components/shared/CaseEditModal';
+import CaseNotesSection from '@/components/shared/CaseNotesSection';
+import CaseAssignmentModal from '@/components/admin/CaseAssignmentModal';
 import { useNavigate } from 'react-router-dom';
 
 interface AdminCaseDetailModalProps {

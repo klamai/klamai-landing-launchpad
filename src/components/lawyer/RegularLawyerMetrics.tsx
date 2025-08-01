@@ -5,6 +5,7 @@ import * as RechartsPrimitive from "recharts";
 import { Bar, BarChart, CartesianGrid, XAxis, Line, LineChart, Area, AreaChart, PieChart, Pie, Cell, RadialBarChart, RadialBar } from "recharts";
 import { TrendingUp, TrendingDown, Users, Briefcase, CreditCard, FileText, DollarSign, Calendar } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Chart Configuration Types
 const THEMES = { light: "", dark: ".dark" } as const;
@@ -366,25 +367,30 @@ interface MetricCardProps {
 
 function MetricCard({ title, value, change, trend, icon: Icon }: MetricCardProps) {
   return (
-    <div className="rounded-lg border bg-card p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold">{value}</p>
-          <div className="flex items-center gap-1 mt-1">
-            {trend === "up" ? (
-              <TrendingUp className="h-4 w-4 text-green-600" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-red-600" />
-            )}
-            <span className={`text-sm ${trend === "up" ? "text-green-600" : "text-red-600"}`}>
+    <Card className="hover:shadow-md transition-shadow duration-200">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-xs text-muted-foreground">
+          {trend === "up" ? (
+            <span className="text-green-600 flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" />
               {change}
             </span>
-          </div>
-        </div>
-        <Icon className="h-8 w-8 text-muted-foreground" />
-      </div>
-    </div>
+          ) : (
+            <span className="text-red-600 flex items-center gap-1">
+              <TrendingDown className="h-3 w-3" />
+              {change}
+            </span>
+          )}
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -397,15 +403,13 @@ interface ChartCardProps {
 
 function ChartCard({ title, description, children }: ChartCardProps) {
   return (
-    <div className="rounded-lg border bg-card shadow-sm">
-      <div className="p-6 pb-4">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-      <div className="px-6 pb-6">
-        {children}
-      </div>
-    </div>
+    <Card className="hover:shadow-md transition-shadow duration-200">
+      <CardHeader>
+        <CardTitle className="text-lg">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
   );
 }
 
@@ -696,9 +700,25 @@ function LegalDashboard() {
                   axisLine={false}
                   tickMargin={8}
                 />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="nuevos" fill="#14b8a6" radius={4} />
-                <Bar dataKey="activos" fill="#8b5cf6" radius={4} />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+                  isAnimationActive={true}
+                />
+                <Bar 
+                  dataKey="nuevos" 
+                  fill="#14b8a6" 
+                  radius={4}
+                  isAnimationActive={true}
+                  animationDuration={1000}
+                />
+                <Bar 
+                  dataKey="activos" 
+                  fill="#8b5cf6" 
+                  radius={4}
+                  isAnimationActive={true}
+                  animationDuration={1000}
+                />
               </BarChart>
             </ChartContainer>
           </ChartCard>
@@ -718,12 +738,17 @@ function LegalDashboard() {
                   cy="50%"
                   outerRadius={60}
                   fill="#8884d8"
+                  isAnimationActive={true}
+                  animationDuration={1000}
                 >
                   {dashboardData.casosPorEspecialidad.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                <ChartTooltip 
+                  content={<ChartTooltipContent hideLabel />}
+                  isAnimationActive={true}
+                />
               </PieChart>
             </ChartContainer>
           </ChartCard>
@@ -742,20 +767,30 @@ function LegalDashboard() {
                   axisLine={false}
                   tickMargin={8}
                 />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  cursor={{ stroke: '#888', strokeWidth: 1 }}
+                  isAnimationActive={true}
+                />
                 <Line
                   type="monotone"
                   dataKey="ingresos"
                   stroke="#10b981"
                   strokeWidth={2}
-                  dot={false}
+                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
+                  isAnimationActive={true}
+                  animationDuration={1000}
                 />
                 <Line
                   type="monotone"
                   dataKey="gastos"
                   stroke="#ef4444"
                   strokeWidth={2}
-                  dot={false}
+                  dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: '#ef4444', strokeWidth: 2 }}
+                  isAnimationActive={true}
+                  animationDuration={1000}
                 />
               </LineChart>
             </ChartContainer>
@@ -794,13 +829,19 @@ function LegalDashboard() {
                   axisLine={false}
                   tickMargin={8}
                 />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  cursor={{ stroke: '#888', strokeWidth: 1 }}
+                  isAnimationActive={true}
+                />
                 <Area
                   type="monotone"
                   dataKey="valor"
                   stroke="#14b8a6"
                   fill="#14b8a6"
                   fillOpacity={0.2}
+                  isAnimationActive={true}
+                  animationDuration={1000}
                 />
               </AreaChart>
             </ChartContainer>

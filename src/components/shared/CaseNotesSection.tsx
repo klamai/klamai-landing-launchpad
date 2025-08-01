@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useCaseNotes } from '@/hooks/useCaseNotes';
+import { useCaseNotes } from '@/hooks/shared/useCaseNotes';
 import { useAuth } from '@/hooks/useAuth';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';

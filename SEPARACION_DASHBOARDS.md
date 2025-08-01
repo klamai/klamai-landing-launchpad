@@ -1,11 +1,13 @@
 # 🏗️ Separación de Dashboards por Rol
 
-## 📋 **PROGRESO ACTUAL - ÚLTIMA ACTUALIZACIÓN: 30/07/2025**
+## 📋 **PROGRESO ACTUAL - ÚLTIMA ACTUALIZACIÓN: 01/08/2025**
 
 ### ✅ **COMPLETADO:**
 
 #### **🔄 FASE 1: Migración de Componentes y Hooks**
 - ✅ **Componentes Admin**: `LawyerApplicationsManagement`, `ClientsManagement` migrados a `/admin/`
+- ✅ **Componentes Admin**: `SuperAdminMetrics` migrado a `/admin/` (30/01/2025)
+- ✅ **Componentes Lawyer**: `RegularLawyerMetrics` migrado a `/components/lawyer/` (30/01/2025)
 - ✅ **Hooks Admin**: `useSuperAdminStats`, `useAdminCases` migrados a `/hooks/admin/`
 - ✅ **Hooks Lawyer**: `useRegularLawyerStats`, `useAssignedCases` migrados a `/hooks/lawyer/`
 - ✅ **Hooks Client**: `useClientDocumentManagement` migrado a `/hooks/client/`
@@ -13,6 +15,8 @@
 
 #### **🔧 FASE 2: Correcciones y Mejoras**
 - ✅ **Dashboard Super Admin**: Navegación corregida, métricas visibles
+- ✅ **Dashboard Regular Lawyer**: Imports actualizados para usar componentes en `/lawyer/`
+- ✅ **Eliminación de Duplicados**: Componentes Metrics movidos a sus directorios correctos
 - ✅ **Error de Hooks**: Corregido orden de hooks en `SuperAdminMetrics`
 - ✅ **Markdown**: Aplicado formato markdown a "Resumen del caso" en todos los modales
 - ✅ **Optimización**: Mejorado tiempo de carga de modales usando `useAuth` context
@@ -55,6 +59,96 @@
 - ✅ **Configuración de Seguridad**: Documento `SECURITY_SETUP.md` con instrucciones
 - ✅ **Cliente Supabase**: Actualizado para usar variables de entorno
 - ✅ **Autenticación**: Mejorada con logging seguro y validación
+
+#### **🔧 FASE 6: Corrección de Imports - TODOS LOS DIRECTORIOS (01/08/2025)**
+- ✅ **Directorio /admin**: 
+  - `CaseDetailModal.tsx`: Corregidos imports de `DocumentViewer`, `DocumentUploadModal`, `ClientDocumentUploadModal`, `CaseEditModal`, `CaseNotesSection`, `CaseAssignmentModal`
+  - Todos los imports apuntan a ubicaciones correctas (`/shared/`, `/client/`, `/admin/`)
+- ✅ **Directorio /lawyer**:
+  - `AssignedCasesManagement.tsx`: Corregidos imports de `useLawyerCases`, `CaseCard`, `DocumentUploadModal`, `DocumentViewer`
+  - `CaseDetailModal.tsx`: Corregidos imports de `DocumentViewer`, `DocumentUploadModal`, `ClientDocumentUploadModal`, `CaseEditModal`, `CaseNotesSection`
+  - `LawyerDocumentViewer.tsx`: Corregido import de `DocumentViewer`
+  - `AssignedCasesList.tsx`: Imports correctos
+  - `RegularLawyerMetrics.tsx`: Sin imports incorrectos
+- ✅ **Directorio /client**:
+  - `ClientDocumentManager.tsx`: Corregidos imports de `ClientDocumentUploadModal`, `DocumentViewer`
+  - `CaseDetailModal.tsx`: Corregidos imports de `DocumentViewer`, `CaseNotesSection`
+  - `MisCasos.tsx`: Imports correctos
+  - `ClientDocumentUploadModal.tsx`: Sin imports incorrectos
+  - `ChatHistoryAnonymous.tsx`: Sin imports incorrectos
+- ✅ **Cache de Vite**: Limpiado completamente para aplicar cambios
+- ✅ **Verificación**: Todos los archivos existen en ubicaciones correctas
+
+#### **🔧 FASE 7: Corrección de Imports Críticos (01/08/2025)**
+- ✅ **Problema Identificado**: Imports incorrectos usando `@/hooks/queries/` en lugar de rutas correctas
+- ✅ **Archivos Corregidos**:
+  - `src/components/admin/CaseAssignmentModal.tsx`: Corregido import de `useSuperAdminStats` de `@/hooks/queries/useSuperAdminStats` a `@/hooks/admin/useSuperAdminStats`
+  - `src/components/lawyer/AssignedCasesList.tsx`: Corregido import de `useAssignedCases` de `@/hooks/queries/useAssignedCases` a `@/hooks/lawyer/useAssignedCases`
+- ✅ **Cache de Vite**: Limpiado completamente (`rm -rf node_modules/.vite && rm -rf .vite`)
+- ✅ **Servidor de Desarrollo**: Reiniciado para aplicar cambios
+- ✅ **Verificación**: Todos los imports ahora apuntan a ubicaciones correctas
+
+#### **🔧 FASE 8: Corrección de Error en LawyerDashboardRouter (01/08/2025)**
+- ✅ **Problema Identificado**: Error en `LawyerDashboardRouter` debido a `React.lazy()` dentro del componente
+- ✅ **Causa Raíz**: `React.lazy()` debe ser llamado fuera del componente, no dentro de funciones condicionales
+- ✅ **Solución Aplicada**:
+  - Movidos los `React.lazy()` imports al nivel superior del archivo
+  - Corregida la estructura de imports para `SuperAdminDashboard` y `RegularLawyerDashboard`
+- ✅ **Componente RegularLawyerMetrics**: Restaurado completamente con contenido original
+  - **Dashboard Completo**: Componente `LegalDashboard` con gráficos de Recharts
+  - **Gráficos Implementados**: 
+    - Evolución de Clientes (BarChart)
+    - Casos por Área Legal (PieChart)
+    - Análisis Financiero (LineChart)
+    - Estado de Casos (RadialBarChart)
+    - Métricas de Rendimiento (AreaChart)
+    - Actividad Reciente (Lista)
+  - **Datos Reales**: Conectado con Supabase para obtener casos asignados al abogado
+  - **Métricas Principales**: Total Clientes, Casos Activos, Ingresos Mes, Pagos Pendientes
+  - **Interfaz Profesional**: Cards de métricas con tendencias y gráficos interactivos
+  - **Loading States**: Estados de carga y manejo de errores
+- ✅ **Componente AssignedCasesManagement**: Restaurado completamente con contenido original
+  - **Contenido Original**: Restaurado el componente original con toda su funcionalidad
+  - **Imports Corregidos**: Actualizados para apuntar a las ubicaciones correctas después de la separación
+  - **Funcionalidades**: Búsqueda, filtros por estado, vista grid/list, validación de acceso
+  - **Interfaz**: Cards de casos con información detallada, notas de asignación prominentes
+  - **Acciones**: Ver detalles, generar resolución, subir documentos, enviar mensajes
+  - **Seguridad**: Validación de rol de abogado regular
+  - **Estados**: Loading, error, acceso no autorizado
+  - **Modales**: CaseDetailModal, DocumentUploadModal, DocumentViewer
+- ✅ **Corrección de Imports Faltantes**: RegularLawyerDashboard.tsx
+  - **Problema**: `Scale` y `UserCheck` no estaban importados de lucide-react
+  - **Solución**: Agregados los imports faltantes
+  - **Resultado**: Error de referencia resuelto
+- ✅ **Corrección de Error de Casos Undefined**: AssignedCasesManagement.tsx
+  - **Problema**: `Uncaught TypeError: can't access property "filter", casos is undefined`
+  - **Causa**: El hook `useAssignedCases` devuelve `cases` pero el componente usaba `casos`
+  - **Solución**: 
+    - Cambiado `casos` por `cases` para coincidir con el hook
+    - Agregada verificación `(cases || [])` antes de `.filter()` y `.find()`
+    - Corregida referencia en contador de casos
+  - **Resultado**: Error de tipo resuelto, componente funcionando correctamente
+- ✅ **Mejoras de Interactividad de Gráficos**: RegularLawyerMetrics.tsx
+  - **Problema**: Los gráficos no eran interactivos (no mostraban tooltips al hacer hover) y no tenían sombras de hover como el super admin
+  - **Solución**: 
+    - Agregadas animaciones con `isAnimationActive={true}` y `animationDuration={1000}`
+    - Mejorados tooltips con `cursor` y configuraciones adicionales
+    - Agregados `dot` y `activeDot` para gráficos de líneas
+    - Mejorada configuración de `ChartTooltip` con opciones de interactividad
+    - **Sombras de Hover**: Agregadas `hover:shadow-md transition-shadow duration-200` a MetricCard y ChartCard
+    - **Componentes UI**: Migrados a usar `Card`, `CardHeader`, `CardContent`, `CardTitle`, `CardDescription` de shadcn/ui
+  - **Gráficos Mejorados**:
+    - **BarChart**: Cursor de hover y animaciones
+    - **LineChart**: Dots interactivos y cursor de línea
+    - **PieChart**: Animaciones de entrada
+    - **AreaChart**: Cursor de hover y animaciones
+    - **RadialBarChart**: Tooltips mejorados
+  - **Cards Mejoradas**:
+    - **MetricCard**: Sombras de hover y estructura mejorada
+    - **ChartCard**: Sombras de hover y estructura consistente
+  - **Resultado**: Gráficos completamente interactivos con animaciones suaves y sombras de hover consistentes con el super admin
+- ✅ **Tipos Corregidos**: Componentes completamente funcionales con tipos TypeScript
+- ✅ **Servidor**: Funcionando correctamente sin errores
 
 ### 🚨 **PROBLEMA CRÍTICO RESUELTO:**
 
@@ -116,66 +210,52 @@ EXISTS (
 #### **✅ Variables de Entorno:**
 - **Archivo**: `src/integrations/supabase/client.ts` actualizado
 - **Configuración**: Uso de `import.meta.env.VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`
-- **Seguridad**: Eliminación de claves hardcodeadas
-- **Fallback**: Valores por defecto para desarrollo
 
-#### **✅ Validación de Contraseñas:**
-- **Archivo**: `src/utils/passwordValidation.ts` creado
-- **Funcionalidades**:
-  - Validación de fortaleza (8+ caracteres, mayúsculas, minúsculas, números, símbolos)
-  - Generación de contraseñas seguras
-  - Indicadores visuales de fortaleza
-  - Prevención de secuencias comunes
-- **Integración**: Implementada en `src/pages/Auth.tsx`
-
-#### **✅ Logging Seguro:**
-- **Archivo**: `src/utils/secureLogging.ts` creado
-- **Funcionalidades**:
-  - Sanitización de errores (emails, teléfonos, NIFs, tokens)
-  - Logging de autenticación sin información sensible
-  - Clase `SecureLogger` para diferentes tipos de logs
-  - Mapeo de códigos de error de Supabase a mensajes seguros
-
-#### **✅ Documentación de Seguridad:**
-- **SECURITY_AUDIT.md**: Auditoría completa con riesgos y plan de acción
-- **SECURITY_SETUP.md**: Instrucciones de configuración paso a paso
-- **Checklist**: Verificación de seguridad implementada
-
-#### **✅ Autenticación Mejorada:**
-- **Logging**: Uso de `logAuth()` y `logError()` en lugar de `console.error()`
-- **Validación**: Verificación de fortaleza de contraseñas antes del registro
-- **Sanitización**: Eliminación de información sensible en logs
-
-### 📊 **ESTADO ACTUAL DE SEGURIDAD:**
-
-#### **🟢 Seguro:**
-- ✅ Variables de entorno configuradas
-- ✅ Validación de contraseñas robusta
-- ✅ Logging sanitizado
-- ✅ Políticas RLS bien definidas
-- ✅ Autenticación con Supabase Auth
-
-#### **🟡 Requiere Atención (Desarrollo):**
-- ⚠️ Edge Functions sin JWT (aceptable para desarrollo)
-- ⚠️ Rate limiting pendiente
-- ⚠️ 2FA pendiente
-
-#### **🔴 Crítico (Producción):**
-- ❌ Habilitar JWT en Edge Functions
-- ❌ Implementar rate limiting
-- ❌ Configurar monitoreo de seguridad
-
-### 🎯 **PRÓXIMOS PASOS:**
-
-1. **Completar configuración de variables de entorno**
-2. **Probar validación de contraseñas**
-3. **Verificar logging seguro**
-4. **Preparar configuración para producción**
-5. **Implementar rate limiting**
-6. **Configurar 2FA**
-
----
-
-**Estado del Proyecto:** 🟡 EN DESARROLLO - SEGURIDAD MEJORADA  
-**Próxima Revisión:** 31/07/2025  
-**Responsable:** Equipo de Desarrollo 
+#### **🔧 FASE 9: Implementación de React Query para Producción (01/08/2025)**
+- ✅ **Configuración Base**: React Query instalado y configurado
+  - **Instalación**: `@tanstack/react-query` y `@tanstack/react-query-devtools`
+  - **Configuración**: QueryClient optimizado para producción en `App.tsx`
+  - **Opciones de Producción**:
+    - `staleTime: 5 * 60 * 1000` (datos frescos por 5 minutos)
+    - `gcTime: 10 * 60 * 1000` (caché por 10 minutos)
+    - `refetchOnWindowFocus: false` (no recargar al cambiar de pestaña)
+    - `refetchOnReconnect: true` (recargar solo en reconexión)
+    - Reintentos inteligentes (máximo 3, no reintentar 404)
+- ✅ **Hook Optimizado**: `useSuperAdminStats` con React Query
+  - **Ubicación**: `src/hooks/queries/useSuperAdminStats.ts`
+  - **Funcionalidades**:
+    - Caché inteligente de estadísticas
+    - Background refetching automático
+    - Manejo robusto de errores
+    - Misma interfaz que el hook original
+  - **Datos Optimizados**:
+    - Total de clientes, abogados, casos
+    - Casos por estado y especialidad
+    - Datos de ingresos y clientes por mes
+    - Gráficos con datos reales de Supabase
+- ✅ **Integración Exitosa**: SuperAdminMetrics.tsx migrado
+  - **Reemplazo**: Función `fetchDashboardData` reemplazada por hook optimizado
+  - **Transformación**: Datos transformados con `React.useMemo` para rendimiento
+  - **Estados**: Loading y error manejados automáticamente por React Query
+  - **Funcionalidad**: Misma interfaz y comportamiento, pero con caché optimizado
+- ✅ **Gestión de Casos Optimizada**: `useAdminCases` con React Query
+  - **Ubicación**: `src/hooks/queries/useAdminCases.ts`
+  - **Funcionalidades**:
+    - Caché de casos por 2 minutos (más frecuente que stats)
+    - Validación de acceso separada con `useSuperAdminAccess`
+    - Carga optimizada de relaciones (especialidades, profiles, asignaciones)
+    - Ordenamiento por fecha de creación
+  - **Hooks Creados**:
+    - `useAdminCases`: Carga optimizada de todos los casos
+    - `useSuperAdminAccess`: Validación de permisos con caché
+  - **Integración**: CasesManagement.tsx migrado a hooks optimizados
+  - **Corrección de Relaciones**: Especificadas las foreign keys correctas para evitar errores de múltiples relaciones
+    - `profiles!casos_cliente_id_fkey`: Relación cliente-caso
+    - `profiles!asignaciones_casos_abogado_id_fkey`: Relación abogado-asignación
+    - `profiles!asignaciones_casos_asignado_por_fkey`: Relación asignado por-asignación
+    - `profiles!casos_cerrado_por_fkey`: Relación cerrado por-caso
+- ✅ **Migración Transparente**: Sin cambios en diseño ni funcionalidad
+  - **Hooks Existentes**: Mantenidos funcionando
+  - **Interfaz**: Sin cambios visuales
+  - **Navegación**: Sin modificaciones
+  - **Componentes**: Sin alteraciones

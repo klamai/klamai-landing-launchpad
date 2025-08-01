@@ -2,19 +2,17 @@ import React, { useState, useEffect } from "react";
 import { SidebarDashboard, SidebarBody, SidebarLink, Logo, LogoIcon } from "@/components/ui/sidebar-dashboard";
 import { 
   LayoutDashboard, 
-  Scale, 
-  Users, 
   FileText, 
-  Settings, 
-  Bell, 
-  LogOut, 
-  Moon, 
+  Bot, 
+  UserPlus, 
+  MessageSquare,
+  Bell,
+  User,
+  LogOut,
+  Moon,
   Sun,
-  UserCheck,
-  Briefcase,
-  Bot,
-  UserPlus,
-  MessageSquare
+  Scale,
+  UserCheck
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -22,8 +20,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAssignedCases } from "@/hooks/lawyer/useAssignedCases";
-import AssignedCasesManagement from "@/components/lawyer/AssignedCasesManagement";
-import RegularLawyerMetrics from "@/components/RegularLawyerMetrics";
+import AssignedCasesManagement from "./lawyer/AssignedCasesManagement";
+import RegularLawyerMetrics from "./lawyer/RegularLawyerMetrics";
 import { Button } from "@/components/ui/button";
 
 const RegularLawyerDashboard = () => {

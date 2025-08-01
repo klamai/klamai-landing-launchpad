@@ -25,7 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toZonedTime } from 'date-fns-tz';
-import { useClientCases } from '@/hooks/useClientCases';
+import { useClientCases } from '@/hooks/client/useClientCases';
 import ClientCaseDetailModal from './CaseDetailModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';

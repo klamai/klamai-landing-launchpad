@@ -3,11 +3,11 @@ import { motion } from 'framer-motion';
 import { Search, Grid3X3, List, Scale, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useLawyerCases } from '@/hooks/useLawyerCases';
-import CaseCard from '@/components/CaseCard';
+import { useAssignedCases } from '@/hooks/lawyer/useAssignedCases';
+import CaseCard from '@/components/shared/CaseCard';
 import CaseDetailModal from '@/components/lawyer/CaseDetailModal';
-import DocumentUploadModal from '@/components/DocumentUploadModal';
-import DocumentViewer from '@/components/DocumentViewer';
+import DocumentUploadModal from '@/components/shared/DocumentUploadModal';
+import DocumentViewer from '@/components/shared/DocumentViewer';
 import { useToast } from '@/hooks/use-toast';
 import { useDocumentManagement } from '@/hooks/shared/useDocumentManagement';
 import { useClientDocumentManagement } from '@/hooks/client/useClientDocumentManagement';
@@ -36,7 +36,7 @@ const UnauthorizedAccess = () => (
   </div>
 );
 
-const LawyerAssignedCasesManagement = () => {
+const AssignedCasesManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterState, setFilterState] = useState<string>('all');
@@ -52,7 +52,7 @@ const LawyerAssignedCasesManagement = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   
-  const { casos, loading, error } = useLawyerCases();
+  const { cases, loading, error } = useAssignedCases();
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -132,7 +132,7 @@ const LawyerAssignedCasesManagement = () => {
   }
 
   // Filtrar casos basado en búsqueda y estado
-  const filteredCases = casos.filter(caso => {
+  const filteredCases = (cases || []).filter(caso => {
     const matchesSearch = !searchTerm || 
       caso.motivo_consulta?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       caso.nombre_borrador?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -147,7 +147,7 @@ const LawyerAssignedCasesManagement = () => {
   const handleViewDetails = async (casoId: string) => {
     try {
       // Find the case in our current cases array
-      const caseDetails = casos.find(c => c.id === casoId);
+      const caseDetails = (cases || []).find(c => c.id === casoId);
       if (caseDetails) {
         setSelectedCaseDetail({
           ...caseDetails,
@@ -318,7 +318,7 @@ const LawyerAssignedCasesManagement = () => {
             Mis Casos Asignados
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {filteredCases.length} de {casos.length} casos
+            {filteredCases.length} de {cases?.length || 0} casos
           </p>
         </div>
         
@@ -477,4 +477,4 @@ const LawyerAssignedCasesManagement = () => {
   );
 };
 
-export default LawyerAssignedCasesManagement; 
+export default AssignedCasesManagement; 

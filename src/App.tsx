@@ -23,7 +23,32 @@ import AuthCallback from "./pages/AuthCallback";
 import ActivarCliente from "./pages/ActivarCliente";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Configuración optimizada para producción
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Datos frescos por 5 minutos (evita recargas innecesarias)
+      staleTime: 5 * 60 * 1000,
+      // Caché por 10 minutos
+      gcTime: 10 * 60 * 1000,
+      // No recargar al cambiar de pestaña (evita recargas molestas)
+      refetchOnWindowFocus: false,
+      // Solo recargar en reconexión
+      refetchOnReconnect: true,
+      // Reintentos inteligentes
+      retry: (failureCount, error: any) => {
+        // No reintentar en errores 404
+        if (error?.status === 404) return false;
+        // Máximo 3 reintentos
+        return failureCount < 3;
+      },
+    },
+    mutations: {
+      // Reintentos para mutaciones
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

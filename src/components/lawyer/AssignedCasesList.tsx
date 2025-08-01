@@ -1,10 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Badge } from '@/components/ui/badge';
+import { Search, Filter, FileText, Clock, CheckCircle, XCircle, AlertCircle, Eye, MessageSquare, Euro, MapPin, Calendar, User, Mail } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Calendar, User, FileText, Phone, Mail } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useAssignedCases } from '@/hooks/lawyer/useAssignedCases';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';

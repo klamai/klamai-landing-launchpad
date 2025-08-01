@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { useDocumentManagement } from '@/hooks/shared/useDocumentManagement';
-import DocumentViewer from '@/components/DocumentViewer';
+import DocumentViewer from '@/components/shared/DocumentViewer';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 

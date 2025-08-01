@@ -2,7 +2,7 @@
 import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useDashboardStats } from "@/hooks/shared/useDashboardStats";
 import { 
   TrendingUp, 
   Clock, 
