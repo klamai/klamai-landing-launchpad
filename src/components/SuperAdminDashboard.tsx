@@ -28,6 +28,7 @@ import LawyersManagement from "@/components/admin/LawyersManagement";
 import LawyerApplicationsManagement from "@/components/admin/LawyerApplicationsManagement";
 import ClientsManagement from "@/components/admin/ClientsManagement";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const SuperAdminDashboard = () => {
   const [open, setOpen] = useState(false);
@@ -207,38 +208,78 @@ const SuperAdminDashboard = () => {
                 ))}
                 <SidebarLink 
                   link={{
-                    label: darkMode ? "Modo Claro" : "Modo Oscuro",
-                    href: "#",
-                    icon: darkMode ? 
-                      <Sun className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" /> :
-                      <Moon className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-                  }}
-                  onClick={toggleDarkMode}
-                />
-                <SidebarLink 
-                  link={{
                     label: "Cerrar Sesión",
                     href: "#",
-                    icon: (
-                      <LogOut className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-                    ),
+                    icon: <LogOut className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
                   }}
                   onClick={handleSignOut}
                 />
               </div>
             </div>
-            <div>
+            <div className="flex items-center justify-between">
               <SidebarLink
                 link={{
-                  label: `${user?.user_metadata?.nombre || "Super"} Admin`,
+                  label: "", // Sin nombre, solo avatar
                   href: "#",
-                  icon: (
-                    <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
-                      <UserCheck className="h-4 w-4" />
-                    </div>
-                  ),
+                  icon: (() => {
+                    const displayName = `${user?.user_metadata?.nombre || "Super"} Admin`;
+                    const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                    const avatarUrl = user?.user_metadata?.avatar_url;
+                    
+                    if (avatarUrl) {
+                      return (
+                        <div className="h-7 w-7 flex-shrink-0 rounded-full overflow-hidden">
+                          <img 
+                            src={avatarUrl} 
+                            alt={displayName}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                          <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium hidden">
+                            <UserCheck className="h-4 w-4" />
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+                        <UserCheck className="h-4 w-4" />
+                      </div>
+                    );
+                  })(),
                 }}
               />
+              
+              {/* Controles de la derecha - solo cuando sidebar está abierto */}
+              {open && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-2"
+                >
+                  {/* Toggle de tema personalizado */}
+                  <ThemeToggle 
+                    isDark={darkMode}
+                    onToggle={toggleDarkMode}
+                  />
+                  
+                  {/* Icono de notificaciones */}
+                  <button
+                    onClick={() => handleNavigation("/abogados/dashboard/notificaciones")}
+                    className="p-2 rounded-lg hover:bg-primary/10 transition-all duration-200 relative"
+                    title="Notificaciones"
+                  >
+                    <Bell className="text-neutral-700 dark:text-neutral-200 h-4 w-4" />
+                    {/* Aquí puedes agregar el indicador de notificaciones si lo necesitas */}
+                  </button>
+                </motion.div>
+              )}
             </div>
           </SidebarBody>
         </SidebarDashboard>

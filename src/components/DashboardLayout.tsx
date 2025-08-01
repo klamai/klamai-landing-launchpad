@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarDashboard, SidebarBody, SidebarLink, Logo, LogoIcon } from "@/components/ui/sidebar-dashboard";
 import { motion } from "framer-motion";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -105,35 +106,42 @@ const DashboardLayout = memo(({
       href: "/dashboard/facturacion",
       icon: <CreditCard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
       description: "Pagos y suscripciones"
-    },
-    {
-      label: "Notificaciones",
-      href: "/dashboard/notificaciones",
-      icon: (
-        <div className="relative">
-          <Bell className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-          {notificacionesNoLeidas > 0 && (
-            <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full border border-white dark:border-gray-800"></span>
-          )}
-        </div>
-      ),
-      description: "Alertas y avisos"
     }
-  ], []);
+  ], [notificacionesNoLeidas]);
 
   // Información de usuario mejorada
   const userInfo = React.useMemo(() => {
     const displayName = user?.user_metadata?.nombre || user?.email || "Usuario";
     const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    const avatarUrl = user?.user_metadata?.avatar_url;
     
     return {
-      label: displayName,
+      label: "", // Sin nombre, solo avatar
       href: "/dashboard/perfil",
       icon: (
         <div className="relative">
-          <div className="h-8 w-8 flex-shrink-0 rounded-full bg-klamai-gradient flex items-center justify-center text-white text-sm font-semibold shadow-lg">
-            {initials}
-          </div>
+          {avatarUrl ? (
+            <div className="h-8 w-8 flex-shrink-0 rounded-full overflow-hidden shadow-lg">
+              <img 
+                src={avatarUrl} 
+                alt={displayName}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  // Fallback a iniciales si la imagen falla
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+              <div className="h-8 w-8 flex-shrink-0 rounded-full bg-klamai-gradient flex items-center justify-center text-white text-sm font-semibold shadow-lg hidden">
+                {initials}
+              </div>
+            </div>
+          ) : (
+            <div className="h-8 w-8 flex-shrink-0 rounded-full bg-klamai-gradient flex items-center justify-center text-white text-sm font-semibold shadow-lg">
+              {initials}
+            </div>
+          )}
           <div className="absolute -top-1 -right-1 h-3 w-3 bg-success rounded-full border-2 border-background"></div>
         </div>
       )
@@ -191,52 +199,7 @@ const DashboardLayout = memo(({
 
                 {/* Sección de utilidades */}
                 <div className="mt-auto pt-4">
-                  {open && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.6 }}
-                      className="px-3 mb-2"
-                    >
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Utilidades
-                      </span>
-                    </motion.div>
-                  )}
                   
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: 0.7 }}
-                  >
-                    <SidebarLink 
-                      link={{
-                        label: darkMode ? "Modo Claro" : "Modo Oscuro",
-                        href: "#",
-                        icon: darkMode ? 
-                          <Sun className="text-amber-500 h-5 w-5 flex-shrink-0" /> :
-                          <Moon className="text-blue-500 h-5 w-5 flex-shrink-0" />
-                      }}
-                      onClick={onToggleDarkMode}
-                      className="group hover:bg-primary/10 rounded-lg transition-all duration-200 mb-1"
-                    />
-                  </motion.div>
-                  
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: 0.8 }}
-                  >
-                    <SidebarLink 
-                      link={{
-                        label: "Cerrar Sesión",
-                        href: "#",
-                        icon: <LogOut className="text-destructive h-5 w-5 flex-shrink-0" />
-                      }}
-                      onClick={handleSignOut}
-                      className="group hover:bg-destructive/10 rounded-lg transition-all duration-200"
-                    />
-                  </motion.div>
                 </div>
               </div>
             </div>
@@ -245,13 +208,45 @@ const DashboardLayout = memo(({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.9 }}
-              className="pt-4"
+              className="pt-4 border-t border-border/50"
             >
-              <SidebarLink
-                link={userInfo}
-                onNavigate={handleNavigation}
-                className="group hover:bg-primary/10 rounded-lg transition-all duration-200 p-2"
-              />
+              <div className="flex items-center justify-between px-3 py-2">
+                {/* Avatar del usuario */}
+                <SidebarLink
+                  link={userInfo}
+                  onNavigate={handleNavigation}
+                  className="group hover:bg-primary/10 rounded-lg transition-all duration-200 p-1"
+                />
+                
+                {/* Controles de la derecha - solo cuando sidebar está abierto */}
+                {open && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-2"
+                  >
+                    {/* Toggle de tema personalizado */}
+                    <ThemeToggle 
+                      isDark={darkMode}
+                      onToggle={onToggleDarkMode}
+                    />
+                    
+                    {/* Icono de notificaciones */}
+                    <button
+                      onClick={() => handleNavigation("/dashboard/notificaciones")}
+                      className="p-2 rounded-lg hover:bg-primary/10 transition-all duration-200 relative"
+                      title="Notificaciones"
+                    >
+                      <Bell className="text-neutral-700 dark:text-neutral-200 h-4 w-4" />
+                      {notificacionesNoLeidas > 0 && (
+                        <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full border border-white dark:border-gray-800"></span>
+                      )}
+                    </button>
+                  </motion.div>
+                )}
+              </div>
+              
               {open && (
                 <motion.div
                   initial={{ opacity: 0 }}
