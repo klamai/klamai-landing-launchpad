@@ -17,7 +17,7 @@ import {
   ChevronDown,
   Bot,
 } from 'lucide-react';
-import { useAdminCases } from '@/hooks/admin/useAdminCases';
+import { useAdminCases, useSuperAdminAccess } from '@/hooks/queries/useAdminCases';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,11 +41,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import CaseCard from '@/components/CaseCard';
+import CaseCard from '@/components/shared/CaseCard';
 import CaseDetailModal from '@/components/admin/CaseDetailModal';
-import CaseAssignmentModal from '@/components/CaseAssignmentModal';
-import AddManualCaseModal from '@/components/AddManualCaseModal';
-import AddAICaseModal from '@/components/AddAICaseModal';
+import CaseAssignmentModal from '@/components/admin/CaseAssignmentModal';
+import AddManualCaseModal from '@/components/admin/AddManualCaseModal';
+import AddAICaseModal from '@/components/admin/AddAICaseModal';
 import { supabase } from '@/integrations/supabase/client';
 
 // Componente de acceso no autorizado
@@ -71,11 +71,11 @@ const UnauthorizedAccess = () => (
 );
 
 const AdminCasesManagement = () => {
-  const { casos, loading, error, accessDenied, refetch } = useAdminCases();
+  // Usar hooks optimizados de React Query
+  const { data: casos = [], loading, error, refetch } = useAdminCases();
+  const { data: hasAccess = false, isLoading: accessLoading } = useSuperAdminAccess();
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [lawyerType, setLawyerType] = useState<string | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [specialtyFilter, setSpecialtyFilter] = useState('all');
@@ -93,42 +93,7 @@ const AdminCasesManagement = () => {
   const [processingCases, setProcessingCases] = useState<Set<string>>(new Set());
   const [especialidades, setEspecialidades] = useState<Array<{ id: number; nombre: string }>>([]);
 
-  // Validación de seguridad para super_admin
-  useEffect(() => {
-    const validateAccess = async () => {
-      if (!user) {
-        setRoleLoading(false);
-        return;
-      }
-
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role, tipo_abogado')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error('Error obteniendo perfil:', error);
-          throw error;
-        }
-
-        console.log('Perfil obtenido para validación:', profile);
-        setUserRole(profile.role);
-        setLawyerType(profile.tipo_abogado);
-        
-        console.log('Roles establecidos:', { role: profile.role, tipo_abogado: profile.tipo_abogado });
-      } catch (error) {
-        console.error('Error validating access:', error);
-      } finally {
-        setRoleLoading(false);
-      }
-    };
-
-    validateAccess();
-  }, [user]);
-
-  // Cargar especialidades desde la base de datos
+  // Cargar especialidades al montar el componente
   useEffect(() => {
     const loadEspecialidades = async () => {
       try {
@@ -137,10 +102,13 @@ const AdminCasesManagement = () => {
           .select('id, nombre')
           .order('nombre');
 
-        if (error) throw error;
-        setEspecialidades(data || []);
+        if (error) {
+          console.error('Error loading specialties:', error);
+        } else {
+          setEspecialidades(data || []);
+        }
       } catch (error) {
-        console.error('Error loading especialidades:', error);
+        console.error('Error:', error);
       }
     };
 
@@ -149,7 +117,7 @@ const AdminCasesManagement = () => {
 
   // Sistema de notificaciones en tiempo real SEGURO
   useEffect(() => {
-    if (!user || userRole !== 'abogado' || lawyerType !== 'super_admin') return;
+    if (!user || !hasAccess) return;
 
     const channel = supabase
       .channel(`casos_changes_${user.id}`) // Canal único por usuario
@@ -194,7 +162,7 @@ const AdminCasesManagement = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, userRole, lawyerType, processingCases, toast, refetch]);
+  }, [user, hasAccess, processingCases, toast, refetch]);
 
   // Función para agregar caso a la lista de procesamiento
   const addToProcessing = (casoId: string) => {
@@ -214,7 +182,7 @@ const AdminCasesManagement = () => {
 
   // Polling de respaldo SEGURO (solo verifica casos en nuestra lista)
   useEffect(() => {
-    if (processingCases.size === 0 || userRole !== 'abogado' || lawyerType !== 'super_admin') return;
+    if (processingCases.size === 0 || !hasAccess) return;
 
     const interval = setInterval(async () => {
       console.log('Verificando casos en procesamiento:', Array.from(processingCases));
@@ -242,10 +210,10 @@ const AdminCasesManagement = () => {
     }, 15000); // Verificar cada 15 segundos como respaldo
 
     return () => clearInterval(interval);
-  }, [processingCases, userRole, lawyerType, toast, refetch]);
+  }, [processingCases, hasAccess, toast, refetch]);
 
   // Loading state
-  if (roleLoading) {
+  if (accessLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -256,7 +224,7 @@ const AdminCasesManagement = () => {
     );
   }
 
-  if (accessDenied) {
+  if (!hasAccess) {
     return <UnauthorizedAccess />;
   }
 
@@ -292,11 +260,11 @@ const AdminCasesManagement = () => {
   }
 
   // Bloquear acceso no autorizado
-  if (userRole !== 'abogado' || lawyerType !== 'super_admin') {
+  if (!hasAccess) {
     console.log('🚫 Acceso denegado a AdminCasesManagement:', { 
-      userRole, 
-      lawyerType, 
-      roleLoading,
+      userRole: user?.role, 
+      lawyerType: user?.tipo_abogado, 
+      accessLoading,
       user: user?.id 
     });
     return <UnauthorizedAccess />;

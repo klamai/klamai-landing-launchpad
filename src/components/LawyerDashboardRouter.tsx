@@ -4,6 +4,10 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
+// Lazy imports fuera del componente
+const SuperAdminDashboard = React.lazy(() => import('./SuperAdminDashboard'));
+const RegularLawyerDashboard = React.lazy(() => import('./RegularLawyerDashboard'));
+
 interface LawyerDashboardRouterProps {
   children?: React.ReactNode;
 }
@@ -76,7 +80,6 @@ const LawyerDashboardRouter = ({ children }: LawyerDashboardRouterProps) => {
   // Route to appropriate dashboard based on lawyer type
   if (lawyerType === 'super_admin') {
     console.log('🚀 Redirigiendo a dashboard de super admin');
-    const SuperAdminDashboard = React.lazy(() => import('./SuperAdminDashboard'));
     return (
       <React.Suspense fallback={
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -91,7 +94,6 @@ const LawyerDashboardRouter = ({ children }: LawyerDashboardRouterProps) => {
     );
   } else if (lawyerType === 'regular') {
     console.log('🚀 Redirigiendo a dashboard de abogado regular');
-    const RegularLawyerDashboard = React.lazy(() => import('./RegularLawyerDashboard'));
     return (
       <React.Suspense fallback={
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">

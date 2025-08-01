@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRef } from "react";
-import LawyerApplicationForm from "@/components/LawyerApplicationForm";
+import LawyerApplicationForm from "@/components/admin/LawyerApplicationForm";
 
 // Animated Background Component (mismo que Auth.tsx)
 const AnimatedBackground = () => {

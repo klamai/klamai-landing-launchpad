@@ -6,7 +6,7 @@ import { Standard } from "@typebot.io/react";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import ChatHistory from "@/components/ChatHistory";
-import ChatHistoryAnonymous from "@/components/ChatHistoryAnonymous";
+import ChatHistoryAnonymous from "@/components/client/ChatHistoryAnonymous";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import ProposalDisplay from "@/components/ProposalDisplay";
 import { useAuth } from "@/hooks/useAuth";
