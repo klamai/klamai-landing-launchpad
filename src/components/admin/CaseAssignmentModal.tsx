@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useSuperAdminStats } from '@/hooks/admin/useSuperAdminStats';
+import { useAvailableLawyers, useAssignCaseToLawyer } from '@/hooks/queries/useAdminLawyers';
 import { UserPlus, Scale, MapPin, Building, User, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 
 interface CaseAssignmentModalProps {
@@ -46,9 +46,21 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
 }) => {
   const [selectedLawyerId, setSelectedLawyerId] = useState('');
   const [assignmentNotes, setAssignmentNotes] = useState('');
-  const [isAssigning, setIsAssigning] = useState(false);
-  const { abogados, loadingAbogados, errorAbogados, retryFetchAbogados, assignCaseToLawyer } = useSuperAdminStats();
+  
+  // Usar hooks de React Query
+  const { data: abogados = [], isLoading: loadingAbogados, error: errorAbogados, refetch: retryFetchAbogados } = useAvailableLawyers();
+  const { mutate: assignCase, isPending: isAssigning } = useAssignCaseToLawyer();
   const { toast } = useToast();
+
+  // Debug: Log cuando cambian los datos de abogados
+  React.useEffect(() => {
+    console.log('🔍 DEBUG - Abogados en modal:', {
+      cantidad: abogados.length,
+      loading: loadingAbogados,
+      error: errorAbogados,
+      abogados: abogados.map(a => ({ id: a.id, nombre: a.nombre, apellido: a.apellido }))
+    });
+  }, [abogados, loadingAbogados, errorAbogados]);
 
   const handleAssignCase = async () => {
     if (!caso || !selectedLawyerId) {
@@ -60,38 +72,33 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
       return;
     }
 
-    setIsAssigning(true);
-    
-    try {
-      const result = await assignCaseToLawyer(caso.id, selectedLawyerId, assignmentNotes);
-      
-      if (result.success) {
-        toast({
-          title: "¡Caso asignado exitosamente!",
-          description: `El caso ha sido asignado al abogado seleccionado${assignmentNotes ? ' con las notas especificadas' : ''}`,
-        });
-        
-        // Reset form and close modal
-        setSelectedLawyerId('');
-        setAssignmentNotes('');
-        onClose();
-      } else {
-        toast({
-          title: "Error al asignar caso",
-          description: result.error || "Ocurrió un error inesperado",
-          variant: "destructive"
-        });
+    assignCase(
+      { 
+        casoId: caso.id, 
+        abogadoId: selectedLawyerId, 
+        notas: assignmentNotes 
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: "¡Caso asignado exitosamente!",
+            description: `El caso ha sido asignado al abogado seleccionado${assignmentNotes ? ' con las notas especificadas' : ''}`,
+          });
+          
+          // Reset form and close modal
+          setSelectedLawyerId('');
+          setAssignmentNotes('');
+          onClose();
+        },
+        onError: (error) => {
+          toast({
+            title: "Error al asignar caso",
+            description: error?.message || "Ocurrió un error inesperado",
+            variant: "destructive"
+          });
+        }
       }
-    } catch (error) {
-      console.error('Error assigning case:', error);
-      toast({
-        title: "Error inesperado",
-        description: "No se pudo asignar el caso. Intenta nuevamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAssigning(false);
-    }
+    );
   };
 
   const handleClose = () => {
@@ -215,7 +222,7 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={retryFetchAbogados}
+                      onClick={() => retryFetchAbogados()}
                       className="flex items-center gap-2"
                     >
                       <RefreshCw className="h-4 w-4" />
@@ -229,7 +236,7 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={retryFetchAbogados}
+                    onClick={() => retryFetchAbogados()}
                     className="mt-2 flex items-center gap-2 mx-auto"
                   >
                     <RefreshCw className="h-4 w-4" />
@@ -246,7 +253,7 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
                       <SelectItem
                         key={abogado.id}
                         value={abogado.id}
-                        className="text-base py-3 px-3 rounded-lg transition-colors data-[state=checked]:bg-blue-600 data-[state=checked]:text-white data-[state=checked]:font-semibold hover:bg-blue-100 hover:text-blue-700 flex flex-col gap-1"
+                        className="text-base py-3 px-3 rounded-lg transition-colors data-[state=checked]:bg-blue-600 data-[state=checked]:text-white data-[state=checked]:font-semibold hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900 flex flex-col gap-1"
                       >
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-blue-500" />
@@ -254,13 +261,18 @@ const CaseAssignmentModal: React.FC<CaseAssignmentModalProps> = ({
                             {abogado.nombre} {abogado.apellido}
                           </span>
                           {abogado.tipo_abogado === 'super_admin' && (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800 border-purple-200">
                               Super Admin
+                            </Badge>
+                          )}
+                          {abogado.tipo_abogado === 'regular' && (
+                            <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 border-green-200">
+                              Regular
                             </Badge>
                           )}
                         </div>
                         <span className="text-xs text-gray-500">
-                          {abogado.casos_activos} casos activos • {abogado.creditos_disponibles} créditos
+                          {abogado.casos_activos} casos activos • {abogado.creditos_disponibles} créditos • {abogado.email}
                         </span>
                       </SelectItem>
                     ))}

@@ -117,7 +117,12 @@ const fetchAdminLawyers = async (): Promise<AbogadoInfo[]> => {
 };
 
 // Función para asignar caso a abogado
-const assignCaseToLawyer = async ({ casoId, abogadoId, notas }: AsignarCasoParams): Promise<{ success: boolean; error?: string }> => {
+const assignCaseToLawyer = async ({ casoId, abogadoId, notas, userId }: { 
+  casoId: string; 
+  abogadoId: string; 
+  notas?: string; 
+  userId: string; 
+}): Promise<{ success: boolean; error?: string }> => {
   try {
     // Usar upsert para manejar asignaciones duplicadas
     const { error } = await supabase
@@ -125,6 +130,7 @@ const assignCaseToLawyer = async ({ casoId, abogadoId, notas }: AsignarCasoParam
       .upsert({
         caso_id: casoId,
         abogado_id: abogadoId,
+        asignado_por: userId, // Agregar el campo asignado_por
         estado_asignacion: 'activa',
         fecha_asignacion: new Date().toISOString(),
         notas_asignacion: notas || null
@@ -152,6 +158,77 @@ const assignCaseToLawyer = async ({ casoId, abogadoId, notas }: AsignarCasoParam
   } catch (error) {
     console.error('Error in assignCaseToLawyer:', error);
     return { success: false, error: 'Error inesperado al asignar caso' };
+  }
+};
+
+// Función para obtener abogados disponibles para asignación
+const fetchAvailableLawyers = async (): Promise<Array<{
+  id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  especialidades: number[] | null;
+  creditos_disponibles: number;
+  casos_asignados: number;
+  casos_activos: number;
+  tipo_abogado?: string;
+}>> => {
+  try {
+    // Obtener TODOS los abogados (incluyendo super admins) con nombre
+    const { data: abogados, error } = await supabase
+      .from('profiles')
+      .select(`
+        id,
+        nombre,
+        apellido,
+        email,
+        especialidades,
+        creditos_disponibles,
+        tipo_abogado,
+        created_at
+      `)
+      .eq('role', 'abogado')
+      .not('nombre', 'is', null) // Solo abogados con nombre
+      .order('nombre');
+
+    if (error) {
+      console.error('Error fetching lawyers:', error);
+      throw new Error('Error al cargar abogados');
+    }
+
+    console.log('🔍 Abogados encontrados:', abogados?.length || 0);
+
+    // Obtener estadísticas de casos para cada abogado
+    const abogadosConStats = await Promise.all(
+      (abogados || []).map(async (abogado) => {
+        const { data: estadisticas } = await supabase
+          .from('asignaciones_casos')
+          .select('estado_asignacion')
+          .eq('abogado_id', abogado.id);
+
+        const casosActivos = estadisticas?.filter(a => a.estado_asignacion === 'activa').length || 0;
+        const totalCasos = estadisticas?.length || 0;
+
+        return {
+          id: abogado.id,
+          nombre: abogado.nombre,
+          apellido: abogado.apellido || '', // Manejar apellido vacío
+          email: abogado.email,
+          especialidades: abogado.especialidades,
+          creditos_disponibles: abogado.creditos_disponibles,
+          casos_asignados: totalCasos,
+          casos_activos: casosActivos,
+          tipo_abogado: abogado.tipo_abogado
+        };
+      })
+    );
+
+    console.log('📋 Abogados procesados:', abogadosConStats.length);
+    console.log('👥 Lista de abogados:', abogadosConStats.map(a => `${a.nombre} ${a.apellido} (${a.tipo_abogado})`));
+    return abogadosConStats;
+  } catch (error) {
+    console.error('Error:', error);
+    throw new Error('Error al cargar abogados disponibles');
   }
 };
 
@@ -188,9 +265,11 @@ export const useAdminLawyers = () => {
 // Hook para asignar casos a abogados
 export const useAssignCaseToLawyer = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
-    mutationFn: assignCaseToLawyer,
+    mutationFn: ({ casoId, abogadoId, notas }: { casoId: string; abogadoId: string; notas?: string }) =>
+      assignCaseToLawyer({ casoId, abogadoId, notas, userId: user?.id || '' }),
     onSuccess: () => {
       // Invalidar queries relacionadas para refrescar datos
       queryClient.invalidateQueries({ queryKey: ['adminLawyers'] });
@@ -199,6 +278,21 @@ export const useAssignCaseToLawyer = () => {
     },
     onError: (error) => {
       console.error('Error en asignación de caso:', error);
+    },
+  });
+}; 
+
+export const useAvailableLawyers = () => {
+  return useQuery({
+    queryKey: ['availableLawyers'],
+    queryFn: fetchAvailableLawyers,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false;
+      return failureCount < 3;
     },
   });
 }; 

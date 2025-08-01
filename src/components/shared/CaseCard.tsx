@@ -389,24 +389,24 @@ const CaseCard: React.FC<CaseCardProps> = ({
                       <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'resolucion')}>
+                  <DropdownMenuContent align="end" className="w-56 [&>*:hover]:bg-blue-50 [&>*:hover]:text-blue-900">
+                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'resolucion')} className="focus:bg-blue-50 focus:text-blue-900">
                       <Target className="h-4 w-4 mr-2 text-blue-600" />
                       Generar Resolución
                       <Badge className="ml-auto bg-blue-100 text-blue-800 text-xs">Básico</Badge>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'estrategia')}>
+                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'estrategia')} className="focus:bg-blue-50 focus:text-blue-900">
                       <Brain className="h-4 w-4 mr-2 text-purple-600" />
                       Estrategia Legal
                       <Badge className="ml-auto bg-purple-100 text-purple-800 text-xs">Premium</Badge>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'documentos')}>
+                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'documentos')} className="focus:bg-blue-50 focus:text-blue-900">
                       <Zap className="h-4 w-4 mr-2 text-green-600" />
                       Generar Documentos
                       <Badge className="ml-auto bg-green-100 text-green-800 text-xs">Pro</Badge>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'analisis')}>
+                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'analisis')} className="focus:bg-blue-50 focus:text-blue-900">
                       <Sparkles className="h-4 w-4 mr-2 text-orange-600" />
                       Análisis Completo
                       <Badge className="ml-auto bg-orange-100 text-orange-800 text-xs">Expert</Badge>
