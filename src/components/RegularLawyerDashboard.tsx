@@ -23,6 +23,7 @@ import { useAssignedCases } from "@/hooks/lawyer/useAssignedCases";
 import AssignedCasesManagement from "./lawyer/AssignedCasesManagement";
 import RegularLawyerMetrics from "./lawyer/RegularLawyerMetrics";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const RegularLawyerDashboard = () => {
   const [open, setOpen] = useState(false);
@@ -174,16 +175,6 @@ const RegularLawyerDashboard = () => {
                 ))}
                 <SidebarLink 
                   link={{
-                    label: darkMode ? "Modo Claro" : "Modo Oscuro",
-                    href: "#",
-                    icon: darkMode ? 
-                      <Sun className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" /> :
-                      <Moon className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-                  }}
-                  onClick={toggleDarkMode}
-                />
-                <SidebarLink 
-                  link={{
                     label: "Cerrar Sesión",
                     href: "#",
                     icon: (
@@ -194,19 +185,71 @@ const RegularLawyerDashboard = () => {
                 />
               </div>
             </div>
-            <div>
+            <div className="flex items-center justify-between">
               <SidebarLink
                 link={{
-                  label: `${user?.user_metadata?.nombre || "Abogado"} ${user?.user_metadata?.apellido || ""}`,
+                  label: "", // Sin nombre, solo avatar
                   href: "/abogados/dashboard/perfil",
-                  icon: (
-                    <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium">
-                      {(user?.user_metadata?.nombre || user?.email || "A")[0].toUpperCase()}
-                    </div>
-                  ),
+                  icon: (() => {
+                    const displayName = `${user?.user_metadata?.nombre || "Abogado"} ${user?.user_metadata?.apellido || ""}`;
+                    const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                    const avatarUrl = user?.user_metadata?.avatar_url;
+                    
+                    if (avatarUrl) {
+                      return (
+                        <div className="h-7 w-7 flex-shrink-0 rounded-full overflow-hidden">
+                          <img 
+                            src={avatarUrl} 
+                            alt={displayName}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                          <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium hidden">
+                            {initials}
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium">
+                        {initials}
+                      </div>
+                    );
+                  })(),
                 }}
                 onNavigate={handleNavigation}
               />
+              
+              {/* Controles de la derecha - solo cuando sidebar está abierto */}
+              {open && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-2"
+                >
+                  {/* Toggle de tema personalizado */}
+                  <ThemeToggle 
+                    isDark={darkMode}
+                    onToggle={toggleDarkMode}
+                  />
+                  
+                  {/* Icono de notificaciones */}
+                  <button
+                    onClick={() => handleNavigation("/abogados/dashboard/notificaciones")}
+                    className="p-2 rounded-lg hover:bg-primary/10 transition-all duration-200 relative"
+                    title="Notificaciones"
+                  >
+                    <Bell className="text-white dark:text-white h-4 w-4" />
+                    {/* Aquí puedes agregar el indicador de notificaciones si lo necesitas */}
+                  </button>
+                </motion.div>
+              )}
             </div>
           </SidebarBody>
         </SidebarDashboard>

@@ -23,6 +23,8 @@ import PerfilSection from "./dashboard/PerfilSection";
 import ConfiguracionSection from "./dashboard/ConfiguracionSection";
 import FacturacionSection from "./dashboard/FacturacionSection";
 import NotificacionesSection from "./dashboard/NotificacionesSection";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { motion } from "framer-motion";
 
 const ClientDashboard = () => {
   const [open, setOpen] = useState(false);
@@ -154,16 +156,6 @@ const ClientDashboard = () => {
                 ))}
                 <SidebarLink 
                   link={{
-                    label: darkMode ? "Modo Claro" : "Modo Oscuro",
-                    href: "#",
-                    icon: darkMode ? 
-                      <Sun className="text-white dark:text-white h-5 w-5 flex-shrink-0" /> :
-                      <Moon className="text-white dark:text-white h-5 w-5 flex-shrink-0" />
-                  }}
-                  onClick={toggleDarkMode}
-                />
-                <SidebarLink 
-                  link={{
                     label: "Cerrar Sesión",
                     href: "#",
                     icon: <LogOut className="text-white dark:text-white h-5 w-5 flex-shrink-0" />,
@@ -172,18 +164,70 @@ const ClientDashboard = () => {
                 />
               </div>
             </div>
-            <div>
+            <div className="flex items-center justify-between">
               <SidebarLink
                 link={{
-                  label: `${user?.user_metadata?.nombre || "Cliente"}`,
+                  label: "", // Sin nombre, solo avatar
                   href: "#",
-                  icon: (
-                    <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium">
-                      {(user?.user_metadata?.nombre || user?.email || "C")[0].toUpperCase()}
-                    </div>
-                  ),
+                  icon: (() => {
+                    const displayName = `${user?.user_metadata?.nombre || "Cliente"}`;
+                    const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                    const avatarUrl = user?.user_metadata?.avatar_url;
+                    
+                    if (avatarUrl) {
+                      return (
+                        <div className="h-7 w-7 flex-shrink-0 rounded-full overflow-hidden">
+                          <img 
+                            src={avatarUrl} 
+                            alt={displayName}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                          <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium hidden">
+                            {initials}
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium">
+                        {initials}
+                      </div>
+                    );
+                  })(),
                 }}
               />
+              
+              {/* Controles de la derecha - solo cuando sidebar está abierto */}
+              {open && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-2"
+                >
+                  {/* Toggle de tema personalizado */}
+                  <ThemeToggle 
+                    isDark={darkMode}
+                    onToggle={toggleDarkMode}
+                  />
+                  
+                  {/* Icono de notificaciones */}
+                  <button
+                    onClick={() => handleNavigation("/dashboard/notificaciones")}
+                    className="p-2 rounded-lg hover:bg-primary/10 transition-all duration-200 relative"
+                    title="Notificaciones"
+                  >
+                    <Bell className="text-white dark:text-white h-4 w-4" />
+                    {/* Aquí puedes agregar el indicador de notificaciones si lo necesitas */}
+                  </button>
+                </motion.div>
+              )}
             </div>
           </SidebarBody>
         </SidebarDashboard>
