@@ -311,35 +311,35 @@ const AdminLawyersManagement = () => {
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" className="[&>*:hover]:bg-blue-50 [&>*:hover]:text-blue-900">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                             <Eye className="w-4 h-4 mr-2" />
                             Ver Perfil
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                             <Edit className="w-4 h-4 mr-2" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                             <Mail className="w-4 h-4 mr-2" />
                             Enviar Email
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>
+                          <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                             <Layers className="w-4 h-4 mr-2" />
                             Ver Casos
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                             <RefreshCw className="w-4 h-4 mr-2" />
                             Recargar Créditos
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem className="text-red-600 focus:bg-red-50 focus:text-red-700">
                             <Ban className="w-4 h-4 mr-2" />
                             Suspender
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem className="text-red-600 focus:bg-red-50 focus:text-red-700">
                             <Trash2 className="w-4 h-4 mr-2" />
                             Eliminar
                           </DropdownMenuItem>
@@ -380,35 +380,35 @@ const AdminLawyersManagement = () => {
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="[&>*:hover]:bg-blue-50 [&>*:hover]:text-blue-900">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Perfil
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                           <Edit className="w-4 h-4 mr-2" />
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                           <Mail className="w-4 h-4 mr-2" />
                           Enviar Email
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                           <Layers className="w-4 h-4 mr-2" />
                           Ver Casos
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                           <RefreshCw className="w-4 h-4 mr-2" />
                           Recargar Créditos
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem className="text-red-600 focus:bg-red-50 focus:text-red-700">
                           <Ban className="w-4 h-4 mr-2" />
                           Suspender
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem className="text-red-600 focus:bg-red-50 focus:text-red-700">
                           <Trash2 className="w-4 h-4 mr-2" />
                           Eliminar
                         </DropdownMenuItem>

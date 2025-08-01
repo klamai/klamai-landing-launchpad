@@ -72,7 +72,7 @@ const UnauthorizedAccess = () => (
 
 const AdminCasesManagement = () => {
   // Usar hooks optimizados de React Query
-  const { data: casos = [], loading, error, refetch } = useAdminCases();
+  const { data: casos = [], isLoading, error, refetch } = useAdminCases();
   const { data: hasAccess = false, isLoading: accessLoading } = useSuperAdminAccess();
   const { user } = useAuth();
   
@@ -228,7 +228,7 @@ const AdminCasesManagement = () => {
     return <UnauthorizedAccess />;
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -263,7 +263,6 @@ const AdminCasesManagement = () => {
   if (!hasAccess) {
     console.log('🚫 Acceso denegado a AdminCasesManagement:', { 
       userRole: user?.role, 
-      lawyerType: user?.tipo_abogado, 
       accessLoading,
       user: user?.id 
     });
@@ -340,7 +339,36 @@ const AdminCasesManagement = () => {
     return matchesSearch && matchesStatus && matchesSpecialty && matchesType && matchesCity && matchesProfileType;
   });
 
-  const activeCasos = filteredCasos; // Show all filtered cases including closed ones
+  // Determinar qué casos mostrar y el título apropiado
+  const getDisplayData = () => {
+    // Si hay búsqueda o filtros específicos aplicados, mostrar todos los casos filtrados
+    const hasSearchOrFilters = searchTerm !== '' || 
+                              statusFilter !== 'all' || 
+                              specialtyFilter !== 'all' || 
+                              typeFilter !== 'all' || 
+                              cityFilter !== 'all' || 
+                              profileTypeFilter !== 'all';
+
+    if (hasSearchOrFilters) {
+      return {
+        casos: filteredCasos,
+        title: 'Casos Filtrados',
+        description: `${filteredCasos.length} casos encontrados con los filtros aplicados`,
+        icon: <Filter className="h-6 w-6 text-blue-500" />
+      };
+    }
+
+    // Si NO hay búsqueda ni filtros específicos (todo en 'all'), mostrar solo casos activos (no cerrados)
+    const activeCases = filteredCasos.filter(caso => caso.estado !== 'cerrado');
+    return {
+      casos: activeCases,
+      title: 'Casos Activos',
+      description: `${activeCases.length} casos activos encontrados para gestionar`,
+      icon: <AlertCircle className="h-6 w-6 text-red-500" />
+    };
+  };
+
+  const { casos: activeCasos, title: sectionTitle, description: sectionDescription, icon: sectionIcon } = getDisplayData();
 
   const handleViewDetails = (casoId: string) => {
     const caso = casos.find(c => c.id === casoId);
@@ -455,7 +483,7 @@ const AdminCasesManagement = () => {
               </SelectTrigger>
               <SelectContent>
                 {statusOptions.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  <SelectItem key={opt.value} value={opt.value} className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">{opt.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -465,9 +493,9 @@ const AdminCasesManagement = () => {
                 <SelectValue placeholder="Especialidad" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las ramas</SelectItem>
+                <SelectItem value="all" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Todas las ramas</SelectItem>
                 {especialidades.map(specialty => (
-                  <SelectItem key={specialty.id} value={specialty.nombre}>{specialty.nombre}</SelectItem>
+                  <SelectItem key={specialty.id} value={specialty.nombre} className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">{specialty.nombre}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -477,9 +505,9 @@ const AdminCasesManagement = () => {
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
+                <SelectItem value="all" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Todos los tipos</SelectItem>
                 {leadTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                  <SelectItem key={type} value={type} className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">{type}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -489,9 +517,9 @@ const AdminCasesManagement = () => {
                 <SelectValue placeholder="Ciudad" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las ciudades</SelectItem>
+                <SelectItem value="all" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Todas las ciudades</SelectItem>
                 {cities.map(city => (
-                  <SelectItem key={city} value={city}>{city}</SelectItem>
+                  <SelectItem key={city} value={city} className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">{city}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -501,9 +529,9 @@ const AdminCasesManagement = () => {
                 <SelectValue placeholder="Tipo de perfil" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los perfiles</SelectItem>
+                <SelectItem value="all" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Todos los perfiles</SelectItem>
                 {profileTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                  <SelectItem key={type} value={type} className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">{type}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -531,39 +559,49 @@ const AdminCasesManagement = () => {
       </Card>
 
       <Card className="border-0 shadow-md bg-gray-100 dark:bg-black">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-900 dark:text-white">
-                <AlertCircle className="h-6 w-6 text-red-500" />
-                Casos Activos
-              </CardTitle>
-              <CardDescription className="text-base text-gray-700 dark:text-gray-300 mt-1">
-                {activeCasos.length} casos activos encontrados para gestionar
+        <CardHeader className="pb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                {sectionIcon}
+                <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {sectionTitle}
+                </CardTitle>
+              </div>
+              <CardDescription className="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
+                {sectionDescription}
               </CardDescription>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Añadir Caso
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-48">
-                <DropdownMenuItem onClick={() => setAddManualCaseOpen(true)}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Añadir Caso Manual
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setAddAICaseOpen(true)} className="relative">
-                  <Bot className="h-4 w-4 mr-2" />
-                  Añadir Caso con IA
-                  <Badge className="ml-auto bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs px-1.5 py-0.5 rounded-full">
-                    Premium
-                  </Badge>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex-shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 font-medium shadow-sm transition-all duration-200 hover:shadow-md">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Añadir Caso
+                    <ChevronDown className="h-4 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 [&>*:hover]:bg-blue-50 [&>*:hover]:text-blue-900">
+                  <DropdownMenuItem onClick={() => setAddManualCaseOpen(true)} className="py-3 focus:bg-blue-50 focus:text-blue-900">
+                    <FileText className="h-4 w-4 mr-3" />
+                    <div>
+                      <div className="font-medium">Añadir Caso Manual</div>
+                      <div className="text-xs text-gray-500">Crear caso desde cero</div>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setAddAICaseOpen(true)} className="py-3 relative focus:bg-blue-50 focus:text-blue-900">
+                    <Bot className="h-4 w-4 mr-3" />
+                    <div>
+                      <div className="font-medium">Añadir Caso con IA</div>
+                      <div className="text-xs text-gray-500">Generar con inteligencia artificial</div>
+                    </div>
+                    <Badge className="ml-auto bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs px-2 py-1 rounded-full">
+                      Premium
+                    </Badge>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -673,7 +711,7 @@ const AdminCasesManagement = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleViewDetails(caso.id)}
-                            className="h-9 px-3 text-sm font-medium border-2 hover:bg-blue-50"
+                            className="h-9 px-3 text-sm font-medium border-2 hover:bg-blue-50 hover:border-blue-300 transition-colors duration-200"
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Ver
@@ -683,7 +721,7 @@ const AdminCasesManagement = () => {
                             size="sm"
                             onClick={() => handleAssignLawyer(caso.id)}
                             disabled={caso.estado === 'cerrado'}
-                            className="h-9 px-3 text-sm font-medium border-2 hover:bg-green-50"
+                            className="h-9 px-3 text-sm font-medium border-2 hover:bg-blue-50 hover:border-blue-300 transition-colors duration-200"
                           >
                             <UserPlus className="h-4 w-4 mr-1" />
                             Asignar

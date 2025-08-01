@@ -642,16 +642,16 @@ const AdminClientsManagement = () => {
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleClientDetails(client)}>
+                        <DropdownMenuContent align="end" className="[&>*:hover]:bg-blue-50 [&>*:hover]:text-blue-900">
+                          <DropdownMenuItem onClick={() => handleClientDetails(client)} className="focus:bg-blue-50 focus:text-blue-900">
                             <Eye className="w-4 h-4 mr-2" />
                             Ver Detalles
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleClientCases(client)}>
+                          <DropdownMenuItem onClick={() => handleClientCases(client)} className="focus:bg-blue-50 focus:text-blue-900">
                             <FileText className="w-4 h-4 mr-2" />
                             Ver Casos
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                             <Mail className="w-4 h-4 mr-2" />
                             Enviar Email
                           </DropdownMenuItem>
@@ -692,16 +692,16 @@ const AdminClientsManagement = () => {
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleClientDetails(client)}>
+                      <DropdownMenuContent align="end" className="[&>*:hover]:bg-blue-50 [&>*:hover]:text-blue-900">
+                        <DropdownMenuItem onClick={() => handleClientDetails(client)} className="focus:bg-blue-50 focus:text-blue-900">
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Detalles
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleClientCases(client)}>
+                        <DropdownMenuItem onClick={() => handleClientCases(client)} className="focus:bg-blue-50 focus:text-blue-900">
                           <FileText className="w-4 h-4 mr-2" />
                           Ver Casos
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900">
                           <Mail className="w-4 h-4 mr-2" />
                           Enviar Email
                         </DropdownMenuItem>

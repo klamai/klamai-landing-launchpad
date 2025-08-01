@@ -178,6 +178,51 @@ const updateCase = async (casoId: string, updates: any): Promise<{ success: bool
   }
 };
 
+// Función para asignar caso a abogado
+const assignCaseToLawyer = async ({ casoId, abogadoId, notas, userId }: { 
+  casoId: string; 
+  abogadoId: string; 
+  notas?: string; 
+  userId: string; 
+}): Promise<{ success: boolean; error?: string }> => {
+  try {
+    // Crear asignación
+    const { error: assignError } = await supabase
+      .from('asignaciones_casos')
+      .upsert({
+        caso_id: casoId,
+        abogado_id: abogadoId,
+        asignado_por: userId,
+        estado_asignacion: 'activa',
+        fecha_asignacion: new Date().toISOString(),
+        notas_asignacion: notas || null
+      }, {
+        onConflict: 'caso_id,abogado_id'
+      });
+
+    if (assignError) {
+      console.error('Error assigning case:', assignError);
+      return { success: false, error: assignError.message };
+    }
+
+    // Actualizar estado del caso
+    const { error: updateError } = await supabase
+      .from('casos')
+      .update({ estado: 'asignado' })
+      .eq('id', casoId);
+
+    if (updateError) {
+      console.error('Error updating case status:', updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in assignCaseToLawyer:', error);
+    return { success: false, error: 'Error inesperado al asignar caso' };
+  }
+};
+
 // Hook optimizado con React Query
 export const useAdminCases = () => {
   const { user } = useAuth();
@@ -268,5 +313,23 @@ export const useUpdateCase = () => {
     onError: (error) => {
       console.error('Error al actualizar caso:', error);
     },
+  });
+}; 
+
+export const useAssignCase = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ casoId, abogadoId, notas }: { casoId: string; abogadoId: string; notas?: string }) =>
+      assignCaseToLawyer({ casoId, abogadoId, notas, userId: user?.id || '' }),
+    onSuccess: () => {
+      // Invalidar y refetch queries relacionadas
+      queryClient.invalidateQueries({ queryKey: ['adminCases'] });
+      queryClient.invalidateQueries({ queryKey: ['superAdminStats'] });
+    },
+    onError: (error) => {
+      console.error('Error assigning case:', error);
+    }
   });
 }; 

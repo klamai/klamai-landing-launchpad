@@ -252,8 +252,8 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="individual">Individual</SelectItem>
-                    <SelectItem value="empresa">Empresa</SelectItem>
+                    <SelectItem value="individual" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Individual</SelectItem>
+                    <SelectItem value="empresa" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Empresa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -321,7 +321,7 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     {especialidades.map((esp) => (
-                      <SelectItem key={esp.id} value={esp.id.toString()}>
+                      <SelectItem key={esp.id} value={esp.id.toString()} className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">
                         {esp.nombre}
                       </SelectItem>
                     ))}
@@ -336,9 +336,9 @@ const AddManualCaseModal: React.FC<AddManualCaseModalProps> = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="estandar">Estándar</SelectItem>
-                    <SelectItem value="premium">Premium</SelectItem>
-                    <SelectItem value="urgente">Urgente</SelectItem>
+                    <SelectItem value="estandar" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Estándar</SelectItem>
+                    <SelectItem value="premium" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Premium</SelectItem>
+                    <SelectItem value="urgente" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Urgente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
