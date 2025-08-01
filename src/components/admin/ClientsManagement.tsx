@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminClients, useSuperAdminAccess, useClientCases, useAddClient } from "@/hooks/queries/useAdminClients";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +44,9 @@ import {
   Loader2,
   Copy,
   Send,
-  CheckCircle2
+  CheckCircle2,
+  Ban,
+  RefreshCw
 } from "lucide-react";
 
 // Componente de acceso no autorizado
@@ -55,9 +58,9 @@ const UnauthorizedAccess = () => (
           <Shield className="w-6 h-6 text-red-600" />
         </div>
         <CardTitle className="text-xl text-red-600">Acceso No Autorizado</CardTitle>
-        <p className="text-gray-600 dark:text-gray-400">
+        <CardDescription>
           No tienes permisos para acceder a esta sección. Solo los super administradores pueden gestionar clientes.
-        </p>
+        </CardDescription>
       </CardHeader>
       <CardContent className="text-center">
         <Button variant="outline" onClick={() => window.history.back()}>
@@ -68,7 +71,6 @@ const UnauthorizedAccess = () => (
   </div>
 );
 
-// Modal para añadir cliente manualmente
 const AddClientModal = ({ 
   isOpen, 
   onClose, 
@@ -78,14 +80,13 @@ const AddClientModal = ({
   onClose: () => void; 
   onSuccess: () => void; 
 }) => {
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
     email: '',
     telefono: '',
     ciudad: '',
-    tipo_perfil: 'individual' as 'individual' | 'empresa',
+    tipo_perfil: 'individual',
     razon_social: '',
     nif_cif: '',
     nombre_gerente: '',
@@ -95,42 +96,36 @@ const AddClientModal = ({
   const [invitationLink, setInvitationLink] = useState('');
   const [showInvitationLink, setShowInvitationLink] = useState(false);
   const { toast } = useToast();
+  const addClientMutation = useAddClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
+    
     try {
-      // Llamar a la Edge Function para crear cliente manualmente
-      const { data, error } = await supabase.functions.invoke('create-client-manual', {
-        body: {
-          ...formData,
-          mensaje_invitacion: formData.mensaje_invitacion || 'Te invitamos a unirte a nuestra plataforma legal.'
-        }
+      const result = await addClientMutation.mutateAsync({
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        email: formData.email,
+        telefono: formData.telefono,
+        ciudad: formData.ciudad,
+        tipo_perfil: formData.tipo_perfil,
+        razon_social: formData.razon_social,
+        nif_cif: formData.nif_cif,
+        nombre_gerente: formData.nombre_gerente,
+        direccion_fiscal: formData.direccion_fiscal
       });
 
-      if (error) {
-        console.error('Error creating client:', error);
-        toast({
-          title: "Error",
-          description: "No se pudo crear el cliente",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (data?.success) {
-        setInvitationLink(data.invitation_link);
-        setShowInvitationLink(true);
+      if (result.success) {
         toast({
           title: "¡Cliente Creado!",
-          description: "El cliente ha sido creado exitosamente y se ha enviado el email de invitación.",
+          description: "El cliente ha sido creado exitosamente.",
         });
         onSuccess();
+        handleClose();
       } else {
         toast({
           title: "Error",
-          description: data?.message || "Error al crear el cliente",
+          description: result.error || "Error al crear el cliente",
           variant: "destructive",
         });
       }
@@ -141,8 +136,6 @@ const AddClientModal = ({
         description: "Error inesperado al crear el cliente",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -188,8 +181,35 @@ const AddClientModal = ({
           <DialogTitle>Añadir Cliente Manualmente</DialogTitle>
         </DialogHeader>
         
-        {!showInvitationLink ? (
-          <form onSubmit={handleSubmit} className="space-y-6">
+        {showInvitationLink ? (
+          <div className="space-y-4">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                <h3 className="font-semibold text-green-800 dark:text-green-200">Cliente Creado Exitosamente</h3>
+              </div>
+              <p className="text-green-700 dark:text-green-300 text-sm">
+                El cliente ha sido añadido a la plataforma.
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Enlace de Invitación</Label>
+              <div className="flex gap-2">
+                <Input value={invitationLink} readOnly />
+                <Button onClick={copyInvitationLink} size="sm">
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button onClick={handleClose}>Cerrar</Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Formulario de cliente */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="nombre">Nombre *</Label>
@@ -209,9 +229,6 @@ const AddClientModal = ({
                   required
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="email">Email *</Label>
                 <Input
@@ -223,86 +240,82 @@ const AddClientModal = ({
                 />
               </div>
               <div>
-                <Label htmlFor="telefono">Teléfono</Label>
+                <Label htmlFor="telefono">Teléfono *</Label>
                 <Input
                   id="telefono"
                   value={formData.telefono}
                   onChange={(e) => setFormData({...formData, telefono: e.target.value})}
+                  required
                 />
+              </div>
+              <div>
+                <Label htmlFor="ciudad">Ciudad *</Label>
+                <Input
+                  id="ciudad"
+                  value={formData.ciudad}
+                  onChange={(e) => setFormData({...formData, ciudad: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="tipo_perfil">Tipo de Perfil *</Label>
+                <select
+                  id="tipo_perfil"
+                  value={formData.tipo_perfil}
+                  onChange={(e) => setFormData({...formData, tipo_perfil: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  required
+                >
+                  <option value="individual">Individual</option>
+                  <option value="empresa">Empresa</option>
+                </select>
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="ciudad">Ciudad</Label>
-              <Input
-                id="ciudad"
-                value={formData.ciudad}
-                onChange={(e) => setFormData({...formData, ciudad: e.target.value})}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="tipo_perfil">Tipo de Perfil</Label>
-              <select
-                id="tipo_perfil"
-                value={formData.tipo_perfil}
-                onChange={(e) => setFormData({...formData, tipo_perfil: e.target.value as 'individual' | 'empresa'})}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              >
-                <option value="individual">Individual</option>
-                <option value="empresa">Empresa</option>
-              </select>
-            </div>
-
             {formData.tipo_perfil === 'empresa' && (
-              <div className="space-y-4 border p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <h4 className="font-medium">Información de Empresa</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="razon_social">Razón Social</Label>
-                    <Input
-                      id="razon_social"
-                      value={formData.razon_social}
-                      onChange={(e) => setFormData({...formData, razon_social: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="nif_cif">NIF/CIF</Label>
-                    <Input
-                      id="nif_cif"
-                      value={formData.nif_cif}
-                      onChange={(e) => setFormData({...formData, nif_cif: e.target.value})}
-                    />
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="razon_social">Razón Social</Label>
+                  <Input
+                    id="razon_social"
+                    value={formData.razon_social}
+                    onChange={(e) => setFormData({...formData, razon_social: e.target.value})}
+                  />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="nombre_gerente">Nombre del Gerente</Label>
-                    <Input
-                      id="nombre_gerente"
-                      value={formData.nombre_gerente}
-                      onChange={(e) => setFormData({...formData, nombre_gerente: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="direccion_fiscal">Dirección Fiscal</Label>
-                    <Input
-                      id="direccion_fiscal"
-                      value={formData.direccion_fiscal}
-                      onChange={(e) => setFormData({...formData, direccion_fiscal: e.target.value})}
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="nif_cif">NIF/CIF</Label>
+                  <Input
+                    id="nif_cif"
+                    value={formData.nif_cif}
+                    onChange={(e) => setFormData({...formData, nif_cif: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="nombre_gerente">Nombre del Gerente</Label>
+                  <Input
+                    id="nombre_gerente"
+                    value={formData.nombre_gerente}
+                    onChange={(e) => setFormData({...formData, nombre_gerente: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="direccion_fiscal">Dirección Fiscal</Label>
+                  <Input
+                    id="direccion_fiscal"
+                    value={formData.direccion_fiscal}
+                    onChange={(e) => setFormData({...formData, direccion_fiscal: e.target.value})}
+                  />
                 </div>
               </div>
             )}
 
             <div>
-              <Label htmlFor="mensaje_invitacion">Mensaje de Invitación (opcional)</Label>
+              <Label htmlFor="mensaje_invitacion">Mensaje de Invitación</Label>
               <Textarea
                 id="mensaje_invitacion"
                 value={formData.mensaje_invitacion}
                 onChange={(e) => setFormData({...formData, mensaje_invitacion: e.target.value})}
-                placeholder="Mensaje personalizado para incluir en el email de invitación..."
+                placeholder="Mensaje personalizado para la invitación..."
                 rows={3}
               />
             </div>
@@ -311,8 +324,8 @@ const AddClientModal = ({
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? (
+              <Button type="submit" disabled={addClientMutation.isPending}>
+                {addClientMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Creando...
@@ -326,43 +339,6 @@ const AddClientModal = ({
               </Button>
             </DialogFooter>
           </form>
-        ) : (
-          <div className="space-y-4">
-            <div className="text-center">
-              <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                ¡Cliente Creado Exitosamente!
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Se ha enviado un email de invitación al cliente. También puedes copiar el enlace de invitación:
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Enlace de Invitación</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={invitationLink}
-                  readOnly
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={copyInvitationLink}
-                  size="sm"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button onClick={handleClose}>
-                Cerrar
-              </Button>
-            </DialogFooter>
-          </div>
         )}
       </DialogContent>
     </Dialog>
@@ -371,157 +347,42 @@ const AddClientModal = ({
 
 const AdminClientsManagement = () => {
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [lawyerType, setLawyerType] = useState<string | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true);
-  
-  const [clients, setClients] = useState<any[]>([]);
-  const [filteredClients, setFilteredClients] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [showClientDetails, setShowClientDetails] = useState(false);
   const [showClientCases, setShowClientCases] = useState(false);
-  const [clientCases, setClientCases] = useState<any[]>([]);
-  const [loadingCases, setLoadingCases] = useState(false);
   const [openMenuClientId, setOpenMenuClientId] = useState<string | null>(null);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const { toast } = useToast();
 
-  // Validación de roles
-  useEffect(() => {
-    const validateAccess = async () => {
-      if (!user) {
-        setRoleLoading(false);
-        return;
-      }
-
-      try {
-        console.log('Validando acceso a AdminClientsManagement:', user.id);
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role, tipo_abogado')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching profile:', error);
-          setUserRole('unauthorized');
-          setRoleLoading(false);
-          return;
-        }
-
-        console.log('Perfil obtenido para validación:', profile);
-
-        if (profile.role !== 'abogado' || profile.tipo_abogado !== 'super_admin') {
-          console.log('Acceso denegado: usuario no es super admin');
-          setUserRole('unauthorized');
-          setRoleLoading(false);
-          return;
-        }
-
-        setUserRole(profile.role);
-        setLawyerType(profile.tipo_abogado);
-        console.log('Acceso autorizado para AdminClientsManagement');
-      } catch (error) {
-        console.error('Error en validación:', error);
-        setUserRole('unauthorized');
-      } finally {
-        setRoleLoading(false);
-      }
-    };
-
-    validateAccess();
-  }, [user]);
-
-  useEffect(() => {
-    if (userRole === 'abogado' && lawyerType === 'super_admin') {
-      fetchClients();
-    }
-  }, [userRole, lawyerType]);
-
-  const fetchClients = async () => {
-    setLoading(true);
-    
-    try {
-      // Llamar a la Edge Function
-      const { data, error } = await supabase.functions.invoke('get-clients', {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
-      });
-
-      if (error) {
-        console.error('Error fetching clients:', error);
-        setClients([]);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los clientes",
-          variant: "destructive",
-        });
-      } else {
-        setClients(data.data || []);
-        setFilteredClients(data.data || []);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      setClients([]);
-      toast({
-        title: "Error",
-        description: "Error inesperado al cargar los clientes",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Hooks optimizados con React Query
+  const { data: hasSuperAdminAccess, isLoading: accessLoading } = useSuperAdminAccess();
+  const { data: clients, isLoading: loading, error: clientsError, refetch: refetchClients } = useAdminClients();
+  const { data: clientCases, isLoading: loadingCases } = useClientCases(selectedClient?.id);
 
   // Filtrar clientes por búsqueda
-  useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredClients(clients);
-    } else {
-      const filtered = clients.filter(client => 
-        client.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.telefono?.includes(searchTerm) ||
-        client.ciudad?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredClients(filtered);
-    }
+  const filteredClients = React.useMemo(() => {
+    if (!clients) return [];
+    if (searchTerm.trim() === "") return clients;
+    
+    return clients.filter(client => 
+      client.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.telefono?.includes(searchTerm) ||
+      client.ciudad?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   }, [searchTerm, clients]);
 
-  const fetchClientCases = async (clientId: string) => {
-    setLoadingCases(true);
-    try {
-      const { data, error } = await supabase
-        .from('casos')
-        .select(`
-          id,
-          motivo_consulta,
-          estado,
-          created_at,
-          compras_realizadas,
-          limite_compras,
-          costo_en_creditos,
-          valor_estimado
-        `)
-        .eq('cliente_id', clientId)
-        .order('created_at', { ascending: false });
+  // Funciones para manejar acciones de clientes
+  const handleClientDetails = (client: any) => {
+    setSelectedClient(client);
+    setShowClientDetails(true);
+  };
 
-      if (error) {
-        console.error('Error fetching client cases:', error);
-        setClientCases([]);
-      } else {
-        setClientCases(data || []);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      setClientCases([]);
-    } finally {
-      setLoadingCases(false);
-    }
+  const handleClientCases = (client: any) => {
+    setSelectedClient(client);
+    setShowClientCases(true);
   };
 
   const getStatusBadge = (estado: string) => {
@@ -541,40 +402,47 @@ const AdminClientsManagement = () => {
     }
   };
 
-  const handleClientDetails = (client: any) => {
-    setSelectedClient(client);
-    setShowClientDetails(true);
-  };
-
-  const handleClientCases = async (client: any) => {
-    setSelectedClient(client);
-    await fetchClientCases(client.id);
-    setShowClientCases(true);
-  };
-
-  const handleAddClientSuccess = () => {
-    fetchClients(); // Recargar la lista
-    setShowAddClientModal(false);
-  };
-
   // Loading state
-  if (roleLoading) {
+  if (accessLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Cargando gestión de clientes...</p>
+        </div>
       </div>
     );
   }
 
   // Unauthorized access
-  if (userRole !== 'abogado' || lawyerType !== 'super_admin') {
+  if (!hasSuperAdminAccess) {
     return <UnauthorizedAccess />;
   }
 
-  if (loading) {
+  // Error state
+  if (clientsError) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+              <Ban className="w-6 h-6 text-red-600" />
+            </div>
+            <CardTitle className="text-xl text-red-600">Error al Cargar</CardTitle>
+            <CardDescription>
+              {clientsError.message || 'Error inesperado al cargar los clientes'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button onClick={() => refetchClients()} className="mr-2">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reintentar
+            </Button>
+            <Button variant="outline" onClick={() => window.history.back()}>
+              Volver
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -619,7 +487,7 @@ const AdminClientsManagement = () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Clientes</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{clients.length}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{clients?.length || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -634,7 +502,7 @@ const AdminClientsManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Casos Activos</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {clients.reduce((sum, client) => sum + (client.casos_activos || 0), 0)}
+                  {clients?.reduce((sum, client) => sum + (client.casos_activos || 0), 0)}
                 </p>
               </div>
             </div>
@@ -650,7 +518,7 @@ const AdminClientsManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pagos Realizados</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {clients.reduce((sum, client) => sum + (client.total_pagos || 0), 0)}
+                  {clients?.reduce((sum, client) => sum + (client.total_pagos || 0), 0)}
                 </p>
               </div>
             </div>
@@ -666,7 +534,7 @@ const AdminClientsManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Ingresos Totales</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  €{clients.reduce((sum, client) => sum + (client.ingresos_totales || 0), 0).toFixed(2)}
+                  €{clients?.reduce((sum, client) => sum + (client.ingresos_totales || 0), 0).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -1004,7 +872,10 @@ const AdminClientsManagement = () => {
       <AddClientModal
         isOpen={showAddClientModal}
         onClose={() => setShowAddClientModal(false)}
-        onSuccess={handleAddClientSuccess}
+        onSuccess={() => {
+          setShowAddClientModal(false);
+          refetchClients(); // Recargar la lista
+        }}
       />
     </div>
   );

@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { useUpdateCase } from '@/hooks/queries/useAdminCases';
 import { supabase } from '@/integrations/supabase/client';
 
 interface CaseEditModalProps {
@@ -75,6 +76,7 @@ const CaseEditModal: React.FC<CaseEditModalProps> = ({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [especialidades, setEspecialidades] = useState<Array<{id: number, nombre: string}>>([]);
+  const updateCaseMutation = useUpdateCase();
   
   // Formulario de datos del caso
   const [formData, setFormData] = useState({
@@ -156,76 +158,84 @@ const CaseEditModal: React.FC<CaseEditModalProps> = ({
   const handleSave = async () => {
     if (!caso) return;
 
-    setIsLoading(true);
-    try {
-      // Actualizar datos del caso
-      const { error: casoError } = await supabase
-        .from('casos')
-        .update({
-          motivo_consulta: formData.motivo_consulta,
-          resumen_caso: formData.resumen_caso,
-          guia_abogado: formData.guia_abogado,
-          valor_estimado: formData.valor_estimado,
-          tipo_lead: formData.tipo_lead as any,
-          especialidad_id: formData.especialidad_id ? parseInt(formData.especialidad_id) : null,
-          // Datos del cliente (guardar en campos borrador)
-          nombre_borrador: clientData.nombre,
-          apellido_borrador: clientData.apellido,
-          email_borrador: clientData.email,
-          telefono_borrador: clientData.telefono,
-          ciudad_borrador: clientData.ciudad,
-          tipo_perfil_borrador: clientData.tipo_perfil as any,
-          razon_social_borrador: clientData.razon_social,
-          nif_cif_borrador: clientData.nif_cif,
-          nombre_gerente_borrador: clientData.nombre_gerente,
-          direccion_fiscal_borrador: clientData.direccion_fiscal,
-          preferencia_horaria_contacto: clientData.preferencia_horaria_contacto
-        })
-        .eq('id', caso.id);
+    const updates = {
+      motivo_consulta: formData.motivo_consulta,
+      resumen_caso: formData.resumen_caso,
+      guia_abogado: formData.guia_abogado,
+      valor_estimado: formData.valor_estimado,
+      tipo_lead: formData.tipo_lead as any,
+      especialidad_id: formData.especialidad_id ? parseInt(formData.especialidad_id) : null,
+      // Datos del cliente (guardar en campos borrador)
+      nombre_borrador: clientData.nombre,
+      apellido_borrador: clientData.apellido,
+      email_borrador: clientData.email,
+      telefono_borrador: clientData.telefono,
+      ciudad_borrador: clientData.ciudad,
+      tipo_perfil_borrador: clientData.tipo_perfil as any,
+      razon_social_borrador: clientData.razon_social,
+      nif_cif_borrador: clientData.nif_cif,
+      nombre_gerente_borrador: clientData.nombre_gerente,
+      direccion_fiscal_borrador: clientData.direccion_fiscal,
+      preferencia_horaria_contacto: clientData.preferencia_horaria_contacto
+    };
 
-      if (casoError) throw casoError;
+    updateCaseMutation.mutate(
+      { casoId: caso.id, updates },
+      {
+        onSuccess: async (data) => {
+          if (data.success) {
+            // Si el cliente tiene un perfil, también actualizar el perfil
+            if (caso.profiles && caso.cliente_id) {
+              try {
+                const { error: profileError } = await supabase
+                  .from('profiles')
+                  .update({
+                    nombre: clientData.nombre,
+                    apellido: clientData.apellido,
+                    email: clientData.email,
+                    telefono: clientData.telefono,
+                    ciudad: clientData.ciudad,
+                    tipo_perfil: clientData.tipo_perfil as any,
+                    razon_social: clientData.razon_social,
+                    nif_cif: clientData.nif_cif,
+                    nombre_gerente: clientData.nombre_gerente,
+                    direccion_fiscal: clientData.direccion_fiscal
+                  })
+                  .eq('id', caso.cliente_id);
 
-      // Si el cliente tiene un perfil, también actualizar el perfil
-      if (caso.profiles && caso.cliente_id) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            nombre: clientData.nombre,
-            apellido: clientData.apellido,
-            email: clientData.email,
-            telefono: clientData.telefono,
-            ciudad: clientData.ciudad,
-            tipo_perfil: clientData.tipo_perfil as any,
-            razon_social: clientData.razon_social,
-            nif_cif: clientData.nif_cif,
-            nombre_gerente: clientData.nombre_gerente,
-            direccion_fiscal: clientData.direccion_fiscal
-          })
-          .eq('id', caso.cliente_id);
+                if (profileError) {
+                  console.warn('Error actualizando perfil del cliente:', profileError);
+                }
+              } catch (error) {
+                console.warn('Error actualizando perfil del cliente:', error);
+              }
+            }
 
-        if (profileError) {
-          console.warn('Error actualizando perfil del cliente:', profileError);
-          // No lanzar error aquí, ya que el caso se actualizó correctamente
+            toast({
+              title: "Caso actualizado",
+              description: "Los datos del caso se han guardado correctamente.",
+            });
+
+            onSave();
+            onClose();
+          } else {
+            toast({
+              title: "Error",
+              description: data.error || "No se pudo actualizar el caso. Inténtalo de nuevo.",
+              variant: "destructive",
+            });
+          }
+        },
+        onError: (error) => {
+          console.error('Error actualizando caso:', error);
+          toast({
+            title: "Error",
+            description: "No se pudo actualizar el caso. Inténtalo de nuevo.",
+            variant: "destructive",
+          });
         }
       }
-
-      toast({
-        title: "Caso actualizado",
-        description: "Los datos del caso se han guardado correctamente.",
-      });
-
-      onSave();
-      onClose();
-    } catch (error) {
-      console.error('Error actualizando caso:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el caso. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    );
   };
 
   if (!caso) return null;
@@ -463,11 +473,11 @@ const CaseEditModal: React.FC<CaseEditModalProps> = ({
 
         {/* Footer fijo para acciones */}
         <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t px-6 py-4 flex justify-end gap-3 z-10">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+          <Button variant="outline" onClick={onClose} disabled={updateCaseMutation.isPending}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={isLoading}>
-            {isLoading ? (
+          <Button onClick={handleSave} disabled={updateCaseMutation.isPending}>
+            {updateCaseMutation.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Guardando...

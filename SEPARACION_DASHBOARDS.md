@@ -211,51 +211,119 @@ EXISTS (
 - **Archivo**: `src/integrations/supabase/client.ts` actualizado
 - **Configuración**: Uso de `import.meta.env.VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`
 
-#### **🔧 FASE 9: Implementación de React Query para Producción (01/08/2025)**
-- ✅ **Configuración Base**: React Query instalado y configurado
-  - **Instalación**: `@tanstack/react-query` y `@tanstack/react-query-devtools`
-  - **Configuración**: QueryClient optimizado para producción en `App.tsx`
-  - **Opciones de Producción**:
-    - `staleTime: 5 * 60 * 1000` (datos frescos por 5 minutos)
-    - `gcTime: 10 * 60 * 1000` (caché por 10 minutos)
-    - `refetchOnWindowFocus: false` (no recargar al cambiar de pestaña)
-    - `refetchOnReconnect: true` (recargar solo en reconexión)
-    - Reintentos inteligentes (máximo 3, no reintentar 404)
-- ✅ **Hook Optimizado**: `useSuperAdminStats` con React Query
-  - **Ubicación**: `src/hooks/queries/useSuperAdminStats.ts`
-  - **Funcionalidades**:
-    - Caché inteligente de estadísticas
-    - Background refetching automático
-    - Manejo robusto de errores
-    - Misma interfaz que el hook original
-  - **Datos Optimizados**:
-    - Total de clientes, abogados, casos
-    - Casos por estado y especialidad
-    - Datos de ingresos y clientes por mes
-    - Gráficos con datos reales de Supabase
-- ✅ **Integración Exitosa**: SuperAdminMetrics.tsx migrado
-  - **Reemplazo**: Función `fetchDashboardData` reemplazada por hook optimizado
-  - **Transformación**: Datos transformados con `React.useMemo` para rendimiento
-  - **Estados**: Loading y error manejados automáticamente por React Query
-  - **Funcionalidad**: Misma interfaz y comportamiento, pero con caché optimizado
-- ✅ **Gestión de Casos Optimizada**: `useAdminCases` con React Query
-  - **Ubicación**: `src/hooks/queries/useAdminCases.ts`
-  - **Funcionalidades**:
-    - Caché de casos por 2 minutos (más frecuente que stats)
-    - Validación de acceso separada con `useSuperAdminAccess`
-    - Carga optimizada de relaciones (especialidades, profiles, asignaciones)
-    - Ordenamiento por fecha de creación
-  - **Hooks Creados**:
-    - `useAdminCases`: Carga optimizada de todos los casos
-    - `useSuperAdminAccess`: Validación de permisos con caché
-  - **Integración**: CasesManagement.tsx migrado a hooks optimizados
-  - **Corrección de Relaciones**: Especificadas las foreign keys correctas para evitar errores de múltiples relaciones
-    - `profiles!casos_cliente_id_fkey`: Relación cliente-caso
-    - `profiles!asignaciones_casos_abogado_id_fkey`: Relación abogado-asignación
-    - `profiles!asignaciones_casos_asignado_por_fkey`: Relación asignado por-asignación
-    - `profiles!casos_cerrado_por_fkey`: Relación cerrado por-caso
-- ✅ **Migración Transparente**: Sin cambios en diseño ni funcionalidad
-  - **Hooks Existentes**: Mantenidos funcionando
-  - **Interfaz**: Sin cambios visuales
-  - **Navegación**: Sin modificaciones
-  - **Componentes**: Sin alteraciones
+## **FASE 9: OPTIMIZACIÓN CON REACT QUERY - SUPER ADMIN** ✅
+
+### **🎯 OBJETIVO:**
+Optimizar el dashboard del super admin con React Query para mejorar rendimiento, caché y experiencia de usuario.
+
+### **✅ COMPLETADO:**
+
+#### **1. Configuración Base React Query**
+- ✅ **QueryClient configurado** en `App.tsx` con opciones optimizadas para producción
+- ✅ **DevTools habilitados** para desarrollo
+- ✅ **Configuración de caché**: staleTime 5min, gcTime 10min, refetchOnWindowFocus: false
+
+#### **2. Métricas del Dashboard Optimizadas**
+- ✅ **Hook creado**: `useSuperAdminStats` en `src/hooks/queries/useSuperAdminStats.ts`
+- ✅ **Integración**: `SuperAdminMetrics.tsx` migrado a React Query
+- ✅ **Caché inteligente**: Datos frescos por 5 minutos, sin recargas innecesarias
+- ✅ **Transformación de datos**: `React.useMemo` para mantener interfaz existente
+
+#### **3. Gestión de Casos Optimizada**
+- ✅ **Hook creado**: `useAdminCases` con React Query
+- ✅ **Validación de acceso**: `useSuperAdminAccess` separado y optimizado
+- ✅ **Corrección de relaciones**: Especificadas foreign keys correctas para evitar errores
+- ✅ **Integración**: `CasesManagement.tsx` migrado completamente
+
+#### **4. Gestión de Abogados Optimizada**
+- ✅ **Hook creado**: `useAdminLawyers` en `src/hooks/queries/useAdminLawyers.ts`
+- ✅ **Funcionalidades**:
+  - Carga optimizada de abogados con estadísticas
+  - Asignación de casos con mutaciones optimizadas
+  - Validación de acceso separada
+  - Caché de 2 minutos para datos frescos
+- ✅ **Integración**: `LawyersManagement.tsx` migrado a hooks optimizados
+
+#### **5. Gestión de Clientes Optimizada**
+- ✅ **Hook creado**: `useAdminClients` en `src/hooks/queries/useAdminClients.ts`
+- ✅ **Funcionalidades**:
+  - Carga optimizada de clientes con estadísticas
+  - Casos por cliente con hook específico
+  - Añadir clientes con mutaciones optimizadas
+  - Validación de acceso separada
+  - Caché de 2 minutos para datos frescos
+- ✅ **Integración**: `ClientsManagement.tsx` migrado completamente
+
+#### **6. Gestión de Solicitudes de Abogados Optimizada**
+- ✅ **Hook creado**: `useAdminLawyerApplications` en `src/hooks/queries/useAdminLawyerApplications.ts`
+- ✅ **Funcionalidades**:
+  - Carga optimizada de solicitudes con caché de 1 minuto
+  - Especialidades con caché de 30 minutos (datos estáticos)
+  - Aprobación automática con mutaciones optimizadas
+  - Rechazo de solicitudes con mutaciones optimizadas
+  - Validación de acceso separada
+  - Optimistic updates para mejor UX
+- ✅ **Integración**: `LawyerApplicationsManagement.tsx` migrado completamente
+- ✅ **Corrección de errores**: Uso correcto de especialidades como objeto `{[key: number]: string}`
+- ✅ **Hooks Creados**:
+  - `useAdminLawyerApplications`: Carga de solicitudes
+  - `useEspecialidades`: Carga de especialidades
+  - `useApproveLawyerAutomated`: Aprobación automática
+  - `useRejectLawyerApplication`: Rechazo de solicitudes
+
+#### **7. Optimización de Acciones de Casos**
+- ✅ **Hooks creados** en `useAdminCases.ts`:
+  - `useCloseCase`: Cerrar casos con mutaciones optimizadas
+  - `useUpdateCase`: Actualizar casos con mutaciones optimizadas
+- ✅ **Funcionalidades**:
+  - Cierre de casos sin recarga de página
+  - Edición de casos sin recarga de página
+  - Optimistic updates para mejor UX
+  - Invalidación automática de caché relacionado
+  - Estados de carga optimizados
+- ✅ **Componentes actualizados**:
+  - `CaseDetailModal.tsx`: Usa hooks optimizados para cerrar casos
+  - `CaseEditModal.tsx`: Usa hooks optimizados para editar casos
+- ✅ **Corrección de Modal**: `CaseDetailModal` ahora usa datos del caché de React Query
+  - **Problema**: Modal no se actualizaba al editar el caso
+  - **Solución**: Usa `updatedCaso` del caché en lugar de props estáticas
+  - **Resultado**: Modal se actualiza automáticamente al editar el caso
+  - **Corrección de Hoisting**: Movida declaración de `updatedCaso` antes de su uso en hooks
+- ✅ **Beneficios**:
+  - Sin `window.location.reload()` en edición
+  - Actualización inmediata del estado del caso
+  - Navegación fluida sin interrupciones
+  - Modal de detalles siempre sincronizado con datos actuales
+
+### **🔧 BENEFICIOS IMPLEMENTADOS:**
+
+#### **Rendimiento:**
+- ✅ **Sin recargas** al navegar entre pestañas
+- ✅ **Caché inteligente** que evita requests innecesarios
+- ✅ **Datos frescos** automáticamente cuando es necesario
+- ✅ **Optimistic updates** para mutaciones
+
+#### **Experiencia de Usuario:**
+- ✅ **Navegación fluida** sin interrupciones
+- ✅ **Estados de carga** consistentes
+- ✅ **Manejo de errores** mejorado
+- ✅ **Retry automático** en fallos de red
+
+#### **Desarrollo:**
+- ✅ **DevTools** para debugging
+- ✅ **TypeScript** completamente tipado
+- ✅ **Separación de responsabilidades** clara
+- ✅ **Reutilización** de hooks entre componentes
+
+### **📊 ESTADO ACTUAL:**
+- ✅ **Super Admin Dashboard**: Completamente optimizado
+- ✅ **Métricas**: Funcionando con React Query
+- ✅ **Gestión de Casos**: Optimizada y sin errores
+- ✅ **Gestión de Abogados**: Optimizada y funcional
+- ✅ **Gestión de Clientes**: Optimizada y funcional
+
+### **🎯 PRÓXIMOS PASOS:**
+1. **Dashboard del Abogado Regular** (migrar `useRegularLawyerStats` y `useAssignedCases`)
+2. **Dashboard del Cliente** (migrar hooks de casos del cliente)
+3. **Testing completo** de todas las funcionalidades
+4. **Optimización de otros componentes** si es necesario

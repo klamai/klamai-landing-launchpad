@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -132,6 +132,52 @@ const fetchAdminCases = async (): Promise<CasosSuperAdmin[]> => {
   }
 };
 
+// Función para cerrar caso
+const closeCase = async (casoId: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('close-case', {
+      body: { caso_id: casoId },
+      headers: {
+        Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+      }
+    });
+
+    if (error) {
+      console.error('Error closing case:', error);
+      return { success: false, error: error.message };
+    }
+
+    if (data.success) {
+      return { success: true };
+    } else {
+      return { success: false, error: data.error || 'Error desconocido' };
+    }
+  } catch (error) {
+    console.error('Error in closeCase:', error);
+    return { success: false, error: 'Error inesperado al cerrar el caso' };
+  }
+};
+
+// Función para actualizar caso
+const updateCase = async (casoId: string, updates: any): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { error } = await supabase
+      .from('casos')
+      .update(updates)
+      .eq('id', casoId);
+
+    if (error) {
+      console.error('Error updating case:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in updateCase:', error);
+    return { success: false, error: 'Error inesperado al actualizar el caso' };
+  }
+};
+
 // Hook optimizado con React Query
 export const useAdminCases = () => {
   const { user } = useAuth();
@@ -168,5 +214,59 @@ export const useSuperAdminAccess = () => {
     staleTime: 10 * 60 * 1000, // Validación válida por 10 minutos
     gcTime: 15 * 60 * 1000,
     refetchOnWindowFocus: false,
+  });
+}; 
+
+// Hook para cerrar caso
+export const useCloseCase = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: closeCase,
+    onSuccess: (data, casoId) => {
+      // Invalidar queries relacionadas para refrescar datos
+      queryClient.invalidateQueries({ queryKey: ['adminCases'] });
+      queryClient.invalidateQueries({ queryKey: ['superAdminStats'] });
+      
+      // Actualizar optimísticamente el caso en el caché
+      queryClient.setQueryData(['adminCases'], (oldData: CasosSuperAdmin[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(caso => 
+          caso.id === casoId 
+            ? { ...caso, estado: 'cerrado', fecha_cierre: new Date().toISOString() }
+            : caso
+        );
+      });
+    },
+    onError: (error) => {
+      console.error('Error al cerrar caso:', error);
+    },
+  });
+};
+
+// Hook para actualizar caso
+export const useUpdateCase = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ casoId, updates }: { casoId: string; updates: any }) => updateCase(casoId, updates),
+    onSuccess: (data, { casoId, updates }) => {
+      // Invalidar queries relacionadas para refrescar datos
+      queryClient.invalidateQueries({ queryKey: ['adminCases'] });
+      queryClient.invalidateQueries({ queryKey: ['superAdminStats'] });
+      
+      // Actualizar optimísticamente el caso en el caché
+      queryClient.setQueryData(['adminCases'], (oldData: CasosSuperAdmin[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(caso => 
+          caso.id === casoId 
+            ? { ...caso, ...updates }
+            : caso
+        );
+      });
+    },
+    onError: (error) => {
+      console.error('Error al actualizar caso:', error);
+    },
   });
 }; 
