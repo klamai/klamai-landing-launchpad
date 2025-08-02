@@ -19,4 +19,7 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    'process.env.VITE_DOCUMENSO_URL': JSON.stringify(process.env.VITE_DOCUMENSO_URL || 'https://documenso-r8swo0o4kksocggw04888cww.klamai.com'),
+  },
 }));

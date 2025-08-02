@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Search, Grid3X3, List, Scale, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useAssignedCases } from '@/hooks/lawyer/useAssignedCases';
+import { useAssignedCases } from '@/hooks/queries/useAssignedCases';
 import CaseCard from '@/components/shared/CaseCard';
 import CaseDetailModal from '@/components/lawyer/CaseDetailModal';
 import DocumentUploadModal from '@/components/shared/DocumentUploadModal';
@@ -40,9 +40,6 @@ const AssignedCasesManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterState, setFilterState] = useState<string>('all');
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [lawyerType, setLawyerType] = useState<string | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true);
   
   // Modal states
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -52,7 +49,7 @@ const AssignedCasesManagement = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   
-  const { cases, loading, error } = useAssignedCases();
+  const { data: cases, isLoading, error } = useAssignedCases();
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -71,64 +68,40 @@ const AssignedCasesManagement = () => {
     refetch: refetchClientDocuments
   } = useClientDocumentManagement(selectedCaseDetail?.id);
 
-  // Validación de seguridad para abogados regulares
-  useEffect(() => {
-    const validateAccess = async () => {
-      if (!user) {
-        setRoleLoading(false);
-        return;
-      }
-
-      try {
-        console.log('🔍 Validando acceso a AssignedCasesManagement:', user.id);
-        
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role, tipo_abogado')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error('❌ Error validando acceso:', error);
-          setUserRole('unauthorized');
-          setLawyerType(null);
-        } else if (profile) {
-          console.log('✅ Perfil obtenido para validación:', profile);
-          setUserRole(profile.role);
-          setLawyerType(profile.tipo_abogado);
-        } else {
-          console.log('⚠️ No se encontró perfil para validación');
-          setUserRole('unauthorized');
-          setLawyerType(null);
-        }
-      } catch (error) {
-        console.error('❌ Error general en validación:', error);
-        setUserRole('unauthorized');
-        setLawyerType(null);
-      } finally {
-        setRoleLoading(false);
-      }
-    };
-
-    validateAccess();
-  }, [user]);
-
   // Loading state
-  if (roleLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Verificando permisos...</p>
+          <p className="text-gray-600 dark:text-gray-300">Cargando casos asignados...</p>
         </div>
       </div>
     );
   }
 
-  // Bloquear acceso no autorizado
-  if (userRole !== 'abogado' || lawyerType !== 'regular') {
-    console.log('🚫 Acceso denegado a AssignedCasesManagement:', { userRole, lawyerType });
-    return <UnauthorizedAccess />;
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
+            <h2 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+              Error al cargar casos
+            </h2>
+            <p className="text-red-600 dark:text-red-300 mb-4">
+              {error.message}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Filtrar casos basado en búsqueda y estado
@@ -278,32 +251,6 @@ const AssignedCasesManagement = () => {
       });
     }
   };
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="animate-pulse space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Error al cargar casos
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400">{error}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <motion.div

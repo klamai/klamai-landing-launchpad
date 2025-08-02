@@ -11,6 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@documenso/embed-react": "^0.2.3",
+    "@docuseal/react": "^1.0.68",
     "@headless-tree/core": "^1.2.1",
     "@headless-tree/react": "^1.2.1",
     "@hookform/resolvers": "^3.9.0",

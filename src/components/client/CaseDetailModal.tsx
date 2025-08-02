@@ -10,7 +10,9 @@ import {
   FileText, 
   MessageSquare,
   Eye,
-  Download
+  Download,
+  PenTool,
+  Shield
 } from 'lucide-react';
 import {
   Dialog,
@@ -36,6 +38,7 @@ import CaseNotesSection from '@/components/shared/CaseNotesSection';
 import { useNotificacionesNoLeidas } from '@/hooks/useNotificacionesNoLeidas';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import CustomDocumensoEmbed from '@/components/shared/CustomDocumensoEmbed';
 
 interface ClientCaseDetailModalProps {
   caso: {
@@ -52,6 +55,7 @@ interface ClientCaseDetailModalProps {
     telefono_borrador?: string;
     ciudad_borrador?: string;
     especialidades?: { id: number; nombre: string };
+    hoja_encargo_token?: string; // Token para hoja de encargo
     profiles?: { 
       nombre: string; 
       apellido: string; 
@@ -174,6 +178,9 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
                   </TabsTrigger>
                   <TabsTrigger value="documents" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     <FileText className="h-4 w-4" /> Documentos
+                  </TabsTrigger>
+                  <TabsTrigger value="hoja-encargo" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
+                    <Shield className="h-4 w-4" /> Hoja de Encargo
                   </TabsTrigger>
                   <TabsTrigger value="interacciones" className="relative min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     Interacciones
@@ -395,6 +402,48 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
                         </div>
                       )}
                     </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="hoja-encargo" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Hoja de Encargo
+                      {caso?.hoja_encargo_token && (
+                        <Badge variant="secondary" className="text-xs">
+                          Documento disponible
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {caso?.hoja_encargo_token ? (
+                      <div className="space-y-4">
+                        <div className="min-h-[500px] w-full border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                          <CustomDocumensoEmbed
+                            token={caso.hoja_encargo_token}
+                            height="500px"
+                            width="100%"
+                            title="Hoja de Encargo"
+                          />
+                        </div>
+                        
+                        <div className="text-xs text-muted-foreground text-center">
+                          <p>Documento seguro para firma digital</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Shield className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm mb-2">No hay hoja de encargo disponible</p>
+                        <p className="text-xs">
+                          El administrador puede crear una hoja de encargo cuando sea necesario.
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
