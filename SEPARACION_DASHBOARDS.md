@@ -358,3 +358,219 @@ Optimizar el dashboard del super admin con React Query para mejorar rendimiento,
   - `src/components/SuperAdminDashboard.tsx`: Nombre y controles
 - ✅ **Resultado**: Transiciones suaves sin parpadeo en todos los dashboards
 - ✅ **Logo Limpio**: Eliminado texto "klamAI" al lado del logo para diseño más limpio
+
+#### **🎨 FASE 11: Avatares de Supabase Authentication en Gestión de Abogados (01/08/2025)**
+- ✅ **Implementación de Avatares Reales**: Integración de avatares de Supabase Authentication
+- ✅ **Hook Actualizado**: `useAdminLawyers` modificado para obtener `user_metadata` de auth
+- ✅ **Datos de Authentication**: 
+  - `avatar_url`: URL del avatar de Google/GitHub
+  - `full_name`: Nombre completo del usuario
+  - `name`: Nombre del usuario
+- ✅ **Función de Renderizado**: `renderAvatar()` implementada con fallback a iniciales
+- ✅ **Componente Actualizado**: `LawyersManagement` usa avatares reales en lugar de iniciales
+- ✅ **Fallback Inteligente**: Si no hay avatar, muestra iniciales con gradiente azul
+- ✅ **Error Handling**: Manejo de errores de carga de imágenes con fallback automático
+- ✅ **Consistencia Visual**: Mismo estilo de avatares que en el sidebar
+- ✅ **Tipos Corregidos**: Interface `AbogadoInfo` actualizada con `user_metadata`
+
+#### **🔧 FASE 12: Corrección de Bordes en Modal Responsive (01/08/2025)**
+- ✅ **Problema Identificado**: Borde blanco visible en modal de detalles del caso en modo responsive
+- ✅ **Causa Raíz**: Bordes por defecto en `DialogContent` y `TabsList` componentes
+- ✅ **Solución Aplicada**:
+  - **DialogContent**: Agregado `border-0 bg-background` para eliminar borde blanco
+  - **TabsList**: Agregado `border-0 bg-background` para consistencia visual
+- ✅ **Archivo Corregido**: `src/components/lawyer/CaseDetailModal.tsx`
+- ✅ **Resultado**: Modal sin bordes blancos en modo responsive, diseño más limpio
+
+#### **📄 FASE 13: Integración de Prueba con Documenso Self-Hosted (01/08/2025)**
+- ✅ **Dependencia Instalada**: `@documenso/embed-react` agregada al proyecto
+- ✅ **Página de Prueba Creada**: `src/pages/DocumensoTest.tsx`
+- ✅ **Componente Personalizado**: `src/components/shared/CustomDocumensoEmbed.tsx`
+- ✅ **Funcionalidades Implementadas**:
+  - **Input para Token**: Campo para ingresar token del documento
+  - **Input para URL**: Campo para URL de instancia self-hosted
+  - **Token Pre-configurado**: `7Kmd29wUcU3mfo78rscMv` (documento de prueba)
+  - **URL Pre-configurada**: `https://documenso-r8swo0o4kksocggw04888cww.klamai.com`
+  - **Validación**: Solo muestra embed si hay token y URL válidos
+  - **Navegación**: Botón para volver al inicio y abrir documento original
+  - **Instrucciones**: Guía paso a paso para usar Documenso self-hosted
+- ✅ **Ruta Agregada**: `/documenso-test` en `App.tsx`
+- ✅ **Diseño Responsive**: Interfaz adaptada para móvil y desktop
+- ✅ **Seguridad**: Validación de entrada, sandbox en iframe, CORS handling
+- ✅ **UX Optimizada**: Interfaz intuitiva con instrucciones claras
+
+#### **✍️ FASE 14: Integración de Hoja de Encargo Digital (01/08/2025)**
+- ✅ **Tab Renombrado**: "Firma Digital" → "Hoja de Encargo" en modal del cliente
+- ✅ **Campo Renombrado**: `documenso_token` → `hoja_encargo_token` en tabla `casos`
+- ✅ **Migración Aplicada**: `rename_documenso_token_to_hoja_encargo_token` aplicada exitosamente
+- ✅ **Configuración Centralizada**: `src/config/constants.ts` para URL de Documenso
+- ✅ **Funcionalidades Implementadas**:
+  - **Tab "Hoja de Encargo"**: Nuevo tab con icono Shield
+  - **Integración Documenso**: `CustomDocumensoEmbed` integrado sin referencias a marca
+  - **Validación de Token**: Solo muestra embed si existe token
+  - **Mensaje Informativo**: Explicación cuando no hay documento disponible
+  - **Diseño Responsive**: Adaptado para móvil y desktop
+- ✅ **Seguridad Implementada**:
+  - **RLS Policies**: Clientes solo ven tokens de sus casos
+  - **Solo Super Admin**: Puede crear, ver y actualizar hojas de encargo
+  - **Abogados Regulares**: NO tienen acceso a hojas de encargo
+  - **Validación de Permisos**: Verificación de propiedad del caso
+  - **Control de Acceso**: Políticas específicas por roles
+- ✅ **Base de Datos Verificada**:
+  - **Campo Renombrado**: `hoja_encargo_token TEXT` en tabla `casos`
+  - **Índice Actualizado**: `idx_casos_hoja_encargo_token` para búsquedas eficientes
+  - **Políticas RLS**: 4 políticas actualizadas correctamente
+  - **Comentario**: Documentación del campo actualizada
+- ✅ **UX Optimizada**:
+  - **Icono Descriptivo**: Shield para identificar hoja de encargo
+  - **Mensajes Claros**: Sin referencias a Documenso
+  - **Estado Vacío**: Mensaje cuando no hay documento disponible
+  - **Integración Seamless**: Embebido directo en el modal
+  - **Badge Informativo**: "Documento disponible" al lado del título
+  - **Diseño Limpio**: Sin div azul, interfaz más minimalista
+
+### **🎯 CÓMO USAR LA HOJA DE ENCARGO:**
+
+1. **Super Admin**: Insertar token directamente en BD o usar interfaz de administración
+2. **Cliente**: Ir a "Mis Casos" → Abrir caso → Tab "Hoja de Encargo"
+3. **Proceso**: Super admin asigna token → Cliente firma digitalmente
+4. **Seguridad**: Solo super admin puede crear, cliente solo puede ver/firmar
+
+### **🔧 CONFIGURACIÓN TÉCNICA:**
+
+- **Campo en BD**: `hoja_encargo_token` en tabla `casos` ✅ APLICADO
+- **Configuración**: `src/config/constants.ts` con URL configurable
+- **Componente**: `CustomDocumensoEmbed` sin referencias a marca
+- **URL Instancia**: Configurable por variable de entorno
+- **Seguridad**: RLS policies para control de acceso ✅ APLICADO
+- **Responsive**: Diseño adaptado para todos los dispositivos
+
+### **🔒 POLÍTICAS DE SEGURIDAD ACTUALIZADAS:**
+
+**✅ Políticas RLS para `hoja_encargo_token`:**
+1. **"Clientes pueden ver hoja_encargo_token de su caso"** - SELECT
+2. **"Solo super admins pueden ver hoja_encargo_token"** - SELECT (incluye clientes)
+3. **"Super admins pueden crear hoja_encargo_token"** - INSERT
+4. **"Super admins pueden actualizar hoja_encargo_token"** - UPDATE
+
+**✅ Control de Acceso:**
+- **Super Admins**: Acceso completo (crear, ver, actualizar)
+- **Clientes**: Solo pueden ver su propia hoja de encargo
+- **Abogados Regulares**: NO tienen acceso (política eliminada)
+
+### **📋 VARIABLES DE ENTORNO:**
+
+**✅ Archivo `.env.local` configurado:**
+```env
+VITE_DOCUMENSO_URL=https://documenso-r8swo0o4kksocggw04888cww.klamai.com
+```
+
+**✅ Archivo `.env.example` actualizado:**
+```env
+VITE_DOCUMENSO_URL=https://documenso-r8swo0o4kksocggw04888cww.klamai.com
+```
+
+**✅ Validación y Seguridad:**
+- **Sanitización de tokens**: Solo caracteres alfanuméricos, guiones y guiones bajos
+- **Validación de URLs**: Verificación de origen para prevenir ataques
+- **Error handling**: Manejo seguro de errores sin exponer información sensible
+- **Sandbox iframe**: Configuración segura para embebido
+
+### **🧹 LIMPIEZA PARA PRODUCCIÓN:**
+
+- ✅ **Archivos de prueba eliminados**: `DocumensoTest.tsx`, `testEnv.ts`
+- ✅ **Console.log removidos**: Sin logs de debugging en producción
+- ✅ **Rutas de prueba eliminadas**: `/documenso-test` removida
+- ✅ **Validación mejorada**: Sanitización y validación de inputs
+- ✅ **Error handling**: Manejo seguro de errores
+- ✅ **Documentación actualizada**: `.env.example` con variable de Documenso
+
+### **📋 PRÓXIMOS PASOS:**
+
+1. ✅ **Aplicar migración**: `npx supabase db push` - COMPLETADO
+2. ✅ **Renombrar campo**: `documenso_token` → `hoja_encargo_token` - COMPLETADO
+3. ✅ **Revertir super admin**: Eliminado modal de creación - COMPLETADO
+4. ✅ **Configurar variables**: `.env.local` y `.env.example` - COMPLETADO
+5. ✅ **Limpieza producción**: Archivos de prueba eliminados - COMPLETADO
+6. ✅ **Seguridad**: Validación y sanitización implementada - COMPLETADO
+7. ✅ **Migraciones locales**: Archivos de migración creados - COMPLETADO
+8. ✅ **Restricción abogados**: Políticas RLS actualizadas - COMPLETADO
+9. **Probar funcionalidad**: Verificar que el tab aparece correctamente
+10. **Probar firma**: Cliente accede y firma documento
+11. **Verificar permisos**: Confirmar que RLS funciona correctamente
+
+### **📁 MIGRACIONES LOCALES CREADAS:**
+
+**✅ Archivos de migración escritos:**
+- `20250802103851_rename_documenso_token_to_hoja_encargo_token.sql`
+- `20250802110055_remove_regular_lawyers_hoja_encargo_access.sql`
+
+**✅ Estado de sincronización:**
+- **Base de datos**: Migraciones aplicadas correctamente
+- **Archivos locales**: Migraciones escritas y sincronizadas
+- **Políticas RLS**: Configuradas según especificaciones de seguridad
+
+#### **📊 FASE 15: Migración React Query - Abogado Regular (01/08/2025)**
+- ✅ **Hook Creado**: `useRegularLawyerStats` en `src/hooks/queries/useRegularLawyerStats.ts`
+- ✅ **Componente Migrado**: `RegularLawyerMetrics.tsx` actualizado para usar React Query
+- ✅ **Funcionalidades Implementadas**:
+  - **Caché Inteligente**: Datos frescos por 2 minutos, caché por 5 minutos
+  - **Validación de Acceso**: Solo abogados regulares pueden acceder
+  - **Manejo de Errores**: Errores específicos para acceso denegado
+  - **Estados de Carga**: Loading states optimizados
+  - **Retry Inteligente**: No reintenta en errores de acceso
+- ✅ **Datos Optimizados**:
+  - **Casos Asignados**: Filtrados por abogado específico
+  - **Métricas Reales**: Basadas en datos de la base de datos
+  - **Gráficos Simulados**: Datos de ejemplo para visualización
+  - **Validación de Roles**: Verificación de tipo_abogado = 'regular'
+- ✅ **Seguridad Implementada**:
+  - **Validación de Usuario**: Verificación de autenticación
+  - **Control de Acceso**: Solo abogados regulares
+  - **Sanitización**: Datos procesados de forma segura
+  - **Error Handling**: Sin exposición de información sensible
+
+#### **📊 FASE 16: Migración React Query - Casos Asignados Abogado Regular (01/08/2025)**
+- ✅ **Hook Creado**: `useAssignedCases` en `src/hooks/queries/useAssignedCases.ts`
+- ✅ **Componente Migrado**: `AssignedCasesManagement.tsx` actualizado para usar React Query
+- ✅ **Funcionalidades Implementadas**:
+  - **Caché Inteligente**: Datos frescos por 1 minuto, caché por 5 minutos
+  - **Validación de Acceso**: Solo abogados regulares pueden acceder
+  - **Manejo de Errores**: Errores específicos para acceso denegado
+  - **Estados de Carga**: Loading states optimizados
+  - **Retry Inteligente**: No reintenta en errores de acceso
+- ✅ **Datos Optimizados**:
+  - **Casos Asignados**: Filtrados por abogado específico
+  - **Relaciones Complejas**: Incluye especialidades y perfiles
+  - **Ordenamiento**: Por fecha de asignación descendente
+  - **Validación de Roles**: Verificación de tipo_abogado = 'regular'
+- ✅ **Seguridad Implementada**:
+  - **Validación de Usuario**: Verificación de autenticación
+  - **Control de Acceso**: Solo abogados regulares
+  - **Sanitización**: Datos procesados de forma segura
+  - **Error Handling**: Sin exposición de información sensible
+- ✅ **Simplificación del Código**:
+  - **Eliminada Validación Manual**: React Query maneja la validación
+  - **Estados Simplificados**: Sin estados de carga manual
+  - **Lógica Centralizada**: Todo en el hook de React Query
+  - **Mejor Mantenibilidad**: Código más limpio y organizado
+
+### **🎯 BENEFICIOS DE LA MIGRACIÓN:**
+
+**✅ Rendimiento:**
+- **Sin recargas** al navegar entre pestañas
+- **Caché inteligente** que evita requests innecesarios
+- **Datos frescos** automáticamente cuando es necesario
+- **Loading states** optimizados
+
+**✅ Experiencia de Usuario:**
+- **Navegación fluida** sin interrupciones
+- **Estados de carga** consistentes
+- **Manejo de errores** mejorado
+- **Retry automático** en fallos de red
+
+**✅ Desarrollo:**
+- **DevTools** para debugging
+- **TypeScript** completamente tipado
+- **Separación de responsabilidades** clara
+- **Reutilización** de hooks entre componentes

@@ -76,6 +76,39 @@ const AdminLawyersManagement = () => {
   const { data: hasSuperAdminAccess, isLoading: accessLoading } = useSuperAdminAccess();
   const { data: abogados, isLoading: loadingAbogados, error: abogadosError, refetch: refetchAbogados } = useAdminLawyers();
 
+  // Función para renderizar avatar con datos de Supabase Auth
+  const renderAvatar = (abogado: any) => {
+    const displayName = `${abogado.nombre} ${abogado.apellido}`;
+    const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    const avatarUrl = abogado.user_metadata?.avatar_url;
+    
+    if (avatarUrl) {
+      return (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full overflow-hidden">
+          <img 
+            src={avatarUrl} 
+            alt={displayName}
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              target.nextElementSibling?.classList.remove('hidden');
+            }}
+          />
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium hidden">
+            {initials}
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium">
+        {initials}
+      </div>
+    );
+  };
+
   // Loading state
   if (accessLoading || loadingAbogados) {
     return (
@@ -262,11 +295,7 @@ const AdminLawyersManagement = () => {
                   <TableRow key={abogado.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
-                        <Avatar>
-                          <AvatarFallback>
-                            {abogado.nombre.charAt(0)}{abogado.apellido.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
+                        {renderAvatar(abogado)}
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
                             {abogado.nombre} {abogado.apellido}
@@ -359,11 +388,7 @@ const AdminLawyersManagement = () => {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarFallback>
-                          {abogado.nombre.charAt(0)}{abogado.apellido.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
+                      {renderAvatar(abogado)}
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white">
                           {abogado.nombre} {abogado.apellido}

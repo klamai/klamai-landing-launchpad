@@ -393,7 +393,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl w-full h-[90vh] flex flex-col p-0">
+        <DialogContent className="max-w-4xl w-full h-[90vh] flex flex-col p-0 border-0 bg-background">
           <DialogHeader className="px-6 py-4">
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -405,7 +405,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
           <ScrollArea className="flex-1 px-6 py-4 h-[calc(90vh-110px)] min-h-0">
             <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
               <div className="sticky top-0 z-10 bg-background pb-2">
-                <TabsList className="flex w-full rounded-lg shadow-sm border mb-2 overflow-x-auto no-scrollbar flex-nowrap">
+                <TabsList className="flex w-full rounded-lg shadow-sm border-0 bg-background mb-2 overflow-x-auto no-scrollbar flex-nowrap">
                   <TabsTrigger value="overview" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
                     <FileText className="h-4 w-4" /> Resumen
                   </TabsTrigger>

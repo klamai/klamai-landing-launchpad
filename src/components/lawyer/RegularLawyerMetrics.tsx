@@ -1,11 +1,10 @@
 import * as React from "react";
-import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import * as RechartsPrimitive from "recharts";
 import { Bar, BarChart, CartesianGrid, XAxis, Line, LineChart, Area, AreaChart, PieChart, Pie, Cell, RadialBarChart, RadialBar } from "recharts";
 import { TrendingUp, TrendingDown, Users, Briefcase, CreditCard, FileText, DollarSign, Calendar } from "lucide-react";
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRegularLawyerStats } from "@/hooks/queries/useRegularLawyerStats";
 
 // Chart Configuration Types
 const THEMES = { light: "", dark: ".dark" } as const;
@@ -403,9 +402,9 @@ interface ChartCardProps {
 
 function ChartCard({ title, description, children }: ChartCardProps) {
   return (
-    <Card className="hover:shadow-md transition-shadow duration-200">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-lg">{title}</CardTitle>
+        <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>{children}</CardContent>
@@ -413,194 +412,9 @@ function ChartCard({ title, description, children }: ChartCardProps) {
   );
 }
 
-// Interfaces para datos reales
-interface LawyerDashboardData {
-  totalClientes: number;
-  casosActivos: number;
-  ingresosMes: number;
-  pagosPendientes: number;
-  clientesData: Array<{ mes: string; nuevos: number; activos: number }>;
-  casosPorEspecialidad: Array<{ nombre: string; casos: number; color: string }>;
-  ingresosGastos: Array<{ mes: string; ingresos: number; gastos: number }>;
-  casosPorEstado: Array<{ estado: string; cantidad: number; fill: string }>;
-  rendimiento: Array<{ categoria: string; valor: number }>;
-}
-
-// Función para obtener datos reales del abogado regular
-async function fetchLawyerDashboardData(): Promise<LawyerDashboardData> {
-  try {
-    // Obtener el usuario actual
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      throw new Error("Usuario no autenticado");
-    }
-
-    // Obtener casos asignados al abogado
-    const { data: assignedCases, error: casesError } = await supabase
-      .from('asignaciones_casos')
-      .select(`
-        caso_id,
-        casos:casos(
-          id,
-          estado,
-          especialidad_id,
-          especialidades:especialidades(nombre),
-          cliente_id
-        )
-      `)
-      .eq('abogado_id', user.id);
-
-    if (casesError) {
-      console.error('Error fetching assigned cases:', casesError);
-      throw casesError;
-    }
-
-    // Procesar datos de casos
-    const cases = assignedCases?.map(ac => ac.casos).filter(Boolean) || [];
-    const totalCasos = cases.length;
-    const casosActivos = cases.filter(c => c.estado === 'asignado' || c.estado === 'listo_para_propuesta').length;
-    const casosCerrados = cases.filter(c => c.estado === 'cerrado').length;
-
-    // Obtener clientes únicos
-    const uniqueClients = new Set(cases.map(c => c.cliente_id).filter(Boolean));
-    const totalClientes = uniqueClients.size;
-
-    // Procesar casos por especialidad
-    const specialtyCounts = cases.reduce((acc, caso) => {
-      const especialidad = caso.especialidades?.nombre || 'Sin Especialidad';
-      acc[especialidad] = (acc[especialidad] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const casosPorEspecialidad = Object.entries(specialtyCounts).map(([nombre, casos], index) => {
-      const colors = ['#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#10b981', '#f97316', '#ec4899'];
-      return {
-        nombre,
-        casos: casos as number,
-        color: colors[index % colors.length]
-      };
-    });
-
-    // Procesar casos por estado
-    const statusCounts = cases.reduce((acc, caso) => {
-      acc[caso.estado] = (acc[caso.estado] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const casosPorEstado = [
-      { estado: "Activos", cantidad: statusCounts['asignado'] || 0, fill: "#14b8a6" },
-      { estado: "En Proceso", cantidad: statusCounts['listo_para_propuesta'] || 0, fill: "#f59e0b" },
-      { estado: "Cerrados", cantidad: statusCounts['cerrado'] || 0, fill: "#10b981" },
-      { estado: "Disponibles", cantidad: statusCounts['disponible'] || 0, fill: "#6b7280" },
-    ];
-
-    // Datos mock para ingresos (se puede implementar cuando tengamos tabla de pagos)
-    const ingresosGastos = [
-      { mes: "Ene", ingresos: Math.floor(totalCasos * 1500), gastos: Math.floor(totalCasos * 500) },
-      { mes: "Feb", ingresos: Math.floor(totalCasos * 1600), gastos: Math.floor(totalCasos * 550) },
-      { mes: "Mar", ingresos: Math.floor(totalCasos * 1400), gastos: Math.floor(totalCasos * 480) },
-      { mes: "Abr", ingresos: Math.floor(totalCasos * 1700), gastos: Math.floor(totalCasos * 600) },
-      { mes: "May", ingresos: Math.floor(totalCasos * 1800), gastos: Math.floor(totalCasos * 650) },
-      { mes: "Jun", ingresos: Math.floor(totalCasos * 1900), gastos: Math.floor(totalCasos * 700) },
-    ];
-
-    // Datos mock para clientes por mes
-    const clientesData = [
-      { mes: "Ene", nuevos: Math.floor(totalClientes * 0.1), activos: Math.floor(totalClientes * 0.6) },
-      { mes: "Feb", nuevos: Math.floor(totalClientes * 0.12), activos: Math.floor(totalClientes * 0.65) },
-      { mes: "Mar", nuevos: Math.floor(totalClientes * 0.08), activos: Math.floor(totalClientes * 0.7) },
-      { mes: "Abr", nuevos: Math.floor(totalClientes * 0.15), activos: Math.floor(totalClientes * 0.75) },
-      { mes: "May", nuevos: Math.floor(totalClientes * 0.13), activos: Math.floor(totalClientes * 0.8) },
-      { mes: "Jun", nuevos: Math.floor(totalClientes * 0.16), activos: Math.floor(totalClientes * 0.85) },
-    ];
-
-    // Datos mock para rendimiento
-    const rendimiento = [
-      { categoria: "Eficiencia", valor: Math.min(95, Math.max(70, casosCerrados / totalCasos * 100)) },
-      { categoria: "Satisfacción", valor: Math.min(95, Math.max(80, 85 + Math.random() * 10)) },
-      { categoria: "Tiempo", valor: Math.min(95, Math.max(60, 75 + Math.random() * 15)) },
-      { categoria: "Calidad", valor: Math.min(95, Math.max(75, 80 + Math.random() * 12)) },
-    ];
-
-    return {
-      totalClientes,
-      casosActivos,
-      ingresosMes: ingresosGastos[ingresosGastos.length - 1].ingresos,
-      pagosPendientes: Math.floor(ingresosGastos[ingresosGastos.length - 1].ingresos * 0.25),
-      clientesData,
-      casosPorEspecialidad,
-      ingresosGastos,
-      casosPorEstado,
-      rendimiento
-    };
-
-  } catch (error) {
-    console.error('Error fetching lawyer dashboard data:', error);
-    // Retornar datos mock en caso de error
-    return {
-      totalClientes: 25,
-      casosActivos: 12,
-      ingresosMes: 18000,
-      pagosPendientes: 4500,
-      clientesData: [
-        { mes: "Ene", nuevos: 3, activos: 15 },
-        { mes: "Feb", nuevos: 4, activos: 18 },
-        { mes: "Mar", nuevos: 2, activos: 20 },
-        { mes: "Abr", nuevos: 5, activos: 22 },
-        { mes: "May", nuevos: 4, activos: 24 },
-        { mes: "Jun", nuevos: 6, activos: 25 },
-      ],
-      casosPorEspecialidad: [
-        { nombre: "Civil", casos: 8, color: "#14b8a6" },
-        { nombre: "Laboral", casos: 6, color: "#8b5cf6" },
-        { nombre: "Mercantil", casos: 4, color: "#f59e0b" },
-        { nombre: "Familiar", casos: 3, color: "#ef4444" },
-        { nombre: "Penal", casos: 2, color: "#06b6d4" },
-      ],
-      ingresosGastos: [
-        { mes: "Ene", ingresos: 12000, gastos: 4000 },
-        { mes: "Feb", ingresos: 14000, gastos: 4500 },
-        { mes: "Mar", ingresos: 13000, gastos: 4200 },
-        { mes: "Abr", ingresos: 16000, gastos: 5000 },
-        { mes: "May", ingresos: 17000, gastos: 5500 },
-        { mes: "Jun", ingresos: 18000, gastos: 6000 },
-      ],
-      casosPorEstado: [
-        { estado: "Activos", cantidad: 8, fill: "#14b8a6" },
-        { estado: "En Proceso", cantidad: 4, fill: "#f59e0b" },
-        { estado: "Cerrados", cantidad: 10, fill: "#10b981" },
-        { estado: "Disponibles", cantidad: 0, fill: "#6b7280" },
-      ],
-      rendimiento: [
-        { categoria: "Eficiencia", valor: 85 },
-        { categoria: "Satisfacción", valor: 92 },
-        { categoria: "Tiempo", valor: 78 },
-        { categoria: "Calidad", valor: 88 },
-      ]
-    };
-  }
-}
-
 // Main Dashboard Component
 function LegalDashboard() {
-  const [dashboardData, setDashboardData] = useState<LawyerDashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchLawyerDashboardData();
-        setDashboardData(data);
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
+  const { data: dashboardData, isLoading, error } = useRegularLawyerStats();
 
   if (isLoading) {
     return (
@@ -626,6 +440,21 @@ function LegalDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard Legal</h1>
+            <p className="text-muted-foreground">
+              Error al cargar los datos del dashboard: {error.message}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!dashboardData) {
     return (
       <div className="min-h-screen bg-background p-6">
@@ -633,7 +462,7 @@ function LegalDashboard() {
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight">Dashboard Legal</h1>
             <p className="text-muted-foreground">
-              Error al cargar los datos del dashboard
+              No se encontraron datos del dashboard
             </p>
           </div>
         </div>

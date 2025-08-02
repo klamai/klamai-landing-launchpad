@@ -7,12 +7,17 @@ interface AbogadoInfo {
   nombre: string;
   apellido: string;
   email: string;
-  especialidades: string[];
+  especialidades: { id: number, nombre: string }[] | number[];
   creditos_disponibles: number;
   created_at: string;
   casos_asignados: number;
   casos_activos: number;
   tipo_abogado?: string;
+  user_metadata?: {
+    avatar_url?: string;
+    full_name?: string;
+    name?: string;
+  };
 }
 
 interface AsignarCasoParams {
@@ -66,6 +71,22 @@ const fetchAdminLawyers = async (): Promise<AbogadoInfo[]> => {
       throw new Error('Error al cargar abogados');
     }
 
+    // Obtener datos de authentication para avatares
+    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+    
+    if (authError) {
+      console.error('Error fetching auth users:', authError);
+      // Continuar sin datos de auth si hay error
+    }
+
+    // Crear mapa de datos de auth por email
+    const authDataMap = new Map<string, any>();
+    authUsers?.users?.forEach(user => {
+      if (user.email) {
+        authDataMap.set(user.email, user.user_metadata);
+      }
+    });
+
     // Obtener estadísticas de casos por abogado
     const { data: casosPorAbogadoData, error: casosError } = await supabase
       .from('asignaciones_casos')
@@ -91,9 +112,10 @@ const fetchAdminLawyers = async (): Promise<AbogadoInfo[]> => {
       casosPorAbogadoMap.set(asignacion.abogado_id, current);
     });
 
-    // Procesar abogados con estadísticas
+    // Procesar abogados con estadísticas y datos de auth
     const processedAbogados: AbogadoInfo[] = (abogadosData || []).map(abogado => {
       const estadisticas = casosPorAbogadoMap.get(abogado.id) || { total: 0, activos: 0 };
+      const authData = authDataMap.get(abogado.email);
       
       return {
         id: abogado.id,
@@ -101,18 +123,19 @@ const fetchAdminLawyers = async (): Promise<AbogadoInfo[]> => {
         apellido: abogado.apellido,
         email: abogado.email,
         especialidades: abogado.especialidades || [],
-        creditos_disponibles: abogado.creditos_disponibles,
+        creditos_disponibles: abogado.creditos_disponibles || 0,
         created_at: abogado.created_at,
         casos_asignados: estadisticas.total,
         casos_activos: estadisticas.activos,
-        tipo_abogado: abogado.tipo_abogado
+        tipo_abogado: abogado.tipo_abogado,
+        user_metadata: authData || {}
       };
     });
 
     return processedAbogados;
   } catch (error) {
-    console.error('Error:', error);
-    throw new Error('Error inesperado al cargar abogados');
+    console.error('Error en fetchAdminLawyers:', error);
+    throw error;
   }
 };
 
