@@ -98,15 +98,29 @@
   - **Dashboard Completo**: Componente `LegalDashboard` con gráficos de Recharts
   - **Gráficos Implementados**: 
     - Evolución de Clientes (BarChart)
-    - Casos por Área Legal (PieChart)
-    - Análisis Financiero (LineChart)
-    - Estado de Casos (RadialBarChart)
-    - Métricas de Rendimiento (AreaChart)
-    - Actividad Reciente (Lista)
-  - **Datos Reales**: Conectado con Supabase para obtener casos asignados al abogado
-  - **Métricas Principales**: Total Clientes, Casos Activos, Ingresos Mes, Pagos Pendientes
-  - **Interfaz Profesional**: Cards de métricas con tendencias y gráficos interactivos
-  - **Loading States**: Estados de carga y manejo de errores
+    - Casos por Estado (PieChart)
+    - Ingresos Mensuales (LineChart)
+    - Rendimiento por Especialidad (BarChart)
+  - **Métricas**: Tarjetas con estadísticas de casos, clientes, ingresos y tiempo promedio
+  - **Animaciones**: Implementadas con `framer-motion` para transiciones suaves
+  - **Responsive**: Diseño adaptativo para diferentes tamaños de pantalla
+
+#### **🎨 FASE 9: Actualización de Sidebar Abogado Regular (01/08/2025)**
+- ✅ **Opciones del Sidebar Actualizadas**:
+  - **Dashboard**: Panel principal con métricas y estadísticas
+  - **Mis Casos**: Gestión de casos asignados al abogado
+  - **Pagos**: Sistema de pagos (próximamente disponible)
+  - **Asistentes IA**: Chat con inteligencia artificial especializada
+  - **Mi Perfil**: Gestión de perfil personal (próximamente disponible)
+  - **Configuración**: Panel de configuración (próximamente disponible)
+- ✅ **Navegación Corregida**: Lógica de rutas actualizada para reconocer nuevas secciones
+- ✅ **Secciones de Contenido**: 
+  - `PagosSection`: Placeholder para sistema de pagos
+  - `AsistentesIASection`: Interfaz mejorada para chat con IA
+  - `ConfiguracionSection`: Placeholder para configuración
+  - `PerfilSection`: Placeholder para gestión de perfil
+- ✅ **Eliminación de Opciones Antiguas**: Removidas "Hojas de Encargo", "Chat con Clientes", "Notificaciones"
+- ✅ **Consistencia Visual**: Mantenido el diseño y animaciones existentes
 - ✅ **Componente AssignedCasesManagement**: Restaurado completamente con contenido original
   - **Contenido Original**: Restaurado el componente original con toda su funcionalidad
   - **Imports Corregidos**: Actualizados para apuntar a las ubicaciones correctas después de la separación
@@ -327,3 +341,20 @@ Optimizar el dashboard del super admin con React Query para mejorar rendimiento,
 2. **Dashboard del Cliente** (migrar hooks de casos del cliente)
 3. **Testing completo** de todas las funcionalidades
 4. **Optimización de otros componentes** si es necesario
+
+#### **🔧 FASE 10: Corrección de Parpadeo en Sidebar (01/08/2025)**
+- ✅ **Problema Identificado**: Parpadeo del texto en sidebar al abrir/cerrar debido a animaciones conflictivas de framer-motion
+- ✅ **Causa Raíz**: Animaciones simultáneas de `display` y `opacity` causando conflictos visuales
+- ✅ **Solución Aplicada**:
+  - **SidebarLink**: Reemplazadas animaciones de framer-motion por CSS transitions
+  - **Logo**: Eliminado framer-motion, implementado CSS transitions
+  - **Nombre de Usuario**: Removidas animaciones de entrada, mantenido solo CSS transitions
+  - **Controles**: Simplificadas transiciones para evitar parpadeo
+- ✅ **Archivos Corregidos**:
+  - `src/components/ui/sidebar-dashboard.tsx`: SidebarLink y Logo
+  - `src/components/RegularLawyerDashboard.tsx`: Nombre y controles
+  - `src/components/DashboardLayout.tsx`: Nombre y controles
+  - `src/components/ClientDashboard.tsx`: Nombre y controles
+  - `src/components/SuperAdminDashboard.tsx`: Nombre y controles
+- ✅ **Resultado**: Transiciones suaves sin parpadeo en todos los dashboards
+- ✅ **Logo Limpio**: Eliminado texto "klamAI" al lado del logo para diseño más limpio

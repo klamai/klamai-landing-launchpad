@@ -211,20 +211,26 @@ const DashboardLayout = memo(({
               className="pt-4 border-t border-border/50"
             >
               <div className="flex items-center justify-between px-3 py-2">
-                {/* Avatar del usuario */}
-                <SidebarLink
-                  link={userInfo}
-                  onNavigate={handleNavigation}
-                  className="group hover:bg-primary/10 rounded-lg transition-all duration-200 p-1"
-                />
+                {/* Avatar del usuario con nombre */}
+                <div className="flex items-center gap-3">
+                  <SidebarLink
+                    link={userInfo}
+                    onNavigate={handleNavigation}
+                    className="group hover:bg-primary/10 rounded-lg transition-all duration-200 p-1"
+                  />
+                  {open && (
+                    <div
+                      className="text-sm font-medium text-neutral-700 dark:text-neutral-200 transition-all duration-200"
+                    >
+                      {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "Usuario"}
+                    </div>
+                  )}
+                </div>
                 
                 {/* Controles de la derecha - solo cuando sidebar está abierto */}
                 {open && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex items-center gap-2"
+                  <div
+                    className="flex items-center gap-2 transition-all duration-200"
                   >
                     {/* Toggle de tema personalizado */}
                     <ThemeToggle 
@@ -238,12 +244,12 @@ const DashboardLayout = memo(({
                       className="p-2 rounded-lg hover:bg-primary/10 transition-all duration-200 relative"
                       title="Notificaciones"
                     >
-                      <Bell className="text-neutral-700 dark:text-neutral-200 h-4 w-4" />
+                      <Bell className="text-white dark:text-white h-4 w-4" />
                       {notificacionesNoLeidas > 0 && (
                         <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full border border-white dark:border-gray-800"></span>
                       )}
                     </button>
-                  </motion.div>
+                  </div>
                 )}
               </div>
               

@@ -6,10 +6,10 @@ import {
   Bot, 
   UserPlus, 
   MessageSquare,
-  Bell,
+  Bell, 
   User,
-  LogOut,
-  Moon,
+  LogOut, 
+  Moon, 
   Sun,
   Scale,
   UserCheck
@@ -53,16 +53,14 @@ const RegularLawyerDashboard = () => {
     const path = location.pathname;
     if (path.includes('/mis-casos')) {
       setActiveSection("mis-casos");
-    } else if (path.includes('/hojas-encargo')) {
-      setActiveSection("hojas-encargo");
-    } else if (path.includes('/asistente-ia')) {
-      setActiveSection("asistente-ia");
-    } else if (path.includes('/chat-clientes')) {
-      setActiveSection("chat-clientes");
-    } else if (path.includes('/notificaciones')) {
-      setActiveSection("notificaciones");
+    } else if (path.includes('/pagos')) {
+      setActiveSection("pagos");
+    } else if (path.includes('/asistentes-ia')) {
+      setActiveSection("asistentes-ia");
     } else if (path.includes('/perfil')) {
       setActiveSection("perfil");
+    } else if (path.includes('/configuracion')) {
+      setActiveSection("configuracion");
     } else {
       setActiveSection("dashboard");
     }
@@ -113,38 +111,24 @@ const RegularLawyerDashboard = () => {
       ),
     },
     {
-      label: "Mis Casos Asignados",
+      label: "Mis Casos",
       href: "/abogados/dashboard/mis-casos",
       icon: (
         <Scale className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
-      label: "Hojas de Encargo",
-      href: "/abogados/dashboard/hojas-encargo",
+      label: "Pagos",
+      href: "/abogados/dashboard/pagos",
       icon: (
         <FileText className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
-      label: "Asistente IA",
-      href: "/abogados/dashboard/asistente-ia",
+      label: "Asistentes IA",
+      href: "/abogados/dashboard/asistentes-ia",
       icon: (
         <Bot className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Chat con Clientes",
-      href: "/abogados/dashboard/chat-clientes",
-      icon: (
-        <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Notificaciones",
-      href: "/abogados/dashboard/notificaciones",
-      icon: (
-        <Bell className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
@@ -152,6 +136,13 @@ const RegularLawyerDashboard = () => {
       href: "/abogados/dashboard/perfil",
       icon: (
         <UserCheck className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Configuración",
+      href: "/abogados/dashboard/configuracion",
+      icon: (
+        <User className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
   ];
@@ -186,52 +177,59 @@ const RegularLawyerDashboard = () => {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <SidebarLink
-                link={{
-                  label: "", // Sin nombre, solo avatar
-                  href: "/abogados/dashboard/perfil",
-                  icon: (() => {
-                    const displayName = `${user?.user_metadata?.nombre || "Abogado"} ${user?.user_metadata?.apellido || ""}`;
-                    const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                    const avatarUrl = user?.user_metadata?.avatar_url;
-                    
-                    if (avatarUrl) {
-                      return (
-                        <div className="h-7 w-7 flex-shrink-0 rounded-full overflow-hidden">
-                          <img 
-                            src={avatarUrl} 
-                            alt={displayName}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                          <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium hidden">
-                            {initials}
+              {/* Avatar del usuario con nombre */}
+              <div className="flex items-center gap-3">
+                <SidebarLink
+                  link={{
+                    label: "", // Sin nombre, solo avatar
+                    href: "/abogados/dashboard/perfil",
+                    icon: (() => {
+                      const displayName = `${user?.user_metadata?.nombre || "Abogado"} ${user?.user_metadata?.apellido || ""}`;
+                      const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                      const avatarUrl = user?.user_metadata?.avatar_url;
+                      
+                      if (avatarUrl) {
+                        return (
+                          <div className="h-7 w-7 flex-shrink-0 rounded-full overflow-hidden">
+                            <img 
+                              src={avatarUrl} 
+                              alt={displayName}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                target.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                            <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium hidden">
+                              {initials}
+                            </div>
                           </div>
+                        );
+                      }
+                      
+                      return (
+                        <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium">
+                          {initials}
                         </div>
                       );
-                    }
-                    
-                    return (
-                      <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium">
-                        {initials}
-                      </div>
-                    );
-                  })(),
-                }}
-                onNavigate={handleNavigation}
-              />
+                    })(),
+                  }}
+                  onNavigate={handleNavigation}
+                />
+                {open && (
+                  <div
+                    className="text-sm font-medium text-neutral-700 dark:text-neutral-200 transition-all duration-200"
+                  >
+                    {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "Abogado"}
+                  </div>
+                )}
+              </div>
               
               {/* Controles de la derecha - solo cuando sidebar está abierto */}
               {open && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex items-center gap-2"
+                <div
+                  className="flex items-center gap-2 transition-all duration-200"
                 >
                   {/* Toggle de tema personalizado */}
                   <ThemeToggle 
@@ -248,7 +246,7 @@ const RegularLawyerDashboard = () => {
                     <Bell className="text-white dark:text-white h-4 w-4" />
                     {/* Aquí puedes agregar el indicador de notificaciones si lo necesitas */}
                   </button>
-                </motion.div>
+                </div>
               )}
             </div>
           </SidebarBody>
@@ -264,16 +262,14 @@ const DashboardContent = ({ activeSection }: { activeSection: string }) => {
     switch (activeSection) {
       case "mis-casos":
         return <MisCasosAsignadosSection />;
-      case "hojas-encargo":
-        return <HojasEncargoSection />;
-      case "asistente-ia":
-        return <AsistenteIASection />;
-      case "chat-clientes":
-        return <ChatClientesSection />;
-      case "notificaciones":
-        return <NotificacionesSection />;
+      case "pagos":
+        return <PagosSection />;
+      case "asistentes-ia":
+        return <AsistentesIASection />;
       case "perfil":
         return <PerfilSection />;
+      case "configuracion":
+        return <ConfiguracionSection />;
       default:
         return <RegularLawyerDashboardSection />;
     }
@@ -304,31 +300,31 @@ const MisCasosAsignadosSection = () => (
   </motion.div>
 );
 
-const HojasEncargoSection = () => (
+const PagosSection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     className="space-y-6"
   >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hojas de Encargo</h1>
+    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Pagos</h1>
     <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
       <FileText className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">Sistema de hojas de encargo próximamente disponible</p>
+      <p className="text-gray-500 dark:text-gray-400">Sistema de pagos próximamente disponible</p>
     </div>
   </motion.div>
 );
 
-const AsistenteIASection = () => (
+const AsistentesIASection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     className="space-y-6"
   >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Asistente IA Legal</h1>
+    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Asistentes IA</h1>
     <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg p-8 text-center border border-blue-200 dark:border-blue-800">
       <Bot className="h-20 w-20 text-blue-500 mx-auto mb-6" />
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-        Asistente Especializado para Abogados
+        Asistentes Especializados para Abogados
       </h2>
       <p className="text-gray-600 dark:text-gray-300 mb-6">
         Obtén asistencia para redacción de documentos, análisis de casos y consultas legales.
@@ -346,37 +342,21 @@ const AsistenteIASection = () => (
   </motion.div>
 );
 
-const ChatClientesSection = () => (
+const ConfiguracionSection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     className="space-y-6"
   >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Chat con Clientes</h1>
+    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Configuración</h1>
     <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <MessageSquare className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">Sistema de chat con clientes próximamente disponible</p>
-    </div>
-  </motion.div>
-);
-
-const NotificacionesSection = () => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="space-y-6"
-  >
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notificaciones</h1>
-    <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
-      <Bell className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-      <p className="text-gray-500 dark:text-gray-400">Centro de notificaciones próximamente disponible</p>
+      <User className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+      <p className="text-gray-500 dark:text-gray-400">Panel de configuración próximamente disponible</p>
     </div>
   </motion.div>
 );
 
 const PerfilSection = () => {
-  const { user } = useAuth();
-  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -384,20 +364,9 @@ const PerfilSection = () => {
       className="space-y-6"
     >
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mi Perfil</h1>
-      <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6">
-        <div className="flex items-center space-x-4 mb-6">
-          <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-xl font-bold">
-            {(user?.user_metadata?.nombre || user?.email || "A")[0].toUpperCase()}
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {user?.user_metadata?.nombre || "Abogado"} {user?.user_metadata?.apellido || ""}
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300">{user?.email}</p>
-            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Abogado Regular</p>
-          </div>
-        </div>
-        <p className="text-gray-500 dark:text-gray-400">Funcionalidad de edición de perfil próximamente disponible</p>
+      <div className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-8 text-center border border-gray-200 dark:border-neutral-700">
+        <UserCheck className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+        <p className="text-gray-500 dark:text-gray-400">Gestión de perfil próximamente disponible</p>
       </div>
     </motion.div>
   );
