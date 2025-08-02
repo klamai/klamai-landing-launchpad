@@ -115,10 +115,20 @@ export const MobileSidebar = ({
     <>
       <div
         className={cn(
-          "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-black dark:bg-black w-full"
+          "h-16 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-black dark:bg-black w-full"
         )}
       >
-        <div className="flex justify-end z-20 w-full">
+        {/* Logo en la esquina superior izquierda */}
+        <div className="flex items-center">
+          <img 
+            src="/logo.svg" 
+            alt="Logo" 
+            className="h-8 w-8"
+          />
+        </div>
+        
+        {/* Menú hamburguesa en la derecha */}
+        <div className="flex justify-end z-20">
           <Menu
             className="text-white dark:text-white cursor-pointer"
             onClick={() => setOpen(!open)}
@@ -146,7 +156,7 @@ export const MobileSidebar = ({
                   ease: "easeInOut",
                 }}
                 className={cn(
-                  "fixed h-full w-80 max-w-[85vw] left-0 top-0 bg-black dark:bg-black p-6 z-50 flex flex-col justify-between",
+                  "fixed h-full w-72 max-w-[75vw] left-0 top-0 bg-black dark:bg-black p-6 z-50 flex flex-col justify-between",
                   className
                 )}
               >
