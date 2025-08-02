@@ -574,3 +574,32 @@ VITE_DOCUMENSO_URL=https://documenso-r8swo0o4kksocggw04888cww.klamai.com
 - **TypeScript** completamente tipado
 - **Separación de responsabilidades** clara
 - **Reutilización** de hooks entre componentes
+
+#### **📱 FASE 17: Corrección Sidebar Móvil (01/08/2025)**
+- ✅ **Problema Identificado**: Sidebar móvil cubría toda la pantalla en modo responsive
+- ✅ **Solución Implementada**: 
+  - **Ancho Limitado**: `w-80 max-w-[85vw]` en lugar de `w-full`
+  - **Overlay Separado**: Fondo oscuro independiente para cerrar el sidebar
+  - **Posicionamiento Mejorado**: `left-0 top-0` en lugar de `inset-0`
+  - **Z-index Optimizado**: Overlay en `z-40`, sidebar en `z-50`
+  - **Padding Reducido**: `p-6` en lugar de `p-10` para mejor uso del espacio
+- ✅ **Funcionalidades Mejoradas**:
+  - **Cierre por Overlay**: Click fuera del sidebar lo cierra
+  - **Animación Suave**: Transiciones mejoradas
+  - **Responsive Design**: Máximo 85% del ancho de la pantalla
+  - **UX Mejorada**: No bloquea completamente la pantalla
+- ✅ **Archivo Modificado**: `src/components/ui/sidebar-dashboard.tsx`
+
+### **🎯 BENEFICIOS DE LA CORRECCIÓN:**
+
+**✅ Experiencia de Usuario:**
+- **Navegación Intuitiva**: Sidebar no bloquea toda la pantalla
+- **Cierre Fácil**: Click fuera del sidebar lo cierra
+- **Mejor Accesibilidad**: Contenido principal siempre visible
+- **Responsive Optimizado**: Se adapta a diferentes tamaños de pantalla
+
+**✅ Diseño Mejorado:**
+- **Ancho Apropiado**: 320px máximo, 85% del viewport
+- **Overlay Elegante**: Fondo semi-transparente
+- **Animaciones Suaves**: Transiciones naturales
+- **Espaciado Optimizado**: Mejor uso del espacio disponible
