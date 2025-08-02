@@ -165,51 +165,58 @@ const ClientDashboard = () => {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <SidebarLink
-                link={{
-                  label: "", // Sin nombre, solo avatar
-                  href: "#",
-                  icon: (() => {
-                    const displayName = `${user?.user_metadata?.nombre || "Cliente"}`;
-                    const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                    const avatarUrl = user?.user_metadata?.avatar_url;
-                    
-                    if (avatarUrl) {
-                      return (
-                        <div className="h-7 w-7 flex-shrink-0 rounded-full overflow-hidden">
-                          <img 
-                            src={avatarUrl} 
-                            alt={displayName}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                          <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium hidden">
-                            {initials}
+              {/* Avatar del usuario con nombre */}
+              <div className="flex items-center gap-3">
+                <SidebarLink
+                  link={{
+                    label: "", // Sin nombre, solo avatar
+                    href: "#",
+                    icon: (() => {
+                      const displayName = `${user?.user_metadata?.nombre || "Cliente"}`;
+                      const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                      const avatarUrl = user?.user_metadata?.avatar_url;
+                      
+                      if (avatarUrl) {
+                        return (
+                          <div className="h-7 w-7 flex-shrink-0 rounded-full overflow-hidden">
+                            <img 
+                              src={avatarUrl} 
+                              alt={displayName}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                target.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                            <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium hidden">
+                              {initials}
+                            </div>
                           </div>
+                        );
+                      }
+                      
+                      return (
+                        <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium">
+                          {initials}
                         </div>
                       );
-                    }
-                    
-                    return (
-                      <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-medium">
-                        {initials}
-                      </div>
-                    );
-                  })(),
-                }}
-              />
+                    })(),
+                  }}
+                />
+                {open && (
+                  <div
+                    className="text-sm font-medium text-neutral-700 dark:text-neutral-200 transition-all duration-200"
+                  >
+                    {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "Cliente"}
+                  </div>
+                )}
+              </div>
               
               {/* Controles de la derecha - solo cuando sidebar está abierto */}
               {open && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex items-center gap-2"
+                <div
+                  className="flex items-center gap-2 transition-all duration-200"
                 >
                   {/* Toggle de tema personalizado */}
                   <ThemeToggle 
@@ -224,9 +231,8 @@ const ClientDashboard = () => {
                     title="Notificaciones"
                   >
                     <Bell className="text-white dark:text-white h-4 w-4" />
-                    {/* Aquí puedes agregar el indicador de notificaciones si lo necesitas */}
                   </button>
-                </motion.div>
+                </div>
               )}
             </div>
           </SidebarBody>

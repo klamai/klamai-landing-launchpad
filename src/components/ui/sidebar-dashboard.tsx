@@ -179,15 +179,14 @@ export const SidebarLink = ({
         {...props}
       >
         {link.icon}
-        <motion.span
-          animate={{
-            display: animate ? (open ? "inline-block" : "none") : "inline-block",
-            opacity: animate ? (open ? 1 : 0) : 1,
-          }}
-          className="text-white dark:text-white text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
+        <span
+          className={cn(
+            "text-white dark:text-white text-sm group-hover/sidebar:translate-x-1 transition-all duration-200 whitespace-pre",
+            animate && !open ? "opacity-0 w-0 overflow-hidden" : "opacity-100 w-auto"
+          )}
         >
           {link.label}
-        </motion.span>
+        </span>
       </button>
     );
   }
@@ -203,15 +202,14 @@ export const SidebarLink = ({
         {...props}
       >
         {link.icon}
-        <motion.span
-          animate={{
-            display: animate ? (open ? "inline-block" : "none") : "inline-block",
-            opacity: animate ? (open ? 1 : 0) : 1,
-          }}
-          className="text-white dark:text-white text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
+        <span
+          className={cn(
+            "text-white dark:text-white text-sm group-hover/sidebar:translate-x-1 transition-all duration-200 whitespace-pre",
+            animate && !open ? "opacity-0 w-0 overflow-hidden" : "opacity-100 w-auto"
+          )}
         >
           {link.label}
-        </motion.span>
+        </span>
       </button>
     );
   }
@@ -226,15 +224,14 @@ export const SidebarLink = ({
       {...props}
     >
       {link.icon}
-      <motion.span
-        animate={{
-          display: animate ? (open ? "inline-block" : "none") : "inline-block",
-          opacity: animate ? (open ? 1 : 0) : 1,
-        }}
-        className="text-white dark:text-white text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
+      <span
+        className={cn(
+          "text-white dark:text-white text-sm group-hover/sidebar:translate-x-1 transition-all duration-200 whitespace-pre",
+          animate && !open ? "opacity-0 w-0 overflow-hidden" : "opacity-100 w-auto"
+        )}
       >
         {link.label}
-      </motion.span>
+      </span>
     </Link>
   );
 };
@@ -246,13 +243,6 @@ export const Logo = () => {
       className="font-normal flex space-x-2 items-center text-sm text-white py-1 relative z-20"
     >
       <img src="/logo2.svg" alt="klamAI Logo" className="h-8" />      
-      <motion.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="font-bold text-white dark:text-white whitespace-pre text-xl tracking-tight"
-      >
-        
-      </motion.span>
     </Link>
   );
 };
