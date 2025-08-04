@@ -175,26 +175,68 @@ export const useSignOut = () => {
   
   return useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error signing out:', error);
-        throw error;
+      try {
+        const { error } = await supabase.auth.signOut();
+        
+        // Si hay error, verificar si es porque la sesión ya no existe
+        if (error) {
+          // Si es un error de sesión faltante, no es un error real
+          if (error.message?.includes('Auth session missing') || 
+              error.message?.includes('session_not_found') ||
+              error.code === 'session_not_found') {
+            console.log('Session already ended, proceeding with cleanup...');
+            // No lanzar error, continuar con la limpieza
+            return;
+          }
+          
+          // Para otros errores, logear pero no lanzar excepción
+          console.error('Error during sign out:', error);
+          // No lanzar error, continuar con la limpieza
+          return;
+        }
+      } catch (error: any) {
+        // Capturar cualquier error inesperado
+        console.error('Unexpected error during sign out:', error);
+        
+        // Si es un error de sesión faltante, no es un error real
+        if (error?.message?.includes('Auth session missing') || 
+            error?.message?.includes('session_not_found') ||
+            error?.code === 'session_not_found') {
+          console.log('Session already ended, proceeding with cleanup...');
+          // No lanzar error, continuar con la limpieza
+          return;
+        }
+        
+        // Para otros errores, no lanzar excepción
+        console.error('Sign out error (non-critical):', error);
+        return;
       }
     },
     onSuccess: () => {
       // Limpiar todas las queries relacionadas con autenticación
       queryClient.removeQueries({ queryKey: ['session'] });
       queryClient.removeQueries({ queryKey: ['profile'] });
+      queryClient.removeQueries({ queryKey: ['sessionValidation'] });
       
       // Limpiar cualquier estado persistente
       localStorage.removeItem('supabase.auth.token');
       sessionStorage.clear();
+      
+      console.log('Sign out completed successfully');
     },
     onError: (error: any) => {
       console.error('Sign out failed:', error);
+      
       // Asegurar limpieza incluso si hay error
       queryClient.removeQueries({ queryKey: ['session'] });
       queryClient.removeQueries({ queryKey: ['profile'] });
+      queryClient.removeQueries({ queryKey: ['sessionValidation'] });
+      
+      // Limpiar cualquier estado persistente
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.clear();
+      
+      console.log('Cleanup completed despite error');
     },
   });
 };
@@ -227,9 +269,5 @@ export const useSessionValidation = () => {
     refetchInterval: 30 * 1000, // Validar cada 30 segundos
     refetchIntervalInBackground: true,
     retry: false, // No reintentar, si falla la validación, cerrar sesión
-    onError: () => {
-      // Si la validación falla, cerrar sesión automáticamente
-      supabase.auth.signOut();
-    },
   });
 }; 
