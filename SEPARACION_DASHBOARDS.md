@@ -927,4 +927,87 @@ VITE_DOCUMENSO_URL=https://documenso-r8swo0o4kksocggw04888cww.klamai.com
   - **Experiencia de usuario mejorada**: Redirección automática sin errores visibles
 - ✅ **Resultado**: Problema de sesiones inválidas completamente resuelto, gestión robusta de sesiones entre múltiples navegadores
 
+#### **🔧 FASE 15: Migración de Autenticación a React Query (01/08/2025)**
+- ✅ **Objetivo**: Migrar el sistema de autenticación de `useState`/`useEffect` a React Query para mejorar seguridad, rendimiento y manejo de errores
+- ✅ **Nuevos Hooks de React Query Creados** (`src/hooks/queries/useAuthQueries.ts`):
+  - **`useSession()`**: Hook para obtener sesión actual con cache inteligente (30s stale time)
+  - **`useProfile(userId)`**: Hook para obtener perfil del usuario (2min stale time)
+  - **`useSignIn()`**: Mutation para login con manejo de errores y invalidación de cache
+  - **`useSignUp()`**: Mutation para registro con validaciones
+  - **`useSignOut()`**: Mutation para logout con limpieza completa de cache
+  - **`useSessionValidation()`**: Validación periódica automática cada 30 segundos
+- ✅ **Migración de useAuth.tsx Completada**:
+  - **Interfaz pública mantenida**: Sin cambios en componentes existentes
+  - **React Query integrado**: Reemplazado `useState`/`useEffect` por hooks de React Query
+  - **Validación automática**: Sesiones inválidas detectadas automáticamente
+  - **Cache inteligente**: Datos de sesión y perfil cacheados eficientemente
+  - **Manejo de errores mejorado**: Errores de sesión manejados automáticamente
+- ✅ **Eliminación de Dependencias Circulares**:
+  - **`useSessionValidation.ts` eliminado**: Funcionalidad integrada en React Query
+  - **Sin dependencias circulares**: Estructura limpia y mantenible
+  - **Validación periódica**: Cada 30 segundos sin impactar rendimiento
+- ✅ **Mejoras de Seguridad Implementadas**:
+  - **Validación automática de sesiones**: Detección de sesiones expiradas o inválidas
+  - **Cache seguro**: Invalidación automática cuando cambia la sesión
+  - **Manejo robusto de errores**: Reintentos inteligentes (máximo 2 para autenticación)
+  - **Sincronización automática**: Cambios de sesión detectados automáticamente
+- ✅ **Beneficios de Seguridad**:
+  - **Prevención de sesiones zombie**: Detección automática de sesiones cerradas desde otros dispositivos
+  - **Protección contra race conditions**: React Query maneja automáticamente las condiciones de carrera
+  - **Auditoría mejorada**: Logs de autenticación más detallados y seguros
+- ✅ **Resultados**:
+  - **Funcionalidad mantenida**: Todos los componentes funcionan sin cambios
+  - **Build exitoso**: Sin errores de compilación
+  - **Seguridad mejorada**: Validación automática y manejo robusto de errores
+  - **Rendimiento optimizado**: Cache inteligente reduce llamadas a Supabase
+
+#### **🔧 FASE 16: Implementación de Rate Limiting (01/08/2025)**
+- ✅ **Objetivo**: Implementar sistema robusto de rate limiting para prevenir ataques de fuerza bruta, abuso del sistema y proteger contra ataques automatizados
+- ✅ **Sistema de Rate Limiting Robusto** (`src/utils/rateLimiting.ts`):
+  - **Configuración flexible**: Diferentes límites para diferentes operaciones
+  - **Storage en memoria**: Para desarrollo (en producción usar Redis)
+  - **Limpieza automática**: Entradas expiradas eliminadas cada 5 minutos
+  - **Bloqueo temporal**: Sistema de bloqueo progresivo por tiempo
+- ✅ **Configuración de Rate Limiting**:
+  - **Login attempts**: 5 intentos en 15 minutos, bloqueo 30 minutos
+  - **Signup attempts**: 3 intentos en 1 hora, bloqueo 1 hora
+  - **Password reset**: 3 intentos en 1 hora, bloqueo 1 hora
+  - **Document uploads**: 10 subidas en 1 minuto, bloqueo 5 minutos
+  - **API calls**: 100 llamadas en 1 minuto, bloqueo 10 minutos
+- ✅ **Hooks Especializados de Rate Limiting**:
+  - **`useLoginRateLimit()`**: Rate limiting específico para login
+  - **`useSignupRateLimit()`**: Rate limiting específico para registro
+  - **`useDocumentUploadRateLimit()`**: Rate limiting para subida de archivos
+  - **Funciones de registro**: `recordFailedLogin`, `recordSuccessfulLogin`, etc.
+- ✅ **Integración en Autenticación** (`src/hooks/queries/useAuthQueries.ts`):
+  - **`useSignIn()` actualizado**: Verificación de rate limiting antes de login
+  - **`useSignUp()` actualizado**: Verificación de rate limiting antes de registro
+  - **Mensajes informativos**: Muestra intentos restantes al usuario
+  - **Limpieza automática**: Rate limiting se limpia en login exitoso
+- ✅ **Integración en Subida de Documentos** (`src/components/client/ClientDocumentUploadModal.tsx`):
+  - **Verificación previa**: Rate limiting antes de subir archivos
+  - **Registro de intentos**: Cada subida se registra para control
+  - **Mensajes de error**: Información clara sobre límites excedidos
+  - **Información de seguridad**: UI que muestra límites al usuario
+- ✅ **Componente de Alerta de Rate Limiting** (`src/components/ui/rate-limit-alert.tsx`):
+  - **Alertas informativas**: Muestra información sobre límites excedidos
+  - **Tiempo restante**: Calcula y muestra tiempo hasta reset
+  - **Estados diferentes**: Bloqueado vs advertencia
+  - **Información de seguridad**: Explica por qué se aplican los límites
+- ✅ **Mejoras de Seguridad Implementadas**:
+  - **Prevención de ataques de fuerza bruta**: Límites estrictos en intentos de login
+  - **Protección contra abuso de registro**: Límites en registro para prevenir spam
+  - **Control de subida de archivos**: Límites en uploads para prevenir spam
+  - **Protección de API**: Límites generales en llamadas API
+- ✅ **Beneficios de Seguridad**:
+  - **Prevención de ataques automatizados**: Bots bloqueados automáticamente
+  - **Protección de recursos**: Servidor protegido contra sobrecarga
+  - **Experiencia de usuario mejorada**: Mensajes claros sobre límites
+  - **Auditoría y monitoreo**: Logs detallados de intentos
+- ✅ **Resultados**:
+  - **Funcionalidad mantenida**: Todos los flujos funcionan normalmente dentro de los límites
+  - **Seguridad mejorada**: Ataques de fuerza bruta prevenidos efectivamente
+  - **Escalabilidad preparada**: Sistema modular fácil de extender
+  - **Build exitoso**: Sin errores de compilación
+
 ## 📋 **PRÓXIMAS TAREAS:**
