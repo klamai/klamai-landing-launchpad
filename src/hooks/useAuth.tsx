@@ -1,7 +1,8 @@
 
-import { useState, useEffect, createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useSessionValidation } from './useSessionValidation';
 
 interface Profile {
   id: string;
@@ -43,6 +44,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Usar el hook de validación de sesión
+  useSessionValidation();
+
   useEffect(() => {
     const fetchProfile = async (userId: string) => {
       const { data, error } = await supabase
@@ -59,9 +63,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id);
+        
+        // Manejar específicamente el evento SIGNED_OUT
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+        
+        // Para otros eventos, actualizar normalmente
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
         if (session?.user) {
           fetchProfile(session.user.id);
         } else {
@@ -109,10 +126,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
-      throw error;
+    try {
+      // Limpiar estado local inmediatamente
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        // Si hay error, no lanzar excepción, solo log
+        // El estado ya se limpió localmente
+      }
+    } catch (error) {
+      console.error('Unexpected error during sign out:', error);
+      // Asegurar que el estado se limpie incluso si hay error
+      setSession(null);
+      setUser(null);
+      setProfile(null);
     }
   };
 
