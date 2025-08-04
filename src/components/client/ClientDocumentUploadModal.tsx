@@ -8,6 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useClientDocumentManagement } from '@/hooks/client/useClientDocumentManagement';
+import { 
+  isValidFileType, 
+  isValidFileSize, 
+  sanitizeDocumentDescription,
+  isValidDocumentType,
+  checkRateLimit,
+  clearRateLimit
+} from '@/utils/security';
 
 interface ClientDocumentUploadModalProps {
   isOpen: boolean;
@@ -32,22 +40,21 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Validar tamaño (máximo 10MB)
-      if (file.size > 10 * 1024 * 1024) {
+      // Validar tipo de archivo
+      if (!isValidFileType(file)) {
         toast({
           title: "Error",
-          description: "El archivo no puede ser mayor a 10MB",
+          description: "Tipo de archivo no permitido. Solo se aceptan PDF, imágenes y documentos de Word",
           variant: "destructive",
         });
         return;
       }
 
-      // Validar tipo de archivo
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'text/markdown'];
-      if (!allowedTypes.includes(file.type)) {
+      // Validar tamaño de archivo
+      if (!isValidFileSize(file)) {
         toast({
           title: "Error",
-          description: "Tipo de archivo no permitido. Solo se aceptan PDF, imágenes y documentos de Word",
+          description: "El archivo no puede ser mayor a 10MB",
           variant: "destructive",
         });
         return;
@@ -67,10 +74,34 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
       return;
     }
 
+    // Rate limiting
+    const rateLimitKey = `upload_${casoId}`;
+    if (!checkRateLimit(rateLimitKey, 5, 60000)) { // Máximo 5 uploads por minuto
+      toast({
+        title: "Error",
+        description: "Demasiadas subidas. Espera un momento antes de intentar de nuevo",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar tipo de documento
+    if (!isValidDocumentType(tipoDocumento)) {
+      toast({
+        title: "Error",
+        description: "Tipo de documento no válido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Sanitizar descripción
+    const sanitizedDescription = sanitizeDocumentDescription(descripcion);
+
     setIsUploading(true);
 
     try {
-      const result = await uploadDocument(selectedFile, tipoDocumento, descripcion);
+      const result = await uploadDocument(selectedFile, tipoDocumento, sanitizedDescription);
       
       if (result.success) {
         toast({

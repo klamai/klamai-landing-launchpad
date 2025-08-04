@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar, 
@@ -12,16 +12,21 @@ import {
   Shield,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Upload,
+  Plus,
+  CreditCard
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useClientCaseDetails } from '@/hooks/client/useClientCaseDetails';
 import { useCaseUnreadNotificationsCount } from '@/hooks/client/useCaseNotifications';
+import ClientDocumentUploadModal from './ClientDocumentUploadModal';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { toZonedTime } from 'date-fns-tz';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ClientCaseCardProps {
   caso: {
@@ -52,6 +57,8 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
 }) => {
   const { data: caseDetails, isLoading: loadingDetails } = useClientCaseDetails(caso.id);
   const { data: notificacionesNoLeidas = 0 } = useCaseUnreadNotificationsCount(caso.id);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const { toast } = useToast();
 
   // Formatear fecha
   const fecha = new Date(caso.created_at);
@@ -61,6 +68,56 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
     year: 'numeric'
   });
   const timeAgo = formatDistanceToNow(fecha, { addSuffix: true, locale: es });
+
+  const handleUploadSuccess = () => {
+    // Refetch case details to update document count
+    // The useClientCaseDetails hook will automatically refetch
+    setIsUploadModalOpen(false);
+  };
+
+  const handlePayment = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
+        body: {
+          plan_id: 'consulta-estrategica',
+          caso_id: caso.id
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.url) {
+        // Redirigir a Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No se recibió URL de pago');
+      }
+    } catch (error) {
+      console.error('Error al crear sesión de pago:', error);
+      toast({
+        title: "Error en el pago",
+        description: error instanceof Error ? error.message : "Error al procesar el pago. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const shouldShowPaymentButton = (estado: string) => {
+    return ['listo_para_propuesta', 'esperando_pago'].includes(estado);
+  };
+
+  const getPaymentButtonText = (estado: string) => {
+    switch (estado) {
+      case 'listo_para_propuesta':
+        return 'Pagar Consulta';
+      case 'esperando_pago':
+        return 'Completar Pago';
+      default:
+        return 'Pagar';
+    }
+  };
 
   // Estados específicos para el cliente
   const getClientStatusBadge = (estado: string) => {
@@ -292,29 +349,50 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
             </div>
           )}
 
-          {/* Acciones */}
-          <div className="mt-auto pt-4 flex gap-2">
+          {/* Botones de acción */}
+          <div className="flex items-center gap-2 mt-4">
             <Button
               onClick={() => onViewDetails(caso.id)}
-              variant="outline"
+              variant="default"
               size="sm"
-              className="flex-1 flex items-center gap-2 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 dark:hover:bg-blue-900/20 dark:hover:text-blue-300 dark:hover:border-blue-700"
+              className="flex items-center gap-2 flex-1"
             >
               <Eye className="h-4 w-4" />
               Ver Detalles
             </Button>
+            
+            {/* Botón de pago solo si el caso está sin pagar */}
+            {caso.estado === 'esperando_pago' && (
+              <Button
+                onClick={handlePayment}
+                variant="default"
+                size="sm"
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CreditCard className="h-4 w-4" />
+                Pagar
+              </Button>
+            )}
+            
             <Button
-              onClick={() => onSendMessage(caso.id)}
+              onClick={() => setIsUploadModalOpen(true)}
               variant="outline"
               size="sm"
-              className="flex items-center gap-2 hover:bg-green-50 hover:text-green-700 hover:border-green-300 dark:hover:bg-green-900/20 dark:hover:text-green-300 dark:hover:border-green-700"
+              className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 dark:hover:bg-purple-900/20 dark:hover:text-purple-300 dark:hover:border-purple-700"
             >
-              <MessageSquare className="h-4 w-4" />
-              Mensaje
+              <Upload className="h-4 w-4" />
+              Subir
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      <ClientDocumentUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        casoId={caso.id}
+        onUploadSuccess={handleUploadSuccess}
+      />
     </motion.div>
   );
 };
