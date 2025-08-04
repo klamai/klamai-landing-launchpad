@@ -8,13 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useClientDocumentManagement } from '@/hooks/client/useClientDocumentManagement';
+import { useAuth } from '@/hooks/useAuth';
+import { useDocumentUploadRateLimit } from '@/utils/rateLimiting';
 import { 
   isValidFileType, 
   isValidFileSize, 
   sanitizeDocumentDescription,
-  isValidDocumentType,
-  checkRateLimit,
-  clearRateLimit
+  isValidDocumentType
 } from '@/utils/security';
 
 interface ClientDocumentUploadModalProps {
@@ -35,7 +35,9 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
   const [descripcion, setDescripcion] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   const { uploadDocument } = useClientDocumentManagement(casoId);
+  const { checkUploadRateLimit, recordUploadAttempt } = useDocumentUploadRateLimit();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -65,7 +67,7 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) {
+    if (!selectedFile || !user) {
       toast({
         title: "Error",
         description: "Por favor selecciona un archivo",
@@ -74,12 +76,13 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
       return;
     }
 
-    // Rate limiting
-    const rateLimitKey = `upload_${casoId}`;
-    if (!checkRateLimit(rateLimitKey, 5, 60000)) { // Máximo 5 uploads por minuto
+    // Verificar rate limiting
+    const rateLimitCheck = await checkUploadRateLimit(user.id);
+    
+    if (!rateLimitCheck.allowed) {
       toast({
         title: "Error",
-        description: "Demasiadas subidas. Espera un momento antes de intentar de nuevo",
+        description: rateLimitCheck.error || "Demasiadas subidas. Espera un momento antes de intentar de nuevo",
         variant: "destructive",
       });
       return;
@@ -101,27 +104,32 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
     setIsUploading(true);
 
     try {
-      const result = await uploadDocument(selectedFile, tipoDocumento, sanitizedDescription);
+      // Registrar intento de subida
+      await recordUploadAttempt(user.id);
       
-      if (result.success) {
-        toast({
-          title: "Éxito",
-          description: "Documento subido correctamente",
-        });
-        onUploadSuccess();
-        handleClose();
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Error al subir el documento",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
+      await uploadDocument({
+        file: selectedFile,
+        tipoDocumento,
+        descripcion: sanitizedDescription,
+      });
+
+      toast({
+        title: "Éxito",
+        description: "Documento subido correctamente",
+      });
+
+      // Limpiar formulario
+      setSelectedFile(null);
+      setTipoDocumento('evidencia');
+      setDescripcion('');
+      
+      onUploadSuccess();
+      onClose();
+    } catch (error: any) {
       console.error('Error uploading document:', error);
       toast({
         title: "Error",
-        description: "Error al subir el documento",
+        description: error.message || "Error al subir el documento",
         variant: "destructive",
       });
     } finally {
@@ -130,17 +138,20 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
   };
 
   const handleClose = () => {
-    setSelectedFile(null);
-    setTipoDocumento('evidencia');
-    setDescripcion('');
-    setIsUploading(false);
-    onClose();
+    if (!isUploading) {
+      setSelectedFile(null);
+      setTipoDocumento('evidencia');
+      setDescripcion('');
+      onClose();
+    }
   };
 
   const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -154,111 +165,130 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Selección de archivo */}
           <div>
-            <Label htmlFor="tipo-documento">Tipo de documento</Label>
+            <Label htmlFor="file-upload" className="block text-sm font-medium mb-2">
+              Seleccionar Archivo
+            </Label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+              <input
+                id="file-upload"
+                type="file"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <label htmlFor="file-upload" className="cursor-pointer">
+                <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                <p className="text-sm text-gray-600">
+                  Haz clic para seleccionar un archivo
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  PDF, Word, imágenes o texto (máx. 10MB)
+                </p>
+              </label>
+            </div>
+            
+            {selectedFile && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm font-medium">{selectedFile.name}</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {formatFileSize(selectedFile.size)}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Tipo de documento */}
+          <div>
+            <Label htmlFor="tipo-documento" className="block text-sm font-medium mb-2">
+              Tipo de Documento
+            </Label>
             <select
               id="tipo-documento"
               value={tipoDocumento}
               onChange={(e) => setTipoDocumento(e.target.value)}
-              className="w-full mt-1 p-2 border border-input rounded-md bg-background"
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="evidencia">Evidencia</option>
               <option value="contrato">Contrato</option>
+              <option value="factura">Factura</option>
               <option value="correspondencia">Correspondencia</option>
-              <option value="identificacion">Identificación</option>
-              <option value="otros">Otros</option>
+              <option value="otro">Otro</option>
             </select>
           </div>
 
+          {/* Descripción */}
           <div>
-            <Label htmlFor="descripcion">Descripción (opcional)</Label>
+            <Label htmlFor="descripcion" className="block text-sm font-medium mb-2">
+              Descripción (opcional)
+            </Label>
             <Textarea
               id="descripcion"
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Describe el contenido del documento..."
-              className="mt-1"
+              placeholder="Describe brevemente el contenido del documento..."
+              className="resize-none"
               rows={3}
+              maxLength={500}
             />
+            <p className="text-xs text-gray-500 mt-1">
+              {descripcion.length}/500 caracteres
+            </p>
           </div>
 
-          <div>
-            <Label htmlFor="file-upload">Seleccionar archivo</Label>
-            <div className="mt-1">
-              <input
-                id="file-upload"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt,.md"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <Button
-                variant="outline"
-                onClick={() => document.getElementById('file-upload')?.click()}
-                className="w-full gap-2"
-                disabled={isUploading}
-              >
-                <Upload className="h-4 w-4" />
-                {selectedFile ? 'Cambiar archivo' : 'Seleccionar archivo'}
-              </Button>
-            </div>
-          </div>
-
-          {selectedFile && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md"
-            >
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-blue-600" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
-                    {selectedFile.name}
-                  </p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
-                    {formatFileSize(selectedFile.size)}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedFile(null)}
-                  disabled={isUploading}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-md">
-            <div className="flex gap-2">
-              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div className="text-xs text-amber-700 dark:text-amber-300">
-                <p className="font-medium mb-1">Tipos de archivo permitidos:</p>
-                <p>PDF, Imágenes (JPG, PNG), Documentos Word (.doc, .docx)</p>
-                <p className="mt-1">Tamaño máximo: 10MB</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <Button 
-              variant="outline" 
-              onClick={handleClose} 
-              className="flex-1"
+          {/* Botones */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              onClick={handleClose}
+              variant="outline"
               disabled={isUploading}
+              className="flex-1"
             >
               Cancelar
             </Button>
-            <Button 
-              onClick={handleUpload} 
-              className="flex-1"
+            <Button
+              onClick={handleUpload}
               disabled={!selectedFile || isUploading}
+              className="flex-1"
             >
-              {isUploading ? 'Subiendo...' : 'Subir'}
+              {isUploading ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="mr-2"
+                  >
+                    ⏳
+                  </motion.div>
+                  Subiendo...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Subir
+                </>
+              )}
             </Button>
+          </div>
+
+          {/* Información de seguridad */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-blue-700">
+                <p className="font-medium mb-1">Información de Seguridad:</p>
+                <ul className="space-y-1">
+                  <li>• Solo archivos seguros permitidos (PDF, Word, imágenes)</li>
+                  <li>• Tamaño máximo: 10MB por archivo</li>
+                  <li>• Máximo 10 subidas por minuto</li>
+                  <li>• Descripción limitada a 500 caracteres</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>

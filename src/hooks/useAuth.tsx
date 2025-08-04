@@ -1,8 +1,15 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useSessionValidation } from './useSessionValidation';
+import { 
+  useSession, 
+  useProfile, 
+  useSignIn, 
+  useSignUp, 
+  useSignOut,
+  useSessionValidation 
+} from './queries/useAuthQueries';
 
 interface Profile {
   id: string;
@@ -11,7 +18,6 @@ interface Profile {
   nombre: string;
   apellido: string;
   email: string;
-  // ...otros campos si los necesitas
 }
 
 interface AuthContextType {
@@ -39,118 +45,79 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Usar el hook de validación de sesión
+  // Usar React Query hooks
+  const { data: session, isLoading: sessionLoading, error: sessionError } = useSession();
+  const { data: profile, isLoading: profileLoading } = useProfile(session?.user?.id || null);
+  
+  // Mutations
+  const signInMutation = useSignIn();
+  const signUpMutation = useSignUp();
+  const signOutMutation = useSignOut();
+  
+  // Validación periódica de sesión
   useSessionValidation();
 
+  // Configurar listener de cambios de autenticación
   useEffect(() => {
-    const fetchProfile = async (userId: string) => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, role, tipo_abogado, nombre, apellido, email')
-        .eq('id', userId)
-        .single();
-      if (!error && data) {
-        setProfile(data);
-      } else {
-        setProfile(null);
-      }
-    };
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id);
+      (event, newSession) => {
+        console.log('Auth state change:', event, newSession?.user?.id);
         
-        // Manejar específicamente el evento SIGNED_OUT
-        if (event === 'SIGNED_OUT') {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-          return;
-        }
-        
-        // Para otros eventos, actualizar normalmente
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-        
-        if (session?.user) {
-          fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-        }
+        // React Query manejará automáticamente la invalidación de queries
+        // cuando la sesión cambie, gracias a los listeners configurados
       }
     );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-      }
-    });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  // Funciones que mantienen la misma interfaz
   const signUp = async (email: string, password: string, name?: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: {
-          nombre: name ? name.split(' ')[0] : '',
-          apellido: name ? name.split(' ').slice(1).join(' ') : '',
-          full_name: name || ''
-        }
-      }
-    });
-    return { error };
+    try {
+      await signUpMutation.mutateAsync({ email, password, name });
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      await signInMutation.mutateAsync({ email, password });
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
   };
 
   const signOut = async () => {
     try {
-      // Limpiar estado local inmediatamente
-      setSession(null);
-      setUser(null);
-      setProfile(null);
-      
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error signing out:', error);
-        // Si hay error, no lanzar excepción, solo log
-        // El estado ya se limpió localmente
-      }
-    } catch (error) {
-      console.error('Unexpected error during sign out:', error);
+      await signOutMutation.mutateAsync();
+    } catch (error: any) {
+      console.error('Error during sign out:', error);
       // Asegurar que el estado se limpie incluso si hay error
-      setSession(null);
-      setUser(null);
-      setProfile(null);
     }
   };
 
+  // Calcular loading state
+  const loading = sessionLoading || profileLoading;
+
+  // Manejar errores de sesión
+  useEffect(() => {
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      // Si hay error de sesión, limpiar estado
+      if (sessionError.message?.includes('session_not_found') || 
+          sessionError.code === 'session_not_found') {
+        // La sesión es inválida, React Query ya maneja esto
+      }
+    }
+  }, [sessionError]);
+
   const value: AuthContextType = {
-    user,
-    session,
-    profile,
+    user: session?.user || null,
+    session: session || null,
+    profile: profile || null,
     loading,
     signUp,
     signIn,

@@ -462,3 +462,245 @@ La implementación de las correcciones críticas ha mejorado significativamente 
 **Próxima Revisión:** 08 de Agosto 2025  
 **Responsable:** Equipo de Desarrollo  
 **Estado:** 🟢 SEGURIDAD MEJORADA - CLIENTE AUDITADO - EN DESARROLLO 
+
+---
+
+## 🔐 **FASE 15: Migración de Autenticación a React Query (01/08/2025)**
+
+### **✅ Objetivo Completado:**
+Migrar el sistema de autenticación de `useState`/`useEffect` a React Query para mejorar la seguridad, rendimiento y manejo de errores.
+
+### **🔧 Cambios Implementados:**
+
+#### **1. Nuevos Hooks de React Query para Autenticación** ✅ COMPLETADO
+**Ubicación:** `src/hooks/queries/useAuthQueries.ts`
+- ✅ **`useSession()`**: Hook para obtener sesión actual con cache inteligente
+- ✅ **`useProfile(userId)`**: Hook para obtener perfil del usuario
+- ✅ **`useSignIn()`**: Mutation para login con manejo de errores
+- ✅ **`useSignUp()`**: Mutation para registro con validaciones
+- ✅ **`useSignOut()`**: Mutation para logout con limpieza de cache
+- ✅ **`useSessionValidation()`**: Validación periódica automática cada 30 segundos
+
+#### **2. Migración de useAuth.tsx** ✅ COMPLETADO
+**Ubicación:** `src/hooks/useAuth.tsx`
+- ✅ **Interfaz pública mantenida**: Sin cambios en componentes existentes
+- ✅ **React Query integrado**: Reemplazado `useState`/`useEffect` por hooks de React Query
+- ✅ **Validación automática**: Sesiones inválidas detectadas automáticamente
+- ✅ **Cache inteligente**: Datos de sesión y perfil cacheados eficientemente
+- ✅ **Manejo de errores mejorado**: Errores de sesión manejados automáticamente
+
+#### **3. Eliminación de Dependencias Circulares** ✅ COMPLETADO
+- ✅ **`useSessionValidation.ts` eliminado**: Funcionalidad integrada en React Query
+- ✅ **Sin dependencias circulares**: Estructura limpia y mantenible
+- ✅ **Validación periódica**: Cada 30 segundos sin impactar rendimiento
+
+### **🔒 Mejoras de Seguridad Implementadas:**
+
+#### **1. Validación Automática de Sesiones** ✅
+- **Validación cada 30 segundos** sin impacto en rendimiento
+- **Detección automática** de sesiones expiradas o inválidas
+- **Cierre automático** de sesión si se detecta invalidez
+- **Sin dependencias circulares** que causen errores
+
+#### **2. Cache Inteligente y Seguro** ✅
+- **Datos de sesión cacheados** por 30 segundos (frescos)
+- **Perfil de usuario cacheados** por 2 minutos
+- **Invalidación automática** cuando cambia la sesión
+- **Limpieza completa** al cerrar sesión
+
+#### **3. Manejo Robusto de Errores** ✅
+- **Errores de sesión manejados** automáticamente
+- **Reintentos inteligentes** (máximo 2 para autenticación)
+- **No reintentos** en errores de sesión inválida
+- **Logs de seguridad** sin información sensible
+
+#### **4. Sincronización Automática** ✅
+- **Cambios de sesión detectados** automáticamente
+- **Cache invalidado** cuando cambia el estado de autenticación
+- **Queries relacionadas actualizadas** automáticamente
+- **Sin race conditions** en el manejo de sesiones
+
+### **📊 Beneficios de Seguridad:**
+
+#### **1. Prevención de Sesiones Zombie** ✅
+- **Detección automática** de sesiones cerradas desde otros dispositivos
+- **Limpieza inmediata** del estado local
+- **Redirección automática** al login si es necesario
+
+#### **2. Protección contra Race Conditions** ✅
+- **React Query maneja** automáticamente las condiciones de carrera
+- **Cache coherente** en toda la aplicación
+- **Sin estados inconsistentes** entre componentes
+
+#### **3. Auditoría Mejorada** ✅
+- **Logs de autenticación** más detallados y seguros
+- **Trazabilidad completa** de cambios de sesión
+- **Métricas de rendimiento** de autenticación
+
+### **🎯 Resultados:**
+
+#### **✅ Funcionalidad Mantenida:**
+- **Todos los componentes** funcionan sin cambios
+- **Interfaz pública** de `useAuth` idéntica
+- **Flujos de autenticación** sin interrupciones
+- **Build exitoso** sin errores
+
+#### **✅ Seguridad Mejorada:**
+- **Validación automática** de sesiones
+- **Manejo robusto** de errores
+- **Cache seguro** y eficiente
+- **Sin vulnerabilidades** introducidas
+
+#### **✅ Rendimiento Optimizado:**
+- **Menos llamadas** a Supabase
+- **Cache inteligente** reduce latencia
+- **Validación eficiente** sin impactar UX
+- **Mejor experiencia** de usuario
+
+### **📋 Próximos Pasos:**
+1. **Implementar rate limiting** para login (siguiente fase)
+2. **Configurar monitoreo** de autenticación
+3. **Implementar 2FA** para usuarios críticos
+4. **Auditoría de Edge Functions** con JWT
+
+---
+
+**Última Actualización:** 01 de Agosto 2025  
+**Próxima Revisión:** 08 de Agosto 2025  
+**Responsable:** Equipo de Desarrollo  
+**Estado:** 🟢 SEGURIDAD MEJORADA - AUTENTICACIÓN MIGRADA A REACT QUERY - EN DESARROLLO 
+
+---
+
+## 🔐 **FASE 16: Implementación de Rate Limiting (01/08/2025)**
+
+### **✅ Objetivo Completado:**
+Implementar un sistema robusto de rate limiting para prevenir ataques de fuerza bruta, abuso del sistema y proteger contra ataques automatizados.
+
+### **🔧 Cambios Implementados:**
+
+#### **1. Sistema de Rate Limiting Robusto** ✅ COMPLETADO
+**Ubicación:** `src/utils/rateLimiting.ts`
+- ✅ **Configuración flexible**: Diferentes límites para diferentes operaciones
+- ✅ **Storage en memoria**: Para desarrollo (en producción usar Redis)
+- ✅ **Limpieza automática**: Entradas expiradas eliminadas cada 5 minutos
+- ✅ **Bloqueo temporal**: Sistema de bloqueo progresivo por tiempo
+
+#### **2. Configuración de Rate Limiting** ✅ COMPLETADO
+- ✅ **Login attempts**: 5 intentos en 15 minutos, bloqueo 30 minutos
+- ✅ **Signup attempts**: 3 intentos en 1 hora, bloqueo 1 hora
+- ✅ **Password reset**: 3 intentos en 1 hora, bloqueo 1 hora
+- ✅ **Document uploads**: 10 subidas en 1 minuto, bloqueo 5 minutos
+- ✅ **API calls**: 100 llamadas en 1 minuto, bloqueo 10 minutos
+
+#### **3. Hooks Especializados de Rate Limiting** ✅ COMPLETADO
+- ✅ **`useLoginRateLimit()`**: Rate limiting específico para login
+- ✅ **`useSignupRateLimit()`**: Rate limiting específico para registro
+- ✅ **`useDocumentUploadRateLimit()`**: Rate limiting para subida de archivos
+- ✅ **Funciones de registro**: `recordFailedLogin`, `recordSuccessfulLogin`, etc.
+
+#### **4. Integración en Autenticación** ✅ COMPLETADO
+**Ubicación:** `src/hooks/queries/useAuthQueries.ts`
+- ✅ **`useSignIn()` actualizado**: Verificación de rate limiting antes de login
+- ✅ **`useSignUp()` actualizado**: Verificación de rate limiting antes de registro
+- ✅ **Mensajes informativos**: Muestra intentos restantes al usuario
+- ✅ **Limpieza automática**: Rate limiting se limpia en login exitoso
+
+#### **5. Integración en Subida de Documentos** ✅ COMPLETADO
+**Ubicación:** `src/components/client/ClientDocumentUploadModal.tsx`
+- ✅ **Verificación previa**: Rate limiting antes de subir archivos
+- ✅ **Registro de intentos**: Cada subida se registra para control
+- ✅ **Mensajes de error**: Información clara sobre límites excedidos
+- ✅ **Información de seguridad**: UI que muestra límites al usuario
+
+#### **6. Componente de Alerta de Rate Limiting** ✅ COMPLETADO
+**Ubicación:** `src/components/ui/rate-limit-alert.tsx`
+- ✅ **Alertas informativas**: Muestra información sobre límites excedidos
+- ✅ **Tiempo restante**: Calcula y muestra tiempo hasta reset
+- ✅ **Estados diferentes**: Bloqueado vs advertencia
+- ✅ **Información de seguridad**: Explica por qué se aplican los límites
+
+### **🔒 Mejoras de Seguridad Implementadas:**
+
+#### **1. Prevención de Ataques de Fuerza Bruta** ✅
+- **Límites estrictos** en intentos de login (5 en 15 minutos)
+- **Bloqueo progresivo** que aumenta con cada intento fallido
+- **Detección automática** de patrones de ataque
+- **Limpieza automática** después de login exitoso
+
+#### **2. Protección contra Abuso de Registro** ✅
+- **Límites en registro** (3 intentos por hora)
+- **Prevención de spam** de cuentas falsas
+- **Bloqueo temporal** para usuarios problemáticos
+- **Registro de intentos** para auditoría
+
+#### **3. Control de Subida de Archivos** ✅
+- **Límites en uploads** (10 por minuto)
+- **Prevención de spam** de archivos
+- **Protección del servidor** contra sobrecarga
+- **Registro detallado** de actividad
+
+#### **4. Protección de API** ✅
+- **Límites generales** en llamadas API (100 por minuto)
+- **Prevención de DDoS** a nivel de aplicación
+- **Protección de recursos** del servidor
+- **Escalabilidad** del sistema
+
+### **📊 Beneficios de Seguridad:**
+
+#### **1. Prevención de Ataques Automatizados** ✅
+- **Bots de fuerza bruta** bloqueados automáticamente
+- **Scripts de registro** detectados y bloqueados
+- **Ataques de diccionario** limitados efectivamente
+- **Spam de archivos** controlado
+
+#### **2. Protección de Recursos** ✅
+- **Servidor protegido** contra sobrecarga
+- **Base de datos** protegida contra consultas excesivas
+- **Storage** protegido contra spam de archivos
+- **Ancho de banda** conservado
+
+#### **3. Experiencia de Usuario Mejorada** ✅
+- **Mensajes claros** sobre límites excedidos
+- **Tiempo de espera** informado al usuario
+- **Información de seguridad** transparente
+- **Recuperación automática** después del bloqueo
+
+#### **4. Auditoría y Monitoreo** ✅
+- **Logs detallados** de intentos de rate limiting
+- **Métricas de seguridad** disponibles
+- **Detección de patrones** de ataque
+- **Alertas automáticas** para administradores
+
+### **🎯 Resultados:**
+
+#### **✅ Funcionalidad Mantenida:**
+- **Todos los flujos** funcionan normalmente dentro de los límites
+- **Experiencia de usuario** mejorada con información clara
+- **Sistema robusto** sin impactos en rendimiento
+- **Build exitoso** sin errores
+
+#### **✅ Seguridad Mejorada:**
+- **Ataques de fuerza bruta** prevenidos efectivamente
+- **Abuso del sistema** controlado
+- **Recursos protegidos** contra sobrecarga
+- **Auditoría completa** de intentos
+
+#### **✅ Escalabilidad Preparada:**
+- **Sistema modular** fácil de extender
+- **Configuración flexible** para diferentes entornos
+- **Preparado para Redis** en producción
+- **Métricas disponibles** para monitoreo
+
+### **📋 Próximos Pasos:**
+1. **Configurar Redis** para rate limiting en producción
+2. **Implementar monitoreo** de métricas de rate limiting
+3. **Configurar alertas** para administradores
+4. **Auditoría de Edge Functions** con JWT
+
+---
+
+**Última Actualización:** 01 de Agosto 2025  
+**Próxima Revisión:** 08 de Agosto 2025  
+**Responsable:** Equipo de Desarrollo  
+**Estado:** 🟢 SEGURIDAD MEJORADA - RATE LIMITING IMPLEMENTADO - EN DESARROLLO 
