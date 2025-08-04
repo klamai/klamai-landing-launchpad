@@ -52,9 +52,23 @@ const DashboardLayout = memo(({
       });
       navigate('/');
     } catch (error: any) {
+      console.error('Error during sign out:', error);
+      
+      // Si el error es de sesión no encontrada, limpiar estado y redirigir
+      if (error?.message?.includes('session_not_found') || error?.code === 'session_not_found') {
+        toast({
+          title: "⚠️ Sesión expirada",
+          description: "Tu sesión ha expirado. Serás redirigido al inicio.",
+          variant: "default"
+        });
+        navigate('/');
+        return;
+      }
+      
+      // Para otros errores, mostrar mensaje de error
       toast({
         title: "❌ Error",
-        description: "Error al cerrar sesión",
+        description: "Error al cerrar sesión. Inténtalo de nuevo.",
         variant: "destructive",
       });
     }

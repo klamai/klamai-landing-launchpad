@@ -901,4 +901,30 @@ VITE_DOCUMENSO_URL=https://documenso-r8swo0o4kksocggw04888cww.klamai.com
   - **No Information Disclosure**: Logs limpiados de información sensible
 - ✅ **Resultado**: Sistema completamente seguro para producción, sin brechas de seguridad, logs limpios y validaciones robustas
 
+#### **🔧 FASE 14: Corrección de Gestión de Sesiones y Cierre de Sesión (01/08/2025)**
+- ✅ **Problema Identificado**: Error `{"code":"session_not_found","message":"Session from session_id claim in JWT does not exist"}` cuando se cierra sesión desde otro navegador
+- ✅ **Causa Raíz**: El `onAuthStateChange` no manejaba específicamente el evento `SIGNED_OUT` y no limpiaba correctamente el estado local
+- ✅ **Soluciones Implementadas**:
+  - **Mejora del `onAuthStateChange`**: Manejo específico del evento `SIGNED_OUT` con limpieza inmediata del estado
+  - **Función `signOut` mejorada**: Limpieza inmediata del estado local antes de llamar a Supabase
+  - **Hook `useSessionValidation`**: Validación periódica de sesiones cada 30 segundos
+  - **Interceptor global**: Manejo automático de errores de sesión inválida en `supabase/client.ts`
+  - **Manejo de errores en componentes**: Detección de errores `session_not_found` y redirección automática
+- ✅ **Funcionalidades Añadidas**:
+  - **Validación automática de sesiones**: Detección de sesiones expiradas o inválidas
+  - **Limpieza de estado persistente**: Eliminación de tokens y datos de sesión obsoletos
+  - **Redirección automática**: Envío al inicio cuando se detecta sesión inválida
+  - **Manejo de errores robusto**: Sin crashes cuando falla el cierre de sesión
+- ✅ **Archivos Modificados**:
+  - **`src/hooks/useAuth.tsx`**: Mejorado manejo de eventos de autenticación
+  - **`src/hooks/useSessionValidation.ts`**: Nuevo hook para validación de sesiones
+  - **`src/integrations/supabase/client.ts`**: Interceptor global para errores de sesión
+  - **`src/components/DashboardLayout.tsx`**: Mejorado manejo de errores en cierre de sesión
+- ✅ **Beneficios de Seguridad**:
+  - **Sesiones consistentes**: Estado sincronizado entre navegadores
+  - **Detección automática**: Sesiones inválidas detectadas y manejadas automáticamente
+  - **Sin datos obsoletos**: Limpieza completa de estado cuando se invalida la sesión
+  - **Experiencia de usuario mejorada**: Redirección automática sin errores visibles
+- ✅ **Resultado**: Problema de sesiones inválidas completamente resuelto, gestión robusta de sesiones entre múltiples navegadores
+
 ## 📋 **PRÓXIMAS TAREAS:**
