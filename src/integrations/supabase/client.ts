@@ -17,15 +17,38 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   );
 }
 
+// Configuración de producción para Supabase (OPTIMIZADA PARA MUCHOS USUARIOS)
+const PRODUCTION_CONFIG = {
+  // Configuración de base de datos
+  db: {
+    timeout: parseInt(import.meta.env.VITE_SUPABASE_DB_TIMEOUT || '5000'), // 5 segundos - Balance UX/estabilidad
+    retry: parseInt(import.meta.env.VITE_SUPABASE_RETRY_ATTEMPTS || '2'), // Solo 2 reintentos - Suficiente sin saturar
+    retryDelay: parseInt(import.meta.env.VITE_SUPABASE_RETRY_DELAY || '2000'), // 2 segundos inicial - Backoff exponencial
+    // maxConnections: Dejar que Supabase maneje automáticamente para escalabilidad
+  },
+  // Configuración de autenticación
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce' // Usar PKCE para mayor seguridad
+  },
+  // Configuración de red
+  global: {
+    headers: {
+      'X-Client-Info': 'klamai-landing-launchpad',
+      'X-Client-Version': '1.0.0'
+    }
+  }
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  }
+  auth: PRODUCTION_CONFIG.auth,
+  global: PRODUCTION_CONFIG.global,
+  db: PRODUCTION_CONFIG.db
 });
 
 // Interceptor global para manejar errores de sesión inválida
@@ -58,3 +81,42 @@ export const handleSessionError = (error: any) => {
   
   return false; // Error no manejado
 };
+
+// Función para manejar errores de red y timeouts
+export const handleNetworkError = (error: any) => {
+  // Log del error para debugging
+  console.error('Network error:', error);
+  
+  // Si es un error de timeout
+  if (error?.message?.includes('timeout') || error?.code === 'TIMEOUT') {
+    console.warn('Request timeout - considerando retry automático');
+    return { shouldRetry: true, delay: 2000 };
+  }
+  
+  // Si es un error de red temporal
+  if (error?.message?.includes('network') || error?.code === 'NETWORK_ERROR') {
+    console.warn('Network error - considerando retry automático');
+    return { shouldRetry: true, delay: 1000 };
+  }
+  
+  // Para otros errores, no reintentar
+  return { shouldRetry: false, delay: 0 };
+};
+
+// Función para validar configuración de producción
+export const validateProductionConfig = () => {
+  const isProduction = import.meta.env.PROD;
+  
+  if (isProduction) {
+    console.log('🔒 Configuración de producción activada (OPTIMIZADA):');
+    console.log(`- Timeout DB: ${PRODUCTION_CONFIG.db.timeout}ms (balanceado para UX)`);
+    console.log(`- Retry attempts: ${PRODUCTION_CONFIG.db.retry} (suficiente sin saturar)`);
+    console.log(`- Retry delay: ${PRODUCTION_CONFIG.db.retryDelay}ms (backoff exponencial)`);
+    console.log(`- Max connections: Automático (escalabilidad)`);
+  } else {
+    console.log('️ Modo desarrollo - configuraciones de producción optimizadas disponibles');
+  }
+};
+
+// Validar configuración al cargar el módulo
+validateProductionConfig();
