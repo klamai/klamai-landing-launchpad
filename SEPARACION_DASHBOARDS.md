@@ -98,6 +98,45 @@
   - **Dashboard Completo**: Componente `LegalDashboard` con gráficos de Recharts
   - **Gráficos Implementados**: 
     - Evolución de Clientes (BarChart)
+
+#### **🔧 FASE 9: Corrección de Error en Consulta de Notificaciones (01/08/2025)**
+- ✅ **Problema Identificado**: Error 400 en consulta de notificaciones del dashboard del cliente
+- ✅ **Causa Raíz**: El hook `useClientCaseDetails` intentaba filtrar por `caso_id` en la tabla `notificaciones`, pero este campo no existía
+- ✅ **Solución Aplicada**:
+  - Corregida la consulta en `src/hooks/client/useClientCaseDetails.ts`
+  - Eliminado el filtro `.eq('caso_id', casoId)` que causaba el error
+  - La tabla `notificaciones` solo tenía: `id`, `usuario_id`, `mensaje`, `leida`, `url_destino`, `created_at`
+- ✅ **Resultado**: Las notificaciones ahora se cargan correctamente sin errores 400
+
+#### **🔧 FASE 10: Implementación de Notificaciones Específicas por Caso (01/08/2025)**
+- ✅ **Mejora Implementada**: Añadido campo `caso_id` a la tabla `notificaciones` para filtrado específico
+- ✅ **Migración de Base de Datos**:
+  - Añadido campo `caso_id UUID REFERENCES public.casos(id) ON DELETE CASCADE`
+  - Creado índice `idx_notificaciones_caso_id` para optimizar consultas
+  - Actualizada política RLS para permitir acceso por caso específico
+  - Actualizada función `notify_case_update()` para incluir `caso_id`
+- ✅ **Nuevos Hooks Creados**:
+  - `useCaseNotifications(casoId)`: Obtiene todas las notificaciones de un caso
+  - `useCaseUnreadNotificationsCount(casoId)`: Cuenta notificaciones no leídas por caso
+- ✅ **Componentes Actualizados**:
+  - `ClientCaseCard`: Ahora muestra notificaciones específicas del caso
+  - `useClientCaseDetails`: Simplificado para usar hooks específicos
+- ✅ **Datos de Prueba**:
+  - Pobladas notificaciones de prueba para casos existentes
+  - Notificaciones específicas por estado del caso (creado, asignado, pago requerido)
+- ✅ **Resultado**: Cada card de caso muestra solo las notificaciones relevantes a ese caso específico
+
+#### **🔧 FASE 9: Optimización del Dashboard del Cliente (01/08/2025)**
+- ✅ **Problema Identificado**: Error en `useClientStats` debido a campos inexistentes y relaciones ambiguas
+- ✅ **Causa Raíz**: El cliente solo debe tener acceso a campos básicos de sus casos, no a relaciones complejas
+- ✅ **Solución Aplicada**:
+  - **Hook `useClientStats`**: Simplificado para acceder solo a campos básicos que el cliente puede ver
+  - **Campos Accesibles**: `id`, `estado`, `created_at`, `fecha_cierre`, `valor_estimado`, `tipo_lead`, `especialidad_id`
+  - **Relación Especialidades**: Corregida usando `especialidades!casos_especialidad_id_fkey` para evitar ambigüedad
+  - **Eliminadas Relaciones Complejas**: Removido acceso a `asignaciones_casos` y `profiles` de abogados
+  - **Componente `DashboardSection`**: Simplificado para mostrar solo métricas básicas del cliente
+  - **Métricas Cliente**: Casos totales, activos, cerrados, pagos, notificaciones
+  - **Seguridad**: El cliente solo ve información básica de sus propios casos
     - Casos por Estado (PieChart)
     - Ingresos Mensuales (LineChart)
     - Rendimiento por Especialidad (BarChart)
@@ -631,3 +670,146 @@ VITE_DOCUMENSO_URL=https://documenso-r8swo0o4kksocggw04888cww.klamai.com
 - **Logo Proporcionado**: 32x32px para buena visibilidad
 - **Espaciado Balanceado**: Elementos bien distribuidos
 - **Consistencia Visual**: Mantiene la identidad de marca
+
+#### **📱 FASE 19: Balanceo Visual Logo y Menú Móvil (01/08/2025)**
+- ✅ **Problema Identificado**: Logo y menú hamburguesa no estaban al mismo nivel visual
+- ✅ **Solución Implementada**: 
+  - **Contenedores Balanceados**: Ambos elementos en contenedores `h-8 w-8` con `justify-center`
+  - **Alineación Perfecta**: `items-center` y `justify-center` para centrado exacto
+  - **Proporción Equilibrada**: Logo 32x32px, menú 24x24px dentro de contenedor 32x32px
+  - **Eliminación de Desbalance**: Mismo tamaño de contenedor para ambos elementos
+- ✅ **Funcionalidades Mejoradas**:
+  - **Balance Visual**: Ambos elementos perfectamente alineados
+  - **Diseño Profesional**: Layout simétrico y pulido
+  - **UX Mejorada**: Apariencia más equilibrada y profesional
+  - **Consistencia**: Mismo nivel visual para ambos elementos
+- ✅ **Archivo Modificado**: `src/components/ui/sidebar-dashboard.tsx`
+
+### **🎯 BENEFICIOS DE LA CORRECCIÓN:**
+
+**✅ Experiencia Visual:**
+- **Balance Perfecto**: Logo y menú al mismo nivel
+- **Simetría Visual**: Contenedores del mismo tamaño
+- **Diseño Profesional**: Apariencia más pulida y equilibrada
+- **Consistencia**: Elementos perfectamente alineados
+
+**✅ Diseño Mejorado:**
+- **Contenedores Iguales**: Ambos elementos en contenedores 32x32px
+- **Centrado Exacto**: Alineación perfecta con CSS flexbox
+- **Proporción Equilibrada**: Tamaños apropiados para cada elemento
+- **Eliminación de Efectos**: Sin desbalance visual
+
+#### **📊 FASE 20: Optimización Dashboard Cliente con React Query (01/08/2025)**
+- ✅ **Hook Creado**: `useClientStats` en `src/hooks/useClientStats.ts`
+- ✅ **Componente Migrado**: `DashboardSection.tsx` completamente reescrito con React Query
+- ✅ **Funcionalidades Implementadas**:
+  - **Métricas Principales**: Mis Casos, Abogados Asignados, Pagos Totales, Notificaciones
+  - **Métricas Secundarias**: Casos Activos, Pagos Pendientes, Casos Cerrados, Sin Leer
+  - **Actividad Reciente**: Últimos 6 eventos con iconos y timestamps
+  - **Resumen de Casos**: Por estado (Activos, Pendientes, Cerrados) y prioridad
+  - **Mi Equipo Legal**: Visualización de abogados asignados
+  - **Gráficos Interactivos**: Mini charts con tendencias y colores dinámicos
+- ✅ **Diseño Optimizado**:
+  - **Cards Interactivas**: Hover effects y transiciones suaves
+  - **Loading States**: Skeleton loaders para mejor UX
+  - **Error Handling**: Manejo elegante de errores
+  - **Responsive Design**: Grid adaptativo para todos los dispositivos
+  - **Tema Dinámico**: Soporte para modo claro/oscuro
+- ✅ **Seguridad Implementada**:
+  - **Validación de Usuario**: Verificación de autenticación
+  - **Control de Acceso**: Solo clientes pueden acceder
+  - **Sanitización**: Datos procesados de forma segura
+  - **Error Handling**: Sin exposición de información sensible
+- ✅ **Componentes Creados**:
+  - **MetricCard**: Tarjetas de métricas con gráficos y tendencias
+  - **MiniChart**: Gráficos SVG para visualización de datos
+  - **RecentActivity**: Actividad reciente con iconos y timestamps
+  - **CasesOverview**: Resumen de casos por estado y prioridad
+  - **AssignedLawyers**: Visualización del equipo legal
+- ✅ **Datos Optimizados**:
+  - **Caché Inteligente**: Datos frescos por 5 minutos
+  - **Relaciones Complejas**: Casos, pagos, notificaciones, abogados
+  - **Actividad Reciente**: Combinación de eventos de múltiples fuentes
+  - **Estadísticas Reales**: Basadas en datos de la base de datos
+
+### **🎯 BENEFICIOS DE LA OPTIMIZACIÓN:**
+
+**✅ Rendimiento:**
+- **Sin recargas** al navegar entre secciones
+- **Caché inteligente** que evita requests innecesarios
+- **Datos frescos** automáticamente cuando es necesario
+- **Loading states** optimizados
+
+**✅ Experiencia de Usuario:**
+- **Dashboard Completo**: Métricas relevantes para clientes
+- **Visualización Clara**: Gráficos y estadísticas fáciles de entender
+- **Actividad Reciente**: Seguimiento de eventos importantes
+- **Equipo Legal**: Visibilidad de abogados asignados
+
+**✅ Desarrollo:**
+- **React Query**: Caché y gestión de estado optimizada
+- **TypeScript**: Completamente tipado
+- **Componentes Reutilizables**: Arquitectura modular
+- **Mantenibilidad**: Código limpio y organizado
+
+#### **🔧 FASE 10: Optimización de Mis Casos del Cliente (01/08/2025)**
+- ✅ **Migración a React Query**: Hook `useClientCases` migrado de `useState/useEffect` a React Query
+- ✅ **Hook Optimizado**: 
+  - Solo accede a campos básicos que el cliente puede ver
+  - Relación con especialidades corregida usando `especialidades!casos_especialidad_id_fkey`
+  - Eliminadas relaciones complejas y campos sensibles
+  - Cache de 2 minutos con garbage collection de 5 minutos
+  - **Campo `hoja_encargo_token` añadido** para visualizar hojas de encargo
+- ✅ **Componente `ClientCaseCard` Creado**:
+  - Diseño específico para el cliente final
+  - Estados adaptados al usuario: "En Revisión", "En Proceso", "Por Pagar", "Finalizado", "Propuesta Lista"
+  - Información de progreso clara y amigable
+  - No muestra precios ni datos sensibles
+  - Diseño responsivo y moderno
+  - Badges de tipo de perfil (Individual/Empresa)
+  - Indicador de documentos adjuntos
+- ✅ **Componente `MisCasos` Mejorado**:
+  - Migrado a React Query para mejor rendimiento
+  - Filtros adaptados al cliente (estados específicos del usuario)
+  - Búsqueda mejorada
+  - Diseño responsivo con grid adaptativo
+  - Estados de carga y error mejorados
+  - Navegación a chat y nueva consulta
+- ✅ **Validación de Permisos Corregida**:
+  - Cambio de validación por email a validación por ID (`cliente_id`)
+  - Validación más robusta y confiable
+  - Logs de debug para problemas de permisos
+- ✅ **Seguridad y Separación**:
+  - Cliente solo ve campos básicos de sus casos
+  - No accede a información de abogados o asignaciones
+  - Estados adaptados al rol del cliente
+  - Cumple con principio de mínimo privilegio
+  - **Hojas de encargo accesibles** para el cliente
+
+#### **🔧 FASE 11: Mejora de Cards del Cliente con Información Relevante (01/08/2025)**
+- ✅ **Hook `useClientCaseDetails` Creado**:
+  - Información completa del caso en una sola consulta optimizada
+  - Documentos del cliente con conteo real
+  - Información del abogado asignado (solo nombre para el cliente)
+  - Notificaciones no leídas
+  - Última actividad del caso
+  - Cache de 1 minuto para datos frescos
+- ✅ **Cards Mejoradas con Indicadores de Actividad**:
+  - **Notificaciones no leídas**: Icono de campana con contador
+  - **Documentos del cliente**: Icono de archivo con número real
+  - **Hoja de encargo**: Icono de escudo cuando está disponible
+  - **Abogado asignado**: Icono de usuario cuando hay asignación
+  - **Última actividad**: Descripción de la acción más reciente
+- ✅ **Diseño Elegante y No Saturado**:
+  - Indicadores compactos con iconos y colores distintivos
+  - Sección "Actividad del Caso" que se muestra solo cuando hay actividad
+  - Información de última actividad en formato compacto
+  - Diseño responsivo que se adapta al contenido
+- ✅ **UX/UI de Producción**:
+  - Información relevante sin saturar la vista
+  - Iconos intuitivos con colores semánticos
+  - Estados de carga manejados correctamente
+  - Información contextual y útil para el cliente
+  - Diseño consistente con el resto de la aplicación
+
+## 📋 **PRÓXIMAS TAREAS:**

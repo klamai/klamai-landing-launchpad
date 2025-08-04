@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
   X, 
@@ -18,7 +18,9 @@ import {
   Building,
   Trash2,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import {
   Dialog,
@@ -110,11 +112,20 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
   onSendMessage
 }) => {
   const [selectedDocument, setSelectedDocument] = useState<{name: string; url: string; type?: string; size?: number} | null>(null);
+  const [showLeftIndicator, setShowLeftIndicator] = useState(false);
+  const [showRightIndicator, setShowRightIndicator] = useState(false);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showClientUploadModal, setShowClientUploadModal] = useState(false);
   const [userRole, setUserRole] = useState<'cliente' | 'abogado' | null>(null);
   const [lawyerType, setLawyerType] = useState<string | null>(null);
   const [isAssignedLawyer, setIsAssignedLawyer] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
+  const [isUploadingClientDocument, setIsUploadingClientDocument] = useState(false);
+  const [isGeneratingResolution, setIsGeneratingResolution] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isClosingCase, setIsClosingCase] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const [showEditModal, setShowEditModal] = useState(false);
@@ -138,27 +149,55 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
     deleteDocument: deleteClientDocument
   } = useClientDocumentManagement(caso?.id);
 
-  // Verificar rol y tipo de abogado
+  // Hook para detectar overflow en los tabs
   useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!user) return;
-      
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, tipo_abogado')
-        .eq('id', user.id)
-        .single();
-      
-      setUserRole(profile?.role || null);
-      setLawyerType(profile?.tipo_abogado || null);
-
-      // Para abogados regulares, asumimos que están asignados si llegan aquí
-      if (profile?.role === 'abogado' && profile?.tipo_abogado === 'regular') {
-        setIsAssignedLawyer(true);
+    const checkOverflow = () => {
+      if (tabsContainerRef.current) {
+        const container = tabsContainerRef.current;
+        const hasOverflow = container.scrollWidth > container.clientWidth;
+        const scrollLeft = container.scrollLeft;
+        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+        
+        setShowLeftIndicator(hasOverflow && scrollLeft > 0);
+        setShowRightIndicator(hasOverflow && scrollLeft < maxScrollLeft);
       }
     };
 
-    fetchUserRole();
+    // Ejecutar inmediatamente y después de un pequeño delay para asegurar que el DOM esté listo
+    checkOverflow();
+    const timeoutId = setTimeout(checkOverflow, 100);
+    
+    window.addEventListener('resize', checkOverflow);
+    
+    return () => {
+      window.removeEventListener('resize', checkOverflow);
+      clearTimeout(timeoutId);
+    };
+  }, [isOpen]); // Agregar isOpen como dependencia para que se ejecute cuando el modal se abre
+
+  // Verificar rol y tipo de abogado
+  const fetchUserRole = async () => {
+    if (!user) return;
+    
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, tipo_abogado')
+      .eq('id', user.id)
+      .single();
+    
+    setUserRole(profile?.role || null);
+    setLawyerType(profile?.tipo_abogado || null);
+
+    // Para abogados regulares, asumimos que están asignados si llegan aquí
+    if (profile?.role === 'abogado' && profile?.tipo_abogado === 'regular') {
+      setIsAssignedLawyer(true);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchUserRole();
+    }
   }, [user]);
 
   // Verificar que el usuario es un abogado regular
@@ -393,8 +432,8 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl w-full h-[90vh] flex flex-col p-0 border-0 bg-background">
-          <DialogHeader className="px-6 py-4">
+        <DialogContent className="max-w-5xl w-full h-[95vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Detalle del Caso #{caso.id.substring(0, 8)}
@@ -402,290 +441,430 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
             </DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 px-6 py-4 h-[calc(90vh-110px)] min-h-0">
+          <div className="flex-1 flex flex-col min-h-0">
             <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
-              <div className="sticky top-0 z-10 bg-background pb-2">
-                <TabsList className="flex w-full rounded-lg shadow-sm border-0 bg-background mb-2 overflow-x-auto no-scrollbar flex-nowrap">
-                  <TabsTrigger value="overview" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
-                    <FileText className="h-4 w-4" /> Resumen
-                  </TabsTrigger>
-                  {caso.guia_abogado && (
-                    <TabsTrigger value="guia" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
-                      <ShieldCheck className="h-4 w-4" /> Guía Abogado
-                    </TabsTrigger>
-                  )}
-                  <TabsTrigger value="client" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
-                    <User className="h-4 w-4" /> Cliente
-                  </TabsTrigger>
-                  <TabsTrigger value="chat" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
-                    <MessageSquare className="h-4 w-4" /> Conversación
-                  </TabsTrigger>
-                  <TabsTrigger value="documentos-resolucion" className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Documentos de Resolución
-                  </TabsTrigger>
-                  <TabsTrigger value="notes" className="flex items-center gap-1 px-4 py-2 min-w-[150px] flex-shrink-0 whitespace-nowrap">
-                    <MessageSquare className="h-4 w-4" /> Notas
-                  </TabsTrigger>
-                </TabsList>
+              {/* Contenedor de tabs con scroll horizontal */}
+              <div className="sticky top-0 z-10 bg-background border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                <div className="px-6 py-3">
+                  <div className="relative">
+                    {/* Scroll horizontal para tabs */}
+                    <div 
+                      ref={tabsContainerRef}
+                      className="overflow-x-auto scrollbar-hide scroll-smooth relative"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                      onScroll={() => {
+                        if (tabsContainerRef.current) {
+                          const container = tabsContainerRef.current;
+                          const hasOverflow = container.scrollWidth > container.clientWidth;
+                          const scrollLeft = container.scrollLeft;
+                          const maxScrollLeft = container.scrollWidth - container.clientWidth;
+                          
+                          setShowLeftIndicator(hasOverflow && scrollLeft > 0);
+                          setShowRightIndicator(hasOverflow && scrollLeft < maxScrollLeft);
+                        }
+                      }}
+                    >
+                      <TabsList className="flex w-full rounded-lg shadow-sm border mb-0 bg-white dark:bg-gray-800" style={{ minWidth: 'max-content' }}>
+                        <TabsTrigger value="overview" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
+                          <FileText className="h-3 w-3" /> Resumen
+                        </TabsTrigger>
+                        {caso.guia_abogado && (
+                          <TabsTrigger value="guia" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[120px] max-w-[140px] md:flex-none md:min-w-[140px] md:max-w-[160px] flex-shrink-0 whitespace-nowrap text-xs">
+                            <ShieldCheck className="h-3 w-3" /> Guía Abog
+                          </TabsTrigger>
+                        )}
+                        <TabsTrigger value="client" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
+                          <User className="h-3 w-3" /> Cliente
+                        </TabsTrigger>
+                        <TabsTrigger value="chat" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
+                          <MessageSquare className="h-3 w-3" /> Convers
+                        </TabsTrigger>
+                        <TabsTrigger value="documentos-resolucion" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[140px] max-w-[160px] md:flex-none md:min-w-[160px] md:max-w-[180px] flex-shrink-0 whitespace-nowrap text-xs">
+                          <FileText className="h-3 w-3" /> Docs Resol
+                        </TabsTrigger>
+                        <TabsTrigger value="notes" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[70px] max-w-[90px] md:flex-none md:min-w-[90px] md:max-w-[110px] flex-shrink-0 whitespace-nowrap text-xs">
+                          <MessageSquare className="h-3 w-3" /> Notas
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+                    
+                    {/* Botones de navegación simplificados */}
+                    {showLeftIndicator && (
+                      <button
+                        onClick={() => {
+                          if (tabsContainerRef.current) {
+                            tabsContainerRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+                          }
+                        }}
+                        className="scroll-nav-button left-1"
+                        title="Scroll izquierda"
+                      >
+                        <ChevronLeft className="h-3 w-3 text-gray-600 dark:text-gray-400" />
+                      </button>
+                    )}
+                    {showRightIndicator && (
+                      <button
+                        onClick={() => {
+                          if (tabsContainerRef.current) {
+                            tabsContainerRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+                          }
+                        }}
+                        className="scroll-nav-button right-1"
+                        title="Scroll derecha"
+                      >
+                        <ChevronRight className="h-3 w-3 text-gray-600 dark:text-gray-400" />
+                      </button>
+                    )}
+                    
+                    {/* Indicador visual simple de scroll */}
+                    {showRightIndicator && (
+                      <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-blue-500 rounded-full opacity-60 pointer-events-none z-10"></div>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <TabsContent value="overview" className="space-y-4 mt-0">
-                <Card className="shadow-md border border-gray-200 dark:border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                      Información del Caso
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {caso.resumen_caso && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-2">Resumen del caso:</p>
-                        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                          <ScrollArea className="h-96">
-                            <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {caso.resumen_caso}
-                              </ReactMarkdown>
-                            </div>
-                          </ScrollArea>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
+              {/* Contenedor de contenido con altura fija */}
+              <div className="flex-1 min-h-0 overflow-hidden px-6 py-4">
+                <TabsContent value="overview" className="space-y-4 mt-0 h-full overflow-y-auto">
+                  <Card className="shadow-md border border-gray-200 dark:border-gray-700">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        Información del Caso
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {caso.resumen_caso && (
                         <div>
-                          <span>{format(casoDate, 'dd/MM/yyyy HH:mm', { locale: es })}</span>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(casoDate, { locale: es, addSuffix: true })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span>{caso.especialidades?.nombre || 'Sin especialidad'}</span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {caso.tipo_lead && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Tipo de lead:</p>
-                          <Badge variant="secondary" className="capitalize">{caso.tipo_lead}</Badge>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Resumen del caso:</p>
+                          <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                            <ScrollArea className="h-96">
+                              <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                  {caso.resumen_caso}
+                                </ReactMarkdown>
+                              </div>
+                            </ScrollArea>
+                          </div>
                         </div>
                       )}
-                      {caso.valor_estimado && (
-                        <div className="flex items-center gap-1 text-sm">
-                          <Euro className="h-4 w-4 text-blue-600" />
-                          <span className="font-medium text-blue-700 dark:text-blue-400">
-                            Valor estimado: {caso.valor_estimado}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
 
-                <Card className="shadow border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                  <CardHeader>
-                    <CardTitle className="text-base font-semibold text-gray-700 dark:text-gray-200">Estado y Asignación</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Estado actual:</p>
-                      {getStatusBadge(caso.estado)}
-                    </div>
-                    {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-2">Asignado a:</p>
-                        {caso.asignaciones_casos.map((asignacion, idx) => (
-                          <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-md">
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4 text-blue-600" />
-                              <span className="font-medium">
-                                {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
-                              </span>
-                              {asignacion.notas_asignacion && (
-                                <Badge 
-                                  variant="outline" 
-                                  className={`ml-2 text-xs ${
-                                    isCurrentUserAssigned(asignacion)
-                                      ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-600'
-                                      : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600'
-                                  }`}
-                                  title={asignacion.notas_asignacion}
-                                >
-                                  <MessageSquare className="h-3 w-3 mr-1" />
-                                  {asignacion.notas_asignacion.length > 30 
-                                    ? `${asignacion.notas_asignacion.substring(0, 30)}...` 
-                                    : asignacion.notas_asignacion
-                                  }
-                                </Badge>
-                              )}
-                            </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <span>{format(casoDate, 'dd/MM/yyyy HH:mm', { locale: es })}</span>
                             <p className="text-xs text-muted-foreground">
-                              Asignado el {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy', { locale: es })}
+                              {formatDistanceToNow(casoDate, { locale: es, addSuffix: true })}
                             </p>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-gray-500" />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Sin asignar</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span>{caso.especialidades?.nombre || 'Sin especialidad'}</span>
                         </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
 
-              {caso.guia_abogado && (
-                <TabsContent value="guia" className="space-y-4 mt-0">
-                  <Card className="shadow-md border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950">
-                    <CardHeader>
-                      <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-200">Guía para el Abogado</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="prose prose-slate bg-white max-w-none dark:prose-invert dark:bg-gray-900 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden h-full">
-                        <ScrollArea className="h-96">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {caso.guia_abogado}
-                          </ReactMarkdown>
-                        </ScrollArea>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {caso.tipo_lead && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Tipo de lead:</p>
+                            <Badge variant="secondary" className="capitalize">{caso.tipo_lead}</Badge>
+                          </div>
+                        )}
+                        {caso.valor_estimado && (
+                          <div className="flex items-center gap-1 text-sm">
+                            <Euro className="h-4 w-4 text-blue-600" />
+                            <span className="font-medium text-blue-700 dark:text-blue-400">
+                              Valor estimado: {caso.valor_estimado}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
-                </TabsContent>
-              )}
 
-              <TabsContent value="client" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Información del Cliente</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="shadow border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                    <CardHeader>
+                      <CardTitle className="text-base font-semibold text-gray-700 dark:text-gray-200">Estado y Asignación</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Nombre completo:</p>
-                        <p className="text-sm">{clientData.nombre} {clientData.apellido}</p>
+                        <p className="text-sm font-medium text-muted-foreground">Estado actual:</p>
+                        {getStatusBadge(caso.estado)}
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Tipo de perfil:</p>
-                        <Badge variant="outline">
-                          {clientData.tipo_perfil === 'empresa' ? (
-                            <>
-                              <Building className="h-3 w-3 mr-1" />
-                              Empresa
-                            </>
-                          ) : (
-                            <>
-                              <User className="h-3 w-3 mr-1" />
-                              Individual
-                            </>
-                          )}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Email:</p>
-                        <div className="flex items-center gap-1">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <p className="text-sm">{clientData.email}</p>
-                        </div>
-                      </div>
-                      {clientData.telefono && (
+                      {caso.asignaciones_casos && caso.asignaciones_casos.length > 0 ? (
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Teléfono:</p>
-                          <div className="flex items-center gap-1">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <p className="text-sm">{clientData.telefono}</p>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Asignado a:</p>
+                          {caso.asignaciones_casos.map((asignacion, idx) => (
+                            <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-md">
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-blue-600" />
+                                <span className="font-medium">
+                                  {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
+                                </span>
+                                {asignacion.notas_asignacion && (
+                                  <Badge 
+                                    variant="outline" 
+                                    className={`ml-2 text-xs ${
+                                      isCurrentUserAssigned(asignacion)
+                                        ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-600'
+                                        : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600'
+                                    }`}
+                                    title={asignacion.notas_asignacion}
+                                  >
+                                    <MessageSquare className="h-3 w-3 mr-1" />
+                                    {asignacion.notas_asignacion.length > 30 
+                                      ? `${asignacion.notas_asignacion.substring(0, 30)}...` 
+                                      : asignacion.notas_asignacion
+                                    }
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Asignado el {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy', { locale: es })}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Sin asignar</span>
                           </div>
                         </div>
                       )}
-                    </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-                    {clientData.ciudad && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Ciudad:</p>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <p className="text-sm">{clientData.ciudad}</p>
+                {caso.guia_abogado && (
+                  <TabsContent value="guia" className="space-y-4 mt-0 h-full overflow-y-auto">
+                    <Card className="shadow-md border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950">
+                      <CardHeader>
+                        <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-200">Guía para el Abogado</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="prose prose-slate bg-white max-w-none dark:prose-invert dark:bg-gray-900 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden h-full">
+                          <ScrollArea className="h-96">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {caso.guia_abogado}
+                            </ReactMarkdown>
+                          </ScrollArea>
                         </div>
-                      </div>
-                    )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                )}
 
-                    {clientData.tipo_perfil === 'empresa' && (
-                      <>
-                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded space-y-2">
-                          {clientData.razon_social && (
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">Razón social:</p>
-                              <p className="text-sm font-semibold">{clientData.razon_social}</p>
-                            </div>
-                          )}
-                          {clientData.nif_cif && (
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">NIF/CIF:</p>
-                              <p className="text-sm">{clientData.nif_cif}</p>
-                            </div>
-                          )}
-                          {clientData.nombre_gerente && (
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">Nombre del gerente:</p>
-                              <p className="text-sm">{clientData.nombre_gerente}</p>
-                            </div>
-                          )}
-                          {clientData.direccion_fiscal && (
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">Dirección fiscal:</p>
-                              <p className="text-sm">{clientData.direccion_fiscal}</p>
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="chat" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {caso.transcripcion_chat ? (
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {JSON.stringify(caso.transcripcion_chat, null, 2)}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>No hay transcripción disponible</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="documentos-resolucion" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TabsContent value="client" className="space-y-4 h-full overflow-y-auto">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-blue-600" />
-                          Documentos del Cliente
+                      <CardTitle className="text-base">Información del Cliente</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Nombre completo:</p>
+                          <p className="text-sm">{clientData.nombre} {clientData.apellido}</p>
                         </div>
-                        {canUploadClientDocuments() && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Tipo de perfil:</p>
+                          <Badge variant="outline">
+                            {clientData.tipo_perfil === 'empresa' ? (
+                              <>
+                                <Building className="h-3 w-3 mr-1" />
+                                Empresa
+                              </>
+                            ) : (
+                              <>
+                                <User className="h-3 w-3 mr-1" />
+                                Individual
+                              </>
+                            )}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Email:</p>
+                          <div className="flex items-center gap-1">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-sm">{clientData.email}</p>
+                          </div>
+                        </div>
+                        {clientData.telefono && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Teléfono:</p>
+                            <div className="flex items-center gap-1">
+                              <Phone className="h-4 w-4 text-muted-foreground" />
+                              <p className="text-sm">{clientData.telefono}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {clientData.ciudad && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Ciudad:</p>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-sm">{clientData.ciudad}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {clientData.tipo_perfil === 'empresa' && (
+                        <>
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded space-y-2">
+                            {clientData.razon_social && (
+                              <div>
+                                <p className="text-sm font-medium text-muted-foreground">Razón social:</p>
+                                <p className="text-sm font-semibold">{clientData.razon_social}</p>
+                              </div>
+                            )}
+                            {clientData.nif_cif && (
+                              <div>
+                                <p className="text-sm font-medium text-muted-foreground">NIF/CIF:</p>
+                                <p className="text-sm">{clientData.nif_cif}</p>
+                              </div>
+                            )}
+                            {clientData.nombre_gerente && (
+                              <div>
+                                <p className="text-sm font-medium text-muted-foreground">Nombre del gerente:</p>
+                                <p className="text-sm">{clientData.nombre_gerente}</p>
+                              </div>
+                            )}
+                            {clientData.direccion_fiscal && (
+                              <div>
+                                <p className="text-sm font-medium text-muted-foreground">Dirección fiscal:</p>
+                                <p className="text-sm">{clientData.direccion_fiscal}</p>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="chat" className="space-y-4 h-full overflow-y-auto">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {caso.transcripcion_chat ? (
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {JSON.stringify(caso.transcripcion_chat, null, 2)}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                          <p>No hay transcripción disponible</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="documentos-resolucion" className="space-y-4 h-full overflow-y-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-blue-600" />
+                            Documentos del Cliente
+                          </div>
+                          {canUploadClientDocuments() && (
+                            <Button
+                              onClick={() => setShowClientUploadModal(true)}
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                            >
+                              <Upload className="h-3 w-3" />
+                              Subir
+                            </Button>
+                          )}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {loadingClientDocs ? (
+                            <div className="text-center py-4 text-muted-foreground">
+                              <p className="text-sm">Cargando documentos...</p>
+                            </div>
+                          ) : documentosCliente.length > 0 ? (
+                            <div className="space-y-2">
+                              {documentosCliente.map((doc) => (
+                                <div key={doc.id} className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                                  <FileText className="h-4 w-4 text-blue-600" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
+                                      {doc.nombre_archivo}
+                                    </p>
+                                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                                      {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
+                                    </p>
+                                    {doc.descripcion && (
+                                      <p className="text-xs text-blue-600 dark:text-blue-400 truncate">
+                                        {doc.descripcion}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleViewClientDocument(doc)}
+                                  >
+                                    <Eye className="h-3 w-3" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => downloadClientDocument(doc)}
+                                  >
+                                    <Download className="h-3 w-3" />
+                                  </Button>
+                                  {canDeleteClientDocuments() && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => handleDeleteClientDocument(doc.id)}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-muted-foreground">
+                              <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                              <p className="text-sm">No hay documentos del cliente</p>
+                              <p className="text-xs">
+                                {canUploadClientDocuments() 
+                                  ? "Puedes subir documentos en nombre del cliente usando el botón de arriba"
+                                  : "El cliente no ha subido documentos aún"
+                                }
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base flex items-center justify-between">
+                          Documentos de Resolución
                           <Button
-                            onClick={() => setShowClientUploadModal(true)}
+                            onClick={() => setShowUploadModal(true)}
                             variant="outline"
                             size="sm"
                             className="gap-1"
@@ -693,158 +872,76 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                             <Upload className="h-3 w-3" />
                             Subir
                           </Button>
-                        )}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {loadingClientDocs ? (
-                          <div className="text-center py-4 text-muted-foreground">
-                            <p className="text-sm">Cargando documentos...</p>
-                          </div>
-                        ) : documentosCliente.length > 0 ? (
-                          <div className="space-y-2">
-                            {documentosCliente.map((doc) => (
-                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                                <FileText className="h-4 w-4 text-blue-600" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
-                                    {doc.nombre_archivo}
-                                  </p>
-                                  <p className="text-xs text-blue-700 dark:text-blue-300">
-                                    {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
-                                  </p>
-                                  {doc.descripcion && (
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 truncate">
-                                      {doc.descripcion}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {loadingDocs ? (
+                            <div className="text-center py-4 text-muted-foreground">
+                              <p className="text-sm">Cargando documentos...</p>
+                            </div>
+                          ) : documentosResolucion.length > 0 ? (
+                            <div className="space-y-2">
+                              {documentosResolucion.map((doc) => (
+                                <div key={doc.id} className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                                  <FileText className="h-4 w-4 text-green-600" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-green-900 dark:text-green-100 truncate">
+                                      {doc.nombre_archivo}
                                     </p>
-                                  )}
-                                </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => handleViewClientDocument(doc)}
-                                >
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => downloadClientDocument(doc)}
-                                >
-                                  <Download className="h-3 w-3" />
-                                </Button>
-                                {canDeleteClientDocuments() && (
+                                    <p className="text-xs text-green-700 dark:text-green-300">
+                                      {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
+                                    </p>
+                                    {doc.descripcion && (
+                                      <p className="text-xs text-green-600 dark:text-green-400 truncate">
+                                        {doc.descripcion}
+                                      </p>
+                                    )}
+                                  </div>
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
-                                    onClick={() => handleDeleteClientDocument(doc.id)}
+                                    onClick={() => handleViewResolutionDocument(doc)}
+                                  >
+                                    <Eye className="h-3 w-3" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => downloadDocument(doc)}
+                                  >
+                                    <Download className="h-3 w-3" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleDeleteDocument(doc.id)}
                                     className="text-red-600 hover:text-red-700"
                                   >
                                     <Trash2 className="h-3 w-3" />
                                   </Button>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                            <p className="text-sm">No hay documentos del cliente</p>
-                            <p className="text-xs">
-                              {canUploadClientDocuments() 
-                                ? "Puedes subir documentos en nombre del cliente usando el botón de arriba"
-                                : "El cliente no ha subido documentos aún"
-                              }
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center justify-between">
-                        Documentos de Resolución
-                        <Button
-                          onClick={() => setShowUploadModal(true)}
-                          variant="outline"
-                          size="sm"
-                          className="gap-1"
-                        >
-                          <Upload className="h-3 w-3" />
-                          Subir
-                        </Button>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {loadingDocs ? (
-                          <div className="text-center py-4 text-muted-foreground">
-                            <p className="text-sm">Cargando documentos...</p>
-                          </div>
-                        ) : documentosResolucion.length > 0 ? (
-                          <div className="space-y-2">
-                            {documentosResolucion.map((doc) => (
-                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                                <FileText className="h-4 w-4 text-green-600" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-green-900 dark:text-green-100 truncate">
-                                    {doc.nombre_archivo}
-                                  </p>
-                                  <p className="text-xs text-green-700 dark:text-green-300">
-                                    {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
-                                  </p>
-                                  {doc.descripcion && (
-                                    <p className="text-xs text-green-600 dark:text-green-400 truncate">
-                                      {doc.descripcion}
-                                    </p>
-                                  )}
                                 </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => handleViewResolutionDocument(doc)}
-                                >
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => downloadDocument(doc)}
-                                >
-                                  <Download className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => handleDeleteDocument(doc.id)}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                            <p className="text-sm">No hay documentos de resolución</p>
-                            <p className="text-xs">Puedes subir documentos usando el botón de arriba</p>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-muted-foreground">
+                              <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                              <p className="text-sm">No hay documentos de resolución</p>
+                              <p className="text-xs">Puedes subir documentos usando el botón de arriba</p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="notes" className="space-y-4 mt-0">
-                {caso?.id && <CaseNotesSection casoId={caso.id} />}
-              </TabsContent>
+                <TabsContent value="notes" className="space-y-4 h-full overflow-y-auto mt-0">
+                  {caso?.id && <CaseNotesSection casoId={caso.id} />}
+                </TabsContent>
+              </div>
             </Tabs>
-          </ScrollArea>
+          </div>
 
           {caso.estado !== 'cerrado' && (
             <div className="border-t bg-background">

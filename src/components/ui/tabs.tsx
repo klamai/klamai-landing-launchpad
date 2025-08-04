@@ -31,13 +31,13 @@ const TabsList = React.forwardRef<
       "scrollbar-hide", // Ocultar scrollbar visual pero mantener funcionalidad
       "overflow-x-auto overflow-y-hidden", // Scroll horizontal
       "flex-nowrap", // No wrap
+      "w-max", // Ancho mínimo
       className
     )}
     style={{ 
       display: 'flex',
       flexDirection: 'row',
-      width: '100%',
-      maxWidth: '100%',
+      minWidth: 'max-content',
       scrollbarWidth: 'none', // Firefox
       msOverflowStyle: 'none', // IE/Edge
       WebkitOverflowScrolling: 'touch' // Smooth scroll en iOS
