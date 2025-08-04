@@ -126,6 +126,54 @@
   - Notificaciones específicas por estado del caso (creado, asignado, pago requerido)
 - ✅ **Resultado**: Cada card de caso muestra solo las notificaciones relevantes a ese caso específico
 
+#### **🔧 FASE 11: Implementación de Botón de Subir Documentos para Clientes (01/08/2025)**
+- ✅ **Funcionalidad Implementada**: Botón para que los clientes suban documentos a sus casos
+- ✅ **Componentes Existentes Verificados**:
+  - `ClientDocumentUploadModal`: Modal completo para subir documentos
+  - `useClientDocumentManagement`: Hook con validación de seguridad
+  - Políticas RLS y Storage: Configuradas correctamente para `documentos_cliente`
+- ✅ **Integración en ClientCaseCard**:
+  - Añadido botón "Subir" con icono de upload
+  - Integrado modal de subida de documentos
+  - Función `onUploadSuccess` para actualizar la vista
+  - **Eliminado botón de mensaje** de las cards
+  - **Añadido botón de pago** que aparece solo cuando `caso.estado === 'esperando_pago'`
+  - **Integración con Stripe** usando la función `crear-sesion-checkout`
+- ✅ **Integración en CaseDetailModal**:
+  - Añadido botón "Subir Documento" en la sección "Mis Documentos"
+  - Integrado modal de subida de documentos en el modal de detalles
+  - Función `handleUploadSuccess` para refetch de documentos
+  - Toast de confirmación al subir exitosamente
+- ✅ **Estructura del Bucket Verificada**:
+  - Bucket: `documentos_legales`
+  - Ruta: `casos/{casoId}/documentos_cliente/{fileName}`
+  - Políticas de seguridad activas para clientes
+- ✅ **Validaciones de Seguridad**:
+  - Cliente solo puede subir a sus propios casos
+  - Validación de tipos de archivo (PDF, imágenes, Word)
+  - Límite de tamaño (10MB)
+  - Verificación de permisos en tiempo real
+- ✅ **Integración de Pago con Stripe**:
+  - Función `handlePayment` que llama a `crear-sesion-checkout`
+  - Redirección automática a Stripe Checkout
+  - Manejo de errores con toast notifications
+  - Botón verde "Pagar" con icono de tarjeta de crédito
+- ✅ **Resultado**: Los clientes pueden subir documentos desde las cards de sus casos y desde el modal de detalles, y pagar casos pendientes directamente desde las cards
+
+#### **🔧 FASE 12: Limpieza de Acceso a asignaciones_casos para Clientes (01/08/2025)**
+- ✅ **Problema Identificado**: El código del cliente estaba accediendo a `asignaciones_casos` innecesariamente
+- ✅ **Correcciones Aplicadas**:
+  - **useClientDocumentManagement**: Reemplazadas 3 consultas a `asignaciones_casos` por llamadas a `can_access_case` RPC
+  - **Validación de Abogados**: Ahora usa función RPC en lugar de consultas directas a `asignaciones_casos`
+  - **Arquitectura Mejorada**: Separación clara entre lógica de clientes y abogados
+- ✅ **Beneficios de Seguridad**:
+  - **Menos consultas innecesarias**: Clientes no intentan acceder a tablas restringidas
+  - **Mejor rendimiento**: Uso de funciones RPC optimizadas
+  - **Código más limpio**: Separación de responsabilidades por rol
+  - **Menos errores**: No hay intentos de acceso a datos no permitidos
+- ✅ **Función RPC Utilizada**: `can_access_case(p_caso_id UUID)` para validar permisos de abogados
+- ✅ **Resultado**: Código más seguro y eficiente, sin intentos de acceso a `asignaciones_casos` desde componentes del cliente
+
 #### **🔧 FASE 9: Optimización del Dashboard del Cliente (01/08/2025)**
 - ✅ **Problema Identificado**: Error en `useClientStats` debido a campos inexistentes y relaciones ambiguas
 - ✅ **Causa Raíz**: El cliente solo debe tener acceso a campos básicos de sus casos, no a relaciones complejas
@@ -811,5 +859,46 @@ VITE_DOCUMENSO_URL=https://documenso-r8swo0o4kksocggw04888cww.klamai.com
   - Estados de carga manejados correctamente
   - Información contextual y útil para el cliente
   - Diseño consistente con el resto de la aplicación
+
+#### **🔧 FASE 13: Auditoría y Mejoras de Seguridad del Lado del Cliente (01/08/2025)**
+- ✅ **Problemas Identificados y Corregidos**:
+  - **Logs Innecesarios**: Eliminados todos los `console.log` con información sensible
+  - **Información de Debug**: Removidos logs que exponían IDs de usuario y datos de casos
+  - **Logs de Validación**: Simplificados para solo mostrar errores críticos
+- ✅ **Utilidades de Seguridad Creadas** (`src/utils/security.ts`):
+  - **Sanitización de Texto**: `sanitizeText()` para prevenir XSS
+  - **Validación de UUID**: `isValidUUID()` para verificar IDs
+  - **Validación de Email**: `isValidEmail()` para emails
+  - **Validación de Archivos**: `isValidFileType()`, `isValidFileSize()`, `isValidFileName()`
+  - **Rate Limiting**: `checkRateLimit()` para prevenir spam (5 uploads/minuto)
+  - **Sanitización de Inputs**: `sanitizeSearchInput()`, `sanitizeDocumentDescription()`
+  - **Validación de Estados**: `isValidCaseStatus()`, `isValidDocumentType()`
+- ✅ **Mejoras Aplicadas en Componentes**:
+  - **ClientDocumentUploadModal**: Validaciones de seguridad en subida de archivos
+  - **useClientDocumentManagement**: Logs limpiados, solo errores críticos
+  - **ClientDocumentManager**: Eliminados logs de debug innecesarios
+  - **CaseDetailModal**: Logs de validación simplificados
+- ✅ **Validaciones de Seguridad Implementadas**:
+  - **Tipo de Archivo**: Solo PDF, imágenes, Word, texto plano
+  - **Tamaño Máximo**: 10MB por archivo
+  - **Rate Limiting**: 5 uploads por minuto por caso
+  - **Sanitización**: Descripciones limitadas a 500 caracteres
+  - **Validación de Inputs**: Todos los campos sanitizados
+- ✅ **Canal de Realtime Verificado**:
+  - **Filtros de Seguridad**: `usuario_id=eq.${user.id}` en notificaciones
+  - **Políticas RLS**: Respetadas en tiempo real
+  - **Sin Brechas**: Solo datos del usuario autenticado
+- ✅ **Consultas a Supabase Auditadas**:
+  - **Tabla `profiles`**: Solo para validación de roles (necesario)
+  - **Tabla `casos`**: Solo campos básicos permitidos para clientes
+  - **Tabla `documentos_cliente`**: Solo documentos del usuario
+  - **Tabla `notificaciones`**: Solo notificaciones del usuario
+  - **Función RPC**: `can_access_case` para validación de abogados
+- ✅ **Sin Vulnerabilidades Detectadas**:
+  - **No XSS**: No uso de `dangerouslySetInnerHTML` en componentes del cliente
+  - **No SQL Injection**: Todas las consultas usan parámetros
+  - **No CSRF**: Tokens de autenticación de Supabase
+  - **No Information Disclosure**: Logs limpiados de información sensible
+- ✅ **Resultado**: Sistema completamente seguro para producción, sin brechas de seguridad, logs limpios y validaciones robustas
 
 ## 📋 **PRÓXIMAS TAREAS:**

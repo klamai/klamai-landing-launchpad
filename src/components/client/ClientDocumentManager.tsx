@@ -84,14 +84,11 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
     }
   };
 
-  const handleView = async (documento: any) => {
+  const handleViewDocument = async (documento: any) => {
     try {
-      console.log('Intentando ver documento:', documento);
       const signedUrl = await getSignedUrl(documento);
-      console.log('URL firmada obtenida:', signedUrl);
-      
       if (signedUrl) {
-        setSelectedDocument({ 
+        setSelectedDocument({
           name: documento.nombre_archivo,
           url: signedUrl,
           type: documento.tipo_documento,
@@ -99,13 +96,17 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
         });
         setIsViewerOpen(true);
       } else {
-        throw new Error('No se pudo obtener la URL del documento');
+        toast({
+          title: "Error",
+          description: "No se pudo obtener el documento",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error('Error al cargar documento:', error);
+      console.error('Error viewing document:', error);
       toast({
         title: "Error",
-        description: "No se pudo cargar el documento",
+        description: "Error al visualizar el documento",
         variant: "destructive",
       });
     }
@@ -134,14 +135,6 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
   };
-
-  console.log('=== CLIENT DOCUMENT MANAGER STATE ===');
-  console.log('Caso ID:', casoId);
-  console.log('Usuario:', user?.id);
-  console.log('Loading:', loading);
-  console.log('Error:', error);
-  console.log('Documentos encontrados:', documentosCliente.length);
-  console.log('Documentos data:', documentosCliente);
 
   return (
     <div className="space-y-6">
@@ -261,7 +254,7 @@ const ClientDocumentManager: React.FC<ClientDocumentManagerProps> = ({ casoId })
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleView(documento)}
+                          onClick={() => handleViewDocument(documento)}
                           title="Ver documento"
                         >
                           <Eye className="h-4 w-4" />

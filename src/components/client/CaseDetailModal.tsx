@@ -21,7 +21,9 @@ import {
   XCircle,
   AlertCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Upload,
+  Plus
 } from 'lucide-react';
 import {
   Dialog,
@@ -49,6 +51,7 @@ import { useNotificacionesNoLeidas } from '@/hooks/useNotificacionesNoLeidas';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CustomDocumensoEmbed from '@/components/shared/CustomDocumensoEmbed';
+import ClientDocumentUploadModal from './ClientDocumentUploadModal';
 
 interface ClientCaseDetailModalProps {
   caso: {
@@ -94,6 +97,7 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
   const [selectedDocument, setSelectedDocument] = useState<{name: string; url: string; type?: string; size?: number} | null>(null);
   const [showLeftIndicator, setShowLeftIndicator] = useState(false);
   const [showRightIndicator, setShowRightIndicator] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -104,7 +108,7 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
     loading: loadingClientDocs,
     downloadDocument: downloadClientDocument,
     getSignedUrl: getClientSignedUrl,
-    refetch: refetchClientDocuments
+    refetch
   } = useClientDocumentManagement(caso?.id);
 
   // Obtener documentos del abogado
@@ -143,12 +147,6 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
   // Verificar que el usuario es el propietario del caso usando campos del borrador
   useEffect(() => {
     if (caso && user) {
-      console.log('Validando permisos:', {
-        casoClienteId: caso.cliente_id,
-        userId: user.id,
-        casoId: caso.id
-      });
-      
       // Validación por ID: verificar si el cliente_id del caso coincide con el user.id
       if (caso.cliente_id && user.id && caso.cliente_id !== user.id) {
         console.error('Acceso denegado: usuario no es propietario del caso');
@@ -272,6 +270,18 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
         variant: "destructive"
       });
     }
+  };
+
+  const handleUploadSuccess = () => {
+    // Refetch documentos del cliente
+    if (caso?.id) {
+      refetch();
+    }
+    setIsUploadModalOpen(false);
+    toast({
+      title: "Documento subido",
+      description: "El documento se ha subido correctamente",
+    });
   };
 
   return (
@@ -467,15 +477,25 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
                 <TabsContent value="documents" className="space-y-4 mt-0 h-full overflow-y-auto">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <FileText className="h-5 w-5" />
-                        Mis Documentos
-                        {documentosCliente.length > 0 && (
-                          <Badge variant="secondary" className="text-xs">
-                            {documentosCliente.length} documento{documentosCliente.length !== 1 ? 's' : ''}
-                          </Badge>
-                        )}
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <FileText className="h-5 w-5" />
+                          Mis Documentos
+                          {documentosCliente.length > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {documentosCliente.length} documento{documentosCliente.length !== 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                        </CardTitle>
+                        <Button
+                          onClick={() => setIsUploadModalOpen(true)}
+                          size="sm"
+                          className="flex items-center gap-2"
+                        >
+                          <Upload className="h-4 w-4" />
+                          Subir Documento
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       {loadingClientDocs ? (
@@ -684,6 +704,16 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
             </Tabs>
           </div>
         </DialogContent>
+
+        {/* Modal de subida de documentos */}
+        {caso && (
+          <ClientDocumentUploadModal
+            isOpen={isUploadModalOpen}
+            onClose={() => setIsUploadModalOpen(false)}
+            casoId={caso.id}
+            onUploadSuccess={handleUploadSuccess}
+          />
+        )}
       </Dialog>
 
       <DocumentViewer

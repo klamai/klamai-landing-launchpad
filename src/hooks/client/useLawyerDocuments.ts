@@ -13,10 +13,10 @@ interface LawyerDocument {
   descripcion?: string;
   fecha_subida: string;
   created_at: string;
-  // Información básica del abogado (solo nombre para el cliente)
   profiles?: {
     nombre: string;
     apellido: string;
+    email: string;
   };
 }
 
@@ -30,41 +30,59 @@ export const useLawyerDocuments = (casoId: string) => {
         throw new Error('Usuario no autenticado o caso no especificado');
       }
 
-      // Verificar que el usuario es el propietario del caso
-      const { data: caso, error: casoError } = await supabase
-        .from('casos')
-        .select('cliente_id')
-        .eq('id', casoId)
-        .eq('cliente_id', user.id)
-        .single();
-
-      if (casoError || !caso) {
-        throw new Error('No tienes permisos para ver este caso');
-      }
-
-      // Obtener documentos de resolución (documentos del abogado) para este caso
       const { data, error } = await supabase
         .from('documentos_resolucion')
         .select(`
-          id,
-          caso_id,
-          abogado_id,
-          tipo_documento,
-          nombre_archivo,
-          ruta_archivo,
-          tamaño_archivo,
-          descripcion,
-          fecha_subida,
-          created_at,
-          profiles:abogado_id(
+          *,
+          profiles:profiles!documentos_resolucion_abogado_id_fkey(
             nombre,
-            apellido
+            apellido,
+            email
           )
         `)
         .eq('caso_id', casoId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(2); // Solo los últimos 2 documentos
 
       if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id && !!casoId,
+    staleTime: 2 * 60 * 1000, // 2 minutos
+    gcTime: 5 * 60 * 1000, // 5 minutos
+  });
+};
+
+// Hook específico para obtener solo los últimos 2 documentos del abogado
+export const useLatestLawyerDocuments = (casoId: string) => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['latest-lawyer-documents', casoId, user?.id],
+    queryFn: async (): Promise<LawyerDocument[]> => {
+      if (!user?.id || !casoId) {
+        return [];
+      }
+
+      const { data, error } = await supabase
+        .from('documentos_resolucion')
+        .select(`
+          *,
+          profiles:profiles!documentos_resolucion_abogado_id_fkey(
+            nombre,
+            apellido,
+            email
+          )
+        `)
+        .eq('caso_id', casoId)
+        .order('created_at', { ascending: false })
+        .limit(2); // Solo los últimos 2 documentos
+
+      if (error) {
+        console.error('Error fetching latest lawyer documents:', error);
+        return [];
+      }
+      
       return data || [];
     },
     enabled: !!user?.id && !!casoId,

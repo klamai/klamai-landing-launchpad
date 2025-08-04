@@ -98,6 +98,55 @@ npm run dev
 - Verificar que las variables están correctas
 - Verificar que no hay espacios extra
 
+### 6. **Utilidades de Seguridad del Cliente** ✅ NUEVO
+
+El proyecto incluye utilidades de seguridad avanzadas para el lado del cliente:
+
+#### **Ubicación:** `src/utils/security.ts`
+
+#### **Funciones Implementadas:**
+```typescript
+// Sanitización de texto para prevenir XSS
+sanitizeText(text: string): string
+
+// Validación de archivos
+isValidFileType(file: File): boolean
+isValidFileSize(file: File, maxSizeMB: number): boolean
+isValidFileName(fileName: string): boolean
+
+// Rate limiting para prevenir spam
+checkRateLimit(key: string, maxRequests: number, windowMs: number): boolean
+
+// Validación de inputs
+isValidUUID(uuid: string): boolean
+isValidEmail(email: string): boolean
+sanitizeSearchInput(searchTerm: string): string
+sanitizeDocumentDescription(description: string): string
+
+// Validación de estados
+isValidCaseStatus(status: string): boolean
+isValidDocumentType(type: string): boolean
+```
+
+#### **Configuración Automática:**
+- ✅ **Rate limiting**: 5 uploads por minuto por caso
+- ✅ **Tamaño máximo de archivo**: 10MB
+- ✅ **Tipos de archivo permitidos**: PDF, imágenes, Word, texto plano
+- ✅ **Sanitización automática**: Descripciones limitadas a 500 caracteres
+- ✅ **Validación de UUIDs**: Todos los IDs verificados
+
+#### **Verificación:**
+```bash
+# Verificar que las utilidades están disponibles
+grep -r "sanitizeText" src/components/client/
+
+# Verificar validaciones de archivo
+grep -r "isValidFileType" src/components/client/
+
+# Verificar rate limiting
+grep -r "checkRateLimit" src/components/client/
+```
+
 ### 6. **Configuración de Producción**
 
 Cuando esté listo para producción:
@@ -129,6 +178,11 @@ VITE_ENABLE_DEBUG_LOGS=false
 - ✅ **Validación de contraseñas robusta** (protección de datos)
 - ✅ **Logging sanitizado** (no expone datos personales)
 - ✅ **Variables de entorno** (protección de credenciales)
+- ✅ **Sanitización de inputs** (prevención de XSS)
+- ✅ **Validación de archivos** (protección contra malware)
+- ✅ **Rate limiting** (prevención de abuso)
+- ✅ **Auditoría de consultas** (control de acceso a datos)
+- ✅ **Limpieza de logs del cliente** (sin información sensible)
 
 ### **🟡 PENDIENTE:**
 - 📋 **Derecho al olvido** (eliminación completa de datos)
@@ -156,6 +210,11 @@ VITE_ENABLE_DEBUG_LOGS=false
 - [ ] **NO hay claves hardcodeadas en el código**
 - [ ] Edge Functions protegidas (producción)
 - [ ] Cumplimiento RGPD básico
+- [ ] **Utilidades de seguridad del cliente funcionando**
+- [ ] **Rate limiting activo en uploads**
+- [ ] **Validación de archivos implementada**
+- [ ] **Logs del cliente limpios**
+- [ ] **Sin acceso a tablas restringidas desde cliente**
 
 ### Comandos de Verificación:
 
@@ -171,6 +230,18 @@ npm run dev
 
 # Verificar archivos de configuración
 ls -la | grep env
+
+# Verificar utilidades de seguridad
+grep -r "sanitizeText" src/utils/security.ts
+grep -r "isValidFileType" src/components/client/
+grep -r "checkRateLimit" src/components/client/
+
+# Verificar que no hay logs sensibles
+grep -r "console.log.*user" src/components/client/
+grep -r "console.log.*caso" src/components/client/
+
+# Verificar que no hay acceso a asignaciones_casos desde cliente
+grep -r "asignaciones_casos" src/hooks/client/
 ```
 
 ---
@@ -197,6 +268,21 @@ ls -la | grep env
    - 📋 Configurar derecho al olvido
    - 📋 Habilitar portabilidad de datos
 
+5. **Logs sensibles en componentes del cliente**
+   - ✅ Verificar que se eliminaron todos los console.log con información sensible
+   - ✅ Revisar que solo hay logs de error críticos
+   - ✅ Confirmar que no se exponen IDs de usuario o datos de casos
+
+6. **Acceso a tablas restringidas desde cliente**
+   - ✅ Verificar que no hay consultas a `asignaciones_casos` desde hooks del cliente
+   - ✅ Confirmar que se usa `can_access_case` RPC para validaciones
+   - ✅ Revisar que solo se accede a datos permitidos por RLS
+
+7. **Validaciones de seguridad no funcionando**
+   - ✅ Verificar que `src/utils/security.ts` existe y está importado
+   - ✅ Confirmar que las validaciones de archivo están activas
+   - ✅ Revisar que el rate limiting está funcionando
+
 ---
 
 ## 📞 SOPORTE DE SEGURIDAD
@@ -211,5 +297,5 @@ Si encuentras problemas de seguridad:
 ---
 
 **Última actualización:** 01 de Agosto 2025  
-**Versión:** 1.1 - CON RGPD Y .ENV.EXAMPLE  
-**Estado:** ✅ CONFIGURADO - SEGURO 
+**Versión:** 1.2 - CON AUDITORÍA DEL LADO DEL CLIENTE  
+**Estado:** ✅ CONFIGURADO - SEGURO - CLIENTE AUDITADO 

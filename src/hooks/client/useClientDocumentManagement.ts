@@ -32,8 +32,6 @@ export const useClientDocumentManagement = (casoId?: string) => {
       }
 
       try {
-        console.log('🔍 Validando acceso a useClientDocumentManagement:', user.id, 'caso:', casoId);
-        
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role, tipo_abogado, id, email')
@@ -41,12 +39,10 @@ export const useClientDocumentManagement = (casoId?: string) => {
           .single();
 
         if (profileError) {
-          console.error('❌ Error obteniendo perfil:', profileError);
+          console.error('Error obteniendo perfil:', profileError);
           setAccessDenied(true);
           return;
         }
-
-        console.log('Perfil del usuario:', profile);
 
         // Verificar acceso al caso
         const { data: casoData, error: casoError } = await supabase
@@ -56,51 +52,38 @@ export const useClientDocumentManagement = (casoId?: string) => {
           .single();
 
         if (casoError) {
-          console.error('❌ Error obteniendo datos del caso:', casoError);
+          console.error('Error obteniendo datos del caso:', casoError);
           setAccessDenied(true);
           return;
         }
-
-        console.log('Datos del caso:', casoData);
 
         // Validar acceso según el rol
         if (profile.role === 'cliente') {
           // Cliente solo puede acceder a sus propios casos
           if (casoData.cliente_id === user.id) {
-            console.log('✅ Acceso autorizado para cliente');
             setAccessDenied(false);
           } else {
-            console.log('🚫 Cliente no puede acceder a caso de otro cliente');
             setAccessDenied(true);
           }
         } else if (profile.role === 'abogado') {
           if (profile.tipo_abogado === 'super_admin') {
-            console.log('✅ Acceso autorizado para super admin');
             setAccessDenied(false);
           } else {
-            // Verificar asignación para abogados regulares
-            const { data: asignacion, error: asignacionError } = await supabase
-              .from('asignaciones_casos')
-              .select('*')
-              .eq('caso_id', casoId)
-              .eq('abogado_id', user.id)
-              .in('estado_asignacion', ['activa', 'completada'])
-              .single();
+            // Para abogados regulares, usar la función can_access_case
+            const { data: canAccess, error: accessError } = await supabase
+              .rpc('can_access_case', { p_caso_id: casoId });
 
-            if (asignacionError || !asignacion) {
-              console.log('🚫 Abogado regular no tiene asignación activa para este caso');
+            if (accessError || !canAccess) {
               setAccessDenied(true);
             } else {
-              console.log('✅ Acceso autorizado para abogado regular asignado');
               setAccessDenied(false);
             }
           }
         } else {
-          console.log('🚫 Rol no autorizado:', profile.role);
           setAccessDenied(true);
         }
       } catch (error) {
-        console.error('❌ Error general en validación:', error);
+        console.error('Error en validación de acceso:', error);
         setAccessDenied(true);
       }
     };
@@ -110,7 +93,6 @@ export const useClientDocumentManagement = (casoId?: string) => {
 
   const fetchDocumentosCliente = async (isRetry = false) => {
     if (!casoId || !user || accessDenied) {
-      console.log('No se puede buscar documentos - casoId:', casoId, 'user:', !!user, 'accessDenied:', accessDenied);
       setDocumentosCliente([]);
       return;
     }
@@ -121,10 +103,6 @@ export const useClientDocumentManagement = (casoId?: string) => {
     }
     
     try {
-      console.log('=== INICIO FETCH DOCUMENTOS CLIENTE ===');
-      console.log('Caso ID:', casoId);
-      console.log('Usuario ID:', user.id);
-      
       const { data, error } = await supabase
         .from('documentos_cliente')
         .select('*')
@@ -137,7 +115,6 @@ export const useClientDocumentManagement = (casoId?: string) => {
         return;
       }
 
-      console.log('Documentos encontrados:', data?.length || 0);
       setDocumentosCliente(data || []);
     } catch (err) {
       console.error('Error in fetchDocumentosCliente:', err);
@@ -157,10 +134,6 @@ export const useClientDocumentManagement = (casoId?: string) => {
     }
 
     try {
-      console.log('=== INICIO UPLOAD DOCUMENTO ===');
-      console.log('Archivo:', file.name, 'Tamaño:', file.size);
-      console.log('Tipo documento:', tipoDocumento);
-
       // Verificar el perfil del usuario
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -193,16 +166,11 @@ export const useClientDocumentManagement = (casoId?: string) => {
         if (profile.tipo_abogado === 'super_admin') {
           canUpload = true;
         } else {
-          // Verificar asignación para abogados regulares
-          const { data: asignacion, error: asignacionError } = await supabase
-            .from('asignaciones_casos')
-            .select('*')
-            .eq('caso_id', casoId)
-            .eq('abogado_id', user.id)
-            .in('estado_asignacion', ['activa', 'completada'])
-            .single();
+          // Para abogados regulares, usar la función can_access_case
+          const { data: canAccess, error: accessError } = await supabase
+            .rpc('can_access_case', { p_caso_id: casoId });
 
-          canUpload = !asignacionError && asignacion;
+          canUpload = !accessError && canAccess;
         }
       }
 
@@ -251,8 +219,6 @@ export const useClientDocumentManagement = (casoId?: string) => {
         await supabase.storage.from('documentos_legales').remove([filePath]);
         return { success: false, error: 'Error al guardar el registro del documento' };
       }
-
-      console.log('✅ Documento subido exitosamente');
       
       // Refetch documentos
       await fetchDocumentosCliente();
@@ -348,16 +314,11 @@ export const useClientDocumentManagement = (casoId?: string) => {
         if (profile.tipo_abogado === 'super_admin') {
           canDelete = true;
         } else {
-          // Verificar asignación para abogados regulares
-          const { data: asignacion, error: asignacionError } = await supabase
-            .from('asignaciones_casos')
-            .select('*')
-            .eq('caso_id', documento.caso_id)
-            .eq('abogado_id', user.id)
-            .in('estado_asignacion', ['activa', 'completada'])
-            .single();
+          // Para abogados regulares, usar la función can_access_case
+          const { data: canAccess, error: accessError } = await supabase
+            .rpc('can_access_case', { p_caso_id: documento.caso_id });
 
-          canDelete = !asignacionError && asignacion;
+          canDelete = !accessError && canAccess;
         }
       }
 
