@@ -119,7 +119,7 @@ export const MobileSidebar = ({
         )}
       >
         {/* Logo en la esquina superior izquierda */}
-        <div className="flex items-center">
+        <div className="flex items-center justify-center h-8 w-8">
           <img 
             src="/logo.svg" 
             alt="Logo" 
@@ -128,9 +128,9 @@ export const MobileSidebar = ({
         </div>
         
         {/* Menú hamburguesa en la derecha */}
-        <div className="flex justify-end z-20">
+        <div className="flex items-center justify-center h-8 w-8">
           <Menu
-            className="text-white dark:text-white cursor-pointer"
+            className="text-white dark:text-white cursor-pointer h-6 w-6"
             onClick={() => setOpen(!open)}
           />
         </div>

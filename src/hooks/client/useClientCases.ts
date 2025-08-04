@@ -1,98 +1,71 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { filterCaseForClient } from '@/utils/caseDisplayUtils';
-import { Caso } from '@/types/database';
+
+interface ClientCase {
+  id: string;
+  motivo_consulta: string;
+  estado: string;
+  created_at: string;
+  fecha_cierre?: string;
+  especialidad_id: number;
+  cliente_id: string;
+  especialidades?: {
+    nombre: string;
+  };
+  // Campos básicos del cliente que puede ver
+  nombre_borrador?: string;
+  apellido_borrador?: string;
+  email_borrador?: string;
+  telefono_borrador?: string;
+  ciudad_borrador?: string;
+  tipo_perfil_borrador?: string;
+  // Para mostrar información de progreso
+  documentos_adjuntos?: any;
+  // Token para hoja de encargo
+  hoja_encargo_token?: string;
+}
 
 export const useClientCases = () => {
-  const [casos, setCasos] = useState<Caso[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchClientCases();
-  }, [user]);
-
-  const fetchClientCases = async () => {
-    if (!user) {
-      setCasos([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Verificar explícitamente que el usuario es un cliente
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        setError('Error al verificar permisos de usuario');
-        setCasos([]);
-        return;
+  return useQuery({
+    queryKey: ['client-cases', user?.id],
+    queryFn: async (): Promise<ClientCase[]> => {
+      if (!user?.id) {
+        throw new Error('Usuario no autenticado');
       }
 
-      // Validación estricta: solo clientes pueden usar este hook
-      if (profile.role !== 'cliente') {
-        console.error('Acceso denegado: usuario no es cliente');
-        setError('Acceso no autorizado');
-        setCasos([]);
-        return;
-      }
-
-      // Query específico para clientes: SOLO sus propios casos
-      const { data, error: casesError } = await supabase
+      const { data, error } = await supabase
         .from('casos')
         .select(`
-          *,
-          especialidades (
+          id,
+          motivo_consulta,
+          estado,
+          created_at,
+          fecha_cierre,
+          especialidad_id,
+          cliente_id,
+          especialidades!casos_especialidad_id_fkey(
             nombre
           ),
-          profiles!casos_cliente_id_fkey (
-            nombre,
-            apellido,
-            email,
-            telefono,
-            ciudad
-          )
+          nombre_borrador,
+          apellido_borrador,
+          email_borrador,
+          telefono_borrador,
+          ciudad_borrador,
+          tipo_perfil_borrador,
+          documentos_adjuntos,
+          hoja_encargo_token
         `)
-        .eq('cliente_id', user.id) // Filtro estricto: solo casos del cliente
+        .eq('cliente_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (casesError) {
-        console.error('Error fetching client cases:', casesError);
-        setError('Error al cargar los casos');
-        setCasos([]);
-        return;
-      }
-
-      // Filtrar campos sensibles para clientes
-      const processedCasos: Caso[] = (data || []).map(caso => ({
-        ...caso,
-        especialidades: caso.especialidades || undefined
-      })).map(caso => filterCaseForClient(caso));
-
-      setCasos(processedCasos);
-    } catch (error) {
-      console.error('Error in useClientCases:', error);
-      setError('Error inesperado al cargar los casos');
-      setCasos([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { 
-    casos, 
-    loading, 
-    error, 
-    refetch: fetchClientCases 
-  };
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutos
+    gcTime: 5 * 60 * 1000, // 5 minutos
+  });
 }; 

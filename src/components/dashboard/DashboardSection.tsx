@@ -1,26 +1,293 @@
 
-import React, { memo } from "react";
-import { motion } from "framer-motion";
-import { useAuth } from "@/hooks/useAuth";
-import { useDashboardStats } from "@/hooks/shared/useDashboardStats";
+import React, { useState, useEffect } from 'react';
 import { 
+  Users, 
+  Scale, 
+  CreditCard, 
+  FileText, 
   TrendingUp, 
+  TrendingDown, 
+  ArrowUpRight, 
+  ArrowDownRight,
+  BarChart3,
+  DollarSign,
+  Calendar,
   Clock, 
+  Eye,
+  EyeOff,
+  Bell,
   CheckCircle, 
   AlertCircle,
-  Calendar,
-  FileText,
   User,
-  ArrowRight,
-  Sparkles,
-  Zap
-} from "lucide-react";
+  MessageCircle,
+  Sparkles
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
+import { useClientStats } from '@/hooks/useClientStats';
+import { cn } from '@/lib/utils';
 
-const DashboardSection = memo(() => {
+// Componente de gráfico mini para visualizaciones
+const MiniChart = ({ data, color, height = 40 }: { data: number[], color: string, height?: number }) => {
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  
+  const points = data.map((value, index) => {
+    const x = (index / (data.length - 1)) * 100;
+    const y = height - ((value - min) / range) * height;
+    return `${x},${y}`;
+  }).join(' ');
+  
+  return (
+    <svg width="100%" height={height} className="overflow-visible">
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
+
+// Componente de tarjeta de métrica
+const MetricCard = ({ 
+  title, 
+  value, 
+  change, 
+  icon: Icon, 
+  chartData, 
+  format = (v: number) => v.toLocaleString(),
+  prefix = '',
+  suffix = '',
+  loading = false
+}: {
+  title: string;
+  value: number;
+  change: number;
+  icon: React.ElementType;
+  chartData: number[];
+  format?: (value: number) => string;
+  prefix?: string;
+  suffix?: string;
+  loading?: boolean;
+}) => {
+  const isPositive = change >= 0;
+  
+  return (
+    <Card className="relative overflow-hidden hover:shadow-md transition-shadow duration-200">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">
+          {loading ? '...' : `${prefix}${format(value)}${suffix}`}
+        </div>
+        <div className="flex items-center justify-between mt-2">
+          <div className={`flex items-center text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            {isPositive ? <ArrowUpRight className="mr-1 h-3 w-3" /> : <ArrowDownRight className="mr-1 h-3 w-3" />}
+            <span>{isPositive ? '+' : ''}{change.toFixed(1)}%</span>
+          </div>
+          <div className="w-16 h-8">
+            <MiniChart 
+              data={chartData} 
+              color={isPositive ? '#10B981' : '#EF4444'} 
+              height={32}
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Componente de actividad reciente
+const RecentActivity = ({ activities, loading }: { activities: any[], loading: boolean }) => {
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'case':
+        return <FileText className="h-4 w-4 text-blue-500" />;
+      case 'payment':
+        return <CreditCard className="h-4 w-4 text-green-500" />;
+      case 'notification':
+        return <Bell className="h-4 w-4 text-purple-500" />;
+      case 'document':
+        return <FileText className="h-4 w-4 text-orange-500" />;
+      default:
+        return <MessageCircle className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const formatTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const date = new Date(timestamp);
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'hace unos minutos';
+    if (diffInHours < 24) return `hace ${diffInHours} horas`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `hace ${diffInDays} días`;
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Actividad Reciente</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center space-x-3">
+                <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" />
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded animate-pulse mb-1" />
+                  <div className="h-3 bg-gray-100 rounded animate-pulse w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold">Actividad Reciente</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {activities.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>No hay actividad reciente</p>
+            </div>
+          ) : (
+            activities.slice(0, 6).map((activity, index) => (
+              <div key={activity.id || index} className="flex items-center space-x-3">
+                <div className="mt-1">
+                  {getActivityIcon(activity.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {activity.description}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatTimeAgo(activity.timestamp)}
+                  </p>
+                </div>
+                {activity.amount && (
+                  <div className="text-sm font-medium text-green-600">
+                    ${activity.amount.toLocaleString()}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Componente de resumen de casos
+const CasesOverview = ({ casesByStatus, casesByPriority, loading }: { 
+  casesByStatus: any, 
+  casesByPriority: any, 
+  loading: boolean 
+}) => {
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Resumen de Casos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <div className="h-4 bg-gray-200 rounded animate-pulse mb-2" />
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="text-center p-2 bg-gray-100 rounded-lg animate-pulse">
+                    <div className="h-6 bg-gray-200 rounded mb-1" />
+                    <div className="h-3 bg-gray-200 rounded w-12 mx-auto" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold">Resumen de Casos</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">Por Estado</h4>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center p-2 bg-green-50 rounded-lg">
+                <div className="text-lg font-bold text-green-600">{casesByStatus.active}</div>
+                <div className="text-xs text-green-600">Activos</div>
+              </div>
+              <div className="text-center p-2 bg-yellow-50 rounded-lg">
+                <div className="text-lg font-bold text-yellow-600">{casesByStatus.pending}</div>
+                <div className="text-xs text-yellow-600">Pendientes</div>
+              </div>
+              <div className="text-center p-2 bg-gray-50 rounded-lg">
+                <div className="text-lg font-bold text-gray-600">{casesByStatus.closed}</div>
+                <div className="text-xs text-gray-600">Cerrados</div>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">Por Prioridad</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Alta</span>
+                <span className="text-sm font-medium text-red-600">{casesByPriority.high}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Media</span>
+                <span className="text-sm font-medium text-yellow-600">{casesByPriority.medium}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Baja</span>
+                <span className="text-sm font-medium text-green-600">{casesByPriority.low}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Componente principal del dashboard
+const DashboardSection = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [showValues, setShowValues] = useState(true);
   const { user } = useAuth();
-  const { totalCasos, casosActivos, casosCerrados, casosEsperandoPago, loading, error } = useDashboardStats();
+  const { data: stats, isLoading, error } = useClientStats();
 
-  // Obtener hora del día para saludo personalizado
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Obtener saludo personalizado
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Buenos días";
@@ -28,280 +295,142 @@ const DashboardSection = memo(() => {
     return "Buenas noches";
   };
 
-  // Datos de actividad reciente mejorados
-  const recentActivity = React.useMemo(() => [
-    {
-      icon: <FileText className="h-4 w-4 text-primary" />,
-      text: "Nueva consulta sobre derecho laboral",
-      time: "hace 2 horas",
-      type: "consulta"
-    },
-    {
-      icon: <CheckCircle className="h-4 w-4 text-success" />,
-      text: "Documento de contrato revisado",
-      time: "hace 5 horas",
-      type: "documento"
-    },
-    {
-      icon: <Calendar className="h-4 w-4 text-accent" />,
-      text: "Cita programada para mañana",
-      time: "hace 1 día",
-      type: "cita"
-    },
-    {
-      icon: <User className="h-4 w-4 text-primary" />,
-      text: "Respuesta de abogado recibida",
-      time: "hace 2 días",
-      type: "respuesta"
-    }
-  ], []);
-
-  const nextActions = React.useMemo(() => [
-    {
-      icon: <FileText className="h-4 w-4 text-primary" />,
-      text: "Revisar propuesta de acuerdo",
-      priority: "alta",
-      href: "/dashboard/casos"
-    },
-    {
-      icon: <AlertCircle className="h-4 w-4 text-warning" />,
-      text: "Completar formulario fiscal",
-      priority: "media",
-      href: "/dashboard/nueva-consulta"
-    },
-    {
-      icon: <User className="h-4 w-4 text-accent" />,
-      text: "Contactar con abogado especialista",
-      priority: "baja",
-      href: "/dashboard/casos"
-    },
-    {
-      icon: <Sparkles className="h-4 w-4 text-primary" />,
-      text: "Programar nueva consulta",
-      priority: "media",
-      href: "/dashboard/nueva-consulta"
-    }
-  ], []);
-
-  // Estadísticas mejoradas con iconos y colores
-  const stats = React.useMemo(() => [
-    { 
-      title: "Consultas Activas", 
-      value: casosActivos.toString(), 
-      icon: <Clock className="h-5 w-5" />,
-      color: "bg-gradient-to-br from-blue-500 to-blue-600", 
-      textColor: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-50 dark:bg-blue-900/20",
-      description: "En proceso"
-    },
-    { 
-      title: "Casos Resueltos", 
-      value: casosCerrados.toString(), 
-      icon: <CheckCircle className="h-5 w-5" />,
-      color: "bg-gradient-to-br from-green-500 to-green-600", 
-      textColor: "text-green-600 dark:text-green-400",
-      bgColor: "bg-green-50 dark:bg-green-900/20",
-      description: "Finalizados"
-    },
-    { 
-      title: "Total Casos", 
-      value: totalCasos.toString(), 
-      icon: <TrendingUp className="h-5 w-5" />,
-      color: "bg-gradient-to-br from-purple-500 to-purple-600", 
-      textColor: "text-purple-600 dark:text-purple-400",
-      bgColor: "bg-purple-50 dark:bg-purple-900/20",
-      description: "Historial completo"
-    },
-    { 
-      title: "Esperando Pago", 
-      value: casosEsperandoPago.toString(), 
-      icon: <AlertCircle className="h-5 w-5" />,
-      color: "bg-gradient-to-br from-orange-500 to-orange-600", 
-      textColor: "text-orange-600 dark:text-orange-400",
-      bgColor: "bg-orange-50 dark:bg-orange-900/20",
-      description: "Pendientes"
-    }
-  ], [casosActivos, casosCerrados, totalCasos, casosEsperandoPago]);
+  // Datos de gráficos mock para tendencias
+  const casesChartData = [2, 3, 2, 4, 3, 5, 4];
+  const paymentsChartData = [5000, 7500, 6000, 8500, 7000, 9000, 8000];
+  const notificationsChartData = [3, 5, 4, 6, 5, 7, 6];
 
   if (error) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
-      >
+      <div className="space-y-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold bg-klamai-gradient bg-clip-text text-transparent mb-2">
-            Bienvenido a klamAI
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            {getGreeting()}, {user?.user_metadata?.nombre || user?.email?.split('@')[0] || 'Usuario'}
           </h1>
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
             <p className="text-destructive font-medium">
-              Error cargando estadísticas: {error}
+              Error cargando estadísticas: {error.message}
             </p>
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-8"
-    >
-      {/* Header mejorado */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="relative overflow-hidden rounded-2xl bg-klamai-gradient-subtle border border-primary/20 p-6"
-      >
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="h-12 w-12 rounded-full bg-klamai-gradient flex items-center justify-center shadow-lg">
-              <Sparkles className="h-6 w-6 text-white" />
-            </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-foreground">
                 {getGreeting()}, {user?.user_metadata?.nombre || user?.email?.split('@')[0] || 'Usuario'}
               </h1>
-              <p className="text-muted-foreground text-lg">
-                Tu dashboard legal inteligente está listo
+            <p className="text-muted-foreground">
+              Tu dashboard legal personalizado
               </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-muted-foreground flex items-center">
+              <Clock className="w-4 h-4 mr-1" />
+              {currentTime.toLocaleTimeString()}
             </div>
+            <button
+              onClick={() => setShowValues(!showValues)}
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg border bg-background hover:bg-accent transition-colors"
+            >
+              {showValues ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              <span className="text-sm">{showValues ? 'Ocultar' : 'Mostrar'} valores</span>
+            </button>
           </div>
         </div>
-        <div className="absolute top-0 right-0 h-full w-32 bg-gradient-to-l from-accent/10 to-transparent"></div>
-      </motion.div>
-
-      {/* Estadísticas mejoradas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: i * 0.1 }}
-            className="group card-hover"
-          >
-            <div className={`${stat.bgColor} rounded-xl p-6 border border-border/50 h-full`}>
-              <div className="flex items-start justify-between mb-4">
-                <div className={`${stat.color} p-3 rounded-lg text-white shadow-lg`}>
-                  {stat.icon}
-                </div>
-                {loading && (
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent"></div>
-                )}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  {stat.title}
-                </p>
-                <p className={`text-3xl font-bold ${stat.textColor} mb-1`}>
-                  {loading ? '...' : stat.value}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        ))}
       </div>
 
-      {/* Secciones de actividad mejoradas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="card-hover bg-card rounded-xl border border-border/50 p-6"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Zap className="h-5 w-5 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground">
-              Actividad Reciente
-            </h3>
-          </div>
-          <div className="space-y-4">
-            {recentActivity.map((activity, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.3 + i * 0.1 }}
-                className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="mt-0.5">
-                  {activity.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground mb-1">
-                    {activity.text}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {activity.time}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+      {/* Métricas principales */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <MetricCard
+          title="Mis Casos"
+          value={showValues ? (stats?.totalCases || 0) : 0}
+          change={12.5}
+          icon={FileText}
+          chartData={casesChartData}
+          loading={isLoading}
+        />
         
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="card-hover bg-card rounded-xl border border-border/50 p-6"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
-              <CheckCircle className="h-5 w-5 text-accent" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground">
-              Próximas Acciones
-            </h3>
-          </div>
-          <div className="space-y-4">
-            {nextActions.map((action, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.4 + i * 0.1 }}
-                className="group flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  {action.icon}
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {action.text}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        action.priority === 'alta' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
-                        action.priority === 'media' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' :
-                        'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-                      }`}>
-                        Prioridad {action.priority}
-                      </span>
-                    </div>
-                  </div>
+        <MetricCard
+          title="Pagos Totales"
+          value={showValues ? (stats?.totalPayments || 0) : 0}
+          change={15.8}
+          icon={DollarSign}
+          chartData={paymentsChartData}
+          format={(v) => `$${(v / 1000).toFixed(0)}K`}
+          loading={isLoading}
+        />
+        
+        <MetricCard
+          title="Notificaciones"
+          value={showValues ? (stats?.totalNotifications || 0) : 0}
+          change={-2.1}
+          icon={Bell}
+          chartData={notificationsChartData}
+          loading={isLoading}
+        />
+        
+        <MetricCard
+          title="Casos Activos"
+          value={showValues ? (stats?.activeCases || 0) : 0}
+          change={5.4}
+          icon={CheckCircle}
+          chartData={[2, 3, 2, 4, 3, 5, 4]}
+          loading={isLoading}
+        />
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-});
 
-DashboardSection.displayName = 'DashboardSection';
+      {/* Métricas secundarias */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <MetricCard
+          title="Pagos Pendientes"
+          value={showValues ? (stats?.pendingPayments || 0) : 0}
+          change={-8.7}
+          icon={CreditCard}
+          chartData={[3000, 4500, 3500, 5000, 4000, 5500, 4500]}
+          format={(v) => `$${(v / 1000).toFixed(0)}K`}
+          loading={isLoading}
+        />
+        
+        <MetricCard
+          title="Casos Cerrados"
+          value={showValues ? (stats?.closedCases || 0) : 0}
+          change={22.3}
+          icon={BarChart3}
+          chartData={[1, 2, 1, 3, 2, 4, 3]}
+          loading={isLoading}
+        />
+        
+        <MetricCard
+          title="Sin Leer"
+          value={showValues ? (stats?.unreadNotifications || 0) : 0}
+          change={3.1}
+          icon={AlertCircle}
+          chartData={[2, 4, 3, 5, 4, 6, 5]}
+          loading={isLoading}
+        />
+      </div>
+
+      {/* Secciones detalladas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentActivity 
+          activities={stats?.recentActivity || []} 
+          loading={isLoading}
+        />
+        <CasesOverview 
+          casesByStatus={stats?.casesByStatus || { active: 0, pending: 0, closed: 0 }}
+          casesByPriority={stats?.casesByPriority || { high: 0, medium: 0, low: 0 }}
+          loading={isLoading}
+        />
+      </div>
+    </div>
+  );
+};
 
 export default DashboardSection;

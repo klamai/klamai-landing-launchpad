@@ -1,20 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Search, 
   Filter, 
   FileText, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
+  Plus,
   AlertCircle,
-  Eye,
-  MessageSquare,
-  Euro,
-  MapPin,
-  Calendar,
-  User,
-  Mail
+  XCircle,
+  CheckCircle,
+  Clock,
+  MessageSquare
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,11 +17,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { toZonedTime } from 'date-fns-tz';
 import { useClientCases } from '@/hooks/client/useClientCases';
 import ClientCaseDetailModal from './CaseDetailModal';
+import ClientCaseCard from './ClientCaseCard';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -38,48 +31,53 @@ const ClientMisCasos: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const { casos, loading, error, refetch } = useClientCases();
+  const { data: casos = [], isLoading, error, refetch } = useClientCases();
 
-  // Convertir a zona horaria de España
-  const spainTimeZone = 'Europe/Madrid';
+  const handleViewDetails = (caso: any) => {
+    setSelectedCaso(caso);
+    setIsModalOpen(true);
+  };
 
-  const getStatusBadge = (estado: string) => {
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedCaso(null);
+  };
+
+  const handleSendMessage = (casoId: string) => {
+    navigate(`/chat?caso=${casoId}`);
+  };
+
+  const handleNewCase = () => {
+    navigate('/nueva-consulta');
+  };
+
+  // Estados específicos para el cliente
+  const getClientStatusBadge = (estado: string) => {
     const statusConfig = {
       'disponible': { 
-        label: 'Disponible', 
+        label: 'En Revisión', 
         className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
       },
-      'agotado': { 
-        label: 'Agotado', 
-        className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-      },
-      'cerrado': { 
-        label: 'Cerrado', 
-        className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+      'asignado': { 
+        label: 'En Proceso', 
+        className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
       },
       'esperando_pago': { 
-        label: 'Esperando Pago', 
-        className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+        label: 'Por Pagar', 
+        className: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+      },
+      'cerrado': { 
+        label: 'Finalizado', 
+        className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+      },
+      'listo_para_propuesta': { 
+        label: 'Propuesta Lista', 
+        className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
       }
     };
     
     const config = statusConfig[estado as keyof typeof statusConfig] || statusConfig.disponible;
     return <Badge className={config.className}>{config.label}</Badge>;
-  };
-
-  const getStatusIcon = (estado: string) => {
-    switch (estado) {
-      case 'disponible':
-        return <Clock className="h-4 w-4 text-blue-600" />;
-      case 'agotado':
-        return <XCircle className="h-4 w-4 text-red-600" />;
-      case 'cerrado':
-        return <CheckCircle className="h-4 w-4 text-gray-600" />;
-      case 'esperando_pago':
-        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
-      default:
-        return <FileText className="h-4 w-4 text-gray-600" />;
-    }
   };
 
   const filteredCasos = casos.filter(caso => {
@@ -96,27 +94,61 @@ const ClientMisCasos: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleViewDetails = (caso: any) => {
-    setSelectedCaso(caso);
-    setIsModalOpen(true);
+  const getDisplayData = () => {
+    if (statusFilter !== 'all') {
+      const statusLabel = {
+        'disponible': 'En Revisión',
+        'asignado': 'En Proceso',
+        'esperando_pago': 'Por Pagar',
+        'cerrado': 'Finalizados',
+        'listo_para_propuesta': 'Propuestas Listas'
+      }[statusFilter] || 'Filtrados';
+      
+      return {
+        title: `Casos ${statusLabel}`,
+        description: `${filteredCasos.length} caso${filteredCasos.length !== 1 ? 's' : ''} encontrado${filteredCasos.length !== 1 ? 's' : ''}`
+      };
+    }
+
+    if (searchTerm) {
+      return {
+        title: 'Resultados de Búsqueda',
+        description: `${filteredCasos.length} caso${filteredCasos.length !== 1 ? 's' : ''} encontrado${filteredCasos.length !== 1 ? 's' : ''} para "${searchTerm}"`
+      };
+    }
+
+    return {
+      title: 'Mis Casos',
+      description: `${casos.length} caso${casos.length !== 1 ? 's' : ''} en total`
+    };
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedCaso(null);
-  };
+  const displayData = getDisplayData();
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Error al cargar los casos</h3>
-            <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <Button onClick={refetch} variant="outline">
-              Intentar de nuevo
-            </Button>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Mis Casos</h1>
+            <p className="text-muted-foreground">Gestiona tus casos legales</p>
+          </div>
+        </div>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center py-8">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Error al cargar los casos
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                {error?.message || 'Error desconocido'}
+              </p>
+              <Button onClick={() => refetch()}>
+                Intentar de nuevo
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -126,29 +158,26 @@ const ClientMisCasos: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mis Casos</h1>
-          <p className="text-sm text-muted-foreground">
-            Gestiona y revisa el estado de tus casos legales
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">{displayData.title}</h1>
+          <p className="text-muted-foreground">{displayData.description}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={refetch} variant="outline" size="sm">
-            Actualizar
-          </Button>
-        </div>
+        <Button onClick={handleNewCase} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Nueva Consulta
+        </Button>
       </div>
 
       {/* Filtros */}
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="Buscar por motivo, nombre, email, ciudad o especialidad..."
+                  placeholder="Buscar por motivo, nombre, ciudad..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -162,10 +191,11 @@ const ClientMisCasos: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="disponible">Disponible</SelectItem>
-                  <SelectItem value="agotado">Agotado</SelectItem>
-                  <SelectItem value="cerrado">Cerrado</SelectItem>
-                  <SelectItem value="esperando_pago">Esperando Pago</SelectItem>
+                  <SelectItem value="disponible">En Revisión</SelectItem>
+                  <SelectItem value="asignado">En Proceso</SelectItem>
+                  <SelectItem value="esperando_pago">Por Pagar</SelectItem>
+                  <SelectItem value="listo_para_propuesta">Propuesta Lista</SelectItem>
+                  <SelectItem value="cerrado">Finalizados</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -174,161 +204,69 @@ const ClientMisCasos: React.FC = () => {
       </Card>
 
       {/* Lista de casos */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-20 w-full mb-2" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-6 w-20" />
-                  <Skeleton className="h-6 w-16" />
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="h-80">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-20 w-full" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 flex-1" />
+                    <Skeleton className="h-8 w-20" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      ) : filteredCasos.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCasos.map((caso) => {
-            const casoDate = toZonedTime(new Date(caso.created_at), spainTimeZone);
-            
-            return (
-              <motion.div
-                key={caso.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
-                          {caso.motivo_consulta || 'Sin motivo especificado'}
-                        </CardTitle>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          #{caso.id.substring(0, 8)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 ml-2">
-                        {getStatusIcon(caso.estado)}
-                        {getStatusBadge(caso.estado)}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-0">
-                    <div className="space-y-3">
-                      {/* Información del cliente */}
-                      <div className="flex items-center gap-2 text-sm">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">
-                          {caso.nombre_borrador} {caso.apellido_borrador}
-                        </span>
-                      </div>
-
-                      {/* Email */}
-                      <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="truncate">{caso.email_borrador}</span>
-                      </div>
-
-                      {/* Ciudad */}
-                      {caso.ciudad_borrador && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span>{caso.ciudad_borrador}</span>
-                        </div>
-                      )}
-
-                      {/* Valor estimado */}
-                      {caso.valor_estimado && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Euro className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium text-blue-600">
-                            {caso.valor_estimado}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Especialidad */}
-                      {caso.especialidades?.nombre && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span>{caso.especialidades.nombre}</span>
-                        </div>
-                      )}
-
-                      {/* Fecha */}
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{format(casoDate, 'dd/MM/yyyy', { locale: es })}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ({formatDistanceToNow(casoDate, { locale: es, addSuffix: true })})
-                        </span>
-                      </div>
-
-                      {/* Botones de acción */}
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          onClick={() => handleViewDetails(caso)}
-                          size="sm"
-                          className="flex-1"
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver Detalles
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
-        </div>
-      ) : (
+      ) : filteredCasos.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">
-              {searchTerm || statusFilter !== 'all' ? 'No se encontraron casos' : 'No tienes casos aún'}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {searchTerm || statusFilter !== 'all' 
-                ? 'Intenta ajustar los filtros de búsqueda'
-                : 'Cuando crees un caso, aparecerá aquí'
-              }
-            </p>
-            {searchTerm || statusFilter !== 'all' ? (
-              <Button 
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter('all');
-                }}
-                variant="outline"
-              >
-                Limpiar filtros
-              </Button>
-            ) : (
-              <Button onClick={() => navigate('/nueva-consulta')} variant="outline">
-                Crear nuevo caso
-              </Button>
-            )}
+          <CardContent className="p-12">
+            <div className="text-center">
+              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                {searchTerm || statusFilter !== 'all' ? 'No se encontraron casos' : 'No tienes casos aún'}
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                {searchTerm || statusFilter !== 'all' 
+                  ? 'Intenta ajustar los filtros de búsqueda'
+                  : 'Comienza creando tu primera consulta legal'
+                }
+              </p>
+              {!searchTerm && statusFilter === 'all' && (
+                <Button onClick={handleNewCase} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Crear Primera Consulta
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCasos.map((caso) => (
+            <ClientCaseCard
+              key={caso.id}
+              caso={caso}
+              onViewDetails={() => handleViewDetails(caso)}
+              onSendMessage={() => handleSendMessage(caso.id)}
+            />
+          ))}
+        </div>
       )}
 
       {/* Modal de detalles */}
-      <ClientCaseDetailModal
-        caso={selectedCaso}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-      />
+      {selectedCaso && (
+        <ClientCaseDetailModal
+          caso={selectedCaso}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 };
