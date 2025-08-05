@@ -460,92 +460,92 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 flex flex-col min-h-0">
-            <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
-              {/* Contenedor de tabs con scroll horizontal */}
-              <div className="sticky top-0 z-10 bg-background border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <div className="px-6 py-3">
-                  <div className="relative">
-                    {/* Scroll horizontal para tabs */}
-                    <div 
-                      ref={tabsContainerRef}
-                      className="overflow-x-auto scrollbar-hide scroll-smooth relative"
-                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
-                      onScroll={() => {
-                        if (tabsContainerRef.current) {
-                          const container = tabsContainerRef.current;
-                          const hasOverflow = container.scrollWidth > container.clientWidth;
-                          const scrollLeft = container.scrollLeft;
-                          const maxScrollLeft = container.scrollWidth - container.clientWidth;
-                          
-                          setShowLeftIndicator(hasOverflow && scrollLeft > 0);
-                          setShowRightIndicator(hasOverflow && scrollLeft < maxScrollLeft);
-                        }
-                      }}
-                    >
-                      <TabsList className="flex w-full rounded-lg shadow-sm border mb-0 bg-white dark:bg-gray-800" style={{ minWidth: 'max-content' }}>
-                        <TabsTrigger value="overview" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
-                          <FileText className="h-3 w-3" /> Resumen
-                        </TabsTrigger>
-                        {updatedCaso.guia_abogado && (
-                          <TabsTrigger value="guia" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[120px] max-w-[140px] md:flex-none md:min-w-[140px] md:max-w-[160px] flex-shrink-0 whitespace-nowrap text-xs">
-                            <ShieldCheck className="h-3 w-3" /> Guía Abog
+          <div className="flex-1 min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 320px)' }}>
+            <div className="h-full overflow-y-auto px-6 py-4">
+              <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
+                {/* Contenedor de tabs con scroll horizontal */}
+                <div className="sticky top-0 z-10 bg-background border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                  <div className="px-6 py-3">
+                    <div className="relative">
+                      {/* Scroll horizontal para tabs */}
+                      <div 
+                        ref={tabsContainerRef}
+                        className="overflow-x-auto scrollbar-hide scroll-smooth relative"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                        onScroll={() => {
+                          if (tabsContainerRef.current) {
+                            const container = tabsContainerRef.current;
+                            const hasOverflow = container.scrollWidth > container.clientWidth;
+                            const scrollLeft = container.scrollLeft;
+                            const maxScrollLeft = container.scrollWidth - container.clientWidth;
+                            
+                            setShowLeftIndicator(hasOverflow && scrollLeft > 0);
+                            setShowRightIndicator(hasOverflow && scrollLeft < maxScrollLeft);
+                          }
+                        }}
+                      >
+                        <TabsList className="flex w-full rounded-lg shadow-sm border mb-0 bg-white dark:bg-gray-800" style={{ minWidth: 'max-content' }}>
+                          <TabsTrigger value="overview" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
+                            <FileText className="h-3 w-3" /> Resumen
                           </TabsTrigger>
-                        )}
-                        <TabsTrigger value="client" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
-                          <User className="h-3 w-3" /> Cliente
-                        </TabsTrigger>
-                        <TabsTrigger value="chat" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
-                          <MessageSquare className="h-3 w-3" /> Convers
-                        </TabsTrigger>
-                        <TabsTrigger value="documents" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
-                          <FileText className="h-3 w-3" /> Docs
-                        </TabsTrigger>
-                        <TabsTrigger value="notes" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[70px] max-w-[90px] md:flex-none md:min-w-[90px] md:max-w-[110px] flex-shrink-0 whitespace-nowrap text-xs">
-                          <MessageSquare className="h-3 w-3" /> Notas
-                        </TabsTrigger>
-                      </TabsList>
+                          {updatedCaso.guia_abogado && (
+                            <TabsTrigger value="guia" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[120px] max-w-[140px] md:flex-none md:min-w-[140px] md:max-w-[160px] flex-shrink-0 whitespace-nowrap text-xs">
+                              <ShieldCheck className="h-3 w-3" /> Guía Abog
+                            </TabsTrigger>
+                          )}
+                          <TabsTrigger value="client" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
+                            <User className="h-3 w-3" /> Cliente
+                          </TabsTrigger>
+                          <TabsTrigger value="chat" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
+                            <MessageSquare className="h-3 w-3" /> Convers
+                          </TabsTrigger>
+                          <TabsTrigger value="documents" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
+                            <FileText className="h-3 w-3" /> Docs
+                          </TabsTrigger>
+                          <TabsTrigger value="notes" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[70px] max-w-[90px] md:flex-none md:min-w-[90px] md:max-w-[110px] flex-shrink-0 whitespace-nowrap text-xs">
+                            <MessageSquare className="h-3 w-3" /> Notas
+                          </TabsTrigger>
+                        </TabsList>
+                      </div>
+                      
+                      {/* Botones de navegación simplificados */}
+                      {showLeftIndicator && (
+                        <button
+                          onClick={() => {
+                            if (tabsContainerRef.current) {
+                              tabsContainerRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+                            }
+                          }}
+                          className="scroll-nav-button left-1"
+                          title="Scroll izquierda"
+                        >
+                          <ChevronLeft className="h-3 w-3 text-gray-600 dark:text-gray-400" />
+                        </button>
+                      )}
+                      {showRightIndicator && (
+                        <button
+                          onClick={() => {
+                            if (tabsContainerRef.current) {
+                              tabsContainerRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+                            }
+                          }}
+                          className="scroll-nav-button right-1"
+                          title="Scroll derecha"
+                        >
+                          <ChevronRight className="h-3 w-3 text-gray-600 dark:text-gray-400" />
+                        </button>
+                      )}
+                      
+                      {/* Indicador visual simple de scroll */}
+                      {showRightIndicator && (
+                        <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-blue-500 rounded-full opacity-60 pointer-events-none z-10"></div>
+                      )}
                     </div>
-                    
-                    {/* Botones de navegación simplificados */}
-                    {showLeftIndicator && (
-                      <button
-                        onClick={() => {
-                          if (tabsContainerRef.current) {
-                            tabsContainerRef.current.scrollBy({ left: -200, behavior: 'smooth' });
-                          }
-                        }}
-                        className="scroll-nav-button left-1"
-                        title="Scroll izquierda"
-                      >
-                        <ChevronLeft className="h-3 w-3 text-gray-600 dark:text-gray-400" />
-                      </button>
-                    )}
-                    {showRightIndicator && (
-                      <button
-                        onClick={() => {
-                          if (tabsContainerRef.current) {
-                            tabsContainerRef.current.scrollBy({ left: 200, behavior: 'smooth' });
-                          }
-                        }}
-                        className="scroll-nav-button right-1"
-                        title="Scroll derecha"
-                      >
-                        <ChevronRight className="h-3 w-3 text-gray-600 dark:text-gray-400" />
-                      </button>
-                    )}
-                    
-                    {/* Indicador visual simple de scroll */}
-                    {showRightIndicator && (
-                      <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-blue-500 rounded-full opacity-60 pointer-events-none z-10"></div>
-                    )}
                   </div>
                 </div>
-              </div>
 
-              {/* Contenedor de contenido con altura fija */}
-              <div className="flex-1 min-h-0 overflow-hidden px-6 py-4">
-                <TabsContent value="overview" className="space-y-4 mt-0 h-full overflow-y-auto">
+                {/* Contenedor de contenido con altura fija */}
+                <TabsContent value="overview" className="space-y-4 mt-0">
                   <Card className="shadow-md border border-gray-200 dark:border-gray-700">
                     <CardHeader>
                       <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
@@ -655,7 +655,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                 </TabsContent>
 
                 {updatedCaso.guia_abogado && (
-                  <TabsContent value="guia" className="space-y-4 mt-0 h-full overflow-y-auto">
+                  <TabsContent value="guia" className="space-y-4 mt-0">
                     <Card className="shadow-md border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950">
                       <CardHeader>
                         <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-200">Guía para el Abogado</CardTitle>
@@ -673,7 +673,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   </TabsContent>
                 )}
 
-                <TabsContent value="client" className="space-y-4 h-full overflow-y-auto">
+                <TabsContent value="client" className="space-y-4 mt-0">
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-base">Información del Cliente</CardTitle>
@@ -765,7 +765,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="chat" className="space-y-4 h-full overflow-y-auto">
+                <TabsContent value="chat" className="space-y-4 mt-0">
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
@@ -785,7 +785,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="documents" className="space-y-4 h-full overflow-y-auto">
+                <TabsContent value="documents" className="space-y-4 mt-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card>
                       <CardHeader>
@@ -942,11 +942,11 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   </div>
                 </TabsContent>
 
-                <TabsContent value="notes" className="space-y-4 mt-0 h-full overflow-y-auto">
+                <TabsContent value="notes" className="space-y-4 mt-0">
                   {updatedCaso?.id && <CaseNotesSection casoId={updatedCaso.id} />}
                 </TabsContent>
-              </div>
-            </Tabs>
+              </Tabs>
+            </div>
           </div>
 
           {updatedCaso.estado !== 'cerrado' && (

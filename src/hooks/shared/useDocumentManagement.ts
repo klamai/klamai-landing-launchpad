@@ -145,6 +145,16 @@ export const useDocumentManagement = (casoId?: string) => {
       return { success: false, error: 'Acceso no autorizado' };
     }
 
+    // Validar que el archivo existe y tiene un nombre válido
+    if (!file || !file.name || typeof file.name !== 'string') {
+      return { success: false, error: 'Archivo inválido o sin nombre' };
+    }
+
+    // Validar el tipo de documento
+    if (!tipoDocumento || typeof tipoDocumento !== 'string') {
+      return { success: false, error: 'Tipo de documento inválido' };
+    }
+
     try {
       // Verificar permisos de subida
       const { data: profile, error: profileError } = await supabase
@@ -179,7 +189,7 @@ export const useDocumentManagement = (casoId?: string) => {
 
       // Generar nombre único para el archivo usando la estructura correcta
       const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop();
+      const fileExtension = file.name.split('.').pop() || '';
       const fileName = `${timestamp}_${file.name}`;
       // Usar la estructura de paths que esperan las políticas RLS: casos/{caso_id}/documentos_resolucion/
       const filePath = `casos/${casoId}/documentos_resolucion/${fileName}`;
