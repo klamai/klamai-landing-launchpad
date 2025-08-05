@@ -133,6 +133,16 @@ export const useClientDocumentManagement = (casoId?: string) => {
       return { success: false, error: 'Acceso no autorizado' };
     }
 
+    // Validar que el archivo existe y tiene un nombre válido
+    if (!file || !file.name || typeof file.name !== 'string') {
+      return { success: false, error: 'Archivo inválido o sin nombre' };
+    }
+
+    // Validar el tipo de documento
+    if (!tipoDocumento || typeof tipoDocumento !== 'string') {
+      return { success: false, error: 'Tipo de documento inválido' };
+    }
+
     try {
       // Verificar el perfil del usuario
       const { data: profile, error: profileError } = await supabase
@@ -180,7 +190,7 @@ export const useClientDocumentManagement = (casoId?: string) => {
 
       // Generar nombre único para el archivo
       const timestamp = new Date().getTime();
-      const fileExtension = file.name.split('.').pop();
+      const fileExtension = file.name.split('.').pop() || '';
       const fileName = `${timestamp}_${file.name}`;
       const filePath = `casos/${casoId}/documentos_cliente/${fileName}`;
 
@@ -226,7 +236,7 @@ export const useClientDocumentManagement = (casoId?: string) => {
       return { success: true };
     } catch (error) {
       console.error('Error in uploadDocument:', error);
-      return { success: false, error: 'Error inesperado al subir documento' };
+      return { success: false, error: 'Error inesperado al subir el documento' };
     }
   };
 

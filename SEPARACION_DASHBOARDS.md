@@ -99,6 +99,19 @@
   - **Gráficos Implementados**: 
     - Evolución de Clientes (BarChart)
 
+#### **🔧 FASE 9: Corrección de Error de Permisos de Auth Admin (01/08/2025)**
+- ✅ **Problema Identificado**: Error `AuthApiError: User not allowed` en dashboard super admin
+- ✅ **Causa Raíz**: Uso de `supabase.auth.admin.listUsers()` desde el cliente del navegador
+- ✅ **Solución Aplicada**:
+  - Eliminada llamada a `supabase.auth.admin.listUsers()` en `useAdminLawyers.ts`
+  - Removida funcionalidad de avatares que requería permisos de administrador
+  - Simplificado el código para funcionar sin datos de autenticación
+- ✅ **Archivo Corregido**: `src/hooks/queries/useAdminLawyers.ts`
+  - Eliminadas líneas 74-85 que causaban el error
+  - Simplificado procesamiento de abogados sin datos de auth
+  - Mantenida funcionalidad principal de gestión de abogados
+- ✅ **Resultado**: Dashboard super admin funciona correctamente sin errores de permisos
+
 #### **🔧 FASE 9: Corrección de Error en Consulta de Notificaciones (01/08/2025)**
 - ✅ **Problema Identificado**: Error 400 en consulta de notificaciones del dashboard del cliente
 - ✅ **Causa Raíz**: El hook `useClientCaseDetails` intentaba filtrar por `caso_id` en la tabla `notificaciones`, pero este campo no existía
@@ -184,6 +197,25 @@
   - **Eliminadas Relaciones Complejas**: Removido acceso a `asignaciones_casos` y `profiles` de abogados
   - **Componente `DashboardSection`**: Simplificado para mostrar solo métricas básicas del cliente
   - **Métricas Cliente**: Casos totales, activos, cerrados, pagos, notificaciones
+
+#### **🔧 FASE 13: Filtrado de Casos Borrador con Datos de Contacto (01/08/2025)**
+- ✅ **Problema Identificado**: Casos borrador vacíos (sin datos de contacto) se mostraban en el dashboard del super admin
+- ✅ **Causa Raíz**: Cuando un usuario inicia una consulta en la landing, se crea un caso borrador automáticamente, pero muchos quedan sin completar
+- ✅ **Solución Aplicada**:
+  - **Filtro Inteligente**: Modificado `useAdminCases` para filtrar casos borrador en el cliente
+  - **Criterios de Filtrado**: Solo mostrar casos borrador que tengan al menos un dato de contacto:
+    - `nombre_borrador` O `apellido_borrador` O `email_borrador` O `telefono_borrador`
+  - **Otros Estados**: Todos los casos que no sean borrador se muestran normalmente
+- ✅ **Archivo Modificado**: `src/hooks/queries/useAdminCases.ts`
+  - Añadido filtro en el cliente después de obtener los datos
+  - Mantenida funcionalidad completa para otros estados de casos
+  - Optimizado para rendimiento sin afectar la base de datos
+- ✅ **Beneficios**:
+  - **Dashboard más limpio**: Solo casos borrador con potencial de conversión
+  - **Mejor UX**: Super admin ve solo casos relevantes
+  - **Sin impacto en BD**: Filtro aplicado en el cliente
+  - **Mantenimiento**: Casos vacíos se pueden limpiar manualmente o con función cron
+- ✅ **Resultado**: El dashboard del super admin ahora muestra solo casos borrador que tienen al menos un dato de contacto, eliminando el ruido de casos vacíos
   - **Seguridad**: El cliente solo ve información básica de sus propios casos
     - Casos por Estado (PieChart)
     - Ingresos Mensuales (LineChart)
@@ -1041,5 +1073,22 @@ VITE_DOCUMENSO_URL=https://documenso-r8swo0o4kksocggw04888cww.klamai.com
   - **Funcionalidad mantenida**: SignOut funciona correctamente
   - **Build exitoso**: Sin errores de compilación
   - **Seguridad mejorada**: Limpieza garantizada del estado
+
+#### **🔧 FASE 9: Corrección de Errores de Subida de Documentos (01/08/2025)**
+- ✅ **Problema Identificado**: Error `TypeError: can't access property "split", g.name is undefined` en subida de documentos
+- ✅ **Causa Raíz**: Llamadas incorrectas a funciones `uploadDocument` pasando objetos en lugar de parámetros separados
+- ✅ **Archivos Corregidos**:
+  - `src/components/client/ClientDocumentUploadModal.tsx`: Corregida llamada de `uploadDocument({file, tipoDocumento, descripcion})` a `uploadDocument(file, tipoDocumento, descripcion)`
+  - `src/components/lawyer/AssignedCasesManagement.tsx`: Corregida llamada de `uploadDocument(file, description)` a `uploadDocument(file, 'resolucion', description)`
+- ✅ **Validaciones de Seguridad Agregadas**:
+  - `src/hooks/client/useClientDocumentManagement.ts`: Agregadas validaciones para archivo, nombre y tipo de documento
+  - `src/hooks/shared/useDocumentManagement.ts`: Agregadas validaciones para archivo, nombre y tipo de documento
+- ✅ **Mejoras de Seguridad**:
+  - Validación de existencia y validez del archivo antes de procesar
+  - Validación del tipo de documento como string
+  - Manejo robusto de errores con mensajes descriptivos
+  - Prevención de errores de tipo `undefined` en propiedades de archivo
+- ✅ **Verificación**: Build exitoso sin errores de compilación
+- ✅ **Estado**: Funcionalidad de subida de documentos completamente operativa y segura
 
 ## 📋 **PRÓXIMAS TAREAS:**

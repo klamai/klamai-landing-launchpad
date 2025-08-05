@@ -107,11 +107,15 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
       // Registrar intento de subida
       await recordUploadAttempt(user.id);
       
-      await uploadDocument({
-        file: selectedFile,
+      const result = await uploadDocument(
+        selectedFile,
         tipoDocumento,
-        descripcion: sanitizedDescription,
-      });
+        sanitizedDescription
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error al subir el documento');
+      }
 
       toast({
         title: "Éxito",

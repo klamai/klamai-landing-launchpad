@@ -90,6 +90,7 @@ const validateSuperAdminAccess = async (userId: string): Promise<boolean> => {
 const fetchAdminCases = async (): Promise<CasosSuperAdmin[]> => {
   try {
     // Obtener todos los casos con relaciones específicas
+    // Filtrar casos borrador: solo mostrar aquellos con al menos un dato de contacto
     const { data, error } = await supabase
       .from('casos')
       .select(`
@@ -125,7 +126,21 @@ const fetchAdminCases = async (): Promise<CasosSuperAdmin[]> => {
       throw new Error('Error al cargar los casos');
     }
 
-    return data || [];
+    // Filtrar casos borrador en el cliente para mostrar solo aquellos con datos de contacto
+    const filteredData = (data || []).filter(caso => {
+      // Si no es borrador, incluirlo
+      if (caso.estado !== 'borrador') {
+        return true;
+      }
+      
+      // Si es borrador, verificar que tenga al menos un dato de contacto
+      return caso.nombre_borrador || 
+             caso.apellido_borrador || 
+             caso.email_borrador || 
+             caso.telefono_borrador;
+    });
+
+    return filteredData;
   } catch (error) {
     console.error('Error:', error);
     throw new Error('Error al cargar los casos del administrador');

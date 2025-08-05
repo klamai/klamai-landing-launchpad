@@ -71,22 +71,6 @@ const fetchAdminLawyers = async (): Promise<AbogadoInfo[]> => {
       throw new Error('Error al cargar abogados');
     }
 
-    // Obtener datos de authentication para avatares
-    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-    
-    if (authError) {
-      console.error('Error fetching auth users:', authError);
-      // Continuar sin datos de auth si hay error
-    }
-
-    // Crear mapa de datos de auth por email
-    const authDataMap = new Map<string, any>();
-    authUsers?.users?.forEach(user => {
-      if (user.email) {
-        authDataMap.set(user.email, user.user_metadata);
-      }
-    });
-
     // Obtener estadísticas de casos por abogado
     const { data: casosPorAbogadoData, error: casosError } = await supabase
       .from('asignaciones_casos')
@@ -103,19 +87,20 @@ const fetchAdminLawyers = async (): Promise<AbogadoInfo[]> => {
     // Crear mapa de estadísticas por abogado
     const casosPorAbogadoMap = new Map<string, { total: number; activos: number }>();
     
-    casosPorAbogadoData?.forEach(asignacion => {
-      const current = casosPorAbogadoMap.get(asignacion.abogado_id) || { total: 0, activos: 0 };
-      current.total += 1;
-      if (asignacion.estado_asignacion === 'activa') {
-        current.activos += 1;
-      }
-      casosPorAbogadoMap.set(asignacion.abogado_id, current);
-    });
+    if (casosPorAbogadoData) {
+      casosPorAbogadoData.forEach(asignacion => {
+        const current = casosPorAbogadoMap.get(asignacion.abogado_id) || { total: 0, activos: 0 };
+        current.total += 1;
+        if (asignacion.estado_asignacion === 'activa') {
+          current.activos += 1;
+        }
+        casosPorAbogadoMap.set(asignacion.abogado_id, current);
+      });
+    }
 
-    // Procesar abogados con estadísticas y datos de auth
+    // Procesar abogados con estadísticas
     const processedAbogados: AbogadoInfo[] = (abogadosData || []).map(abogado => {
       const estadisticas = casosPorAbogadoMap.get(abogado.id) || { total: 0, activos: 0 };
-      const authData = authDataMap.get(abogado.email);
       
       return {
         id: abogado.id,
@@ -128,7 +113,7 @@ const fetchAdminLawyers = async (): Promise<AbogadoInfo[]> => {
         casos_asignados: estadisticas.total,
         casos_activos: estadisticas.activos,
         tipo_abogado: abogado.tipo_abogado,
-        user_metadata: authData || {}
+        user_metadata: {} // Datos de auth no disponibles desde el cliente
       };
     });
 

@@ -8,7 +8,8 @@ import { Buffer } from "node:buffer";
 // ----- CONFIGURACIÓN Y CONSTANTES -----
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
+  "Access-Control-Allow-Headers": "authorization, x-client-info, x-client-version, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 const LISTA_ESPECIALIDADES_VALIDAS = [
   'Derecho Civil',

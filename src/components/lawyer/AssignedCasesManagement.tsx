@@ -197,7 +197,7 @@ const AssignedCasesManagement = () => {
     }
 
     try {
-      const result = await uploadDocument(file, description);
+      const result = await uploadDocument(file, 'resolucion', description);
       if (result.success) {
         toast({
           title: "Éxito",
