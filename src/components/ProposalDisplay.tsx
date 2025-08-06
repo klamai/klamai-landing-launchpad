@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Star, X, Sparkles } from 'lucide-react';
+import { Star, X, Sparkles, Clock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PricingSection } from '@/components/ui/pricing-section';
 import AuthModal from '@/components/AuthModal';
@@ -214,32 +214,30 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
           <PricingSection tier={singlePlan} />
         </motion.div>
 
-        {/* Sección de guardar progreso - comentada para uso futuro */}
-        {/* 
-        <motion.div 
+        {/* Sección de guardar progreso */}
+        <motion.div
           className="text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700">
-            <Clock className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+            <Mail className="w-12 h-12 text-blue-500 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               ¿Necesitas más tiempo para decidir?
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Guarda tu progreso y recibe un resumen completo por email. Podrás revisar toda la información y decidir con calma.
+              Recibe un resumen completo de tu caso por email. Podrás revisar toda la información y decidir con calma.
             </p>
             <Button
               onClick={handleSaveProgress}
               variant="outline"
               className="px-8 py-3 text-lg font-medium border-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-300"
             >
-              Guardar Progreso y Recibir Resumen por Email
+              Enviarme la propuesta por email
             </Button>
           </div>
         </motion.div>
-        */}
       </div>
 
       {/* Modal de Autenticación */}

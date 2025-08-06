@@ -8,6 +8,12 @@ export const CONFIG = {
   APP_VERSION: '1.0.0',
 } as const;
 
+// Configuración específica para Typebot
+export const TYPEBOT_CONFIG = {
+  TYPEBOT_NAME: import.meta.env.VITE_TYPEBOT_NAME,
+  TYPEBOT_API_HOST: import.meta.env.VITE_TYPEBOT_API_HOST
+} as const;
+
 // Función helper para obtener la URL completa de un documento de Documenso
 export const getDocumensoDocumentUrl = (token: string): string => {
   if (!CONFIG.DOCUMENSO_URL) {
