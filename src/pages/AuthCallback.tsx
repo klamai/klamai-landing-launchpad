@@ -17,11 +17,11 @@ const AuthCallback = () => {
   const casoId = searchParams.get('casoId');
 
   useEffect(() => {
-    console.log('AuthCallback - Estado inicial:', { 
-      loading, 
-      user: user?.id, 
-      planId, 
-      casoId 
+    console.log('AuthCallback - Estado inicial:', {
+      loading,
+      user: user?.id,
+      planId,
+      casoId
     });
 
     if (loading) return;
@@ -32,15 +32,33 @@ const AuthCallback = () => {
       return;
     }
 
-    if (!planId || !casoId) {
-      console.log('AuthCallback - Faltan parámetros, redirigiendo al dashboard');
+    // Si tenemos casoId pero NO planId: sólo vincular el caso y volver al dashboard
+    if (casoId && !planId) {
+      (async () => {
+        try {
+          console.log('AuthCallback - Vinculación sin compra: intentando asignar caso');
+          await linkCaseToUser(casoId, user.id);
+          console.log('AuthCallback - Vinculación OK. Redirigiendo al dashboard');
+          navigate('/dashboard');
+        } catch (e) {
+          console.error('AuthCallback - Error al vincular sin compra:', e);
+          navigate('/dashboard');
+        }
+      })();
+      return;
+    }
+
+    // Si faltan ambos, ir a dashboard
+    if (!casoId && !planId) {
+      console.log('AuthCallback - Sin parámetros relevantes, redirigiendo al dashboard');
       navigate('/dashboard');
       return;
     }
 
+    // Si tenemos ambos planId y casoId => flujo de pago
     console.log('AuthCallback - Iniciando proceso de pago');
     processPayment();
-  }, [user, loading, planId, casoId]);
+  }, [user, loading, planId, casoId, navigate]);
 
   const processPayment = async () => {
     if (processing) return;
