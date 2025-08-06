@@ -109,10 +109,11 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
       }
 
       onSuccess();
-    } catch (error: any) {
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : "Ocurrió un error inesperado";
       toast({
         title: "Error",
-        description: error.message || "Ocurrió un error inesperado",
+        description: errMsg,
         variant: "destructive",
       });
     } finally {
@@ -125,19 +126,28 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
     try {
       // Construir URL de redirección con contexto
       let redirectUrl = `${window.location.origin}/dashboard`;
+
+      // Si hay planId y casoId => ir a callback con ambos (flujo de pago)
       if (planId && casoId) {
         redirectUrl = `${window.location.origin}/auth-callback?planId=${encodeURIComponent(planId)}&casoId=${encodeURIComponent(casoId)}`;
-        console.log('AuthModal - Configurando redirección de Google a:', redirectUrl);
       }
+      // Si NO hay planId pero SÍ hay casoId => ir a callback sólo para vincular el caso
+      else if (!planId && casoId) {
+        redirectUrl = `${window.location.origin}/auth-callback?casoId=${encodeURIComponent(casoId)}`;
+      }
+
+      console.log('AuthModal - Configurando redirección de Google a:', redirectUrl);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
-          queryParams: planId && casoId ? {
-            planId,
-            casoId
-          } : undefined
+          // Pasar queryParams sólo cuando tengamos algo que aportar
+          queryParams: (planId && casoId)
+            ? { planId, casoId }
+            : (casoId
+              ? { casoId }
+              : undefined)
         }
       });
       
@@ -151,11 +161,12 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
       } else {
         console.log('AuthModal - Google OAuth iniciado exitosamente');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('AuthModal - Error inesperado en Google OAuth:', error);
+      const errMsg = error instanceof Error ? error.message : "Error al conectar con Google";
       toast({
         title: "Error",
-        description: error.message || "Error al conectar con Google",
+        description: errMsg,
         variant: "destructive",
       });
     } finally {
