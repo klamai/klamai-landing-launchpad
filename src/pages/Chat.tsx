@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Moon, Sun, Scale, Menu, X, Sidebar } from "lucide-react";
+import { Moon, Sun, Scale, Menu, X, Sidebar, Clock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Standard } from "@typebot.io/react";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import SignOutButton from "@/components/SignOutButton";
 import AuthModal from "@/components/AuthModal";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { TYPEBOT_CONFIG } from "@/config/constants";
 
 const Chat = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -392,6 +393,30 @@ const Chat = () => {
     }, 1000);
   };
 
+  // Validate Typebot configuration
+  if (!TYPEBOT_CONFIG.TYPEBOT_NAME || !TYPEBOT_CONFIG.TYPEBOT_API_HOST) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Error de Configuración
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Falta configurar las variables de entorno para Typebot. Por favor, contacta al administrador.
+          </p>
+          <div className="text-sm text-gray-500 dark:text-gray-500 space-y-2">
+            <p>Variables requeridas:</p>
+            <ul className="text-left space-y-1">
+              <li>• VITE_TYPEBOT_NAME</li>
+              <li>• VITE_TYPEBOT_API_HOST</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Show loading while we get essential data
   if (!typebotReady) {
     return (
@@ -545,8 +570,8 @@ const Chat = () => {
           )}>
             <div className="h-full relative">
               <Standard
-                typebot="klamai-test-supabase-wyqehpx"
-                apiHost="https://bot.autoiax.com"
+                typebot={TYPEBOT_CONFIG.TYPEBOT_NAME}
+                apiHost={TYPEBOT_CONFIG.TYPEBOT_API_HOST}
                 style={{ width: "100%", height: "100%" }}
                 prefilledVariables={{
                   "utm_value": userConsultation || "Hola, necesito asesoramiento legal",
