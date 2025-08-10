@@ -39,6 +39,7 @@ import {
 interface CaseCardProps {
   caso: {
     id: string;
+    cliente_id?: string;
     motivo_consulta: string;
     resumen_caso?: string;
     guia_abogado?: string;
@@ -243,7 +244,11 @@ const CaseCard: React.FC<CaseCardProps> = ({
           ${hideAssignmentStyling ? 'border-gray-200 dark:border-gray-800' : ''}
           ${caso.estado === 'asignado' && !hideAssignmentStyling 
             ? 'shadow-md dark:shadow-stone-900/10 before:absolute before:inset-0 before:rounded-xl before:p-[1.5px] before:bg-gradient-to-r before:from-stone-300 before:via-stone-400 before:to-stone-300 dark:before:from-stone-800/60 dark:before:via-stone-700/60 dark:before:to-stone-800/60 before:opacity-70 before:-z-10' 
-            : 'shadow-md dark:shadow-blue-900/10 hover:shadow-lg dark:hover:shadow-blue-800/20 before:absolute before:inset-0 before:rounded-xl before:p-[1.5px] before:bg-gradient-to-r before:from-blue-200/0 before:via-blue-300/50 before:to-blue-200/0 dark:before:from-blue-800/0 dark:before:via-blue-700/30 dark:before:to-blue-800/0 before:opacity-0 group-hover:before:opacity-100 before:transition-opacity before:duration-300 before:-z-10'}
+            : `shadow-md dark:shadow-blue-900/10 hover:shadow-lg dark:hover:shadow-blue-800/20 before:absolute before:inset-0 before:rounded-xl before:p-[1.5px] 
+               ${(caso.estado === 'disponible' || (caso.fecha_pago && caso.cliente_id))
+                ? 'before:bg-gradient-to-r before:from-blue-200/0 before:via-blue-300/50 before:to-blue-200/0 dark:before:from-blue-800/0 dark:before:via-blue-700/30 dark:before:to-blue-800/0 before:opacity-100'
+                : 'before:bg-gradient-to-r before:from-blue-200/0 before:via-blue-300/50 before:to-blue-200/0 dark:before:from-blue-800/0 dark:before:via-blue-700/30 dark:before:to-blue-800/0 before:opacity-0 group-hover:before:opacity-100'} 
+               before:transition-opacity before:duration-300 before:-z-10`}
         `}
       >
         {/* Sello visual de cerrado */}

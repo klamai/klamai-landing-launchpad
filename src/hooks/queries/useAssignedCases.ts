@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface AssignedCase {
   id: string;
+  cliente_id?: string | null;
   motivo_consulta: string | null;
   resumen_caso: string | null;
   guia_abogado: string | null;
@@ -64,6 +65,7 @@ const fetchAssignedCases = async (): Promise<AssignedCase[]> => {
       notas_asignacion,
       casos!inner (
         id,
+        cliente_id,
         motivo_consulta,
         resumen_caso,
         guia_abogado,
@@ -98,6 +100,7 @@ const fetchAssignedCases = async (): Promise<AssignedCase[]> => {
   // Transformar los datos para mantener la estructura esperada
   const assignedCases: AssignedCase[] = ((data as unknown) as any[] || []).map((assignment: any) => ({
     id: assignment.casos.id,
+    cliente_id: assignment.casos.cliente_id || null,
     motivo_consulta: assignment.casos.motivo_consulta,
     resumen_caso: assignment.casos.resumen_caso,
     guia_abogado: assignment.casos.guia_abogado,

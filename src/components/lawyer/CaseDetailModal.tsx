@@ -21,7 +21,8 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
-  CreditCard
+  CreditCard,
+  MoreHorizontal
 } from 'lucide-react';
 import {
   Dialog,
@@ -56,6 +57,8 @@ import CaseNotesSection from '@/components/shared/CaseNotesSection';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface LawyerCaseDetailModalProps {
   caso: {
@@ -513,8 +516,8 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                           <TabsTrigger value="chat" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
                             <MessageSquare className="h-3 w-3" /> Convers
                           </TabsTrigger>
-                          <TabsTrigger value="documentos-resolucion" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[140px] max-w-[160px] md:flex-none md:min-w-[160px] md:max-w-[180px] flex-shrink-0 whitespace-nowrap text-xs">
-                            <FileText className="h-3 w-3" /> Docs Resol
+                          <TabsTrigger value="documentos-resolucion" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[120px] max-w-[140px] md:flex-none md:min-w-[140px] md:max-w-[160px] flex-shrink-0 whitespace-nowrap text-xs">
+                            <FileText className="h-3 w-3" /> Docs
                           </TabsTrigger>
                           <TabsTrigger value="notes" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[70px] max-w-[90px] md:flex-none md:min-w-[90px] md:max-w-[110px] flex-shrink-0 whitespace-nowrap text-xs">
                             <MessageSquare className="h-3 w-3" /> Notas
@@ -938,9 +941,11 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                     </Card>
 
                     <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base flex items-center justify-between">
+                      <CardHeader className="space-y-2">
+                        <CardTitle className="text-base">
                           Documentos de Resolución
+                        </CardTitle>
+                        <div className="mt-3">
                           <Button
                             onClick={() => setShowUploadModal(true)}
                             variant="outline"
@@ -950,7 +955,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                             <Upload className="h-3 w-3" />
                             Subir
                           </Button>
-                        </CardTitle>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2">
@@ -1025,126 +1030,83 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
             <div className="border-t bg-background">
               <Separator />
               <div className="p-2 md:p-4">
-                {/* Para desktop: mostrar todos los botones */}
-                <div className="hidden md:flex flex-wrap gap-3 justify-center">
-                  <Button
-                    size="sm"
-                    onClick={() => setShowEditModal(true)}
-                    variant="default"
-                    className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md hover:shadow-blue-500/20 dark:shadow-blue-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1 dark:focus:ring-blue-600/40"
-                  >
-                    <User className="h-4 w-4" />
-                    Editar Caso
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => onGenerateResolution(caso.id)}
-                    variant="outline"
-                    className="flex items-center gap-2 rounded-xl border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all duration-300"
-                  >
-                    <Bot className="h-4 w-4" />
-                    IA
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowUploadModal(true)}
-                    variant="outline"
-                    className="flex items-center gap-2 rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-all duration-300"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Subir Documento
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => onSendMessage(caso.id)}
-                    variant="outline"
-                    className="flex items-center gap-2 rounded-xl border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all duration-300"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    Enviar Mensaje
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowChargeModal(true)}
-                    variant="default"
-                    className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    Solicitar Pago
-                  </Button>
-                  {canCloseCase() && (
-                    <Button
-                      size="sm"
-                      onClick={handleCerrarCaso}
-                      variant="destructive"
-                      disabled={isClosing}
-                      className="flex items-center gap-2"
-                    >
-                      <ShieldCheck className="h-4 w-4" />
-                      {isClosing ? 'Cerrando...' : 'Cerrar Caso'}
+                {/* Toolbar compacta: desktop con grupos */}
+                <div className="hidden md:flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" onClick={() => setShowEditModal(true)} variant="default" className="rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-sm">
+                      <User className="h-4 w-4 mr-1" /> Editar
                     </Button>
-                  )}
+                    <Button size="sm" onClick={() => setShowChargeModal(true)} variant="default" disabled={!caso?.cliente_id} className="rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm disabled:opacity-60 disabled:pointer-events-none">
+                      <CreditCard className="h-4 w-4 mr-1" /> Pago
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" onClick={() => onGenerateResolution(caso.id)} variant="outline" className="rounded-xl border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300">
+                      <Bot className="h-4 w-4 mr-1" /> IA
+                    </Button>
+                    <Button size="sm" onClick={() => setShowUploadModal(true)} variant="outline" className="rounded-xl">
+                      <Upload className="h-4 w-4 mr-1" /> Documento
+                    </Button>
+                    <Button size="sm" onClick={() => onSendMessage(caso.id)} variant="outline" className="rounded-xl">
+                      <MessageSquare className="h-4 w-4 mr-1" /> Mensaje
+                    </Button>
+                    {canCloseCase() && (
+                      <Button size="sm" onClick={handleCerrarCaso} variant="destructive" disabled={isClosing} className="rounded-xl">
+                        <ShieldCheck className="h-4 w-4 mr-1" /> {isClosing ? 'Cerrando...' : 'Cerrar'}
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 
-                {/* Para móvil: mostrar un grid de botones más compactos */}
-                <div className="md:hidden grid grid-cols-3 gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => setShowEditModal(true)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 p-2 h-auto"
-                  >
-                    <User className="h-4 w-4" />
-                    <span className="text-xs">Editar</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => onGenerateResolution(caso.id)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 p-2 h-auto"
-                  >
-                    <Bot className="h-4 w-4" />
-                    <span className="text-xs">IA</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowUploadModal(true)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 p-2 h-auto"
-                  >
-                    <Upload className="h-4 w-4" />
-                    <span className="text-xs">Docs</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => onSendMessage(caso.id)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 p-2 h-auto"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    <span className="text-xs">Mensaje</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowChargeModal(true)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 p-2 h-auto"
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    <span className="text-xs">Pago</span>
-                  </Button>
-                  {canCloseCase() && (
-                    <Button
-                      size="sm"
-                      onClick={handleCerrarCaso}
-                      variant="destructive"
-                      disabled={isClosing}
-                      className="flex flex-col items-center gap-1 p-2 h-auto"
-                    >
-                      <ShieldCheck className="h-4 w-4" />
-                      <span className="text-xs">{isClosing ? 'Cerrando' : 'Cerrar'}</span>
+                {/* Móvil: 2 primarias + menú Más */}
+                <div className="md:hidden flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" onClick={() => setShowEditModal(true)} className="rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-sm">
+                      <User className="h-4 w-4 mr-1" /> Editar
                     </Button>
-                  )}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button
+                              size="sm"
+                              onClick={() => setShowChargeModal(true)}
+                              className="rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm disabled:opacity-60 disabled:pointer-events-auto"
+                              disabled={!caso?.cliente_id}
+                            >
+                              <CreditCard className="h-4 w-4 mr-1" /> Pago
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        {!caso?.cliente_id && (
+                          <TooltipContent>Vincula el caso a un cliente para solicitar pago</TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="outline" className="rounded-xl">
+                        <MoreHorizontal className="h-4 w-4 mr-1" /> Más
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-60 p-1 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 shadow-lg">
+                      <DropdownMenuItem onClick={() => onGenerateResolution(caso.id)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200">
+                        <Bot className="h-4 w-4 mr-1 text-purple-600" /> Generar con IA
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setShowUploadModal(true)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200">
+                        <Upload className="h-4 w-4 mr-1 text-blue-600" /> Subir Documento
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onSendMessage(caso.id)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200">
+                        <MessageSquare className="h-4 w-4 mr-1 text-emerald-600" /> Enviar Mensaje
+                      </DropdownMenuItem>
+                      {canCloseCase() && (
+                        <DropdownMenuItem onClick={handleCerrarCaso} disabled={isClosing} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-rose-50 hover:text-rose-900 dark:hover:bg-rose-900/30 dark:hover:text-rose-200 data-[highlighted]:bg-rose-50 data-[highlighted]:text-rose-900 dark:data-[highlighted]:bg-rose-900/30 dark:data-[highlighted]:text-rose-200">
+                          <ShieldCheck className="h-4 w-4 mr-1 text-rose-600" /> {isClosing ? 'Cerrando...' : 'Cerrar'}
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>

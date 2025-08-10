@@ -46,6 +46,7 @@
  - ✅ **Unificación de estilo de botones por rol** (10/08/2025):
    - Super Admin: actualizado en `src/components/admin/CasesManagement.tsx` (tabla Acciones) y `src/components/admin/CaseDetailModal.tsx` (barra de acciones del modal) con los mismos gradientes y `rounded-xl` que cliente.
    - Abogado Regular: actualizado en `src/components/lawyer/CaseDetailModal.tsx` (barra de acciones) para usar azul (Ver/Editar) y verde (Solicitar Pago), secundarios con `outline` acentuado. Sin cambios de lógica.
+ - ✅ **Footer compacto en modales de detalle** (10/08/2025): Toolbar moderna con acciones primarias visibles y menú “Más” para secundarias. Responsive mejorado (móvil: 2 acciones + menú). Archivos: `admin/CaseDetailModal.tsx`, `lawyer/CaseDetailModal.tsx`.
 
 #### **🔒 FASE 4: Seguridad y Validaciones**
 - ✅ **Validación de Roles**: Implementada en todos los componentes migrados
