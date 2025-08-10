@@ -164,6 +164,14 @@ const AssignedCasesManagement = () => {
     });
   };
 
+  const handleGenerateResolutionWithAgent = (casoId: string) => {
+    // Implementar generación de resolución con agente
+    toast({
+      title: "Funcionalidad en desarrollo",
+      description: "La generación de resoluciones con agente estará disponible pronto",
+    });
+  };
+
   const handleUploadDocument = (casoId: string) => {
     setSelectedCaseForUpload(casoId);
     setUploadModalOpen(true);
@@ -366,11 +374,13 @@ const AssignedCasesManagement = () => {
                   estado_asignacion: 'activa',
                   notas_asignacion: caso.notas_asignacion,
                   profiles: { nombre: 'Tú', apellido: '', email: '' }
-                }]
+                }],
+                fecha_pago: caso.fecha_pago || null,
               }}
               onViewDetails={handleViewDetails}
               onAssignLawyer={handleAssignLawyer}
               onGenerateResolution={handleGenerateResolution}
+              onGenerateResolutionWithAgent={handleGenerateResolutionWithAgent}
               onUploadDocument={handleUploadDocument}
               onSendMessage={handleSendMessage}
               hideAssignButton={true}

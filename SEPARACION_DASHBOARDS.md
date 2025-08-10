@@ -41,6 +41,7 @@
   - Sello "CERRADO" con "Por: [Nombre del Abogado]"
   - Borde verde para casos asignados
 - ✅ **Casos Cerrados**: Información completa de quién cerró el caso
+- ✅ **Indicador de Pago** (10/08/2025): Se añadió un chip "Pagado" con icono en `ClientCaseCard` y `CaseCard` cuando existe `fecha_pago`. Se propagó `fecha_pago` en los hooks `useClientCases` y `useAssignedCases`, y se pasó a `CaseCard` desde `AssignedCasesManagement`.
 
 #### **🔒 FASE 4: Seguridad y Validaciones**
 - ✅ **Validación de Roles**: Implementada en todos los componentes migrados
@@ -1170,17 +1171,17 @@ VITE_DOCUMENSO_URL=https://documenso-r8swo0o4kksocggw04888cww.klamai.com
 - ✅ Nueva función: `crear-cobro` (JWT ON) para generar enlaces de pago con concepto/importe y exenciones IVA (b2b_ue, fuera_ue, suplido, ajg).
 - ✅ Nueva función: `pagar-cobro` (JWT ON) para que el cliente pueda abrir/reutilizar la sesión de pago de un cobro pendiente.
 - ✅ Webhook: maneja `pago_id`, aplica comisión 15% si el solicitante es abogado regular, idempotencia.
-- ▶️ UI pendiente: botón “Solicitar pago” (admin/abogado) con modal; sección “Pagos pendientes” (cliente).
+- ▶️ UI pendiente: botón "Solicitar pago" (admin/abogado) con modal; sección "Pagos pendientes" (cliente).
 
 ### (09/08/2025) UI Cobros Ad-hoc (avance)
 - ✅ `CaseDetailTabs.tsx` ahora:
   - Filtra pagos por `caso_id` y muestra `concepto`, `importe` y `estado`.
-  - Botón “Pagar ahora” para clientes en pagos `pending/processing` usando la función `pagar-cobro`.
-  - Botón “Solicitar cobro” visible para super admin y abogado regular asignado, con modal para concepto/importe e IVA/exención (invoca `crear-cobro`).
+  - Botón "Pagar ahora" para clientes en pagos `pending/processing` usando la función `pagar-cobro`.
+  - Botón "Solicitar cobro" visible para super admin y abogado regular asignado, con modal para concepto/importe e IVA/exención (invoca `crear-cobro`).
 
 ### (09/08/2025) UI Cobros Ad-hoc (cliente)
 - ✅ `ClientCaseCard.tsx`: botón de pago para estados `listo_para_propuesta` y `esperando_pago` (flujo de plan).
-- ✅ `client/CaseDetailModal.tsx`: añadido tab “Pagos” solo para cliente con tabla de `pagos` del caso y acción “Pagar ahora” (invoca `pagar-cobro`).
+- ✅ `client/CaseDetailModal.tsx`: añadido tab "Pagos" solo para cliente con tabla de `pagos` del caso y acción "Pagar ahora" (invoca `pagar-cobro`).
 - ✅ Seguridad: validación por `cliente_id`; no se exponen datos de abogado ni acciones administrativas.
 - ✅ Despliegue: Edge Functions `crear-cobro` y `pagar-cobro` activas con CORS y JWT ON.
 - ✅ Migración: `20250809150000_alter_pagos_intent_nullable.sql` para permitir `stripe_payment_intent_id` NULL en cobros ad‑hoc.
