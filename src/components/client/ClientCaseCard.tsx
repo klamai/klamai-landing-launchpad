@@ -45,6 +45,7 @@ interface ClientCaseCardProps {
     tipo_perfil_borrador?: string;
     documentos_adjuntos?: any;
     hoja_encargo_token?: string;
+    fecha_pago?: string | null;
   };
   onViewDetails: (casoId: string) => void;
   onSendMessage: (casoId: string) => void;
@@ -124,35 +125,41 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
     const statusConfig = {
       'disponible': {
         label: 'En Revisión',
-        className: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800 text-xs font-medium px-2 py-1 border'
+        className: 'bg-gradient-to-r from-blue-500/80 to-blue-600/80 text-white border-blue-400 dark:border-blue-700'
       },
       'asignado': {
         label: 'En Proceso',
-        className: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-800 text-xs font-medium px-2 py-1 border'
+        className: 'bg-gradient-to-r from-indigo-500/80 to-indigo-600/80 text-white border-indigo-400 dark:border-indigo-700'
       },
       'esperando_pago': {
         label: 'Por Pagar',
-        className: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800 text-xs font-medium px-2 py-1 border'
+        className: 'bg-gradient-to-r from-amber-500/80 to-amber-600/80 text-white border-amber-400 dark:border-amber-700'
       },
       'cerrado': {
         label: 'Finalizado',
-        className: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-700 text-xs font-medium px-2 py-1 border'
+        className: 'bg-gradient-to-r from-gray-500/80 to-gray-600/80 text-white border-gray-400 dark:border-gray-700'
       },
       'listo_para_propuesta': {
         label: 'En Preparación',
-        className: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-200 dark:border-purple-800 text-xs font-medium px-2 py-1 border'
+        className: 'bg-gradient-to-r from-purple-500/80 to-purple-600/80 text-white border-purple-400 dark:border-purple-700'
       }
     };
     
     const config = statusConfig[estado as keyof typeof statusConfig] || statusConfig.disponible;
-    return <Badge className={config.className}>{config.label}</Badge>;
+    return (
+      <Badge 
+        className={`${config.className} text-xs font-medium px-3 py-1 shadow-sm border`}
+      >
+        {config.label}
+      </Badge>
+    );
   };
 
   const getProfileTypeBadge = (tipo?: string) => {
     if (!tipo) return null;
     
     return (
-      <Badge variant="outline" className="text-xs font-medium px-2 py-1 rounded-full border-gray-300 text-gray-700 dark:text-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50">
+      <Badge variant="outline" className="text-xs font-medium px-2.5 py-1 rounded-full border-gray-300 text-gray-700 dark:text-gray-300 dark:border-gray-600 bg-gray-50/80 dark:bg-gray-800/50 backdrop-blur-sm shadow-sm">
         {tipo === 'empresa' ? (
           <>
             <Shield className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
@@ -265,13 +272,19 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
       transition={{ duration: 0.3 }}
       className="group"
     >
-      <Card className="relative transition-all duration-200 hover:shadow-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col bg-white dark:bg-[#181f2a] rounded-2xl shadow-sm dark:shadow-blue-900/10 hover:border-blue-400">
+      <Card className="relative transition-all duration-300 hover:shadow-lg border border-gray-200 dark:border-gray-700 h-full flex flex-col bg-white/80 dark:bg-[#181f2a]/90 backdrop-blur-sm rounded-2xl shadow-sm dark:shadow-blue-900/10 hover:border-blue-400">
         {/* Header con estado y fecha */}
         <CardContent className="p-6 flex-1 flex flex-col">
           <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {getClientStatusBadge(caso.estado)}
               {getProfileTypeBadge(caso.tipo_perfil_borrador)}
+              {caso.fecha_pago && (
+                <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-800">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  Pagado
+                </span>
+              )}
             </div>
             <div className="text-right">
               <div className="text-xs text-muted-foreground flex items-center gap-1">
@@ -296,7 +309,7 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
           </div>
 
           {/* Información de progreso */}
-          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="mb-4 p-4 rounded-xl border backdrop-blur-sm bg-blue-50/70 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/50 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
               {progressInfo.icon}
               <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
@@ -355,19 +368,19 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
               onClick={() => onViewDetails(caso.id)}
               variant="default"
               size="sm"
-              className="flex items-center gap-2 flex-1"
+              className="flex items-center gap-2 flex-1 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-blue-500/20 dark:shadow-blue-900/20"
             >
               <Eye className="h-4 w-4" />
               Ver Detalles
             </Button>
             
             {/* Botón de pago en estados permitidos */}
-            {shouldShowPaymentButton(caso.estado) && (
+              {shouldShowPaymentButton(caso.estado) && (
               <Button
                 onClick={handlePayment}
                 variant="default"
                 size="sm"
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                  className="flex items-center gap-2 bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20"
               >
                 <CreditCard className="h-4 w-4" />
                 {getPaymentButtonText(caso.estado)}
@@ -378,7 +391,7 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
               onClick={() => setIsUploadModalOpen(true)}
               variant="outline"
               size="sm"
-              className="flex items-center gap-2 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 dark:hover:bg-purple-900/20 dark:hover:text-purple-300 dark:hover:border-purple-700"
+              className="flex items-center gap-2 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-900/20 dark:hover:text-purple-300 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-purple-500/10 dark:shadow-purple-900/10"
             >
               <Upload className="h-4 w-4" />
               Subir

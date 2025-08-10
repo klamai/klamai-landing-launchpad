@@ -29,6 +29,7 @@ interface AssignedCase {
     apellido: string;
     email: string;
   };
+  fecha_pago?: string | null;
 }
 
 const fetchAssignedCases = async (): Promise<AssignedCase[]> => {
@@ -42,14 +43,14 @@ const fetchAssignedCases = async (): Promise<AssignedCase[]> => {
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('role, tipo_abogado')
-    .eq('id', user.id)
+    .eq('id', user.id as any)
     .single();
 
   if (profileError || !profile) {
     throw new Error('Error obteniendo perfil de usuario');
   }
 
-  if (profile.role !== 'abogado' || profile.tipo_abogado !== 'regular') {
+  if ((profile as any).role !== 'abogado' || (profile as any).tipo_abogado !== 'regular') {
     throw new Error('Acceso denegado: solo abogados regulares');
   }
 
@@ -76,7 +77,8 @@ const fetchAssignedCases = async (): Promise<AssignedCase[]> => {
         especialidad_id,
         valor_estimado,
         ciudad_borrador,
-        especialidades (
+        fecha_pago,
+        especialidades:especialidades (
           nombre
         ),
         cerrado_por_profile:profiles!casos_cerrado_por_fkey (
@@ -86,7 +88,7 @@ const fetchAssignedCases = async (): Promise<AssignedCase[]> => {
         )
       )
     `)
-    .eq('abogado_id', user.id)
+    .eq('abogado_id', user.id as any)
     .order('fecha_asignacion', { ascending: false });
 
   if (error) {
@@ -94,7 +96,7 @@ const fetchAssignedCases = async (): Promise<AssignedCase[]> => {
   }
 
   // Transformar los datos para mantener la estructura esperada
-  const assignedCases: AssignedCase[] = (data || []).map(assignment => ({
+  const assignedCases: AssignedCase[] = ((data as unknown) as any[] || []).map((assignment: any) => ({
     id: assignment.casos.id,
     motivo_consulta: assignment.casos.motivo_consulta,
     resumen_caso: assignment.casos.resumen_caso,
@@ -114,7 +116,8 @@ const fetchAssignedCases = async (): Promise<AssignedCase[]> => {
     estado_asignacion: assignment.estado_asignacion,
     notas_asignacion: assignment.notas_asignacion,
     asignacion_id: assignment.id,
-    cerrado_por_profile: assignment.casos.cerrado_por_profile
+    cerrado_por_profile: assignment.casos.cerrado_por_profile,
+    fecha_pago: assignment.casos.fecha_pago,
   }));
 
   return assignedCases;

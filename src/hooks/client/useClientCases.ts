@@ -24,6 +24,7 @@ interface ClientCase {
   documentos_adjuntos?: any;
   // Token para hoja de encargo
   hoja_encargo_token?: string;
+  fecha_pago?: string | null;
 }
 
 export const useClientCases = () => {
@@ -46,7 +47,7 @@ export const useClientCases = () => {
           fecha_cierre,
           especialidad_id,
           cliente_id,
-          especialidades!casos_especialidad_id_fkey(
+          especialidades:especialidades(
             nombre
           ),
           nombre_borrador,
@@ -56,13 +57,14 @@ export const useClientCases = () => {
           ciudad_borrador,
           tipo_perfil_borrador,
           documentos_adjuntos,
-          hoja_encargo_token
+          hoja_encargo_token,
+          fecha_pago
         `)
-        .eq('cliente_id', user.id)
+        .eq('cliente_id', user.id as any)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data as unknown) as ClientCase[];
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000, // 2 minutos
