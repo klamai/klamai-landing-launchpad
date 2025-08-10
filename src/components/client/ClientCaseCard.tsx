@@ -362,13 +362,13 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
             </div>
           )}
 
-          {/* Botones de acción */}
+          {/* Botones de acción - estilo moderno */}
           <div className="flex items-center gap-2 mt-4">
             <Button
               onClick={() => onViewDetails(caso.id)}
               variant="default"
               size="sm"
-              className="flex items-center gap-2 flex-1 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-blue-500/20 dark:shadow-blue-900/20"
+              className="flex items-center gap-2 flex-1 rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md hover:shadow-blue-500/20 dark:shadow-blue-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1 dark:focus:ring-blue-600/40"
             >
               <Eye className="h-4 w-4" />
               Ver Detalles
@@ -380,7 +380,7 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
                 onClick={handlePayment}
                 variant="default"
                 size="sm"
-                  className="flex items-center gap-2 bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20"
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
               >
                 <CreditCard className="h-4 w-4" />
                 {getPaymentButtonText(caso.estado)}
@@ -391,7 +391,7 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
               onClick={() => setIsUploadModalOpen(true)}
               variant="outline"
               size="sm"
-              className="flex items-center gap-2 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-900/20 dark:hover:text-purple-300 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-purple-500/10 dark:shadow-purple-900/10"
+              className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-900/20 dark:hover:text-purple-300 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-purple-500/10 dark:shadow-purple-900/10 transform hover:scale-[1.02] focus:ring-2 focus:ring-purple-500/40 focus:ring-offset-1 dark:focus:ring-purple-600/40"
             >
               <Upload className="h-4 w-4" />
               Subir
