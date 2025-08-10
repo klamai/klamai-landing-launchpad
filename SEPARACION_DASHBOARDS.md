@@ -42,6 +42,7 @@
   - Borde verde para casos asignados
 - ✅ **Casos Cerrados**: Información completa de quién cerró el caso
 - ✅ **Indicador de Pago** (10/08/2025): Se añadió un chip "Pagado" con icono en `ClientCaseCard` y `CaseCard` cuando existe `fecha_pago`. Se propagó `fecha_pago` en los hooks `useClientCases` y `useAssignedCases`, y se pasó a `CaseCard` desde `AssignedCasesManagement`.
+ - ✅ **Botones de acción modernizados** (10/08/2025): En `src/components/client/ClientCaseCard.tsx` y `src/components/shared/CaseCard.tsx` se actualizaron los botones a un estilo moderno con `rounded-xl`, gradientes semánticos (azul Ver, verde Pago, outline con acento para secundarios), hover con elevación y leve escala, `focus ring` accesible, tamaños `sm` consistentes, alineación de iconos y soporte dark mode. Sin cambios de lógica.
 
 #### **🔒 FASE 4: Seguridad y Validaciones**
 - ✅ **Validación de Roles**: Implementada en todos los componentes migrados

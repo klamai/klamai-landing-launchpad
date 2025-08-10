@@ -381,7 +381,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onViewDetails(caso.id)}
-              className="flex-1 min-w-0 h-9 text-xs font-semibold bg-white hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:text-blue-800 dark:hover:text-blue-200 transition-colors duration-200"
+              className="flex-1 min-w-0 h-9 text-xs font-semibold rounded-xl bg-white dark:bg-gray-800/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-800 dark:hover:text-blue-200 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-blue-500/10 dark:hover:shadow-blue-900/10 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1 dark:focus:ring-blue-600/40"
             >
               <Eye className="h-4 w-4 mr-1 flex-shrink-0" />
               <span className="truncate">Ver</span>
@@ -393,7 +393,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={() => onAssignLawyer(caso.id)}
-                    className="flex-1 min-w-0 h-9 text-xs font-semibold bg-white hover:bg-emerald-50 dark:bg-gray-800 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:text-emerald-800 dark:hover:text-emerald-200 transition-colors duration-200"
+                    className="flex-1 min-w-0 h-9 text-xs font-semibold rounded-xl bg-white dark:bg-gray-800/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-800 dark:hover:text-emerald-200 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-emerald-500/10 dark:hover:shadow-emerald-900/10 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
                   >
                     <UserPlus className="h-4 w-4 mr-1 flex-shrink-0" />
                     <span className="truncate">Asignar</span>
@@ -404,7 +404,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 min-w-0 h-9 text-xs font-semibold bg-white hover:bg-purple-50 dark:bg-gray-800 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:text-purple-800 dark:hover:text-purple-200 transition-colors duration-200"
+                      className="flex-1 min-w-0 h-9 text-xs font-semibold rounded-xl bg-white dark:bg-gray-800/50 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-purple-800 dark:hover:text-purple-200 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-purple-500/10 dark:hover:shadow-purple-900/10 transform hover:scale-[1.02] focus:ring-2 focus:ring-purple-500/40 focus:ring-offset-1 dark:focus:ring-purple-600/40"
                     >
                       <Bot className="h-4 w-4 mr-1 flex-shrink-0" />
                       <span className="truncate">IA</span>
