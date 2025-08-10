@@ -1032,8 +1032,8 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   <Button
                     size="sm"
                     onClick={() => setIsEditModalOpen(true)}
-                    variant="outline"
-                    className="flex items-center gap-2"
+                    variant="default"
+                    className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md hover:shadow-blue-500/20 dark:shadow-blue-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1 dark:focus:ring-blue-600/40"
                   >
                     <User className="h-4 w-4" />
                     Editar Caso
@@ -1041,8 +1041,8 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   <Button
                     size="sm"
                     onClick={() => setShowAssignmentModal(true)}
-                    variant="outline"
-                    className="flex items-center gap-2"
+                    variant="default"
+                    className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
                   >
                     <Users className="h-4 w-4" />
                     Asignar Abogado
@@ -1051,7 +1051,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     size="sm"
                     onClick={() => onGenerateResolution(updatedCaso.id)}
                     variant="outline"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-xl border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all duration-300"
                   >
                     <Bot className="h-4 w-4" />
                     IA
@@ -1060,7 +1060,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     size="sm"
                     onClick={() => setIsUploadModalOpen(true)}
                     variant="outline"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-all duration-300"
                   >
                     <Upload className="h-4 w-4" />
                     Subir Documento
@@ -1069,7 +1069,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     size="sm"
                     onClick={() => onSendMessage(updatedCaso.id)}
                     variant="outline"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-xl border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all duration-300"
                   >
                     <MessageSquare className="h-4 w-4" />
                     Enviar Mensaje
@@ -1077,8 +1077,8 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   <Button
                     size="sm"
                     onClick={() => setShowPaymentModal(true)}
-                    variant="outline"
-                    className="flex items-center gap-2"
+                    variant="default"
+                    className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
                   >
                     <CreditCard className="h-4 w-4" />
                     Solicitar Pago
@@ -1087,7 +1087,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     size="sm"
                     onClick={() => setShowConvertToClientModal(true)}
                     variant="outline"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-xl border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all duration-300"
                   >
                     <Plus className="h-4 w-4" />
                     Convertir en Cliente
