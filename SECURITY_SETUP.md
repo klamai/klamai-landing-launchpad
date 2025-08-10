@@ -78,7 +78,17 @@ Durante el desarrollo, las Edge Functions están configuradas sin verificación 
 verify_jwt = false  # Solo para desarrollo
 ```
 
-**⚠️ IMPORTANTE:** Cambiar a `verify_jwt = true` antes de producción.
+**⚠️ IMPORTANTE:**
+- `stripe-webhook` (webhook externo) debe quedar con `verify_jwt = false`.
+- `crear-sesion-checkout` debe estar con `verify_jwt = true`.
+- `crear-cobro` (ad-hoc) con `verify_jwt = true` y validación de permisos.
+- Configurar `STRIPE_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY` en Secrets de Supabase.
+- Opcional: `PLATFORM_COMMISSION_REGULAR_PCT` (por defecto 0.15) para comisión de cobros solicitados por abogados regulares.
+
+### 4.1. Stripe Webhook - Trazabilidad y RGPD
+- Asegúrate de que la columna `public.stripe_webhook_events.data` sea NULLABLE (migración local `20250808150500_make_stripe_webhook_events_data_nullable.sql`).
+- La función `stripe-webhook` guarda solo `data_sanitizada` y metadatos claves: `stripe_session_id`, `stripe_payment_intent_id`, `amount_total_cents`, `currency`, `user_id`, `caso_id`, `price_id`, `product_id`.
+- En Stripe Dashboard, reenvía eventos a `https://<PROJECT>.supabase.co/functions/v1/stripe-webhook` cuando cambies secretos.
 
 ### 5. **Verificar Configuración**
 

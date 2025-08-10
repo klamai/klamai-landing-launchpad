@@ -25,7 +25,7 @@ import {
   Upload,
   Plus
 } from 'lucide-react';
-import {
+import { 
   Dialog,
   DialogContent,
   DialogHeader,
@@ -35,6 +35,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -103,13 +107,49 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
   const { user } = useAuth();
   const { count: notificacionesNoLeidas } = useNotificacionesNoLeidas();
 
-  const {
+  const { 
     documentosCliente,
     loading: loadingClientDocs,
     downloadDocument: downloadClientDocument,
     getSignedUrl: getClientSignedUrl,
     refetch
   } = useClientDocumentManagement(caso?.id);
+
+  // Pagos del caso
+  const [pagos, setPagos] = useState<any[]>([]);
+  useEffect(() => {
+    const load = async () => {
+      if (!caso?.id || !user) return;
+      const { data } = await supabase
+        .from('pagos')
+        .select('*')
+        .eq('caso_id', caso.id)
+        .eq('usuario_id', user.id)
+        .order('created_at', { ascending: false });
+      setPagos(data || []);
+    };
+    load();
+  }, [caso?.id, user]);
+
+  const handlePagarCobro = async (pagoId: string) => {
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      const { data, error } = await supabase.functions.invoke('pagar-cobro', {
+        body: { pago_id: pagoId },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (error) throw new Error(error.message);
+      if (data?.url) {
+        window.location.href = data.url as string;
+      } else {
+        throw new Error('No se recibió URL de pago');
+      }
+    } catch (e: any) {
+      console.error('Error iniciando pago de cobro:', e);
+      toast({ title: 'Error en el pago', description: e?.message || 'Inténtalo de nuevo.', variant: 'destructive' });
+    }
+  };
 
   // Obtener documentos del abogado
   const {
@@ -332,6 +372,9 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
                         <TabsTrigger value="lawyer-documents" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[120px] max-w-[140px] md:flex-none md:min-w-[140px] md:max-w-[160px] flex-shrink-0 whitespace-nowrap text-xs">
                           <User className="h-3 w-3" /> Docs Abog
                         </TabsTrigger>
+                        <TabsTrigger value="pagos" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
+                          <Euro className="h-3 w-3" /> Pagos
+                        </TabsTrigger>
                         <TabsTrigger value="hoja-encargo" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
                           <Shield className="h-3 w-3" /> Hoja Enc
                         </TabsTrigger>
@@ -443,6 +486,62 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
                       </CardContent>
                     </Card>
                   </TabsContent>
+
+        <TabsContent value="pagos" className="space-y-4 mt-0">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Euro className="h-5 w-5" /> Pagos del Caso
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pagos.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Concepto</TableHead>
+                      <TableHead>Importe</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acción</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pagos.map((pago) => {
+                      const amount = typeof pago.monto_total === 'number' ? pago.monto_total : (typeof pago.monto === 'number' ? pago.monto : 0);
+                      const estado = pago.estado || 'pending';
+                      const isPending = estado === 'pending' || estado === 'processing';
+                      return (
+                        <TableRow key={pago.id}>
+                          <TableCell>{new Date(pago.created_at).toLocaleDateString('es-ES')}</TableCell>
+                          <TableCell>{pago.concepto || pago.descripcion || '—'}</TableCell>
+                          <TableCell>€{Number(amount).toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Badge variant={estado === 'succeeded' ? 'default' : 'secondary'}>
+                              {estado === 'succeeded' ? 'Completado' : 'Pendiente'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {isPending && (
+                              <Button size="sm" onClick={() => handlePagarCobro(pago.id)}>
+                                Pagar ahora
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Euro className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No hay pagos registrados para este caso</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
                   <TabsContent value="client" className="space-y-4 mt-0">
                     <Card>

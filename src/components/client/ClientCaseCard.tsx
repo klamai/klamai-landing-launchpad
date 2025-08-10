@@ -139,7 +139,7 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
         className: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-700 text-xs font-medium px-2 py-1 border'
       },
       'listo_para_propuesta': {
-        label: 'Propuesta Lista',
+        label: 'En Preparación',
         className: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-200 dark:border-purple-800 text-xs font-medium px-2 py-1 border'
       }
     };
@@ -192,7 +192,7 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
         };
       case 'listo_para_propuesta':
         return {
-          text: 'Tu propuesta legal está lista para revisión',
+          text: 'Estamos preparando tu propuesta legal para revisión. Completa el pago para continuar.',
           icon: <Shield className="h-4 w-4 text-purple-500" />
         };
       default:
@@ -361,8 +361,8 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
               Ver Detalles
             </Button>
             
-            {/* Botón de pago solo si el caso está sin pagar */}
-            {caso.estado === 'esperando_pago' && (
+            {/* Botón de pago en estados permitidos */}
+            {shouldShowPaymentButton(caso.estado) && (
               <Button
                 onClick={handlePayment}
                 variant="default"
@@ -370,7 +370,7 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
               >
                 <CreditCard className="h-4 w-4" />
-                Pagar
+                {getPaymentButtonText(caso.estado)}
               </Button>
             )}
             

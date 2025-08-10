@@ -34,11 +34,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -60,6 +62,9 @@ import CaseEditModal from '@/components/shared/CaseEditModal';
 import CaseNotesSection from '@/components/shared/CaseNotesSection';
 import CaseAssignmentModal from '@/components/admin/CaseAssignmentModal';
 import { useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 
 interface AdminCaseDetailModalProps {
   caso: {
@@ -142,6 +147,10 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showConvertToClientModal, setShowConvertToClientModal] = useState(false);
   const [loadingPayment, setLoadingPayment] = useState(false);
+  const [pagos, setPagos] = useState<any[]>([]);
+  const [chargeConcept, setChargeConcept] = useState('');
+  const [chargeAmount, setChargeAmount] = useState('');
+  const [chargeExencion, setChargeExencion] = useState<'none' | 'b2b_ue' | 'fuera_ue' | 'suplido' | 'ajg'>('none');
 
   // Obtener los datos actualizados del caché de React Query
   const { data: allCases } = useAdminCases();
@@ -211,6 +220,21 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
       clearTimeout(timeoutId);
     };
   }, [isOpen]); // Agregar isOpen como dependencia para que se ejecute cuando el modal se abre
+
+  // Cargar pagos del caso
+  useEffect(() => {
+    const loadPagos = async () => {
+      if (!updatedCaso?.id) return;
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      const { data, error } = await supabase.functions.invoke('listar-pagos-caso', {
+        body: { caso_id: updatedCaso.id },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!error) setPagos(data?.pagos || []);
+    };
+    loadPagos();
+  }, [updatedCaso?.id]);
 
   // Convertir a zona horaria de España
   const spainTimeZone = 'Europe/Madrid';
@@ -488,6 +512,9 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                           <TabsTrigger value="overview" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
                             <FileText className="h-3 w-3" /> Resumen
                           </TabsTrigger>
+                          <TabsTrigger value="pagos" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
+                            <Euro className="h-3 w-3" /> Pagos
+                          </TabsTrigger>
                           {updatedCaso.guia_abogado && (
                             <TabsTrigger value="guia" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[120px] max-w-[140px] md:flex-none md:min-w-[140px] md:max-w-[160px] flex-shrink-0 whitespace-nowrap text-xs">
                               <ShieldCheck className="h-3 w-3" /> Guía Abog
@@ -649,6 +676,53 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                             <span className="text-sm text-gray-600 dark:text-gray-400">Sin asignar</span>
                           </div>
                         </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="pagos" className="space-y-4 mt-0">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Pagos del Caso</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {pagos.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Fecha</TableHead>
+                              <TableHead>Concepto</TableHead>
+                              <TableHead>Importe</TableHead>
+                              <TableHead>Estado</TableHead>
+                              <TableHead>Solicitante</TableHead>
+                              <TableHead>Comisión</TableHead>
+                              <TableHead>Neto</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {pagos.map((pago) => {
+                              const amount = typeof pago.monto_total === 'number' ? pago.monto_total : Number(pago.monto_total || pago.monto || 0);
+                              return (
+                                <TableRow key={pago.id}>
+                                  <TableCell>{new Date(pago.created_at).toLocaleDateString('es-ES')}</TableCell>
+                                  <TableCell>{pago.concepto || pago.descripcion || '—'}</TableCell>
+                                  <TableCell>€{amount.toFixed(2)}</TableCell>
+                                  <TableCell>
+                                    <Badge variant={pago.estado === 'succeeded' ? 'default' : pago.estado === 'failed' ? 'destructive' : 'secondary'}>
+                                      {pago.estado}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>{pago.solicitante_rol || '—'}</TableCell>
+                                  <TableCell>{pago.comision ? `€${Number(pago.comision).toFixed(2)}` : '€0.00'}</TableCell>
+                                  <TableCell>{pago.monto_neto ? `€${Number(pago.monto_neto).toFixed(2)}` : (pago.estado === 'succeeded' && pago.comision != null ? `€${(Number(amount) - Number(pago.comision)).toFixed(2)}` : '—')}</TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="text-sm text-muted-foreground">No hay pagos registrados</div>
                       )}
                     </CardContent>
                   </Card>
@@ -1031,6 +1105,80 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Solicitar Pago (Cobro Ad-hoc) */}
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Solicitar pago</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="concepto">Concepto</Label>
+              <Input id="concepto" value={chargeConcept} onChange={(e) => setChargeConcept(e.target.value)} placeholder="Ej. Honorarios adicionales" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="monto">Importe base (EUR)</Label>
+              <Input id="monto" type="number" inputMode="decimal" step="0.01" min="0.01" value={chargeAmount} onChange={(e) => setChargeAmount(e.target.value)} placeholder="0.00" />
+            </div>
+            <div className="space-y-2">
+              <Label>IVA / Exención</Label>
+              <Select value={chargeExencion} onValueChange={(v) => setChargeExencion(v as any)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona IVA/Exención" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">IVA 21% (por defecto)</SelectItem>
+                  <SelectItem value="b2b_ue">Exento: B2B intracomunitario</SelectItem>
+                  <SelectItem value="fuera_ue">Exento: Cliente fuera de la UE</SelectItem>
+                  <SelectItem value="suplido">Exento: Suplido/Gasto repercutido</SelectItem>
+                  <SelectItem value="ajg">Exento: Asistencia Jurídica Gratuita</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPaymentModal(false)} disabled={loadingPayment}>Cancelar</Button>
+            <Button
+              onClick={async () => {
+                if (!updatedCaso?.id) return;
+                const concepto = chargeConcept.trim();
+                const montoBase = Number(chargeAmount);
+                if (!concepto || !isFinite(montoBase) || montoBase <= 0) {
+                  toast({ title: 'Datos inválidos', description: 'Ingresa un concepto y un monto válido (> 0).', variant: 'destructive' });
+                  return;
+                }
+                try {
+                  setLoadingPayment(true);
+                  const session = await supabase.auth.getSession();
+                  const token = session.data.session?.access_token;
+                  const { data, error } = await supabase.functions.invoke('crear-cobro', {
+                    body: {
+                      caso_id: updatedCaso.id,
+                      concepto,
+                      monto_base: Math.round(montoBase * 100) / 100,
+                      exencion_tipo: chargeExencion,
+                    },
+                    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                  });
+                  if (error) throw new Error(error.message);
+                  toast({ title: 'Cobro solicitado', description: 'Se ha creado el cobro y aparecerá en Pagos del cliente.' });
+                  setShowPaymentModal(false);
+                  setChargeConcept(''); setChargeAmount(''); setChargeExencion('none');
+                } catch (e: any) {
+                  console.error('Error creando cobro:', e);
+                  toast({ title: 'Error', description: e?.message || 'No se pudo crear el cobro.', variant: 'destructive' });
+                } finally {
+                  setLoadingPayment(false);
+                }
+              }}
+              disabled={loadingPayment}
+            >
+              {loadingPayment ? 'Creando...' : 'Crear cobro'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

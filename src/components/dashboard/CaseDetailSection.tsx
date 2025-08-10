@@ -2,7 +2,7 @@
 import React, { memo } from 'react';
 
 const CaseDetailSection = memo(() => {
-  const CaseDetail = React.lazy(() => import("@/components/CaseDetailTabs"));
+  const CaseDetail = React.lazy(() => import("@/components/shared/CaseDetailTabs"));
   
   return (
     <React.Suspense fallback={

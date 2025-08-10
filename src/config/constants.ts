@@ -10,8 +10,8 @@ export const CONFIG = {
 
 // Configuración específica para Typebot
 export const TYPEBOT_CONFIG = {
-  TYPEBOT_NAME: import.meta.env.VITE_TYPEBOT_NAME,
-  TYPEBOT_API_HOST: import.meta.env.VITE_TYPEBOT_API_HOST
+  TYPEBOT_NAME: import.meta.env.VITE_TYPEBOT_NAME || 'klamai',
+  TYPEBOT_API_HOST: import.meta.env.VITE_TYPEBOT_API_HOST || 'https://chat.klamai.com'
 } as const;
 
 // Función helper para obtener la URL completa de un documento de Documenso

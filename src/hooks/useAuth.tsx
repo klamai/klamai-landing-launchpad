@@ -18,6 +18,7 @@ interface Profile {
   nombre: string;
   apellido: string;
   email: string;
+  avatar_url?: string;
 }
 
 interface AuthContextType {

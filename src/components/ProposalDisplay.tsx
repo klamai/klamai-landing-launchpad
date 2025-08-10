@@ -40,13 +40,35 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     }
   };
 
-  const handleSaveProgress = () => {
+  const handleSaveProgress = async () => {
     if (!user) {
       setAuthModalMode('signup');
       setShowAuthModal(true);
-    } else {
-      // Usuario ya autenticado, enviar resumen
-      sendProgressSummary();
+      return;
+    }
+
+    try {
+      // Vincular caso al usuario primero
+      await linkCaseToUser(user.id, casoId);
+      
+      // Luego enviar resumen por email
+      await sendProgressSummary();
+      
+      toast({
+        title: "¡Progreso guardado!",
+        description: "Tu caso ha sido vinculado a tu cuenta y te hemos enviado un resumen por email.",
+      });
+      
+      // Redirigir al dashboard
+      window.location.href = '/dashboard';
+      
+    } catch (error) {
+      console.error('Error al guardar progreso:', error);
+      toast({
+        title: "Error al guardar progreso",
+        description: "No se pudo vincular tu caso. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -93,17 +115,75 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     });
   };
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = async () => {
     setShowAuthModal(false);
-    if (selectedPlan) {
-      handlePayment(selectedPlan);
-    } else {
-      sendProgressSummary();
+    
+    try {
+      if (selectedPlan) {
+        // Si hay plan seleccionado, proceder al pago
+        handlePayment(selectedPlan);
+      } else {
+        // Si no hay plan, vincular caso y enviar resumen
+        if (user) {
+          await linkCaseToUser(user.id, casoId);
+          await sendProgressSummary();
+          
+          toast({
+            title: "¡Bienvenido!",
+            description: "Tu cuenta ha sido creada y tu caso vinculado. Te hemos enviado un resumen por email.",
+          });
+          
+          // Redirigir al dashboard
+          window.location.href = '/dashboard';
+        }
+      }
+    } catch (error) {
+      console.error('Error en handleAuthSuccess:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo completar la operación. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
     }
-    toast({
-      title: "¡Bienvenido!",
-      description: "Tu cuenta ha sido creada exitosamente.",
-    });
+  };
+
+  const linkCaseToUser = async (userId: string, caseId: string) => {
+    try {
+      console.log('Linking case to user:', { userId, caseId });
+      
+      const sessionToken = localStorage.getItem('current_session_token');
+      
+      if (!sessionToken) {
+        console.error('No session token found for case linking');
+        throw new Error('Token de sesión no encontrado');
+      }
+
+      const { data, error } = await supabase.rpc('assign_anonymous_case_to_user', {
+        p_caso_id: caseId,
+        p_session_token: sessionToken,
+        p_user_id: userId
+      });
+
+      if (error) {
+        console.error('Error in assign_anonymous_case_to_user function:', error);
+        throw new Error(`Error al asignar caso: ${error.message}`);
+      }
+
+      if (!data) {
+        console.error('Case assignment returned false');
+        throw new Error('No se pudo asignar el caso. El caso podría haber expirado o ya estar asignado.');
+      }
+
+      console.log('Case linked to user successfully');
+
+      // Clean up tokens after successful assignment
+      localStorage.removeItem('current_caso_id');
+      localStorage.removeItem('current_session_token');
+      
+    } catch (error) {
+      console.error('Error in linkCaseToUser:', error);
+      throw error;
+    }
   };
 
   // Plan único de pago con Price ID real de Stripe
@@ -187,9 +267,9 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
         {/* Header personalizado */}
         <motion.div 
           className="text-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.3 }}
         >
           <div className="inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-700 dark:text-blue-300 text-sm font-medium mb-4">
             <Star className="w-4 h-4 mr-2" />
@@ -207,9 +287,9 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
 
         {/* Plan de servicio único */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
         >
           <PricingSection tier={singlePlan} />
         </motion.div>
@@ -219,7 +299,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
           className="text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
         >
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700">
             <Mail className="w-12 h-12 text-blue-500 mx-auto mb-4" />

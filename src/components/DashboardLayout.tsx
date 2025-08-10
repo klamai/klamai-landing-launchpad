@@ -36,7 +36,7 @@ const DashboardLayout = memo(({
   darkMode, 
   onToggleDarkMode 
 }: DashboardLayoutProps) => {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { count: notificacionesNoLeidas } = useNotificacionesNoLeidas();
@@ -125,9 +125,11 @@ const DashboardLayout = memo(({
 
   // Información de usuario mejorada
   const userInfo = React.useMemo(() => {
-    const displayName = user?.user_metadata?.nombre || user?.email || "Usuario";
+    const displayName = (profile?.nombre && profile?.apellido)
+      ? `${profile.nombre} ${profile.apellido}`
+      : (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.user_metadata?.nombre || user?.email || "Usuario");
     const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    const avatarUrl = user?.user_metadata?.avatar_url;
+    const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url;
     
     return {
       label: "", // Sin nombre, solo avatar
@@ -147,7 +149,7 @@ const DashboardLayout = memo(({
                   target.nextElementSibling?.classList.remove('hidden');
                 }}
               />
-              <div className="h-8 w-8 flex-shrink-0 rounded-full bg-klamai-gradient flex items-center justify-center text-white text-sm font-semibold shadow-lg hidden">
+                  <div className="h-8 w-8 flex-shrink-0 rounded-full bg-klamai-gradient flex items-center justify-center text-white text-sm font-semibold shadow-lg hidden">
                 {initials}
               </div>
             </div>
@@ -160,7 +162,7 @@ const DashboardLayout = memo(({
         </div>
       )
     };
-  }, [user]);
+  }, [user, profile]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-accent/5">
@@ -236,7 +238,9 @@ const DashboardLayout = memo(({
                     <div
                       className="text-sm font-medium text-neutral-700 dark:text-neutral-200 transition-all duration-200"
                     >
-                      {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "Usuario"}
+                      {(profile?.nombre && profile?.apellido)
+                        ? `${profile.nombre} ${profile.apellido}`
+                        : (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "Usuario")}
                     </div>
                   )}
                 </div>

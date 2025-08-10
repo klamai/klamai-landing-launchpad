@@ -10,6 +10,7 @@ interface Profile {
   nombre: string;
   apellido: string;
   email: string;
+  avatar_url?: string;
 }
 
 // Hook para obtener la sesión actual
@@ -47,8 +48,8 @@ export const useProfile = (userId: string | null) => {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, role, tipo_abogado, nombre, apellido, email')
-        .eq('id', userId)
+        .select('id, role, tipo_abogado, nombre, apellido, email, avatar_url')
+        .eq('id', userId as any)
         .single();
       
       if (error) {
@@ -56,7 +57,12 @@ export const useProfile = (userId: string | null) => {
         throw error;
       }
       
-      return data;
+      // Verificar que data no sea null y tenga la estructura correcta
+      if (!data || typeof data !== 'object') {
+        return null;
+      }
+      
+      return data as Profile;
     },
     enabled: !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutos

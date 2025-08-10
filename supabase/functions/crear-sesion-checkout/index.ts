@@ -1,4 +1,5 @@
 
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import Stripe from "https://esm.sh/stripe@14.21.0";
@@ -9,9 +10,40 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
+// Utilidades de sanitización para logs
+const maskEmail = (email?: string) => {
+  if (!email || typeof email !== 'string') return email;
+  const [user, domain] = email.split('@');
+  const visible = user.slice(0, 2);
+  return `${visible}***@${domain}`;
+};
+const maskId = (id?: string) => {
+  if (!id || typeof id !== 'string') return id;
+  return `${id.slice(0, 6)}...`;
+};
+const sanitizeDetails = (value: any): any => {
+  if (value == null) return value;
+  if (typeof value === 'string') return value.length > 40 ? `${value.slice(0, 12)}...` : value;
+  if (Array.isArray(value)) return value.map(sanitizeDetails);
+  if (typeof value === 'object') {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (k.toLowerCase().includes('email')) out[k] = maskEmail(v as string);
+      else if (k.toLowerCase().includes('id')) out[k] = maskId(String(v));
+      else if (k.toLowerCase().includes('url')) out[k] = typeof v === 'string' ? `${(v as string).split('?')[0]}?...` : v;
+      else out[k] = sanitizeDetails(v);
+    }
+    return out;
+  }
+  return value;
+};
 const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREAR-SESION-CHECKOUT] ${step}${detailsStr}`);
+  try {
+    const detailsStr = details ? ` - ${JSON.stringify(sanitizeDetails(details))}` : '';
+    console.log(`[CREAR-SESION-CHECKOUT] ${step}${detailsStr}`);
+  } catch {
+    console.log(`[CREAR-SESION-CHECKOUT] ${step}`);
+  }
 };
 
 serve(async (req) => {
@@ -82,10 +114,43 @@ serve(async (req) => {
 
     logStep("Caso verificado", { casoId: caso.id, estado: caso.estado });
 
+    // Validar estados permitidos para crear/reutilizar sesión
+    const allowedStates = ["listo_para_propuesta", "esperando_pago"];
+    if (!allowedStates.includes(caso.estado)) {
+      logStep("ERROR - Estado de caso no permitido para pago", { estado: caso.estado });
+      return new Response(JSON.stringify({
+        error: "Estado del caso no permite iniciar pago",
+        estado_actual: caso.estado
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400
+      });
+    }
+
     // Inicializar Stripe
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
     });
+
+    // Reutilizar sesión existente si sigue abierta y no expirada
+    if (caso.stripe_session_id) {
+      try {
+        const existing = await stripe.checkout.sessions.retrieve(caso.stripe_session_id);
+        const isOpen = existing?.status === "open";
+        const notExpired = typeof existing?.expires_at === "number" ? (existing.expires_at * 1000) > Date.now() : true;
+        if (isOpen && notExpired && existing?.url) {
+          logStep("Reutilizando sesión de checkout existente", { sessionId: existing.id, expires_at: existing.expires_at });
+          return new Response(JSON.stringify({ url: existing.url, session_id: existing.id }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200
+          });
+        } else {
+          logStep("Sesión existente no reutilizable (completada/expirada/sin url)", { sessionId: existing?.id, status: existing?.status, expires_at: existing?.expires_at });
+        }
+      } catch (e) {
+        logStep("No se pudo recuperar sesión existente, se creará nueva", { error: (e as Error)?.message });
+      }
+    }
 
     // Verificar si ya existe un customer de Stripe para este usuario
     let customerId = null;
@@ -111,7 +176,7 @@ serve(async (req) => {
     // Configurar el producto según el plan
     let productName = "Consulta Estratégica con Abogado Especialista";
     let unitAmount = 3750; // 37.50€ en centavos
-    let priceId = "price_1Rc0kkI0mIGG72Op6Rk4GulG"; // Price ID real de Stripe
+    let priceId = Deno.env.get("STRIPE_PRICE_ID_CONSULTA_ESTRATEGICA") || "price_1Rc0kkI0mIGG72Op6Rk4GulG";
 
     if (plan_id === "consulta-estrategica") {
       // Usar configuración por defecto
@@ -121,7 +186,11 @@ serve(async (req) => {
       throw new Error("Plan no reconocido");
     }
 
+    // Log técnico (enmascarado) del priceId realmente usado
+    logStep("Price ID resuelto", { priceId });
+
     // Crear sesión de checkout
+    const idempotencyKey = `${user.id}:${caso_id}:${plan_id}:${Math.floor(Date.now()/60000)}`; // por minuto
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ["card"],
@@ -132,13 +201,17 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/pago-exitoso?session_id={CHECKOUT_SESSION_ID}&caso_id=${caso_id}`,
-      cancel_url: `${req.headers.get("origin")}/pago-cancelado?session_id={CHECKOUT_SESSION_ID}&caso_id=${caso_id}`,
+      client_reference_id: caso_id,
+      success_url: `${(Deno.env.get('APP_BASE_URL') || req.headers.get("origin") || '').replace(/\/$/, '')}/pago-exitoso?session_id={CHECKOUT_SESSION_ID}&caso_id=${caso_id}`,
+      cancel_url: `${(Deno.env.get('APP_BASE_URL') || req.headers.get("origin") || '').replace(/\/$/, '')}/pago-cancelado?session_id={CHECKOUT_SESSION_ID}&caso_id=${caso_id}`,
       metadata: {
         caso_id: caso_id,
         user_id: user.id,
         plan_id: plan_id,
       },
+    }, {
+      // Evita duplicaciones ante reintentos rápidos
+      idempotencyKey
     });
 
     logStep("Sesión de checkout creada", { sessionId: session.id, url: session.url });

@@ -29,7 +29,7 @@ const RegularLawyerDashboard = () => {
   const [open, setOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [activeSection, setActiveSection] = useState("dashboard");
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -183,10 +183,12 @@ const RegularLawyerDashboard = () => {
                   link={{
                     label: "", // Sin nombre, solo avatar
                     href: "/abogados/dashboard/perfil",
-                    icon: (() => {
-                      const displayName = `${user?.user_metadata?.nombre || "Abogado"} ${user?.user_metadata?.apellido || ""}`;
+                     icon: (() => {
+                      const displayName = (profile?.nombre && profile?.apellido)
+                        ? `${profile.nombre} ${profile.apellido}`
+                        : (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.user_metadata?.nombre || user?.email?.split('@')[0] || "Abogado");
                       const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                      const avatarUrl = user?.user_metadata?.avatar_url;
+                      const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url;
                       
                       if (avatarUrl) {
                         return (
@@ -217,11 +219,13 @@ const RegularLawyerDashboard = () => {
                   }}
                   onNavigate={handleNavigation}
                 />
-                {open && (
+                 {open && (
                   <div
                     className="text-sm font-medium text-neutral-700 dark:text-neutral-200 transition-all duration-200"
                   >
-                    {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "Abogado"}
+                    {(profile?.nombre && profile?.apellido)
+                      ? `${profile.nombre} ${profile.apellido}`
+                      : (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "Abogado")}
                   </div>
                 )}
               </div>
