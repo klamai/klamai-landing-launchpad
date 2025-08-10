@@ -1,13 +1,51 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature"
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature, x-client-version",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS"
+};
+// Utilidades de sanitización de logs para cumplir RGPD y evitar PII en registros
+const maskEmail = (email)=>{
+  if (!email || typeof email !== "string") return email;
+  const [user, domain] = email.split("@");
+  const visible = user.slice(0, 2);
+  return `${visible}***@${domain}`;
+};
+const maskId = (id)=>{
+  if (!id || typeof id !== "string") return id;
+  return `${id.slice(0, 6)}...`;
+};
+const sanitizeDetails = (value)=>{
+  if (value == null) return value;
+  if (typeof value === "string") return value.length > 40 ? `${value.slice(0, 12)}...` : value;
+  if (Array.isArray(value)) return value.map(sanitizeDetails);
+  if (typeof value === "object") {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (k.toLowerCase().includes("email")) {
+        out[k] = maskEmail(v);
+      } else if (k.toLowerCase().includes("id")) {
+        out[k] = maskId(String(v));
+      } else if (k.toLowerCase().includes("url")) {
+        out[k] = typeof v === "string" ? `${v.split("?")[0]}?...` : v;
+      } else {
+        out[k] = sanitizeDetails(v);
+      }
+    }
+    return out;
+  }
+  return value;
 };
 const logStep = (step, details)=>{
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
+  try {
+    const detailsStr = details ? ` - ${JSON.stringify(sanitizeDetails(details))}` : '';
+    console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
+  } catch {
+    console.log(`[STRIPE-WEBHOOK] ${step}`);
+  }
 };
 serve(async (req)=>{
   if (req.method === "OPTIONS") {
@@ -59,13 +97,48 @@ serve(async (req)=>{
         status: 200
       });
     }
-    // Registrar el evento
-    await supabase.from("stripe_webhook_events").insert({
+    // Registrar evento con metadatos normalizados y payload sanitizado
+    const payload = event.data?.object || {};
+    const sanitized = sanitizeDetails(payload);
+    let stripeSessionId: string | null = null;
+    let stripePaymentIntentId: string | null = null;
+    let amountTotalCents: number | null = null;
+    let currency: string | null = null;
+    let userId: string | null = null;
+    let casoIdMeta: string | null = null;
+
+    if (payload?.object === 'checkout.session') {
+      stripeSessionId = typeof payload?.id === 'string' ? payload.id : null;
+      stripePaymentIntentId = typeof payload?.payment_intent === 'string' ? payload.payment_intent : null;
+      amountTotalCents = typeof payload?.amount_total === 'number' ? payload.amount_total : null;
+      currency = payload?.currency ?? null;
+      userId = payload?.metadata?.user_id ?? null;
+      casoIdMeta = payload?.metadata?.caso_id ?? null;
+    } else if (payload?.object === 'payment_intent') {
+      stripePaymentIntentId = typeof payload?.id === 'string' ? payload.id : null;
+      // Para payment_intent el monto puede venir en amount o amount_received
+      amountTotalCents = typeof payload?.amount === 'number' ? payload.amount : (typeof payload?.amount_received === 'number' ? payload.amount_received : null);
+      currency = payload?.currency ?? null;
+      // metadata puede no contener caso_id/user_id en este evento
+      userId = payload?.metadata?.user_id ?? null;
+      casoIdMeta = payload?.metadata?.caso_id ?? null;
+    }
+
+    const { error: insertEventError } = await supabase.from("stripe_webhook_events").insert({
       stripe_event_id: event.id,
       event_type: event.type,
-      data: event.data,
+      data_sanitizada: sanitized,
+      stripe_session_id: stripeSessionId,
+      stripe_payment_intent_id: stripePaymentIntentId,
+      amount_total_cents: amountTotalCents,
+      currency: currency,
+      user_id: userId,
+      caso_id: casoIdMeta,
       processed: false
     });
+    if (insertEventError) {
+      logStep("Webhook event insert failed", { error: insertEventError.message });
+    }
     let processingResult = {
       success: false,
       message: "Event type not handled"
@@ -73,7 +146,7 @@ serve(async (req)=>{
     // Procesar eventos específicos
     switch(event.type){
       case "checkout.session.completed":
-        processingResult = await handleCheckoutCompleted(event, supabase);
+        processingResult = await handleCheckoutCompleted(event, supabase, stripe);
         break;
       case "payment_intent.succeeded":
         processingResult = await handlePaymentSucceeded(event, supabase);
@@ -126,45 +199,134 @@ serve(async (req)=>{
     });
   }
 });
-async function handleCheckoutCompleted(event, supabase) {
+async function handleCheckoutCompleted(event, supabase, stripe) {
   logStep("Processing checkout.session.completed");
   const session = event.data.object;
-  const casoId = session.metadata?.caso_id;
+  let casoId = session.metadata?.caso_id;
+  const pagoId = session.metadata?.pago_id || null;
+  const solicitanteRol = session.metadata?.solicitante_rol || null;
+  
+  // Si no hay caso_id en metadatos, buscar por stripe_session_id
   if (!casoId) {
-    return {
-      success: false,
-      message: "No caso_id in session metadata"
-    };
+    logStep("No caso_id in metadata, searching by stripe_session_id", { sessionId: session.id });
+    const { data: caso, error: casoError } = await supabase
+      .from("casos")
+      .select("id")
+      .eq("stripe_session_id", session.id)
+      .single();
+    
+    if (casoError || !caso) {
+      logStep("No case found with stripe_session_id", { sessionId: session.id, error: casoError?.message });
+      return {
+        success: false,
+        message: "No case found for this session"
+      };
+    }
+    casoId = caso.id;
   }
+  
   try {
+    // Comprobación de idempotencia adicional a nivel de caso
+    const { data: casoRow, error: casoRowError } = await supabase
+      .from("casos")
+      .select("estado, stripe_payment_intent_id, fecha_pago")
+      .eq("id", casoId)
+      .single();
+    if (!casoRowError && casoRow) {
+      const alreadyProcessedByIntent = casoRow.stripe_payment_intent_id && session.payment_intent && (casoRow.stripe_payment_intent_id === session.payment_intent);
+      const alreadyPaidState = ["disponible", "asignado", "cerrado"].includes(casoRow.estado);
+      if (alreadyProcessedByIntent || alreadyPaidState) {
+        logStep("Case already processed, skipping update", { casoId: maskId(casoId), estado: casoRow.estado, payment_intent: maskId(String(session.payment_intent || '')) });
+        // Aunque el caso ya esté procesado, si venimos de un pago ad-hoc, intentar completar el registro de pago
+        if (pagoId) {
+          await finalizeAdHocPaymentIfNeeded(supabase, session, pagoId, solicitanteRol);
+        }
+        return {
+          success: true,
+          message: "Case already processed"
+        };
+      }
+    }
+
     // Actualizar estado del caso a disponible
     const { error: caseError } = await supabase.from("casos").update({
       estado: "disponible",
-      fecha_ultimo_contacto: new Date().toISOString()
+      fecha_pago: new Date().toISOString(),
+      stripe_payment_intent_id: session.payment_intent,
+      updated_at: new Date().toISOString()
     }).eq("id", casoId);
+    
     if (caseError) {
       throw new Error(`Failed to update case: ${caseError.message}`);
     }
-    // Crear registro de pago
-    const { error: paymentError } = await supabase.from("pagos").insert({
-      usuario_id: session.metadata?.user_id,
-      stripe_payment_intent_id: session.payment_intent,
-      monto: session.amount_total,
-      moneda: session.currency,
-      estado: "succeeded",
-      descripcion: "Consulta Estratégica - Pago único",
-      metadata_pago: {
-        session_id: session.id,
-        caso_id: casoId,
-        customer_email: session.customer_details?.email
-      }
-    });
-    if (paymentError) {
-      logStep("Payment record creation failed", {
-        error: paymentError
-      });
-    // No fallar completamente si no se puede crear el registro de pago
+    
+    // Expandir sesión para obtener price/product
+    let priceId: string | null = null;
+    let productId: string | null = null;
+    try {
+        const expanded = await stripe.checkout.sessions.retrieve(session.id, { expand: ['line_items.data.price.product'] });
+      const line = expanded?.line_items?.data?.[0];
+      priceId = line?.price?.id ?? null;
+      productId = line?.price?.product?.id ?? null;
+    } catch (e) {
+      logStep('Expand failed (non-critical)', { error: (e as Error)?.message });
     }
+
+    // Intentar actualizar el evento con price/product y caso_id por trazabilidad
+    try {
+      await supabase
+        .from("stripe_webhook_events")
+        .update({ price_id: priceId, product_id: productId, caso_id: casoId })
+        .eq("stripe_event_id", event.id);
+    } catch (e) {
+      logStep("Failed to update webhook event with price/product", { error: (e as Error)?.message });
+    }
+
+    // Registrar pago para flujo de "plan" (legacy) solo si NO es ad-hoc con pago_id
+    if (!pagoId) {
+      const amountTotalCents = typeof session.amount_total === "number" ? session.amount_total : 0;
+      const amountTotalEur = amountTotalCents / 100;
+      const { error: paymentError } = await supabase.from("pagos").insert({
+        usuario_id: session.metadata?.user_id,
+        stripe_payment_intent_id: session.payment_intent,
+        caso_id: casoId,
+        monto: amountTotalEur,
+        moneda: session.currency || 'eur',
+        estado: "succeeded",
+        descripcion: `Pago para caso ${casoId.toString().slice(0, 8)}`,
+        metadata_pago: {
+          session_id: session.id,
+          caso_id: casoId,
+          customer_email: session.customer_details?.email,
+          plan_id: session.metadata?.plan_id || 'consulta-estrategica',
+          price_id: priceId,
+          product_id: productId
+        }
+      });
+      if (paymentError) {
+        logStep("Payment record creation failed", { error: paymentError });
+      }
+    } else {
+      // Completar pago ad-hoc existente
+      await finalizeAdHocPaymentIfNeeded(supabase, session, pagoId, solicitanteRol);
+    }
+    
+    // Crear notificación para el cliente si hay user_id
+    if (session.metadata?.user_id) {
+      const { error: notificacionError } = await supabase
+        .from("notificaciones")
+        .insert({
+          usuario_id: session.metadata.user_id,
+          mensaje: `Tu pago para el caso #${casoId.toString().slice(0, 8)} ha sido procesado exitosamente. El caso está ahora disponible para revisión por nuestros abogados.`,
+          url_destino: `/dashboard/casos/${casoId}`,
+          caso_id: casoId
+        });
+      
+      if (notificacionError) {
+        logStep("Notification creation failed", { error: notificacionError.message });
+      }
+    }
+    
     logStep("Checkout completed successfully", {
       casoId
     });
@@ -243,5 +405,54 @@ async function handlePaymentFailed(event, supabase) {
       success: false,
       message: errorMessage
     };
+  }
+}
+
+// Completa un pago ad-hoc existente, aplica comisión si el solicitante fue abogado regular
+async function finalizeAdHocPaymentIfNeeded(supabase, session, pagoId, solicitanteRol) {
+  try {
+    // Idempotencia: si ya está en succeeded, salir
+    const { data: pago, error: fetchError } = await supabase
+      .from('pagos')
+      .select('id, estado, monto_total, comision')
+      .eq('id', pagoId)
+      .single();
+    if (fetchError || !pago) {
+      logStep('Ad-hoc payment not found', { pagoId });
+      return;
+    }
+    if (pago.estado === 'succeeded') return;
+
+    const total = typeof pago.monto_total === 'number' ? pago.monto_total : ((typeof session.amount_total === 'number' ? session.amount_total : 0) / 100);
+    let comision = pago.comision || 0;
+
+    if (solicitanteRol === 'abogado_regular') {
+      const pctEnv = Deno.env.get('PLATFORM_COMMISSION_REGULAR_PCT');
+      const pct = pctEnv ? Number(pctEnv) : 0.15;
+      if (isFinite(pct) && pct > 0) {
+        comision = Math.round(total * pct * 100) / 100;
+      }
+    }
+
+    const { error: upd } = await supabase
+      .from('pagos')
+      .update({
+        estado: 'succeeded',
+        stripe_payment_intent_id: session.payment_intent,
+        comision,
+        monto_neto: Math.round((total - comision) * 100) / 100,
+        metadata_pago: {
+          ...(await supabase.from('pagos').select('metadata_pago').eq('id', pagoId).single()).data?.metadata_pago || {},
+          session_id: session.id,
+          price_id: undefined,
+          product_id: undefined,
+        }
+      })
+      .eq('id', pagoId);
+    if (upd) {
+      logStep('Ad-hoc payment update failed', { pagoId, error: upd.message });
+    }
+  } catch (e) {
+    logStep('Ad-hoc finalization error', { pagoId, message: (e as Error)?.message });
   }
 }

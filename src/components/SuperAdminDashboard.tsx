@@ -34,7 +34,7 @@ const SuperAdminDashboard = () => {
   const [open, setOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [activeSection, setActiveSection] = useState("dashboard");
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -223,10 +223,12 @@ const SuperAdminDashboard = () => {
                   link={{
                     label: "", // Sin nombre, solo avatar
                     href: "#",
-                    icon: (() => {
-                      const displayName = `${user?.user_metadata?.nombre || "Super"} Admin`;
+                     icon: (() => {
+                      const displayName = (profile?.nombre && profile?.apellido)
+                        ? `${profile.nombre} ${profile.apellido}`
+                        : (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.user_metadata?.nombre || user?.email?.split('@')[0] || "Super Admin");
                       const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                      const avatarUrl = user?.user_metadata?.avatar_url;
+                      const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url;
                       
                       if (avatarUrl) {
                         return (
@@ -256,11 +258,13 @@ const SuperAdminDashboard = () => {
                     })(),
                   }}
                 />
-                {open && (
+                 {open && (
                   <div
                     className="text-sm font-medium text-neutral-700 dark:text-neutral-200 transition-all duration-200"
                   >
-                    {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "Super Admin"}
+                    {(profile?.nombre && profile?.apellido)
+                      ? `${profile.nombre} ${profile.apellido}`
+                      : (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "Super Admin")}
                   </div>
                 )}
               </div>

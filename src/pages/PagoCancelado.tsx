@@ -1,5 +1,5 @@
 import { useSearchParams, Link } from 'react-router-dom';
-import { XCircle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { XCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -30,37 +30,22 @@ const PagoCancelado = () => {
           </p>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-            ¿Qué puedes hacer ahora?
-          </h3>
-          <ul className="text-left space-y-2 text-gray-600 dark:text-gray-300">
-            <li className="flex items-start">
-              <span className="text-blue-500 mr-2">•</span>
-              Intentar el pago nuevamente con el mismo plan
-            </li>
-            <li className="flex items-start">
-              <span className="text-blue-500 mr-2">•</span>
-              Revisar otros planes disponibles
-            </li>
-            <li className="flex items-start">
-              <span className="text-blue-500 mr-2">•</span>
-              Contactar con nuestro soporte si necesitas ayuda
-            </li>
-          </ul>
+        <div className="space-y-2 text-gray-600 dark:text-gray-300">
+          Puedes reintentar el pago desde el detalle de tu caso cuando lo desees.
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-8">
-          <Button asChild className="flex-1">
-            <Link to={`/chat${casoId ? `?caso_id=${casoId}` : ''}`}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Reintentar Pago
-            </Link>
-          </Button>
+          {casoId && (
+            <Button asChild className="flex-1">
+              <Link to={`/dashboard/casos/${casoId}`}>
+                Ir al caso
+              </Link>
+            </Button>
+          )}
           <Button asChild variant="outline" className="flex-1">
-            <Link to="/">
+            <Link to="/dashboard">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver al Inicio
+              Ir al Dashboard
             </Link>
           </Button>
         </div>

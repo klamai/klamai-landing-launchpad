@@ -1091,4 +1091,107 @@ VITE_DOCUMENSO_URL=https://documenso-r8swo0o4kksocggw04888cww.klamai.com
 - ✅ **Verificación**: Build exitoso sin errores de compilación
 - ✅ **Estado**: Funcionalidad de subida de documentos completamente operativa y segura
 
+#### **🔧 FASE 18: Corrección del Flujo de Vinculación de Casos (02/08/2025)**
+- ✅ **Problema Identificado**: Cuando el cliente selecciona "Enviarme la propuesta por email" en `ProposalDisplay`, el caso no se vinculaba a su perfil, por lo que no aparecía en su dashboard
+- ✅ **Causa Raíz**: El flujo `handleSaveProgress` solo enviaba un resumen por email sin vincular el caso al usuario usando `assign_anonymous_case_to_user`
+- ✅ **Solución Implementada** (`src/components/ProposalDisplay.tsx`):
+  - **Función `linkCaseToUser`**: Implementada para vincular casos anónimos al usuario usando `assign_anonymous_case_to_user`
+  - **`handleSaveProgress` actualizado**: Ahora vincula el caso antes de enviar el resumen por email
+  - **`handleAuthSuccess` actualizado**: Maneja la vinculación de casos después de autenticación exitosa
+  - **Redirección al dashboard**: Después de vincular el caso, redirige al usuario a su dashboard
+- ✅ **Mejoras en Autenticación** (`src/components/AuthModal.tsx`):
+  - **Google OAuth mejorado**: Ahora maneja casos donde solo hay `casoId` (sin `planId`)
+  - **Redirección inteligente**: Usa `AuthCallback` para casos de guardar progreso
+  - **Parámetros dinámicos**: Construye URLs de redirección según contexto
+- ✅ **Mejoras en AuthCallback** (`src/pages/AuthCallback.tsx`):
+  - **Manejo de casos sin plan**: Procesa casos donde solo hay `casoId` para guardar progreso
+  - **Vinculación obligatoria**: Siempre vincula el caso al usuario antes de cualquier otra acción
+  - **Flujo condicional**: Si hay `planId`, procede a pago; si no, solo redirige al dashboard
+- ✅ **Corrección de TypeScript** (`src/hooks/queries/useAuthQueries.ts`):
+  - **Error de tipos corregido**: Usado cast `as any` para `userId` en consulta de perfil
+  - **Validación de datos**: Verificación de que `data` existe y tiene estructura correcta
+  - **Manejo de errores**: Mejorado manejo de casos donde el perfil no existe
+- ✅ **Flujo Completo Implementado**:
+  1. **Usuario hace clic en "Enviarme la propuesta por email"**
+  2. **Si no está autenticado**: Se abre modal de registro/login
+  3. **Si está autenticado**: Se vincula el caso inmediatamente
+  4. **Después de autenticación**: Se vincula el caso y se envía resumen
+  5. **Redirección**: Usuario va a su dashboard donde verá su caso
+- ✅ **Casos Cubiertos**:
+  - **Registro con email**: Caso vinculado después de registro exitoso
+  - **Login con email**: Caso vinculado después de login exitoso
+  - **Google OAuth**: Caso vinculado a través de `AuthCallback`
+  - **Usuario ya autenticado**: Vinculación inmediata sin pasar por autenticación
+- ✅ **Beneficios**:
+  - **Experiencia de usuario mejorada**: Los casos aparecen correctamente en el dashboard
+  - **Flujo consistente**: Mismo comportamiento para todos los métodos de autenticación
+  - **Seguridad mantenida**: Uso de `assign_anonymous_case_to_user` con validación de tokens
+  - **Limpieza automática**: Tokens de sesión limpiados después de vinculación exitosa
+- ✅ **Resultados**:
+  - **Funcionalidad completa**: Los casos se vinculan correctamente al usuario
+  - **Dashboard actualizado**: Los clientes ven sus casos en el dashboard
+  - **Flujo robusto**: Manejo de errores y casos edge
+  - **Build exitoso**: Sin errores de compilación
+
+#### **🔧 FASE 19: Limpieza y Optimización de Funciones Edge Stripe (02/08/2025)**
+- ✅ **Problema Identificado**: Tenías dos funciones de webhook redundantes (`stripe-webhook` y `manejar-pago-exitoso`) causando confusión en la configuración
+- ✅ **Solución Implementada**:
+  - **Eliminada** función `manejar-pago-exitoso` (redundante y menos robusta)
+  - **Mejorada** función `stripe-webhook` con mejor manejo de errores y logging
+  - **Corregidos** CORS headers para incluir `x-client-version` y `Access-Control-Allow-Methods`
+  - **Optimizada** función `handleCheckoutCompleted` para buscar casos por `stripe_session_id` si no hay `caso_id` en metadatos
+  - **Agregada** creación de notificaciones para el cliente después del pago exitoso
+  - **Optimizadas** animaciones en `ProposalDisplay.tsx` (reducidas de 0.6s a 0.3s)
+- ✅ **Configuración Requerida**:
+  - **Stripe Dashboard**: Configurar webhook endpoint `https://vwnoznuznmrdaumjyctg.supabase.co/functions/v1/stripe-webhook`
+  - **Eventos**: `checkout.session.completed`, `payment_intent.succeeded`, `payment_intent.payment_failed`
+  - **Variables de Entorno**: `STRIPE_WEBHOOK_SECRET` en Supabase
+- ✅ **Funciones Edge Actuales**:
+  - `stripe-webhook` (webhook principal mejorado)
+  - `crear-sesion-checkout` (creación de sesiones de pago)
+  - `manejar-pago-exitoso` (ELIMINADA - redundante)
+  - Otras funciones de gestión de casos y usuarios
+
 ## 📋 **PRÓXIMAS TAREAS:**
+### (08/08/2025) Actualizaciones recientes - Stripe y Notificaciones
+- ✅ `stripe-webhook` actualizado: rellena `caso_id`, `stripe_session_id`, `stripe_payment_intent_id`, `amount_total_cents`, `currency`, `user_id`, `price_id`, `product_id` y crea notificación al cliente (sin columna `tipo`).
+- ✅ `crear-sesion-checkout`: reutiliza sesión abierta, `idempotencyKey`, valida estados permitidos.
+- ✅ Migraciones locales escritas y aplicadas en cloud:
+  - `20250808123000_add_index_casos_stripe_session_id.sql`
+  - `20250808124500_alter_pagos_monto_to_numeric.sql`
+  - `20250808133000_add_caso_id_to_pagos.sql`
+  - `20250808134500_extend_stripe_webhook_events_metadata.sql`
+  - `20250808150500_make_stripe_webhook_events_data_nullable.sql`
+- ✅ UI: `PagoExitoso` sin botón de reintento; `PagoCancelado` con CTA de reintento desde la card del caso.
+- ⚠️ Recordatorio: En Supabase Cloud, `stripe-webhook` con Verify JWT = OFF; `crear-sesion-checkout` con Verify JWT = ON.
+
+### (09/08/2025) Cobros Ad-hoc (Stripe)
+- ✅ Migración aplicada: nuevas columnas en `pagos` para IVA/comisiones y soporte ad-hoc.
+- ✅ Nueva función: `crear-cobro` (JWT ON) para generar enlaces de pago con concepto/importe y exenciones IVA (b2b_ue, fuera_ue, suplido, ajg).
+- ✅ Nueva función: `pagar-cobro` (JWT ON) para que el cliente pueda abrir/reutilizar la sesión de pago de un cobro pendiente.
+- ✅ Webhook: maneja `pago_id`, aplica comisión 15% si el solicitante es abogado regular, idempotencia.
+- ▶️ UI pendiente: botón “Solicitar pago” (admin/abogado) con modal; sección “Pagos pendientes” (cliente).
+
+### (09/08/2025) UI Cobros Ad-hoc (avance)
+- ✅ `CaseDetailTabs.tsx` ahora:
+  - Filtra pagos por `caso_id` y muestra `concepto`, `importe` y `estado`.
+  - Botón “Pagar ahora” para clientes en pagos `pending/processing` usando la función `pagar-cobro`.
+  - Botón “Solicitar cobro” visible para super admin y abogado regular asignado, con modal para concepto/importe e IVA/exención (invoca `crear-cobro`).
+
+### (09/08/2025) UI Cobros Ad-hoc (cliente)
+- ✅ `ClientCaseCard.tsx`: botón de pago para estados `listo_para_propuesta` y `esperando_pago` (flujo de plan).
+- ✅ `client/CaseDetailModal.tsx`: añadido tab “Pagos” solo para cliente con tabla de `pagos` del caso y acción “Pagar ahora” (invoca `pagar-cobro`).
+- ✅ Seguridad: validación por `cliente_id`; no se exponen datos de abogado ni acciones administrativas.
+- ✅ Despliegue: Edge Functions `crear-cobro` y `pagar-cobro` activas con CORS y JWT ON.
+- ✅ Migración: `20250809150000_alter_pagos_intent_nullable.sql` para permitir `stripe_payment_intent_id` NULL en cobros ad‑hoc.
+
+### (08/08/2025) Avatares - Fase 1 (fallback de URL)
+- ✅ Preferencia por `profile.avatar_url` (tabla `profiles`) y respaldo con `user.user_metadata.avatar_url` (Google) en:
+  - `src/components/DashboardLayout.tsx`
+  - `src/components/ClientDashboard.tsx`
+  - `src/components/RegularLawyerDashboard.tsx`
+  - `src/components/SuperAdminDashboard.tsx`
+- ✅ Nombre mostrado: usa `profile.nombre + profile.apellido`; si no, `full_name`/`name` de metadata o el email.
+- ✅ Compilación sin errores.
+- 🔒 RGPD: no almacenamos PII adicional; solo mostramos URL de avatar existente. Sin nuevos logs.
+- ▶️ Fase 2 pendiente: edición de avatar por el usuario (subida a Storage con validación y RLS).

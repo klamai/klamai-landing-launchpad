@@ -49,6 +49,23 @@ const PagoExitoso = () => {
             title: "¡Caso activado!",
             description: "Tu caso ha sido procesado y está disponible para los abogados.",
           });
+        } else {
+          // Polling ligero: hasta 3 reintentos cada 1.5s
+          let intentos = 0;
+          const intervalo = setInterval(async () => {
+            intentos += 1;
+            const { data: casoRetry } = await supabase
+              .from('casos')
+              .select('estado')
+              .eq('id', casoId)
+              .single();
+            if (casoRetry?.estado === 'disponible') {
+              setCasoActualizado(true);
+              clearInterval(intervalo);
+              toast({ title: "¡Caso activado!", description: "Tu caso ya está disponible." });
+            }
+            if (intentos >= 3) clearInterval(intervalo);
+          }, 1500);
         }
       }
     } catch (error) {
@@ -88,18 +105,7 @@ const PagoExitoso = () => {
           }
         </p>
 
-        {sessionId && (
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              ID de transacción: <span className="font-mono">{sessionId.slice(0, 20)}...</span>
-            </p>
-            {casoId && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                ID del caso: <span className="font-mono">{casoId.slice(0, 8)}...</span>
-              </p>
-            )}
-          </div>
-        )}
+        {/* Por seguridad y simplicidad, ocultamos IDs sensibles */}
 
         <div className="space-y-4">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -129,18 +135,19 @@ const PagoExitoso = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-8">
-          {user && (
+          {casoId && (
             <Button asChild className="flex-1">
-              <Link to="/dashboard">
+              <Link to={`/dashboard/casos/${casoId}`}>
                 <Home className="w-4 h-4 mr-2" />
-                Ir al Dashboard
+                Ir al caso
               </Link>
             </Button>
           )}
+          {/* El reintento de pago se mantiene solo en Pago Cancelado */}
           <Button asChild variant="outline" className="flex-1">
-            <Link to="/">
+            <Link to="/dashboard">
               <ArrowRight className="w-4 h-4 mr-2" />
-              Volver al Inicio
+              Ir al Dashboard
             </Link>
           </Button>
         </div>

@@ -9,10 +9,16 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.crear-sesion-checkout]
-verify_jwt = false
+verify_jwt = true
 
-[functions.manejar-pago-exitoso]
-verify_jwt = false
+[functions.crear-cobro]
+verify_jwt = true
 
 [functions.add-manual-case]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.pagar-cobro]
+verify_jwt = true

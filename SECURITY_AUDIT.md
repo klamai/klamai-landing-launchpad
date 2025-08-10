@@ -798,4 +798,49 @@ Error `AuthSessionMissingError: Auth session missing!` cuando se intenta cerrar 
 **Última Actualización:** 01 de Agosto 2025  
 **Próxima Revisión:** 08 de Agosto 2025  
 **Responsable:** Equipo de Desarrollo  
-**Estado:** 🟢 SEGURIDAD MEJORADA - ERROR DE SIGNOUT CORREGIDO - EN DESARROLLO 
+**Estado:** 🟢 SEGURIDAD MEJORADA - ERROR DE SIGNOUT CORREGIDO - EN DESARROLLO
+
+## 🔐 FASE 20: Trazabilidad y seguridad de pagos Stripe (08/08/2025)
+
+### ✅ Objetivo
+Completar la trazabilidad de pagos y sanear el almacenamiento de eventos de Stripe garantizando RGPD y robustez en producción.
+
+### 🔧 Cambios implementados
+- ✅ `stripe_webhook_events.data` ahora es NULLABLE para dejar de guardar el payload crudo y almacenar únicamente `data_sanitizada` (RGPD)
+  - Migración aplicada en cloud y escrita localmente: `20250808150500_make_stripe_webhook_events_data_nullable.sql`
+- ✅ `stripe-webhook` (Edge Function) actualizado:
+  - Inserta evento con: `stripe_event_id`, `event_type`, `data_sanitizada`, `stripe_session_id`, `stripe_payment_intent_id`, `amount_total_cents`, `currency`, `user_id`, `caso_id`
+  - En `checkout.session.completed` expande sesión y actualiza `price_id` y `product_id`
+  - Idempotencia a nivel de caso/intent; actualiza caso a `disponible`
+  - Crea notificación al cliente conforme al esquema (sin campo `tipo`)
+  - Logs sanitizados y CORS ampliado (incluye `stripe-signature`, `x-client-version`)
+- ✅ `crear-sesion-checkout` (Edge Function):
+  - Usa `idempotencyKey`, reutiliza sesión abierta, valida estados (`listo_para_propuesta`, `esperando_pago`), usa `client_reference_id`
+
+### 🔒 Configuración de seguridad
+- `stripe-webhook` con Verify JWT = OFF (webhook externo)
+- `crear-sesion-checkout` con Verify JWT = ON
+- Secrets requeridos en Supabase: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`
+
+### 📊 Resultados
+- Nuevos eventos registran: `caso_id`, `stripe_session_id`, `stripe_payment_intent_id`, `amount_total_cents`, `currency`, `user_id`, `price_id`, `product_id`
+
+### Cobros Ad-hoc (08/2025)
+- Nuevas columnas en `pagos`: `concepto`, `tipo_cobro`, `monto_base`, `iva_tipo`, `iva_monto`, `monto_total`, `exento`, `exencion_motivo`, `solicitado_por` (FK a `profiles.id`), `solicitante_rol`, `stripe_session_id`, `comision`, `monto_neto`.
+- Nueva función Edge `crear-cobro` (verify_jwt ON):
+  - Valida permisos (superadmin o abogado regular asignado), calcula IVA 21% por defecto, excepciones (b2b_ue, fuera_ue, suplido, ajg), registra `pagos` pending y crea Stripe Checkout con `price_data`.
+  - Logs sanitizados; CORS con `x-client-version`.
+- `stripe-webhook` extendido:
+  - Maneja `pago_id` y aplica comisión del 15% (`PLATFORM_COMMISSION_REGULAR_PCT`) si solicitante es abogado regular; idempotencia por estado y `stripe_event_id`.
+- RLS: mantener que clientes solo vean sus pagos; inserciones/updates sensibles via service role en funciones Edge.
+- Tabla `pagos` guarda importe exacto en euros (`numeric(10,2)`) y referencia `caso_id`
+- No se guarda payload crudo; solo `data_sanitizada` (cumplimiento RGPD)
+
+### 🧱 Migraciones relevantes (ya escritas y aplicadas)
+- `20250808123000_add_index_casos_stripe_session_id.sql`
+- `20250808124500_alter_pagos_monto_to_numeric.sql`
+- `20250808133000_add_caso_id_to_pagos.sql`
+- `20250808134500_extend_stripe_webhook_events_metadata.sql`
+- `20250808150500_make_stripe_webhook_events_data_nullable.sql`
+
+---

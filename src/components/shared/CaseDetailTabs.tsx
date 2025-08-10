@@ -5,6 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
@@ -47,6 +51,11 @@ const CaseDetailTabs = () => {
   const [lawyerType, setLawyerType] = useState<'regular' | 'super_admin' | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [isChargeModalOpen, setIsChargeModalOpen] = useState(false);
+  const [creatingCharge, setCreatingCharge] = useState(false);
+  const [chargeConcept, setChargeConcept] = useState("");
+  const [chargeAmount, setChargeAmount] = useState("");
+  const [chargeExencion, setChargeExencion] = useState<'none' | 'b2b_ue' | 'fuera_ue' | 'suplido' | 'ajg'>("none");
   const { toast } = useToast();
   const { user } = useAuth();
   const { count: notificacionesNoLeidas } = useNotificacionesNoLeidas();
@@ -110,6 +119,7 @@ const CaseDetailTabs = () => {
       const { data, error } = await supabase
         .from('pagos')
         .select('*')
+        .eq('caso_id', casoId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -120,6 +130,70 @@ const CaseDetailTabs = () => {
       setPagos(data || []);
     } catch (error) {
       console.error('Error:', error);
+    }
+  };
+
+  const canRequestCharge = () => {
+    // Super admin (tipo_abogado super_admin) o abogado regular asignado
+    if (userRole === 'abogado' && lawyerType === 'super_admin') return true;
+    if (userRole === 'abogado' && lawyerType === 'regular' && isAssignedLawyer) return true;
+    // Compatibilidad si existiera un rol 'superadmin'
+    if (userRole === 'superadmin') return true as any;
+    return false;
+  };
+
+  const handleSolicitarCobro = async () => {
+    if (!casoId) return;
+    const concepto = chargeConcept.trim();
+    const montoBase = Number(chargeAmount);
+    if (!concepto || !isFinite(montoBase) || montoBase <= 0) {
+      toast({ title: 'Datos inválidos', description: 'Ingresa un concepto y un monto válido (> 0).', variant: 'destructive' });
+      return;
+    }
+    setCreatingCharge(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('crear-cobro', {
+        body: {
+          caso_id: casoId,
+          concepto,
+          monto_base: Math.round(montoBase * 100) / 100,
+          exencion_tipo: chargeExencion,
+        }
+      });
+
+      if (error) throw new Error(error.message);
+
+      toast({ title: 'Cobro solicitado', description: 'Se ha creado el cobro y aparecerá en Pagos.' });
+      setIsChargeModalOpen(false);
+      setChargeConcept("");
+      setChargeAmount("");
+      setChargeExencion('none');
+      await fetchPagos();
+    } catch (e: any) {
+      console.error('Error creando cobro:', e);
+      toast({ title: 'Error', description: e?.message || 'No se pudo crear el cobro.', variant: 'destructive' });
+    } finally {
+      setCreatingCharge(false);
+    }
+  };
+
+  const handlePagarCobro = async (pagoId: string) => {
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      const { data, error } = await supabase.functions.invoke('pagar-cobro', {
+        body: { pago_id: pagoId },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (error) throw new Error(error.message);
+      if (data?.url) {
+        window.location.href = data.url as string;
+      } else {
+        throw new Error('No se recibió URL de pago');
+      }
+    } catch (e: any) {
+      console.error('Error iniciando pago de cobro:', e);
+      toast({ title: 'Error en el pago', description: e?.message || 'Inténtalo de nuevo.', variant: 'destructive' });
     }
   };
 
@@ -364,6 +438,18 @@ const CaseDetailTabs = () => {
                 {getPaymentButtonText()}
               </Button>
             )}
+            {/* Botón solicitar cobro (super admin o abogado regular asignado) */}
+            {canRequestCharge() && (
+              <Button
+                onClick={() => setIsChargeModalOpen(true)}
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 ml-4"
+                size="lg"
+              >
+                <CreditCard className="h-5 w-5" />
+                Solicitar cobro
+              </Button>
+            )}
+
             {/* Botón de cerrar caso solo para super admin y si el caso no está cerrado */}
             {canCloseCase() && (
               <Button
@@ -379,6 +465,46 @@ const CaseDetailTabs = () => {
               </div>
             </CardContent>
           </Card>
+
+      {/* Modal Solicitar Cobro */}
+      <Dialog open={isChargeModalOpen} onOpenChange={setIsChargeModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Solicitar cobro</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="concepto">Concepto</Label>
+              <Input id="concepto" value={chargeConcept} onChange={(e) => setChargeConcept(e.target.value)} placeholder="Ej. Honorarios adicionales" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="monto">Importe base (EUR)</Label>
+              <Input id="monto" type="number" inputMode="decimal" step="0.01" min="0.01" value={chargeAmount} onChange={(e) => setChargeAmount(e.target.value)} placeholder="0.00" />
+            </div>
+            <div className="space-y-2">
+              <Label>IVA / Exención</Label>
+              <Select value={chargeExencion} onValueChange={(v) => setChargeExencion(v as any)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona IVA/Exención" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">IVA 21% (por defecto)</SelectItem>
+                  <SelectItem value="b2b_ue">Exento: B2B intracomunitario</SelectItem>
+                  <SelectItem value="fuera_ue">Exento: Cliente fuera de la UE</SelectItem>
+                  <SelectItem value="suplido">Exento: Suplido/Gasto repercutido</SelectItem>
+                  <SelectItem value="ajg">Exento: Asistencia Jurídica Gratuita</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsChargeModalOpen(false)} disabled={creatingCharge}>Cancelar</Button>
+            <Button onClick={handleSolicitarCobro} disabled={creatingCharge}>
+              {creatingCharge ? 'Creando...' : 'Crear cobro'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="resumen" className="space-y-4">
         <TabsList className="flex overflow-x-auto no-scrollbar flex-nowrap w-full">
@@ -611,7 +737,7 @@ const CaseDetailTabs = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-green-600" />
-                Historial de Pagos
+                Pagos del Caso
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -620,26 +746,39 @@ const CaseDetailTabs = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Fecha</TableHead>
-                      <TableHead>Descripción</TableHead>
-                      <TableHead>Monto</TableHead>
+                      <TableHead>Concepto</TableHead>
+                      <TableHead>Importe</TableHead>
                       <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acción</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pagos.map((pago) => (
-                      <TableRow key={pago.id}>
-                        <TableCell>
-                          {format(new Date(pago.created_at), 'dd/MM/yyyy', { locale: es })}
-                        </TableCell>
-                        <TableCell>{pago.descripcion}</TableCell>
-                        <TableCell>€{(pago.monto / 100).toFixed(2)}</TableCell>
-                        <TableCell>
-                          <Badge variant={pago.estado === 'succeeded' ? 'default' : 'secondary'}>
-                            {pago.estado === 'succeeded' ? 'Completado' : 'Pendiente'}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {pagos.map((pago: any) => {
+                      const amount = typeof pago.monto_total === 'number' ? pago.monto_total : (typeof pago.monto === 'number' ? pago.monto : 0);
+                      const estado = pago.estado || 'pending';
+                      const isPending = estado === 'pending' || estado === 'processing';
+                      return (
+                        <TableRow key={pago.id}>
+                          <TableCell>
+                            {format(new Date(pago.created_at), 'dd/MM/yyyy', { locale: es })}
+                          </TableCell>
+                          <TableCell>{pago.concepto || pago.descripcion || '—'}</TableCell>
+                          <TableCell>€{Number(amount).toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Badge variant={estado === 'succeeded' ? 'default' : 'secondary'}>
+                              {estado === 'succeeded' ? 'Completado' : 'Pendiente'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {userRole === 'cliente' && isPending && (
+                              <Button size="sm" onClick={() => handlePagarCobro(pago.id)}>
+                                Pagar ahora
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               ) : (
