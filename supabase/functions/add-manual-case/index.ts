@@ -31,7 +31,8 @@ const LISTA_ESPECIALIDADES_VALIDAS = [
   'Derecho Laboral',
   'Derecho Mercantil',
   'Derecho Penal',
-  'Derecho Sanitario'
+  'Derecho Sanitario',
+  'Consulta General'
 ];
 
 // --- TIPOS E INTERFACES ---
