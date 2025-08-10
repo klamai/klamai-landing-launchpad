@@ -63,7 +63,8 @@ INSERT INTO public.especialidades (nombre) VALUES
 ('Derecho Inmobiliario'),
 ('Derecho Fiscal'),
 ('Derecho de la Seguridad Social'),
-('Derecho de Extranjería');
+('Derecho de Extranjería'),
+('Consulta General');
 
 -- Habilitar RLS en todas las nuevas tablas
 ALTER TABLE public.especialidades ENABLE ROW LEVEL SECURITY;

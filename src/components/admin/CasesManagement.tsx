@@ -490,7 +490,7 @@ const AdminCasesManagement = () => {
 
             <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
               <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Especialidad" />
+                <SelectValue placeholder="Rama" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Todas las ramas</SelectItem>
