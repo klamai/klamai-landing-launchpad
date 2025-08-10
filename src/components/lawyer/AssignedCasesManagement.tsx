@@ -351,7 +351,7 @@ const AssignedCasesManagement = () => {
                 especialidad_id: caso.especialidad_id || 0,
                 estado: caso.estado,
                 created_at: caso.created_at,
-                cliente_id: '',
+                cliente_id: (caso as any).cliente_id || '',
                 valor_estimado: caso.valor_estimado || '',
                 tipo_lead: caso.tipo_lead,
                 ciudad_borrador: caso.ciudad_borrador || '',

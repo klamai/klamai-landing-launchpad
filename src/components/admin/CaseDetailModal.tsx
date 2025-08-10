@@ -27,7 +27,8 @@ import {
   UserPlus,
   CheckCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MoreHorizontal
 } from 'lucide-react';
 import {
   Dialog,
@@ -65,6 +66,8 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AdminCaseDetailModalProps {
   caso: {
@@ -145,6 +148,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
   const navigate = useNavigate();
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showLinkClientModal, setShowLinkClientModal] = useState(false);
   const [showConvertToClientModal, setShowConvertToClientModal] = useState(false);
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [pagos, setPagos] = useState<any[]>([]);
@@ -245,24 +249,24 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
 
   const getStatusBadge = (estado: string) => {
     const statusConfig = {
-      'disponible': {
-        label: 'Disponible',
+      'disponible': { 
+        label: 'Disponible', 
         className: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800 text-xs font-medium px-2 py-1 border'
       },
       'asignado': {
         label: 'Asignado',
         className: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-800 text-xs font-medium px-2 py-1 border'
       },
-      'agotado': {
-        label: 'Agotado',
+      'agotado': { 
+        label: 'Agotado', 
         className: 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-800 text-xs font-medium px-2 py-1 border'
       },
-      'cerrado': {
-        label: 'Cerrado',
+      'cerrado': { 
+        label: 'Cerrado', 
         className: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-700 text-xs font-medium px-2 py-1 border'
       },
-      'esperando_pago': {
-        label: 'Esperando Pago',
+      'esperando_pago': { 
+        label: 'Esperando Pago', 
         className: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800 text-xs font-medium px-2 py-1 border'
       },
       'listo_para_propuesta': {
@@ -369,11 +373,11 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
     closeCase(updatedCaso.id, {
       onSuccess: (data) => {
         if (data.success) {
-          toast({
-            title: "Éxito",
-            description: "Caso cerrado correctamente",
-          });
-          onClose();
+      toast({
+        title: "Éxito",
+        description: "Caso cerrado correctamente",
+      });
+      onClose();
         } else {
           toast({
             title: "Error",
@@ -383,13 +387,13 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
         }
       },
       onError: (error) => {
-        console.error('Error al cerrar caso:', error);
-        toast({
-          title: "Error",
+      console.error('Error al cerrar caso:', error);
+      toast({
+        title: "Error",
           description: "Error inesperado al cerrar el caso",
-          variant: "destructive"
-        });
-      }
+        variant: "destructive"
+      });
+    }
     });
   };
 
@@ -486,7 +490,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
 
           <div className="flex-1 min-h-0 overflow-hidden" style={{ height: 'calc(90vh - 280px) md:calc(95vh - 320px)' }}>
             <div className="h-full overflow-y-auto px-6 py-4">
-              <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
+            <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
                 {/* Contenedor de tabs con scroll horizontal */}
                 <div className="sticky top-0 z-10 bg-background border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                   <div className="px-6 py-3">
@@ -511,30 +515,30 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                         <TabsList className="flex w-full rounded-lg shadow-sm border mb-0 bg-white dark:bg-gray-800" style={{ minWidth: 'max-content' }}>
                           <TabsTrigger value="overview" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
                             <FileText className="h-3 w-3" /> Resumen
-                          </TabsTrigger>
+                  </TabsTrigger>
                           {updatedCaso.guia_abogado && (
                             <TabsTrigger value="guia" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[120px] max-w-[140px] md:flex-none md:min-w-[140px] md:max-w-[160px] flex-shrink-0 whitespace-nowrap text-xs">
                               <ShieldCheck className="h-3 w-3" /> Guía Abog
-                            </TabsTrigger>
-                          )}
+                    </TabsTrigger>
+                  )}
                           <TabsTrigger value="pagos" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
                             <Euro className="h-3 w-3" /> Pagos
-                          </TabsTrigger>
+                  </TabsTrigger>
                           <TabsTrigger value="client" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
                             <User className="h-3 w-3" /> Cliente
-                          </TabsTrigger>
+                  </TabsTrigger>
                           <TabsTrigger value="chat" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
                             <MessageSquare className="h-3 w-3" /> Convers
-                          </TabsTrigger>
+                  </TabsTrigger>
                           <TabsTrigger value="documents" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
                             <FileText className="h-3 w-3" /> Docs
                           </TabsTrigger>
                           <TabsTrigger value="notes" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[70px] max-w-[90px] md:flex-none md:min-w-[90px] md:max-w-[110px] flex-shrink-0 whitespace-nowrap text-xs">
                             <MessageSquare className="h-3 w-3" /> Notas
-                          </TabsTrigger>
-                        </TabsList>
-                      </div>
-                      
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
                       {/* Botones de navegación simplificados */}
                       {showLeftIndicator && (
                         <button
@@ -572,114 +576,114 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                 </div>
 
                 {/* Contenedor de contenido con altura fija */}
-                <TabsContent value="overview" className="space-y-4 mt-0">
-                  <Card className="shadow-md border border-gray-200 dark:border-gray-700">
-                    <CardHeader>
-                      <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                        Información del Caso
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+              <TabsContent value="overview" className="space-y-4 mt-0">
+                <Card className="shadow-md border border-gray-200 dark:border-gray-700">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      Información del Caso
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                       {updatedCaso.resumen_caso && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-2">Resumen del caso:</p>
-                          <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                            <ScrollArea className="h-96">
-                              <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Resumen del caso:</p>
+                        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                          <ScrollArea className="h-96">
+                            <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                   {updatedCaso.resumen_caso}
                                 </ReactMarkdown>
-                              </div>
-                            </ScrollArea>
-                          </div>
+                            </div>
+                          </ScrollArea>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <span>{format(casoDate, 'dd/MM/yyyy HH:mm', { locale: es })}</span>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(casoDate, { locale: es, addSuffix: true })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span>{updatedCaso.especialidades?.nombre || 'Sin especialidad'}</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {updatedCaso.tipo_lead && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Tipo de lead:</p>
+                            <Badge variant="secondary" className="capitalize">{updatedCaso.tipo_lead}</Badge>
                         </div>
                       )}
+                        {updatedCaso.valor_estimado && (
+                        <div className="flex items-center gap-1 text-sm">
+                          <Euro className="h-4 w-4 text-blue-600" />
+                          <span className="font-medium text-blue-700 dark:text-blue-400">
+                              Valor estimado: {updatedCaso.valor_estimado}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <span>{format(casoDate, 'dd/MM/yyyy HH:mm', { locale: es })}</span>
+                <Card className="shadow border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                  <CardHeader>
+                    <CardTitle className="text-base font-semibold text-gray-700 dark:text-gray-200">Estado y Asignación</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Estado actual:</p>
+                        {getStatusBadge(updatedCaso.estado)}
+                    </div>
+                      {updatedCaso.asignaciones_casos && updatedCaso.asignaciones_casos.length > 0 ? (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Asignado a:</p>
+                          {updatedCaso.asignaciones_casos.map((asignacion, idx) => (
+                          <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-md">
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-blue-600" />
+                              <span className="font-medium">
+                                {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
+                              </span>
+                              {asignacion.notas_asignacion && (
+                                <Badge 
+                                  variant="outline" 
+                                  className="ml-2 text-xs bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600"
+                                  title={asignacion.notas_asignacion}
+                                >
+                                  <MessageSquare className="h-3 w-3 mr-1" />
+                                  {asignacion.notas_asignacion.length > 30 
+                                    ? `${asignacion.notas_asignacion.substring(0, 30)}...` 
+                                    : asignacion.notas_asignacion
+                                  }
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(casoDate, { locale: es, addSuffix: true })}
+                              Asignado el {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy', { locale: es })}
                             </p>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span>{updatedCaso.especialidades?.nombre || 'Sin especialidad'}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Sin asignar</span>
                         </div>
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {updatedCaso.tipo_lead && (
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Tipo de lead:</p>
-                            <Badge variant="secondary" className="capitalize">{updatedCaso.tipo_lead}</Badge>
-                          </div>
-                        )}
-                        {updatedCaso.valor_estimado && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Euro className="h-4 w-4 text-blue-600" />
-                            <span className="font-medium text-blue-700 dark:text-blue-400">
-                              Valor estimado: {updatedCaso.valor_estimado}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="shadow border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                    <CardHeader>
-                      <CardTitle className="text-base font-semibold text-gray-700 dark:text-gray-200">Estado y Asignación</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Estado actual:</p>
-                        {getStatusBadge(updatedCaso.estado)}
-                      </div>
-                      {updatedCaso.asignaciones_casos && updatedCaso.asignaciones_casos.length > 0 ? (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-2">Asignado a:</p>
-                          {updatedCaso.asignaciones_casos.map((asignacion, idx) => (
-                            <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-md">
-                              <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-blue-600" />
-                                <span className="font-medium">
-                                  {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
-                                </span>
-                                {asignacion.notas_asignacion && (
-                                  <Badge 
-                                    variant="outline" 
-                                    className="ml-2 text-xs bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600"
-                                    title={asignacion.notas_asignacion}
-                                  >
-                                    <MessageSquare className="h-3 w-3 mr-1" />
-                                    {asignacion.notas_asignacion.length > 30 
-                                      ? `${asignacion.notas_asignacion.substring(0, 30)}...` 
-                                      : asignacion.notas_asignacion
-                                    }
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                Asignado el {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy', { locale: es })}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Sin asignar</span>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
                 <TabsContent value="pagos" className="space-y-4 mt-0">
                   <Card>
@@ -729,297 +733,312 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                 </TabsContent>
 
                 {updatedCaso.guia_abogado && (
-                  <TabsContent value="guia" className="space-y-4 mt-0">
-                    <Card className="shadow-md border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950">
-                      <CardHeader>
-                        <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-200">Guía para el Abogado</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="prose prose-slate bg-white max-w-none dark:prose-invert dark:bg-gray-900 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden h-full">
-                          <ScrollArea className="h-96">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <TabsContent value="guia" className="space-y-4 mt-0">
+                  <Card className="shadow-md border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950">
+                      <CardHeader className="space-y-2">
+                      <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-200">Guía para el Abogado</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="prose prose-slate bg-white max-w-none dark:prose-invert dark:bg-gray-900 p-5 rounded text-sm border border-gray-200 dark:border-gray-700 overflow-hidden h-full">
+                        <ScrollArea className="h-96">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {updatedCaso.guia_abogado}
-                            </ReactMarkdown>
-                          </ScrollArea>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                )}
+                          </ReactMarkdown>
+                        </ScrollArea>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              )}
 
                 <TabsContent value="client" className="space-y-4 mt-0">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Información del Cliente</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Nombre completo:</p>
-                          <p className="text-sm">{clientData.nombre} {clientData.apellido}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Tipo de perfil:</p>
-                          <Badge variant="outline">
-                            {clientData.tipo_perfil === 'empresa' ? (
-                              <>
-                                <Building className="h-3 w-3 mr-1" />
-                                Empresa
-                              </>
-                            ) : (
-                              <>
-                                <User className="h-3 w-3 mr-1" />
-                                Individual
-                              </>
-                            )}
-                          </Badge>
+                <Card>
+                  <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        Información del Cliente
+                        {updatedCaso?.cliente_id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="ml-2 h-7 text-xs"
+                            onClick={() => window.location.href = '/abogados/dashboard/clientes'}
+                            title="Abrir gestión de clientes"
+                          >
+                            Ver perfil
+                          </Button>
+                        )}
+                      </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Nombre completo:</p>
+                        <p className="text-sm">{clientData.nombre} {clientData.apellido}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Tipo de perfil:</p>
+                        <Badge variant="outline">
+                          {clientData.tipo_perfil === 'empresa' ? (
+                            <>
+                              <Building className="h-3 w-3 mr-1" />
+                              Empresa
+                            </>
+                          ) : (
+                            <>
+                              <User className="h-3 w-3 mr-1" />
+                              Individual
+                            </>
+                          )}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Email:</p>
+                        <div className="flex items-center gap-1">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-sm">{clientData.email}</p>
                         </div>
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {clientData.telefono && (
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Email:</p>
+                          <p className="text-sm font-medium text-muted-foreground">Teléfono:</p>
                           <div className="flex items-center gap-1">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <p className="text-sm">{clientData.email}</p>
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-sm">{clientData.telefono}</p>
                           </div>
                         </div>
-                        {clientData.telefono && (
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Teléfono:</p>
-                            <div className="flex items-center gap-1">
-                              <Phone className="h-4 w-4 text-muted-foreground" />
-                              <p className="text-sm">{clientData.telefono}</p>
+                      )}
+                    </div>
+
+                    {clientData.ciudad && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Ciudad:</p>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-sm">{clientData.ciudad}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {clientData.tipo_perfil === 'empresa' && (
+                      <>
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded space-y-2">
+                          {clientData.razon_social && (
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Razón social:</p>
+                              <p className="text-sm font-semibold">{clientData.razon_social}</p>
                             </div>
+                          )}
+                          {clientData.nif_cif && (
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">NIF/CIF:</p>
+                              <p className="text-sm">{clientData.nif_cif}</p>
+                            </div>
+                          )}
+                          {clientData.nombre_gerente && (
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Nombre del gerente:</p>
+                              <p className="text-sm">{clientData.nombre_gerente}</p>
+                            </div>
+                          )}
+                          {clientData.direccion_fiscal && (
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Dirección fiscal:</p>
+                              <p className="text-sm">{clientData.direccion_fiscal}</p>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+                <TabsContent value="chat" className="space-y-4 mt-0">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      {updatedCaso.transcripcion_chat ? (
+                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {JSON.stringify(updatedCaso.transcripcion_chat, null, 2)}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No hay transcripción disponible</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+                <TabsContent value="documents" className="space-y-4 mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-blue-600" />
+                          Documentos del Cliente
+                        </div>
+                        </CardTitle>
+                        <div className="mt-3">
+                        <Button
+                            onClick={() => setIsClientUploadModalOpen(true)}
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                        >
+                          <Upload className="h-3 w-3" />
+                          Subir
+                        </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {loadingClientDocs ? (
+                          <div className="text-center py-4 text-muted-foreground">
+                            <p className="text-sm">Cargando documentos...</p>
+                          </div>
+                        ) : documentosCliente.length > 0 ? (
+                          <div className="space-y-2">
+                            {documentosCliente.map((doc) => (
+                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                                <FileText className="h-4 w-4 text-blue-600" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
+                                    {doc.nombre_archivo}
+                                  </p>
+                                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                                    {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
+                                  </p>
+                                  {doc.descripcion && (
+                                    <p className="text-xs text-blue-600 dark:text-blue-400 truncate">
+                                      {doc.descripcion}
+                                    </p>
+                                  )}
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleViewClientDocument(doc)}
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => downloadClientDocument(doc)}
+                                >
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleDeleteClientDocument(doc.id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No hay documentos del cliente</p>
+                            <p className="text-xs">Puedes subir documentos en nombre del cliente usando el botón de arriba</p>
                           </div>
                         )}
                       </div>
-
-                      {clientData.ciudad && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Ciudad:</p>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <p className="text-sm">{clientData.ciudad}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {clientData.tipo_perfil === 'empresa' && (
-                        <>
-                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded space-y-2">
-                            {clientData.razon_social && (
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">Razón social:</p>
-                                <p className="text-sm font-semibold">{clientData.razon_social}</p>
-                              </div>
-                            )}
-                            {clientData.nif_cif && (
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">NIF/CIF:</p>
-                                <p className="text-sm">{clientData.nif_cif}</p>
-                              </div>
-                            )}
-                            {clientData.nombre_gerente && (
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">Nombre del gerente:</p>
-                                <p className="text-sm">{clientData.nombre_gerente}</p>
-                              </div>
-                            )}
-                            {clientData.direccion_fiscal && (
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">Dirección fiscal:</p>
-                                <p className="text-sm">{clientData.direccion_fiscal}</p>
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
                     </CardContent>
                   </Card>
-                </TabsContent>
 
-                <TabsContent value="chat" className="space-y-4 mt-0">
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
+                      <CardHeader className="space-y-2">
+                        <CardTitle className="text-base">Documentos de Resolución</CardTitle>
+                        <div className="mt-3">
+                        <Button
+                            onClick={() => setIsUploadModalOpen(true)}
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                        >
+                          <Upload className="h-3 w-3" />
+                          Subir
+                        </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                      {updatedCaso.transcripcion_chat ? (
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
-                          {JSON.stringify(updatedCaso.transcripcion_chat, null, 2)}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p>No hay transcripción disponible</p>
-                        </div>
-                      )}
+                      <div className="space-y-2">
+                        {loadingDocs ? (
+                          <div className="text-center py-4 text-muted-foreground">
+                            <p className="text-sm">Cargando documentos...</p>
+                          </div>
+                        ) : documentosResolucion.length > 0 ? (
+                          <div className="space-y-2">
+                            {documentosResolucion.map((doc) => (
+                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                                <FileText className="h-4 w-4 text-green-600" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-green-900 dark:text-green-100 truncate">
+                                    {doc.nombre_archivo}
+                                  </p>
+                                  <p className="text-xs text-green-700 dark:text-green-300">
+                                    {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
+                                  </p>
+                                  {doc.descripcion && (
+                                    <p className="text-xs text-green-600 dark:text-green-400 truncate">
+                                      {doc.descripcion}
+                                    </p>
+                                  )}
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleViewResolutionDocument(doc)}
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => downloadDocument(doc)}
+                                >
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleDeleteDocument(doc.id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No hay documentos de resolución</p>
+                            <p className="text-xs">Puedes subir documentos usando el botón de arriba</p>
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
-                </TabsContent>
+                </div>
+              </TabsContent>
 
-                <TabsContent value="documents" className="space-y-4 mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-blue-600" />
-                            Documentos del Cliente
-                          </div>
-                          <Button
-                            onClick={() => setIsClientUploadModalOpen(true)}
-                            variant="outline"
-                            size="sm"
-                            className="gap-1"
-                          >
-                            <Upload className="h-3 w-3" />
-                            Subir
-                          </Button>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {loadingClientDocs ? (
-                            <div className="text-center py-4 text-muted-foreground">
-                              <p className="text-sm">Cargando documentos...</p>
-                            </div>
-                          ) : documentosCliente.length > 0 ? (
-                            <div className="space-y-2">
-                              {documentosCliente.map((doc) => (
-                                <div key={doc.id} className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                                  <FileText className="h-4 w-4 text-blue-600" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
-                                      {doc.nombre_archivo}
-                                    </p>
-                                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                                      {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
-                                    </p>
-                                    {doc.descripcion && (
-                                      <p className="text-xs text-blue-600 dark:text-blue-400 truncate">
-                                        {doc.descripcion}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => handleViewClientDocument(doc)}
-                                  >
-                                    <Eye className="h-3 w-3" />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => downloadClientDocument(doc)}
-                                  >
-                                    <Download className="h-3 w-3" />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => handleDeleteClientDocument(doc.id)}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="text-center py-8 text-muted-foreground">
-                              <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                              <p className="text-sm">No hay documentos del cliente</p>
-                              <p className="text-xs">Puedes subir documentos en nombre del cliente usando el botón de arriba</p>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base flex items-center justify-between">
-                          Documentos de Resolución
-                          <Button
-                            onClick={() => setIsUploadModalOpen(true)}
-                            variant="outline"
-                            size="sm"
-                            className="gap-1"
-                          >
-                            <Upload className="h-3 w-3" />
-                            Subir
-                          </Button>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {loadingDocs ? (
-                            <div className="text-center py-4 text-muted-foreground">
-                              <p className="text-sm">Cargando documentos...</p>
-                            </div>
-                          ) : documentosResolucion.length > 0 ? (
-                            <div className="space-y-2">
-                              {documentosResolucion.map((doc) => (
-                                <div key={doc.id} className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                                  <FileText className="h-4 w-4 text-green-600" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-green-900 dark:text-green-100 truncate">
-                                      {doc.nombre_archivo}
-                                    </p>
-                                    <p className="text-xs text-green-700 dark:text-green-300">
-                                      {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
-                                    </p>
-                                    {doc.descripcion && (
-                                      <p className="text-xs text-green-600 dark:text-green-400 truncate">
-                                        {doc.descripcion}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => handleViewResolutionDocument(doc)}
-                                  >
-                                    <Eye className="h-3 w-3" />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => downloadDocument(doc)}
-                                  >
-                                    <Download className="h-3 w-3" />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => handleDeleteDocument(doc.id)}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="text-center py-8 text-muted-foreground">
-                              <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                              <p className="text-sm">No hay documentos de resolución</p>
-                              <p className="text-xs">Puedes subir documentos usando el botón de arriba</p>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="notes" className="space-y-4 mt-0">
+              <TabsContent value="notes" className="space-y-4 mt-0">
                   {updatedCaso?.id && <CaseNotesSection casoId={updatedCaso.id} />}
-                </TabsContent>
-              </Tabs>
+              </TabsContent>
+            </Tabs>
             </div>
           </div>
 
@@ -1027,158 +1046,110 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
             <div className="border-t bg-background">
               <Separator />
               <div className="p-4">
-                {/* Layout para desktop: botones en una fila */}
-                <div className="hidden md:flex flex-wrap gap-3 justify-center">
+                {/* Toolbar compacta: desktop con grupos */}
+                <div className="hidden md:flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" onClick={() => setIsEditModalOpen(true)} variant="default" className="rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-sm">
+                      <User className="h-4 w-4 mr-1" /> Editar
+                  </Button>
+                    <Button size="sm" onClick={() => setShowAssignmentModal(true)} variant="default" className="rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm">
+                      <Users className="h-4 w-4 mr-1" /> Asignar
+                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
                   <Button
                     size="sm"
-                    onClick={() => setIsEditModalOpen(true)}
-                    variant="default"
-                    className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md hover:shadow-blue-500/20 dark:shadow-blue-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1 dark:focus:ring-blue-600/40"
-                  >
-                    <User className="h-4 w-4" />
-                    Editar Caso
+                              onClick={() => setShowPaymentModal(true)}
+                              variant="default"
+                              disabled={!updatedCaso?.cliente_id}
+                              className="rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm disabled:opacity-60 disabled:pointer-events-auto"
+                            >
+                              <CreditCard className="h-4 w-4 mr-1" /> Pago
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowAssignmentModal(true)}
-                    variant="default"
-                    className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
-                  >
-                    <Users className="h-4 w-4" />
-                    Asignar Abogado
+                          </span>
+                        </TooltipTrigger>
+                        {!updatedCaso?.cliente_id && (
+                          <TooltipContent>
+                            <div className="flex items-center gap-2">
+                              <span>Vincula el caso a un cliente para solicitar pago</span>
+                              <Button size="sm" variant="outline" className="h-7 px-2 ml-2" onClick={() => setShowLinkClientModal(true)}>Vincular</Button>
+                </div>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" onClick={() => onGenerateResolution(updatedCaso.id)} variant="outline" className="rounded-xl border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300">
+                      <Bot className="h-4 w-4 mr-1" /> IA
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => onGenerateResolution(updatedCaso.id)}
-                    variant="outline"
-                    className="flex items-center gap-2 rounded-xl border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all duration-300"
-                  >
-                    <Bot className="h-4 w-4" />
-                    IA
+                    <Button size="sm" onClick={() => setIsUploadModalOpen(true)} variant="outline" className="rounded-xl">
+                      <Upload className="h-4 w-4 mr-1" /> Documento
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setIsUploadModalOpen(true)}
-                    variant="outline"
-                    className="flex items-center gap-2 rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-all duration-300"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Subir Documento
+                    <Button size="sm" onClick={() => onSendMessage(updatedCaso.id)} variant="outline" className="rounded-xl border-blue-200 dark:border-blue-800">
+                      <MessageSquare className="h-4 w-4 mr-1" /> Mensaje
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => onSendMessage(updatedCaso.id)}
-                    variant="outline"
-                    className="flex items-center gap-2 rounded-xl border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all duration-300"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    Enviar Mensaje
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowPaymentModal(true)}
-                    variant="default"
-                    className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    Solicitar Pago
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowConvertToClientModal(true)}
-                    variant="outline"
-                    className="flex items-center gap-2 rounded-xl border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all duration-300"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Convertir en Cliente
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleCerrarCaso}
-                    variant="destructive"
-                    disabled={isClosingCase}
-                    className="flex items-center gap-2"
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                    {isClosingCase ? 'Cerrando...' : 'Cerrar Caso'}
-                  </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="outline" className="rounded-xl">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-60 p-1 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 shadow-lg">
+                        {!updatedCaso?.cliente_id && (
+                          <DropdownMenuItem onClick={() => setShowLinkClientModal(true)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200">
+                            <Plus className="h-4 w-4 mr-1 text-blue-600" /> Vincular/Convertir Cliente
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={handleCerrarCaso} disabled={isClosingCase} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-rose-50 hover:text-rose-900 dark:hover:bg-rose-900/30 dark:hover:text-rose-200 data-[highlighted]:bg-rose-50 data-[highlighted]:text-rose-900 dark:data-[highlighted]:bg-rose-900/30 dark:data-[highlighted]:text-rose-200">
+                          <CheckCircle className="h-4 w-4 mr-1 text-rose-600" /> {isClosingCase ? 'Cerrando...' : 'Cerrar Caso'}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
                 
-                {/* Layout para mobile: botones en grid compacto */}
-                <div className="grid grid-cols-3 gap-2 md:hidden">
-                  <Button
-                    size="sm"
-                    onClick={() => setIsEditModalOpen(true)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
-                  >
-                    <User className="h-4 w-4" />
-                    <span className="text-xs">Editar</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowAssignmentModal(true)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
-                  >
-                    <Users className="h-4 w-4" />
-                    <span className="text-xs">Asignar</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => onGenerateResolution(updatedCaso.id)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
-                  >
-                    <Bot className="h-4 w-4" />
-                    <span className="text-xs">IA</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setIsUploadModalOpen(true)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
-                  >
-                    <Upload className="h-4 w-4" />
-                    <span className="text-xs">Subir Doc</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => onSendMessage(updatedCaso.id)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    <span className="text-xs">Mensaje</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowPaymentModal(true)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    <span className="text-xs">Pago</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowConvertToClientModal(true)}
-                    variant="outline"
-                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span className="text-xs">Cliente</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleCerrarCaso}
-                    variant="destructive"
-                    disabled={isClosingCase}
-                    className="flex flex-col items-center gap-1 h-auto py-2 px-1 col-span-2"
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                    <span className="text-xs">{isClosingCase ? 'Cerrando...' : 'Cerrar Caso'}</span>
-                  </Button>
+                {/* Móvil: 2 primarias + menú Más */}
+                <div className="md:hidden flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" onClick={() => setIsEditModalOpen(true)} className="rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-sm">
+                      <User className="h-4 w-4 mr-1" /> Editar
+                    </Button>
+                    <Button size="sm" onClick={() => setShowAssignmentModal(true)} className="rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm">
+                      <Users className="h-4 w-4 mr-1" /> Asignar
+                    </Button>
+                    <Button size="sm" onClick={() => setShowPaymentModal(true)} disabled={!updatedCaso?.cliente_id} className="rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm disabled:opacity-60 disabled:pointer-events-none">
+                      <CreditCard className="h-4 w-4 mr-1" /> Pago
+                    </Button>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="outline" className="rounded-xl">
+                        <MoreHorizontal className="h-4 w-4 mr-1" /> Más
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-60 p-1 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 shadow-lg">
+                      <DropdownMenuItem onClick={() => onGenerateResolution(updatedCaso.id)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200">
+                        <Bot className="h-4 w-4 mr-1 text-purple-600" /> Generar con IA
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setIsUploadModalOpen(true)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200">
+                        <Upload className="h-4 w-4 mr-1 text-blue-600" /> Subir Documento
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onSendMessage(updatedCaso.id)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200">
+                        <MessageSquare className="h-4 w-4 mr-1 text-emerald-600" /> Enviar Mensaje
+                      </DropdownMenuItem>
+                      {!updatedCaso?.cliente_id && (
+                        <DropdownMenuItem onClick={() => setShowLinkClientModal(true)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200">
+                          <Plus className="h-4 w-4 mr-1 text-indigo-600" /> Vincular/Convertir Cliente
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={handleCerrarCaso} disabled={isClosingCase} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-rose-50 hover:text-rose-900 dark:hover:bg-rose-900/30 dark:hover:text-rose-200 data-[highlighted]:bg-rose-50 data-[highlighted]:text-rose-900 dark:data-[highlighted]:bg-rose-900/30 dark:data-[highlighted]:text-rose-200">
+                        <CheckCircle className="h-4 w-4 mr-1 text-rose-600" /> {isClosingCase ? 'Cerrando...' : 'Cerrar Caso'}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>
@@ -1186,6 +1157,39 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
         </DialogContent>
       </Dialog>
 
+      {/* Modal Vincular Cliente */}
+      <Dialog open={showLinkClientModal} onOpenChange={setShowLinkClientModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Vincular cliente al caso</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">Opciones:</p>
+            <div className="space-y-2">
+                  <Button
+                    variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setShowLinkClientModal(false);
+                  toast({ title: 'Pendiente', description: 'Implementar búsqueda por email y asignación de cliente.' });
+                }}
+                  >
+                Buscar y vincular por email existente
+                  </Button>
+                  <Button
+                    variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setShowLinkClientModal(false);
+                  toast({ title: 'Pendiente', description: 'Enviar invitación al email del borrador para que complete el registro.' });
+                }}
+                  >
+                Enviar invitación al email borrador
+                  </Button>
+                </div>
+                </div>
+        </DialogContent>
+      </Dialog>
       {/* Modal Solicitar Pago (Cobro Ad-hoc) */}
       <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
         <DialogContent className="sm:max-w-md">
@@ -1196,7 +1200,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
             <div className="space-y-2">
               <Label htmlFor="concepto">Concepto</Label>
               <Input id="concepto" value={chargeConcept} onChange={(e) => setChargeConcept(e.target.value)} placeholder="Ej. Honorarios adicionales" />
-            </div>
+              </div>
             <div className="space-y-2">
               <Label htmlFor="monto">Importe base (EUR)</Label>
               <Input id="monto" type="number" inputMode="decimal" step="0.01" min="0.01" value={chargeAmount} onChange={(e) => setChargeAmount(e.target.value)} placeholder="0.00" />
