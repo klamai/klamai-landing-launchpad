@@ -465,7 +465,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className={`max-w-5xl w-full h-[95vh] flex flex-col p-0 ${
+        <DialogContent className={`max-w-5xl w-full h-[90vh] md:h-[95vh] flex flex-col p-0 ${
           updatedCaso.estado === 'asignado' ? 'border-2 border-green-200 dark:border-green-700' : ''
         }`}>
           <DialogHeader className={`px-6 py-4 flex-shrink-0 ${
@@ -484,7 +484,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 320px)' }}>
+          <div className="flex-1 min-h-0 overflow-hidden" style={{ height: 'calc(90vh - 280px) md:calc(95vh - 320px)' }}>
             <div className="h-full overflow-y-auto px-6 py-4">
               <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
                 {/* Contenedor de tabs con scroll horizontal */}
@@ -512,14 +512,14 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                           <TabsTrigger value="overview" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
                             <FileText className="h-3 w-3" /> Resumen
                           </TabsTrigger>
-                          <TabsTrigger value="pagos" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
-                            <Euro className="h-3 w-3" /> Pagos
-                          </TabsTrigger>
                           {updatedCaso.guia_abogado && (
                             <TabsTrigger value="guia" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[120px] max-w-[140px] md:flex-none md:min-w-[140px] md:max-w-[160px] flex-shrink-0 whitespace-nowrap text-xs">
                               <ShieldCheck className="h-3 w-3" /> Guía Abog
                             </TabsTrigger>
                           )}
+                          <TabsTrigger value="pagos" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
+                            <Euro className="h-3 w-3" /> Pagos
+                          </TabsTrigger>
                           <TabsTrigger value="client" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
                             <User className="h-3 w-3" /> Cliente
                           </TabsTrigger>
@@ -1027,7 +1027,8 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
             <div className="border-t bg-background">
               <Separator />
               <div className="p-4">
-                <div className="flex flex-wrap gap-3 justify-center">
+                {/* Layout para desktop: botones en una fila */}
+                <div className="hidden md:flex flex-wrap gap-3 justify-center">
                   <Button
                     size="sm"
                     onClick={() => setIsEditModalOpen(true)}
@@ -1046,9 +1047,9 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     <Users className="h-4 w-4" />
                     Asignar Abogado
                   </Button>
-                  <Button 
+                  <Button
                     size="sm"
-                    onClick={() => onGenerateResolution(updatedCaso.id)} 
+                    onClick={() => onGenerateResolution(updatedCaso.id)}
                     variant="outline"
                     className="flex items-center gap-2"
                   >
@@ -1100,6 +1101,83 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   >
                     <CheckCircle className="h-4 w-4" />
                     {isClosingCase ? 'Cerrando...' : 'Cerrar Caso'}
+                  </Button>
+                </div>
+                
+                {/* Layout para mobile: botones en grid compacto */}
+                <div className="grid grid-cols-3 gap-2 md:hidden">
+                  <Button
+                    size="sm"
+                    onClick={() => setIsEditModalOpen(true)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
+                  >
+                    <User className="h-4 w-4" />
+                    <span className="text-xs">Editar</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowAssignmentModal(true)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
+                  >
+                    <Users className="h-4 w-4" />
+                    <span className="text-xs">Asignar</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => onGenerateResolution(updatedCaso.id)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
+                  >
+                    <Bot className="h-4 w-4" />
+                    <span className="text-xs">IA</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setIsUploadModalOpen(true)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span className="text-xs">Subir Doc</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => onSendMessage(updatedCaso.id)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    <span className="text-xs">Mensaje</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowPaymentModal(true)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    <span className="text-xs">Pago</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowConvertToClientModal(true)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 h-auto py-2 px-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="text-xs">Cliente</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleCerrarCaso}
+                    variant="destructive"
+                    disabled={isClosingCase}
+                    className="flex flex-col items-center gap-1 h-auto py-2 px-1 col-span-2"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="text-xs">{isClosingCase ? 'Cerrando...' : 'Cerrar Caso'}</span>
                   </Button>
                 </div>
               </div>
@@ -1212,11 +1290,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
       <CaseAssignmentModal
         isOpen={showAssignmentModal}
         onClose={() => setShowAssignmentModal(false)}
-        casoId={updatedCaso?.id || ''}
-        onSuccess={() => {
-          setShowAssignmentModal(false);
-          // Refetch data
-        }}
+        caso={updatedCaso}
       />
     </>
   );
