@@ -155,7 +155,7 @@ const RegularLawyerDashboard = () => {
         <SidebarDashboard open={open} setOpen={setOpen}>
           <SidebarBody className="justify-between gap-10 ">
             <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-              {open ? <Logo /> : <LogoIcon />}
+              {open ? <Logo userType="lawyer" /> : <LogoIcon userType="lawyer" />}
               <div className="mt-8 flex flex-col gap-2 ">
                 {links.map((link, idx) => (
                   <SidebarLink 

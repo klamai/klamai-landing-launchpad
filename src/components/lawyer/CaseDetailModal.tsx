@@ -462,7 +462,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-5xl w-full h-[95vh] flex flex-col p-0">
+        <DialogContent className="max-w-5xl w-full h-[90vh] md:h-[95vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -471,7 +471,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 320px)' }}>
+          <div className="flex-1 min-h-0 overflow-hidden" style={{ height: 'calc(90vh - 280px) md:calc(95vh - 320px)' }}>
             <div className="h-full overflow-y-auto px-6 py-4">
               <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
                 {/* Contenedor de tabs con scroll horizontal */}
@@ -499,14 +499,14 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                           <TabsTrigger value="overview" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
                             <FileText className="h-3 w-3" /> Resumen
                           </TabsTrigger>
-                          <TabsTrigger value="pagos" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
-                            <Euro className="h-3 w-3" /> Pagos
-                          </TabsTrigger>
                           {caso.guia_abogado && (
                             <TabsTrigger value="guia" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[120px] max-w-[140px] md:flex-none md:min-w-[140px] md:max-w-[160px] flex-shrink-0 whitespace-nowrap text-xs">
                               <ShieldCheck className="h-3 w-3" /> Guía Abog
                             </TabsTrigger>
                           )}
+                          <TabsTrigger value="pagos" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
+                            <Euro className="h-3 w-3" /> Pagos
+                          </TabsTrigger>
                           <TabsTrigger value="client" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[80px] max-w-[100px] md:flex-none md:min-w-[100px] md:max-w-[120px] flex-shrink-0 whitespace-nowrap text-xs">
                             <User className="h-3 w-3" /> Cliente
                           </TabsTrigger>
@@ -1024,8 +1024,9 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
           {caso.estado !== 'cerrado' && (
             <div className="border-t bg-background">
               <Separator />
-              <div className="p-4">
-                <div className="flex flex-wrap gap-3 justify-center">
+              <div className="p-2 md:p-4">
+                {/* Para desktop: mostrar todos los botones */}
+                <div className="hidden md:flex flex-wrap gap-3 justify-center">
                   <Button
                     size="sm"
                     onClick={() => setShowEditModal(true)}
@@ -1035,9 +1036,9 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                     <User className="h-4 w-4" />
                     Editar Caso
                   </Button>
-                  <Button 
+                  <Button
                     size="sm"
-                    onClick={() => onGenerateResolution(caso.id)} 
+                    onClick={() => onGenerateResolution(caso.id)}
                     variant="outline"
                     className="flex items-center gap-2"
                   >
@@ -1081,6 +1082,67 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                     >
                       <ShieldCheck className="h-4 w-4" />
                       {isClosing ? 'Cerrando...' : 'Cerrar Caso'}
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Para móvil: mostrar un grid de botones más compactos */}
+                <div className="md:hidden grid grid-cols-3 gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => setShowEditModal(true)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 p-2 h-auto"
+                  >
+                    <User className="h-4 w-4" />
+                    <span className="text-xs">Editar</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => onGenerateResolution(caso.id)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 p-2 h-auto"
+                  >
+                    <Bot className="h-4 w-4" />
+                    <span className="text-xs">IA</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowUploadModal(true)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 p-2 h-auto"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span className="text-xs">Docs</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => onSendMessage(caso.id)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 p-2 h-auto"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    <span className="text-xs">Mensaje</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowChargeModal(true)}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1 p-2 h-auto"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    <span className="text-xs">Pago</span>
+                  </Button>
+                  {canCloseCase() && (
+                    <Button
+                      size="sm"
+                      onClick={handleCerrarCaso}
+                      variant="destructive"
+                      disabled={isClosing}
+                      className="flex flex-col items-center gap-1 p-2 h-auto"
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                      <span className="text-xs">{isClosing ? 'Cerrando' : 'Cerrar'}</span>
                     </Button>
                   )}
                 </div>

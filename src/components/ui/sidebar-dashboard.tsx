@@ -258,24 +258,31 @@ export const SidebarLink = ({
   );
 };
 
-export const Logo = () => {
+export const Logo = ({ userType }: { userType?: 'admin' | 'lawyer' | 'client' }) => {
   return (
     <Link
-      to="/abogados/dashboard"
-      className="font-normal flex space-x-2 items-center text-sm text-white py-1 relative z-20"
+      to={userType === 'client' ? "/dashboard" : "/abogados/dashboard"}
+      className="font-normal flex flex-col items-center text-sm text-white py-1 relative z-20"
     >
-      <img src="/logo2.svg" alt="klamAI Logo" className="h-8" />      
+      <img src="/logo2.svg" alt="klamAI Logo" className="h-8" />
+      {userType && (
+        <span className="text-xs mt-1 capitalize">
+          {userType === 'admin' && 'Administración'}
+          {userType === 'lawyer' && 'Abogados'}
+          {userType === 'client' && 'Clientes'}
+        </span>
+      )}
     </Link>
   );
 };
 
-export const LogoIcon = () => {
+export const LogoIcon = ({ userType }: { userType?: 'admin' | 'lawyer' | 'client' }) => {
   return (
     <Link
-      to="/abogados/dashboard"
+      to={userType === 'client' ? "/dashboard" : "/abogados/dashboard"}
       className="font-normal flex space-x-2 items-center text-sm text-white py-1 relative z-20"
     >
-      <img src="/logo.svg" alt="klamAI Logo" className="h-8" />      
-      </Link>
+      <img src="/logo.svg" alt="klamAI Logo" className="h-8" />
+    </Link>
   );
 };
