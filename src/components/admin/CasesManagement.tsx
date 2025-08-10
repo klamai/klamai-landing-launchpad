@@ -708,20 +708,20 @@ const AdminCasesManagement = () => {
                       <TableCell className="py-4">
                         <div className="flex items-center gap-2">
                           <Button
-                            variant="outline"
+                            variant="default"
                             size="sm"
                             onClick={() => handleViewDetails(caso.id)}
-                            className="h-9 px-3 text-sm font-medium border-2 hover:bg-blue-50 hover:border-blue-300 transition-colors duration-200"
+                            className="h-9 px-3 text-sm font-semibold rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md hover:shadow-blue-500/20 dark:shadow-blue-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1 dark:focus:ring-blue-600/40"
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Ver
                           </Button>
                           <Button
-                            variant="outline"
+                            variant="default"
                             size="sm"
                             onClick={() => handleAssignLawyer(caso.id)}
                             disabled={caso.estado === 'cerrado'}
-                            className="h-9 px-3 text-sm font-medium border-2 hover:bg-blue-50 hover:border-blue-300 transition-colors duration-200"
+                            className="h-9 px-3 text-sm font-semibold rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white disabled:opacity-60 disabled:pointer-events-none shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
                           >
                             <UserPlus className="h-4 w-4 mr-1" />
                             Asignar

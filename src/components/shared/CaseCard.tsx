@@ -378,10 +378,10 @@ const CaseCard: React.FC<CaseCardProps> = ({
         <div className="p-3 pt-0">
           <div className="flex flex-wrap gap-2">
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={() => onViewDetails(caso.id)}
-              className="flex-1 min-w-0 h-9 text-xs font-semibold rounded-xl bg-white dark:bg-gray-800/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-800 dark:hover:text-blue-200 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-blue-500/10 dark:hover:shadow-blue-900/10 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1 dark:focus:ring-blue-600/40"
+              className="flex items-center gap-2 flex-1 min-w-0 h-9 text-xs font-semibold rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md hover:shadow-blue-500/20 dark:shadow-blue-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1 dark:focus:ring-blue-600/40"
             >
               <Eye className="h-4 w-4 mr-1 flex-shrink-0" />
               <span className="truncate">Ver</span>
@@ -390,10 +390,10 @@ const CaseCard: React.FC<CaseCardProps> = ({
               <>
                 {!hideAssignButton && (
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="sm"
                     onClick={() => onAssignLawyer(caso.id)}
-                    className="flex-1 min-w-0 h-9 text-xs font-semibold rounded-xl bg-white dark:bg-gray-800/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-800 dark:hover:text-emerald-200 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-emerald-500/10 dark:hover:shadow-emerald-900/10 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
+                    className="flex items-center gap-2 flex-1 min-w-0 h-9 text-xs font-semibold rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
                   >
                     <UserPlus className="h-4 w-4 mr-1 flex-shrink-0" />
                     <span className="truncate">Asignar</span>

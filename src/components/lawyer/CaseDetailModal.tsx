@@ -1030,8 +1030,8 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                   <Button
                     size="sm"
                     onClick={() => setShowEditModal(true)}
-                    variant="outline"
-                    className="flex items-center gap-2"
+                    variant="default"
+                    className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md hover:shadow-blue-500/20 dark:shadow-blue-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1 dark:focus:ring-blue-600/40"
                   >
                     <User className="h-4 w-4" />
                     Editar Caso
@@ -1040,7 +1040,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                     size="sm"
                     onClick={() => onGenerateResolution(caso.id)}
                     variant="outline"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-xl border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all duration-300"
                   >
                     <Bot className="h-4 w-4" />
                     IA
@@ -1049,7 +1049,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                     size="sm"
                     onClick={() => setShowUploadModal(true)}
                     variant="outline"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-all duration-300"
                   >
                     <Upload className="h-4 w-4" />
                     Subir Documento
@@ -1058,7 +1058,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                     size="sm"
                     onClick={() => onSendMessage(caso.id)}
                     variant="outline"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-xl border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all duration-300"
                   >
                     <MessageSquare className="h-4 w-4" />
                     Enviar Mensaje
@@ -1066,8 +1066,8 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                   <Button
                     size="sm"
                     onClick={() => setShowChargeModal(true)}
-                    variant="outline"
-                    className="flex items-center gap-2"
+                    variant="default"
+                    className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
                   >
                     <CreditCard className="h-4 w-4" />
                     Solicitar Pago
