@@ -386,6 +386,7 @@ const AssignedCasesManagement = () => {
               hideAssignButton={true}
               showProminentNotes={true}
               hideAssignmentStyling={true}
+              forceAvailableHighlight={caso.estado !== 'cerrado'}
             />
           ))}
         </div>

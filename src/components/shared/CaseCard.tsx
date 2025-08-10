@@ -111,6 +111,7 @@ interface CaseCardProps {
   hideAssignButton?: boolean;
   showProminentNotes?: boolean; // Nueva prop para controlar la visualización prominente de notas
   hideAssignmentStyling?: boolean; // Nueva prop para ocultar bordes y sellos verdes de asignación
+  forceAvailableHighlight?: boolean; // Forzar highlight estático (uso: abogado regular)
 }
 
 const CaseCard: React.FC<CaseCardProps> = ({
@@ -123,7 +124,8 @@ const CaseCard: React.FC<CaseCardProps> = ({
   onSendMessage,
   hideAssignButton = false,
   showProminentNotes = false,
-  hideAssignmentStyling = false
+  hideAssignmentStyling = false,
+  forceAvailableHighlight = false
 }) => {
   const spainTimeZone = 'Europe/Madrid';
   const casoDate = toZonedTime(new Date(caso.created_at), spainTimeZone);
@@ -245,7 +247,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
           ${caso.estado === 'asignado' && !hideAssignmentStyling 
             ? 'shadow-md dark:shadow-stone-900/10 before:absolute before:inset-0 before:rounded-xl before:p-[1.5px] before:bg-gradient-to-r before:from-stone-300 before:via-stone-400 before:to-stone-300 dark:before:from-stone-800/60 dark:before:via-stone-700/60 dark:before:to-stone-800/60 before:opacity-70 before:-z-10' 
             : `shadow-md dark:shadow-blue-900/10 hover:shadow-lg dark:hover:shadow-blue-800/20 before:absolute before:inset-0 before:rounded-xl before:p-[1.5px] 
-               ${(caso.estado === 'disponible' || (caso.fecha_pago && caso.cliente_id))
+               ${((caso.estado === 'disponible' && !!caso.cliente_id && !!caso.fecha_pago) || forceAvailableHighlight)
                 ? 'before:bg-gradient-to-r before:from-blue-200/0 before:via-blue-300/50 before:to-blue-200/0 dark:before:from-blue-800/0 dark:before:via-blue-700/30 dark:before:to-blue-800/0 before:opacity-100'
                 : 'before:bg-gradient-to-r before:from-blue-200/0 before:via-blue-300/50 before:to-blue-200/0 dark:before:from-blue-800/0 dark:before:via-blue-700/30 dark:before:to-blue-800/0 before:opacity-0 group-hover:before:opacity-100'} 
                before:transition-opacity before:duration-300 before:-z-10`}
