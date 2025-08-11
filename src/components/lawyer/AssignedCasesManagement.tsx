@@ -108,6 +108,7 @@ const AssignedCasesManagement = () => {
   const filteredCases = (cases || []).filter(caso => {
     const matchesSearch = !searchTerm || 
       caso.motivo_consulta?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      caso.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       caso.nombre_borrador?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       caso.apellido_borrador?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       caso.email_borrador?.toLowerCase().includes(searchTerm.toLowerCase());

@@ -326,6 +326,7 @@ const AdminCasesManagement = () => {
     };
 
     const matchesSearch = caso.motivo_consulta?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         caso.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          clientData.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          clientData.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          clientData.email.toLowerCase().includes(searchTerm.toLowerCase());

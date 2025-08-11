@@ -279,6 +279,33 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
+  const getPaymentStatusLabel = (estado: string) => {
+    const map: Record<string, string> = {
+      succeeded: 'Hecho',
+      paid: 'Hecho',
+      processing: 'Procesando',
+      pending: 'Pendiente',
+      requires_action: 'Requiere acción',
+      requires_payment_method: 'Requiere método de pago',
+      failed: 'Fallido',
+      canceled: 'Cancelado',
+      refunded: 'Reembolsado',
+    };
+    return map[estado] || estado;
+  };
+
+  const computePagoAmount = (pago: any) => {
+    return typeof pago.monto_total === 'number' ? pago.monto_total : Number(pago.monto_total || pago.monto || 0);
+  };
+
+  const computePagoNeto = (pago: any) => {
+    const amount = computePagoAmount(pago);
+    const comision = pago.comision != null ? Number(pago.comision) : null;
+    if (pago.monto_neto != null) return Number(pago.monto_neto);
+    if (pago.estado === 'succeeded' && comision != null) return Number(amount) - comision;
+    return 0;
+  };
+
   const handleViewClientDocument = async (doc: any) => {
     const signedUrl = await getClientSignedUrl(doc);
     if (signedUrl) {
@@ -692,7 +719,8 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     </CardHeader>
                     <CardContent>
                       {pagos.length > 0 ? (
-                        <Table>
+                        <div className="overflow-x-auto">
+                        <Table className="min-w-[700px]">
                           <TableHeader>
                             <TableRow>
                               <TableHead>Fecha</TableHead>
@@ -700,12 +728,12 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                               <TableHead>Importe</TableHead>
                               <TableHead>Estado</TableHead>
                               <TableHead>Solicitante</TableHead>
-                              <TableHead>Comisión</TableHead>
+                  <TableHead>Gestión Klamai</TableHead>
                               <TableHead>Neto</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {pagos.map((pago) => {
+                          {pagos.map((pago) => {
                               const amount = typeof pago.monto_total === 'number' ? pago.monto_total : Number(pago.monto_total || pago.monto || 0);
                               return (
                                 <TableRow key={pago.id}>
@@ -713,18 +741,25 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                                   <TableCell>{pago.concepto || pago.descripcion || '—'}</TableCell>
                                   <TableCell>€{amount.toFixed(2)}</TableCell>
                                   <TableCell>
-                                    <Badge variant={pago.estado === 'succeeded' ? 'default' : pago.estado === 'failed' ? 'destructive' : 'secondary'}>
-                                      {pago.estado}
+                                  <Badge variant={pago.estado === 'succeeded' ? 'default' : pago.estado === 'failed' ? 'destructive' : 'secondary'}>
+                                      {getPaymentStatusLabel(pago.estado)}
                                     </Badge>
                                   </TableCell>
                                   <TableCell>{pago.solicitante_rol || '—'}</TableCell>
                                   <TableCell>{pago.comision ? `€${Number(pago.comision).toFixed(2)}` : '€0.00'}</TableCell>
-                                  <TableCell>{pago.monto_neto ? `€${Number(pago.monto_neto).toFixed(2)}` : (pago.estado === 'succeeded' && pago.comision != null ? `€${(Number(amount) - Number(pago.comision)).toFixed(2)}` : '—')}</TableCell>
+                                <TableCell>{(() => { const neto = computePagoNeto(pago); return neto > 0 ? `€${neto.toFixed(2)}` : '—'; })()}</TableCell>
                                 </TableRow>
                               );
                             })}
                           </TableBody>
                         </Table>
+                        {/* Total Neto */}
+                        <div className="flex justify-end mt-3 pr-2">
+                          <div className="text-sm font-semibold">
+                            Total Neto: €{pagos.reduce((acc, p) => acc + computePagoNeto(p), 0).toFixed(2)}
+                          </div>
+                        </div>
+                        </div>
                       ) : (
                         <div className="text-sm text-muted-foreground">No hay pagos registrados</div>
                       )}
@@ -1247,6 +1282,16 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   });
                   if (error) throw new Error(error.message);
                   toast({ title: 'Cobro solicitado', description: 'Se ha creado el cobro y aparecerá en Pagos del cliente.' });
+                  // Refrescar sección de pagos inmediatamente
+                  try {
+                    const session2 = await supabase.auth.getSession();
+                    const token2 = session2.data.session?.access_token;
+                    const { data: pagosData } = await supabase.functions.invoke('listar-pagos-caso', {
+                      body: { caso_id: updatedCaso.id },
+                      headers: token2 ? { Authorization: `Bearer ${token2}` } : undefined,
+                    });
+                    setPagos(pagosData?.pagos || []);
+                  } catch {}
                   setShowPaymentModal(false);
                   setChargeConcept(''); setChargeAmount(''); setChargeExencion('none');
                 } catch (e: any) {

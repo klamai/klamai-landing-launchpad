@@ -318,6 +318,9 @@ const CaseCard: React.FC<CaseCardProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 bg-gray-50/80 dark:bg-gray-800/50 px-2 py-1 rounded-full backdrop-blur-sm">
+                <span className="font-mono tracking-tight">#{caso.id.substring(0,8)}</span>
+              </div>
+              <div className="flex items-center gap-1 bg-gray-50/80 dark:bg-gray-800/50 px-2 py-1 rounded-full backdrop-blur-sm">
                 <Clock className="h-3 w-3 text-amber-500 dark:text-amber-400" />
                 <span>Hace {formatDistanceToNow(casoDate, { locale: es, addSuffix: false }).replace('hace ', '').replace('alrededor de ', '')}</span>
               </div>

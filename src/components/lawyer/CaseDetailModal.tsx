@@ -59,6 +59,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAssignedCases } from '@/hooks/queries/useAssignedCases';
 
 interface LawyerCaseDetailModalProps {
   caso: {
@@ -145,6 +147,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
   const [chargeConcept, setChargeConcept] = useState('');
   const [chargeAmount, setChargeAmount] = useState('');
   const [chargeExencion, setChargeExencion] = useState<'none' | 'b2b_ue' | 'fuera_ue' | 'suplido' | 'ajg'>('none');
+  const queryClient = useQueryClient();
 
   const { 
     documentosResolucion, 
@@ -190,20 +193,21 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
     };
   }, [isOpen]); // Agregar isOpen como dependencia para que se ejecute cuando el modal se abre
 
-  // Cargar pagos del caso (lectura)
-  useEffect(() => {
-    const loadPagos = async () => {
-      if (!caso?.id) return;
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
-      const { data, error } = await supabase.functions.invoke('listar-pagos-caso', {
-        body: { caso_id: caso.id },
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-      if (!error) setPagos(data?.pagos || []);
-    };
-    loadPagos();
+  // Cargar pagos del caso (lectura) + función para refetch tras crear cobro
+  const fetchPagos = React.useCallback(async () => {
+    if (!caso?.id) return;
+    const session = await supabase.auth.getSession();
+    const token = session.data.session?.access_token;
+    const { data, error } = await supabase.functions.invoke('listar-pagos-caso', {
+      body: { caso_id: caso.id },
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!error) setPagos(data?.pagos || []);
   }, [caso?.id]);
+
+  useEffect(() => {
+    fetchPagos();
+  }, [fetchPagos]);
 
   // Verificar rol y tipo de abogado
   const fetchUserRole = async () => {
@@ -254,11 +258,17 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
     }
   }, [caso, user, userRole, lawyerType, onClose, toast]);
 
+  // Tomar versión actualizada del caso desde React Query (siempre, sin condicionales)
+  const { data: assignedCases } = useAssignedCases();
+
+  // Mantener orden de hooks estable: llamar hooks arriba y luego hacer returns
   if (!caso) return null;
+
+  const displayCaso = (assignedCases || []).find((c: any) => c.id === caso.id) || caso;
 
   // Convertir a zona horaria de España
   const spainTimeZone = 'Europe/Madrid';
-  const casoDate = toZonedTime(new Date(caso.created_at), spainTimeZone);
+  const casoDate = toZonedTime(new Date(displayCaso.created_at), spainTimeZone);
 
   const getStatusBadge = (estado: string) => {
     const statusConfig = {
@@ -282,6 +292,33 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
     
     const config = statusConfig[estado as keyof typeof statusConfig] || statusConfig.disponible;
     return <Badge className={config.className}>{config.label}</Badge>;
+  };
+
+  const getPaymentStatusLabel = (estado: string) => {
+    const map: Record<string, string> = {
+      succeeded: 'Hecho',
+      paid: 'Hecho',
+      processing: 'Procesando',
+      pending: 'Pendiente',
+      requires_action: 'Requiere acción',
+      requires_payment_method: 'Requiere método de pago',
+      failed: 'Fallido',
+      canceled: 'Cancelado',
+      refunded: 'Reembolsado',
+    };
+    return map[estado] || estado;
+  };
+
+  const computePagoAmount = (pago: any) => {
+    return typeof pago.monto_total === 'number' ? pago.monto_total : Number(pago.monto_total || pago.monto || 0);
+  };
+
+  const computePagoNeto = (pago: any) => {
+    const amount = computePagoAmount(pago);
+    const comision = pago.comision != null ? Number(pago.comision) : null;
+    if (pago.monto_neto != null) return Number(pago.monto_neto);
+    if (pago.estado === 'succeeded' && comision != null) return Number(amount) - comision;
+    return 0;
   };
 
   const handleViewClientDocument = async (doc: any) => {
@@ -407,8 +444,10 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
     }
   };
 
-  const handleEditSuccess = () => {
-    window.location.reload();
+  const handleEditSuccess = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['assignedCases', user?.id] });
+    setShowEditModal(false);
+    fetchPagos();
   };
 
   // Determinar si el usuario puede cerrar el caso
@@ -450,16 +489,16 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
   };
 
   const clientData = {
-    nombre: caso.nombre_borrador || '',
-    apellido: caso.apellido_borrador || '',
-    email: caso.email_borrador || '',
-    telefono: caso.telefono_borrador || '',
-    ciudad: caso.ciudad_borrador || '',
-    tipo_perfil: caso.tipo_perfil_borrador || 'individual',
-    razon_social: caso.razon_social_borrador || '',
-    nif_cif: caso.nif_cif_borrador || '',
-    nombre_gerente: caso.nombre_gerente_borrador || '',
-    direccion_fiscal: caso.direccion_fiscal_borrador || ''
+    nombre: displayCaso.nombre_borrador || '',
+    apellido: displayCaso.apellido_borrador || '',
+    email: displayCaso.email_borrador || '',
+    telefono: displayCaso.telefono_borrador || '',
+    ciudad: displayCaso.ciudad_borrador || '',
+    tipo_perfil: displayCaso.tipo_perfil_borrador || 'individual',
+    razon_social: displayCaso.razon_social_borrador || '',
+    nif_cif: displayCaso.nif_cif_borrador || '',
+    nombre_gerente: displayCaso.nombre_gerente_borrador || '',
+    direccion_fiscal: displayCaso.direccion_fiscal_borrador || ''
   };
 
   return (
@@ -467,11 +506,11 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-5xl w-full h-[90vh] md:h-[95vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 flex-shrink-0">
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Detalle del Caso #{caso.id.substring(0, 8)}
-              {getStatusBadge(caso.estado)}
-            </DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Detalle del Caso #{displayCaso.id.substring(0, 8)}
+                {getStatusBadge(displayCaso.estado)}
+              </DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 min-h-0 overflow-hidden" style={{ height: 'calc(90vh - 280px) md:calc(95vh - 320px)' }}>
@@ -570,14 +609,14 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {caso.resumen_caso && (
+                      {displayCaso.resumen_caso && (
                         <div>
                           <p className="text-sm font-medium text-muted-foreground mb-2">Resumen del caso:</p>
                           <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                             <ScrollArea className="h-96">
                               <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                  {caso.resumen_caso}
+                                  {displayCaso.resumen_caso}
                                 </ReactMarkdown>
                               </div>
                             </ScrollArea>
@@ -597,22 +636,22 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                         </div>
                         <div className="flex items-center gap-1">
                           <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span>{caso.especialidades?.nombre || 'Sin especialidad'}</span>
+                          <span>{displayCaso.especialidades?.nombre || 'Sin especialidad'}</span>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {caso.tipo_lead && (
+                         {displayCaso.tipo_lead && (
                           <div>
                             <p className="text-sm font-medium text-muted-foreground">Tipo de lead:</p>
-                            <Badge variant="secondary" className="capitalize">{caso.tipo_lead}</Badge>
+                             <Badge variant="secondary" className="capitalize">{displayCaso.tipo_lead}</Badge>
                           </div>
                         )}
-                        {caso.valor_estimado && (
+                         {displayCaso.valor_estimado && (
                           <div className="flex items-center gap-1 text-sm">
                             <Euro className="h-4 w-4 text-blue-600" />
                             <span className="font-medium text-blue-700 dark:text-blue-400">
-                              Valor estimado: {caso.valor_estimado}
+                               Valor estimado: {displayCaso.valor_estimado}
                             </span>
                           </div>
                         )}
@@ -681,15 +720,16 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                       <CardTitle className="text-base">Pagos del Caso</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {pagos.length > 0 ? (
-                        <Table>
+                          {pagos.length > 0 ? (
+                        <div className="overflow-x-auto">
+                        <Table className="min-w-[700px]">
                           <TableHeader>
                             <TableRow>
                               <TableHead>Fecha</TableHead>
                               <TableHead>Concepto</TableHead>
                               <TableHead>Importe</TableHead>
                               <TableHead>Estado</TableHead>
-                              <TableHead>Comisión</TableHead>
+                              <TableHead>Gestión Klamai</TableHead>
                               <TableHead>Neto</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -703,16 +743,23 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                                   <TableCell>€{amount.toFixed(2)}</TableCell>
                                   <TableCell>
                                     <Badge variant={pago.estado === 'succeeded' ? 'default' : pago.estado === 'failed' ? 'destructive' : 'secondary'}>
-                                      {pago.estado}
+                                      {getPaymentStatusLabel(pago.estado)}
                                     </Badge>
                                   </TableCell>
                                   <TableCell>{pago.comision ? `€${Number(pago.comision).toFixed(2)}` : '€0.00'}</TableCell>
-                                  <TableCell>{pago.monto_neto ? `€${Number(pago.monto_neto).toFixed(2)}` : (pago.estado === 'succeeded' && pago.comision != null ? `€${(Number(amount) - Number(pago.comision)).toFixed(2)}` : '—')}</TableCell>
+                                  <TableCell>{(() => { const neto = computePagoNeto(pago); return neto > 0 ? `€${neto.toFixed(2)}` : '—'; })()}</TableCell>
                                 </TableRow>
                               );
                             })}
                           </TableBody>
                         </Table>
+                        {/* Total Neto */}
+                        <div className="flex justify-end mt-3 pr-2">
+                          <div className="text-sm font-semibold">
+                            Total Neto: €{pagos.reduce((acc, p) => acc + computePagoNeto(p), 0).toFixed(2)}
+                          </div>
+                        </div>
+                        </div>
                       ) : (
                         <div className="text-sm text-muted-foreground">No hay pagos registrados</div>
                       )}
@@ -1173,6 +1220,10 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                   toast({ title: 'Cobro solicitado', description: 'Se ha creado el cobro para el cliente.' });
                   setShowChargeModal(false);
                   setChargeConcept(''); setChargeAmount(''); setChargeExencion('none');
+                  // Refrescar pagos inmediatamente
+                  try {
+                    await fetchPagos();
+                  } catch {}
                 } catch (e: any) {
                   console.error('Error creando cobro:', e);
                   toast({ title: 'Error', description: e?.message || 'No se pudo crear el cobro.', variant: 'destructive' });
@@ -1211,7 +1262,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
       <CaseEditModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        caso={caso}
+        caso={displayCaso}
         onSave={handleEditSuccess}
       />
     </>
