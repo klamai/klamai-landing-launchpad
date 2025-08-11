@@ -1,5 +1,12 @@
 # 🏗️ Separación de Dashboards por Rol
 
+### (11/08/2025) Ajustes UI Gestión de Casos y Modales
+- ✅ Gestión de Casos (admin): en la vista inicial sin filtros ya no se listan casos con estado `asignado`; se muestran solo activos disponibles (no cerrados ni asignados).
+- ✅ Dropdown "Añadir Caso": se retiró la insignia "Premium" y se simplificaron iconos/estilos para un diseño más limpio y consistente en light/dark.
+- ✅ Botón de cobros: renombrado de "Pago" a "Cobrar" en modales de superadmin y abogado regular (desktop y móvil) para mayor claridad.
+- ✅ Notas de asignación: ahora se muestran completas, con `whitespace-pre-wrap` y envoltura de palabra; se eliminó truncado con `...`.
+- 🔒 Sin cambios de lógica de datos. Solo UI. Compilación OK.
+
 ## 📋 **PROGRESO ACTUAL - ÚLTIMA ACTUALIZACIÓN: 01/08/2025**
 
 ### ✅ **COMPLETADO:**
