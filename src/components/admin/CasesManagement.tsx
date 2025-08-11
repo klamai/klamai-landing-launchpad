@@ -78,6 +78,7 @@ const AdminCasesManagement = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [paidFilter, setPaidFilter] = useState<'all'|'pagados'|'no_pagados'>('all');
   const [specialtyFilter, setSpecialtyFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
@@ -336,8 +337,10 @@ const AdminCasesManagement = () => {
     const matchesType = typeFilter === 'all' || caso.tipo_lead === typeFilter;
     const matchesCity = cityFilter === 'all' || clientData.ciudad === cityFilter;
     const matchesProfileType = profileTypeFilter === 'all' || clientData.tipo_perfil === profileTypeFilter;
+    const isPaid = Boolean((caso as any).fecha_pago);
+    const matchesPaid = paidFilter === 'all' || (paidFilter === 'pagados' ? isPaid : !isPaid);
 
-    return matchesSearch && matchesStatus && matchesSpecialty && matchesType && matchesCity && matchesProfileType;
+    return matchesSearch && matchesStatus && matchesSpecialty && matchesType && matchesCity && matchesProfileType && matchesPaid;
   });
 
   // Determinar qué casos mostrar y el título apropiado
@@ -359,12 +362,12 @@ const AdminCasesManagement = () => {
       };
     }
 
-    // Si NO hay búsqueda ni filtros específicos (todo en 'all'), mostrar solo casos activos (no cerrados)
-    const activeCases = filteredCasos.filter(caso => caso.estado !== 'cerrado');
+    // Si NO hay búsqueda ni filtros específicos (todo en 'all'), mostrar solo casos activos no cerrados y no asignados
+    const activeCases = filteredCasos.filter(caso => caso.estado !== 'cerrado' && caso.estado !== 'asignado');
     return {
       casos: activeCases,
       title: 'Casos Activos',
-      description: `${activeCases.length} casos activos encontrados para gestionar`,
+      description: `${activeCases.length} casos activos disponibles para gestionar`,
       icon: <AlertCircle className="h-6 w-6 text-red-500" />
     };
   };
@@ -477,7 +480,7 @@ const AdminCasesManagement = () => {
             />
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mb-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Filtrar por estado" />
@@ -537,6 +540,17 @@ const AdminCasesManagement = () => {
               </SelectContent>
             </Select>
 
+            <Select value={paidFilter} onValueChange={(v) => setPaidFilter(v as any)}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Pago consulta" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Pago: Todos</SelectItem>
+                <SelectItem value="pagados" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Pagados</SelectItem>
+                <SelectItem value="no_pagados" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">No pagados</SelectItem>
+              </SelectContent>
+            </Select>
+
             <div className="flex gap-1">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
@@ -582,23 +596,14 @@ const AdminCasesManagement = () => {
                     <ChevronDown className="h-4 w-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 [&>*:hover]:bg-blue-50 [&>*:hover]:text-blue-900">
-                  <DropdownMenuItem onClick={() => setAddManualCaseOpen(true)} className="py-3 focus:bg-blue-50 focus:text-blue-900">
-                    <FileText className="h-4 w-4 mr-3" />
-                    <div>
-                      <div className="font-medium">Añadir Caso Manual</div>
-                      <div className="text-xs text-gray-500">Crear caso desde cero</div>
-                    </div>
+                <DropdownMenuContent align="end" className="w-60 p-1 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 shadow-lg">
+                  <DropdownMenuItem onClick={() => setAddManualCaseOpen(true)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200 py-2">
+                    <FileText className="h-4 w-4 mr-1 text-blue-600" />
+                    Añadir caso manual
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setAddAICaseOpen(true)} className="py-3 relative focus:bg-blue-50 focus:text-blue-900">
-                    <Bot className="h-4 w-4 mr-3" />
-                    <div>
-                      <div className="font-medium">Añadir Caso con IA</div>
-                      <div className="text-xs text-gray-500">Generar con inteligencia artificial</div>
-                    </div>
-                    <Badge className="ml-auto bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs px-2 py-1 rounded-full">
-                      Premium
-                    </Badge>
+                  <DropdownMenuItem onClick={() => setAddAICaseOpen(true)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-purple-50 hover:text-purple-900 dark:hover:bg-purple-900/30 dark:hover:text-purple-200 data-[highlighted]:bg-purple-50 data-[highlighted]:text-purple-900 dark:data-[highlighted]:bg-purple-900/30 dark:data-[highlighted]:text-purple-200 py-2">
+                    <Bot className="h-4 w-4 mr-1 text-purple-600" />
+                    Añadir caso con IA
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

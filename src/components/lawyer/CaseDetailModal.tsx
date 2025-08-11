@@ -679,21 +679,17 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                                   {asignacion.profiles?.nombre} {asignacion.profiles?.apellido}
                                 </span>
                                 {asignacion.notas_asignacion && (
-                                  <Badge 
-                                    variant="outline" 
-                                    className={`ml-2 text-xs ${
-                                      isCurrentUserAssigned(asignacion)
-                                        ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-600'
-                                        : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600'
-                                    }`}
-                                    title={asignacion.notas_asignacion}
-                                  >
-                                    <MessageSquare className="h-3 w-3 mr-1" />
-                                    {asignacion.notas_asignacion.length > 30 
-                                      ? `${asignacion.notas_asignacion.substring(0, 30)}...` 
-                                      : asignacion.notas_asignacion
-                                    }
-                                  </Badge>
+                                  <div className={`ml-2 text-xs rounded px-2 py-1 max-w-full border ${
+                                    isCurrentUserAssigned(asignacion)
+                                      ? 'text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
+                                      : 'text-yellow-800 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700'
+                                  }`}>
+                                    <div className="flex items-center gap-1 mb-0.5">
+                                      <MessageSquare className="h-3 w-3" />
+                                      <span className="font-medium">Nota de asignación</span>
+                                    </div>
+                                    <p className="whitespace-pre-wrap break-words leading-snug">{asignacion.notas_asignacion}</p>
+                                  </div>
                                 )}
                               </div>
                               <p className="text-xs text-muted-foreground">
@@ -1084,7 +1080,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                       <User className="h-4 w-4 mr-1" /> Editar
                     </Button>
                     <Button size="sm" onClick={() => setShowChargeModal(true)} variant="default" disabled={!caso?.cliente_id} className="rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm disabled:opacity-60 disabled:pointer-events-none">
-                      <CreditCard className="h-4 w-4 mr-1" /> Pago
+                      <CreditCard className="h-4 w-4 mr-1" /> Cobrar
                     </Button>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1121,7 +1117,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                               className="rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm disabled:opacity-60 disabled:pointer-events-auto"
                               disabled={!caso?.cliente_id}
                             >
-                              <CreditCard className="h-4 w-4 mr-1" /> Pago
+                              <CreditCard className="h-4 w-4 mr-1" /> Cobrar
                             </Button>
                           </span>
                         </TooltipTrigger>
@@ -1169,12 +1165,12 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="concepto">Concepto</Label>
-              <Input id="concepto" value={chargeConcept} onChange={(e) => setChargeConcept(e.target.value)} placeholder="Ej. Honorarios adicionales" />
+              <Label htmlFor="monto">Importe base (EUR)</Label>
+              <Input id="monto" type="number" inputMode="decimal" step="0.01" min="0.01" pattern="^\\d+(\\.\\d{1,2})?$" value={chargeAmount} onChange={(e) => setChargeAmount(e.target.value)} placeholder="0.00" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="monto">Importe base (EUR)</Label>
-              <Input id="monto" type="number" inputMode="decimal" step="0.01" min="0.01" value={chargeAmount} onChange={(e) => setChargeAmount(e.target.value)} placeholder="0.00" />
+              <Label htmlFor="concepto">Concepto</Label>
+              <Input id="concepto" value={chargeConcept} maxLength={140} onChange={(e) => setChargeConcept(e.target.value)} placeholder="Ej. Honorarios adicionales" />
             </div>
             <div className="space-y-2">
               <Label>IVA / Exención</Label>
@@ -1197,7 +1193,7 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
             <Button
               onClick={async () => {
                 if (!caso?.id) return;
-                const concepto = chargeConcept.trim();
+                const concepto = chargeConcept.replace(/[\u0000-\u001F\u007F]/g, '').trim();
                 const montoBase = Number(chargeAmount);
                 if (!concepto || !isFinite(montoBase) || montoBase <= 0) {
                   toast({ title: 'Datos inválidos', description: 'Ingresa un concepto y un monto válido (> 0).', variant: 'destructive' });

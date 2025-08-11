@@ -130,6 +130,13 @@ const SuperAdminDashboard = () => {
       ),
     },
     {
+      label: "Clientes",
+      href: "/abogados/dashboard/clientes",
+      icon: (
+        <Users className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
       label: "Hojas de Encargo",
       href: "/abogados/dashboard/hojas-encargo",
       icon: (
@@ -139,13 +146,6 @@ const SuperAdminDashboard = () => {
     {
       label: "Gestión de Abogados",
       href: "/abogados/dashboard/abogados",
-      icon: (
-        <Users className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Clientes",
-      href: "/abogados/dashboard/clientes",
       icon: (
         <Users className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
