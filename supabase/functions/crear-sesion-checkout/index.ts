@@ -115,7 +115,8 @@ serve(async (req) => {
     logStep("Caso verificado", { casoId: caso.id, estado: caso.estado });
 
     // Validar estados permitidos para crear/reutilizar sesión
-    const allowedStates = ["listo_para_propuesta", "esperando_pago"];
+    // Permitimos iniciar pago también desde 'propuesta_enviada' para casos que recibieron propuesta y deciden pagar
+    const allowedStates = ["listo_para_propuesta", "esperando_pago", "propuesta_enviada"];
     if (!allowedStates.includes(caso.estado)) {
       logStep("ERROR - Estado de caso no permitido para pago", { estado: caso.estado });
       return new Response(JSON.stringify({

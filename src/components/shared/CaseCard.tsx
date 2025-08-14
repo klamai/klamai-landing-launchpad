@@ -20,7 +20,9 @@ import {
   Zap,
   StickyNote,
   CheckCircle,
-  Globe
+  Globe,
+  Send,
+  Mail
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -46,7 +48,6 @@ interface CaseCardProps {
     especialidad_id: number;
     estado: string;
     created_at: string;
-    cliente_id: string;
     valor_estimado?: string;
     tipo_lead?: string;
     canal_atencion?: string;
@@ -108,6 +109,7 @@ interface CaseCardProps {
   onGenerateResolutionWithAgent: (casoId: string, agent: string) => void;
   onUploadDocument: (casoId: string) => void;
   onSendMessage: (casoId: string) => void;
+  onOpenSendProposal?: (casoId: string) => void;
   hideAssignButton?: boolean;
   showProminentNotes?: boolean; // Nueva prop para controlar la visualización prominente de notas
   hideAssignmentStyling?: boolean; // Nueva prop para ocultar bordes y sellos verdes de asignación
@@ -122,6 +124,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
   onGenerateResolutionWithAgent,
   onUploadDocument,
   onSendMessage,
+  onOpenSendProposal,
   hideAssignButton = false,
   showProminentNotes = false,
   hideAssignmentStyling = false,
@@ -168,11 +171,19 @@ const CaseCard: React.FC<CaseCardProps> = ({
       'listo_para_propuesta': {
         label: 'Listo para Propuesta',
         className: 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white dark:from-indigo-600 dark:to-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm'
+      },
+      'propuesta_enviada': {
+        label: 'Propuesta Enviada',
+        className: 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white dark:from-indigo-600 dark:to-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm'
       }
     };
     
     const config = statusConfig[estado as keyof typeof statusConfig] || statusConfig.disponible;
-    return <Badge className={config.className}>{config.label}</Badge>;
+    return (
+      <Badge className={config.className}>
+        {estado === 'propuesta_enviada' && <Send className="h-3 w-3 mr-1 inline" />} {config.label}
+      </Badge>
+    );
   };
 
   const getLeadTypeBadge = (tipo: string) => {
@@ -244,6 +255,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
         className={`relative overflow-hidden transition-all duration-300 h-full flex flex-col rounded-xl bg-white dark:bg-gray-900/70 backdrop-blur-sm
           ${caso.estado === 'cerrado' ? 'opacity-75 grayscale' : ''}
           ${hideAssignmentStyling ? 'border-gray-200 dark:border-gray-800' : ''}
+          ${(caso as any)?.fecha_pago ? 'border-2 border-green-300 dark:border-green-700' : ''}
           ${caso.estado === 'asignado' && !hideAssignmentStyling 
             ? 'shadow-md dark:shadow-stone-900/10 before:absolute before:inset-0 before:rounded-xl before:p-[1.5px] before:bg-gradient-to-r before:from-stone-300 before:via-stone-400 before:to-stone-300 dark:before:from-stone-800/60 dark:before:via-stone-700/60 dark:before:to-stone-800/60 before:opacity-70 before:-z-10' 
             : `shadow-md dark:shadow-blue-900/10 hover:shadow-lg dark:hover:shadow-blue-800/20 before:absolute before:inset-0 before:rounded-xl before:p-[1.5px] 
@@ -422,6 +434,18 @@ const CaseCard: React.FC<CaseCardProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg">
+                    {caso.estado === 'listo_para_propuesta' && (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (onOpenSendProposal) onOpenSendProposal(caso.id);
+                          else onViewDetails(caso.id);
+                        }}
+                        className="flex items-center px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 focus:bg-blue-50 dark:focus:bg-blue-900/30 focus:text-blue-700 dark:focus:text-blue-300 cursor-pointer"
+                      >
+                        <Mail className="h-4 w-4 mr-2 text-indigo-600" />
+                        Enviar propuesta
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'resolucion')} className="flex items-center px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 focus:bg-blue-50 dark:focus:bg-blue-900/30 focus:text-blue-700 dark:focus:text-blue-300 cursor-pointer">
                       <Target className="h-4 w-4 mr-2 text-blue-600" />
                       Generar Resolución

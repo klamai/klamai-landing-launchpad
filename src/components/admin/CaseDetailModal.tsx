@@ -64,6 +64,7 @@ import CaseNotesSection from '@/components/shared/CaseNotesSection';
 import CaseAssignmentModal from '@/components/admin/CaseAssignmentModal';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -80,6 +81,7 @@ interface AdminCaseDetailModalProps {
     valor_estimado?: string;
     tipo_lead?: string;
     tipo_perfil_borrador?: string;
+    cliente_id?: string | null;
     transcripcion_chat?: any;
     propuesta_estructurada?: any;
     documentos_adjuntos?: any;
@@ -155,6 +157,11 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
   const [chargeConcept, setChargeConcept] = useState('');
   const [chargeAmount, setChargeAmount] = useState('');
   const [chargeExencion, setChargeExencion] = useState<'none' | 'b2b_ue' | 'fuera_ue' | 'suplido' | 'ajg'>('none');
+  // Envío de propuesta (WhatsApp)
+  const [showSendProposalModal, setShowSendProposalModal] = useState(false);
+  const [proposalPhone, setProposalPhone] = useState('');
+  const [includeCheckoutLink, setIncludeCheckoutLink] = useState(false);
+  const [sendingProposal, setSendingProposal] = useState(false);
 
   // Obtener los datos actualizados del caché de React Query
   const { data: allCases } = useAdminCases();
@@ -179,8 +186,8 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
     deleteDocument: deleteClientDocument
   } = useClientDocumentManagement(updatedCaso?.id || '');
 
-  const { mutate: closeCase, isLoading: isClosingCase } = useCloseCase();
-  const { mutate: updateCase, isLoading: isUpdatingCase } = useUpdateCase();
+  const { mutate: closeCase, isPending: isClosingCase } = useCloseCase() as any;
+  const { mutate: updateCase } = useUpdateCase() as any;
   
   // Verificar acceso usando el profile del contexto
   const isSuperAdmin = profile?.role === 'abogado' && profile?.tipo_abogado === 'super_admin';
@@ -497,7 +504,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className={`max-w-5xl w-full h-[90vh] md:h-[95vh] flex flex-col p-0 ${
-          updatedCaso.estado === 'asignado' ? 'border-2 border-green-200 dark:border-green-700' : ''
+          (updatedCaso.estado === 'asignado' || (updatedCaso as any)?.fecha_pago) ? 'border-2 border-green-300 dark:border-green-700' : ''
         }`}>
           <DialogHeader className={`px-6 py-4 flex-shrink-0 ${
             updatedCaso.estado === 'asignado' ? 'bg-green-50 dark:bg-green-950/30 border-b border-green-200 dark:border-green-800' : ''
@@ -506,6 +513,25 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
               <FileText className="h-5 w-5" />
               Detalle del Caso #{updatedCaso.id.substring(0, 8)}
               {getStatusBadge(updatedCaso.estado)}
+              {!updatedCaso?.cliente_id && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-6 w-6 ml-1"
+                        onClick={() => setShowLinkClientModal(true)}
+                      >
+                        <UserPlus className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <span>Vincular cliente</span>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               {updatedCaso.estado === 'asignado' && updatedCaso.asignaciones_casos && updatedCaso.asignaciones_casos.length > 0 && (
                 <div className="flex items-center gap-1 bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs font-semibold border border-green-200 dark:border-green-700">
                   <UserPlus className="h-3 w-3" />
@@ -787,7 +813,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
                         Información del Cliente
-                        {updatedCaso?.cliente_id && (
+                      {updatedCaso?.cliente_id ? (
                           <Button
                             size="sm"
                             variant="outline"
@@ -797,7 +823,17 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                           >
                             Ver perfil
                           </Button>
-                        )}
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="ml-2 h-7 text-xs"
+                          onClick={() => setShowLinkClientModal(true)}
+                          title="Vincular cliente"
+                        >
+                          <UserPlus className="h-3 w-3 mr-1" /> Vincular
+                        </Button>
+                      )}
                       </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -893,9 +929,9 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
                   </CardHeader>
                   <CardContent>
-                      {updatedCaso.transcripcion_chat ? (
+                      {(updatedCaso as any)?.transcripcion_chat ? (
                       <div className="space-y-2 max-h-96 overflow-y-auto">
-                          {JSON.stringify(updatedCaso.transcripcion_chat, null, 2)}
+                          {JSON.stringify((updatedCaso as any).transcripcion_chat, null, 2)}
                       </div>
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
@@ -1122,16 +1158,57 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     <Button size="sm" onClick={() => onSendMessage(updatedCaso.id)} variant="outline" className="rounded-xl border-blue-200 dark:border-blue-800">
                       <MessageSquare className="h-4 w-4 mr-1" /> Mensaje
                   </Button>
+                    {/* Botón visible para enviar propuesta cuando aplique */}
+                    {updatedCaso?.estado === 'listo_para_propuesta' && (
+                  <Button 
+                    size="sm"
+                        onClick={() => {
+                          const seedPhone = (updatedCaso as any)?.telefono_borrador || (updatedCaso as any)?.profiles?.telefono || '';
+                          setProposalPhone(seedPhone || '');
+                          setIncludeCheckoutLink(false);
+                          setShowSendProposalModal(true);
+                        }}
+                        className="rounded-xl bg-gradient-to-b from-indigo-500 to-indigo-600 text-white shadow-sm"
+                      >
+                        <Send className="h-4 w-4 mr-1" /> Enviar propuesta
+                  </Button>
+                    )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button size="sm" variant="outline" className="rounded-xl">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-60 p-1 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 shadow-lg">
+                      <DropdownMenuContent align="end" className="w-60 p-1 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 shadow-lg">
+                        {updatedCaso?.estado === 'listo_para_propuesta' && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              const seedPhone = (updatedCaso as any)?.telefono_borrador || (updatedCaso as any)?.profiles?.telefono || '';
+                              setProposalPhone(seedPhone || '');
+                              setIncludeCheckoutLink(false);
+                              setShowSendProposalModal(true);
+                            }}
+                            className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200"
+                          >
+                            <Mail className="h-4 w-4 mr-1 text-indigo-600" /> Enviar propuesta
+                          </DropdownMenuItem>
+                        )}
                         {!updatedCaso?.cliente_id && (
                           <DropdownMenuItem onClick={() => setShowLinkClientModal(true)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200">
                             <Plus className="h-4 w-4 mr-1 text-blue-600" /> Vincular/Convertir Cliente
+                          </DropdownMenuItem>
+                        )}
+                        {updatedCaso?.estado === 'listo_para_propuesta' && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              const seedPhone = (updatedCaso as any)?.telefono_borrador || (updatedCaso as any)?.profiles?.telefono || '';
+                              setProposalPhone(seedPhone || '');
+                              setIncludeCheckoutLink(false);
+                              setShowSendProposalModal(true);
+                            }}
+                            className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200"
+                          >
+                            <Mail className="h-4 w-4 mr-1 text-indigo-600" /> Enviar propuesta
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem onClick={handleCerrarCaso} disabled={isClosingCase} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-rose-50 hover:text-rose-900 dark:hover:bg-rose-900/30 dark:hover:text-rose-200 data-[highlighted]:bg-rose-50 data-[highlighted]:text-rose-900 dark:data-[highlighted]:bg-rose-900/30 dark:data-[highlighted]:text-rose-200">
@@ -1147,7 +1224,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   <div className="flex items-center gap-2">
                     <Button size="sm" onClick={() => setIsEditModalOpen(true)} className="rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-sm">
                       <User className="h-4 w-4 mr-1" /> Editar
-                    </Button>
+                  </Button>
                     <Button size="sm" onClick={() => setShowAssignmentModal(true)} className="rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm">
                       <Users className="h-4 w-4 mr-1" /> Asignar
                     </Button>
@@ -1162,6 +1239,19 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-60 p-1 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 shadow-lg">
+                      {updatedCaso?.estado === 'listo_para_propuesta' && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            const seedPhone = (updatedCaso as any)?.telefono_borrador || (updatedCaso as any)?.profiles?.telefono || '';
+                            setProposalPhone(seedPhone || '');
+                            setIncludeCheckoutLink(false);
+                            setShowSendProposalModal(true);
+                          }}
+                          className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200"
+                        >
+                          <Mail className="h-4 w-4 mr-1 text-indigo-600" /> Enviar propuesta
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => onGenerateResolution(updatedCaso.id)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200">
                         <Bot className="h-4 w-4 mr-1 text-purple-600" /> Generar con IA
                       </DropdownMenuItem>
@@ -1183,6 +1273,55 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                   </DropdownMenu>
                 </div>
               </div>
+              {/* Modal Enviar Propuesta (WhatsApp) */}
+              <Dialog open={showSendProposalModal} onOpenChange={setShowSendProposalModal}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Enviar propuesta por WhatsApp</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="proposalPhone">Teléfono del cliente</Label>
+                      <Input id="proposalPhone" value={proposalPhone} onChange={(e) => setProposalPhone(e.target.value)} placeholder="+34 600 000 000" />
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium">Incluir enlace de pago</p>
+                        <p className="text-xs text-muted-foreground">Opcional. No recomendado por defecto.</p>
+                      </div>
+                      <Switch checked={includeCheckoutLink} onCheckedChange={setIncludeCheckoutLink} />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowSendProposalModal(false)} disabled={sendingProposal}>Cancelar</Button>
+                  <Button
+                      onClick={async () => {
+                        if (!updatedCaso?.id) return;
+                        try {
+                          setSendingProposal(true);
+                          const session = await supabase.auth.getSession();
+                          const token = session.data.session?.access_token;
+                          const { data, error } = await supabase.functions.invoke('enviar-propuesta-whatsapp', {
+                            body: { caso_id: updatedCaso.id, include_checkout_url: includeCheckoutLink, phone_override: proposalPhone || undefined },
+                            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                          });
+                          if (error) throw new Error(error.message);
+                          toast({ title: 'Propuesta enviada', description: 'Se envió por WhatsApp y se actualizó el estado.' });
+                          setShowSendProposalModal(false);
+                        } catch (e: any) {
+                          toast({ title: 'Error', description: e?.message || 'No se pudo enviar la propuesta', variant: 'destructive' });
+                        } finally {
+                          setSendingProposal(false);
+                        }
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      disabled={sendingProposal || !proposalPhone}
+                    >
+                      {sendingProposal ? 'Enviando…' : 'Enviar'}
+                  </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
         </DialogContent>
@@ -1231,11 +1370,11 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
             <div className="space-y-2">
               <Label htmlFor="monto">Importe base (EUR)</Label>
               <Input id="monto" type="number" inputMode="decimal" step="0.01" min="0.01" pattern="^\\d+(\\.\\d{1,2})?$" value={chargeAmount} onChange={(e) => setChargeAmount(e.target.value)} placeholder="0.00" />
-            </div>
+              </div>
             <div className="space-y-2">
               <Label htmlFor="concepto">Concepto</Label>
               <Input id="concepto" value={chargeConcept} maxLength={140} onChange={(e) => setChargeConcept(e.target.value)} placeholder="Ej. Honorarios adicionales" />
-              </div>
+            </div>
             <div className="space-y-2">
               <Label>IVA / Exención</Label>
               <Select value={chargeExencion} onValueChange={(v) => setChargeExencion(v as any)}>
@@ -1328,14 +1467,14 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
       <CaseEditModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        caso={updatedCaso}
+        caso={updatedCaso as any}
         onSave={handleEditSuccess}
       />
 
       <CaseAssignmentModal
         isOpen={showAssignmentModal}
         onClose={() => setShowAssignmentModal(false)}
-        caso={updatedCaso}
+        caso={updatedCaso as any}
       />
     </>
   );
