@@ -134,39 +134,30 @@ const AdminCasesManagement = () => {
     if (!user || !hasAccess) return;
 
     const channel = supabase
-      .channel(`casos_changes_${user.id}`) // Canal único por usuario
+      .channel(`casos_changes_${user.id}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'casos',
-          filter: 'estado=eq.disponible'
+          filter: 'estado=in.(disponible,listo_para_propuesta)'
         },
         (payload) => {
           console.log('Cambio detectado en caso:', payload);
-          
-          // Verificar si el caso estaba en borrador antes Y si está en nuestra lista de procesamiento
-          if (payload.old?.estado === 'borrador' && 
-              payload.new?.estado === 'disponible' &&
-              processingCases.has(payload.new.id)) {
-            
-            console.log('Caso procesado por este usuario:', payload.new);
-            
-            toast({
-              title: "¡Caso procesado!",
-              description: `El caso "${payload.new.motivo_consulta}" ha sido procesado completamente con IA y está listo para asignar.`,
-              duration: 8000,
-            });
-            
-            // Remover de la lista de procesamiento
+          const newEstado = payload.new?.estado as string | undefined;
+          const transitionedFromDraft = payload.old?.estado === 'borrador';
+          const isTargetEstado = newEstado === 'disponible' || newEstado === 'listo_para_propuesta';
+          if (transitionedFromDraft && isTargetEstado && processingCases.has(payload.new.id)) {
+            const desc = newEstado === 'listo_para_propuesta'
+              ? `El caso "${payload.new.motivo_consulta}" está listo para enviar propuesta.`
+              : `El caso "${payload.new.motivo_consulta}" ha sido procesado completamente con IA y está listo.`;
+            toast({ title: '¡Caso procesado!', description: desc, duration: 8000 });
             setProcessingCases(prev => {
               const newSet = new Set(prev);
               newSet.delete(payload.new.id);
               return newSet;
             });
-            
-            // Actualizar la lista de casos
             refetch();
           }
         }
@@ -205,7 +196,7 @@ const AdminCasesManagement = () => {
         .from('casos')
         .select('id, estado, motivo_consulta')
         .in('id', Array.from(processingCases) as any)
-        .eq('estado', 'disponible' as any);
+        .in('estado', ['disponible','listo_para_propuesta'] as any);
 
       const casosActualizados = (casosActualizadosRaw || []) as Array<{ id: string; estado: string; motivo_consulta: string }>;
 
@@ -213,11 +204,10 @@ const AdminCasesManagement = () => {
         console.log('Casos actualizados encontrados:', casosActualizados);
         
         casosActualizados.forEach(caso => {
-          toast({
-            title: "¡Caso procesado!",
-            description: `El caso "${caso.motivo_consulta}" ha sido procesado completamente con IA y está listo para asignar.`,
-            duration: 8000,
-          });
+          const desc = caso.estado === 'listo_para_propuesta'
+            ? `El caso "${caso.motivo_consulta}" está listo para enviar propuesta.`
+            : `El caso "${caso.motivo_consulta}" ha sido procesado completamente con IA y está listo.`;
+          toast({ title: '¡Caso procesado!', description: desc, duration: 8000 });
           removeFromProcessing(caso.id);
         });
         

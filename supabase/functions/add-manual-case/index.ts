@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable */
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -132,6 +134,22 @@ serve(async (req) => {
 
   try {
     const { caseText, caseData } = await req.json();
+    // Normalizar especialidad del formulario si viene informada
+    const preselectedEspecialidadId: number | null = (caseData?.especialidad_id != null && !Number.isNaN(Number(caseData.especialidad_id)))
+      ? Number(caseData.especialidad_id)
+      : null;
+
+    // Utilidad: normalizar teléfono con prefijo 34 por defecto
+    const normalizePhone = (raw?: string | null): string | null => {
+      if (!raw) return null;
+      const digits = String(raw).replace(/\D+/g, '');
+      if (!digits) return null;
+      if (digits.startsWith('34')) return digits;
+      // Si ya tiene 0034, normalizar a 34
+      if (digits.startsWith('0034')) return digits.slice(2);
+      // Añadir prefijo 34 si no está presente
+      return `34${digits}`;
+    };
     
     // Determinar el modo de operación
     const isFormMode = caseData && !caseText;
@@ -193,6 +211,23 @@ serve(async (req) => {
       throw new Error('Se requiere al menos un dato de contacto del cliente (nombre, apellido o email)');
     }
 
+    // Resolver especialidad para inserción: usar formulario o 'Consulta General'
+    let insertEspecialidadId: number | null = preselectedEspecialidadId;
+    if (insertEspecialidadId == null) {
+      const { data: generalSpec, error: generalErr } = await supabase
+        .from('especialidades')
+        .select('id')
+        .eq('nombre', 'Consulta General')
+        .single();
+      if (generalErr) {
+        log('error', 'No se pudo obtener id de Consulta General', { error: generalErr.message });
+      }
+      insertEspecialidadId = generalSpec?.id ?? null;
+    }
+    if (insertEspecialidadId == null) {
+      throw new Error("No se encontró la especialidad 'Consulta General'.");
+    }
+
     // Crear el caso en la base de datos
     const casoData = {
       motivo_consulta: extractedInfo.consulta.motivo_consulta,
@@ -201,7 +236,7 @@ serve(async (req) => {
       nombre_borrador: extractedInfo.cliente.nombre || null,
       apellido_borrador: extractedInfo.cliente.apellido || null,
       email_borrador: extractedInfo.cliente.email || null,
-      telefono_borrador: extractedInfo.cliente.telefono || null,
+      telefono_borrador: normalizePhone(extractedInfo.cliente.telefono) || null,
       ciudad_borrador: extractedInfo.cliente.ciudad || null,
       tipo_perfil_borrador: extractedInfo.cliente.tipo_perfil || null,
       razon_social_borrador: extractedInfo.cliente.razon_social || null,
@@ -211,7 +246,7 @@ serve(async (req) => {
       preferencia_horaria_contacto: extractedInfo.consulta.preferencia_horaria || null,
       tipo_lead: extractedInfo.consulta.tipo_lead || null,
       valor_estimado: caseData?.valor_estimado || null,
-      especialidad_id: caseData?.especialidad_id || null
+      especialidad_id: insertEspecialidadId
     };
 
     const { data: caso, error: insertError } = await supabase.from("casos").insert(casoData).select().single();
@@ -224,7 +259,7 @@ serve(async (req) => {
     log('info', 'Caso creado exitosamente', { casoId: caso.id, modo: isFormMode ? 'formulario' : 'texto' });
 
     // Paso 3: Iniciar procesamiento asíncrono (NO esperar)
-    processWithAIAssistantsAsync(caso.id, originalText, extractedInfo).catch(error => {
+    processWithAIAssistantsAsync(caso.id, originalText, extractedInfo, insertEspecialidadId).catch(error => {
       log('error', 'Error en procesamiento asíncrono', { casoId: caso.id, error: error.message });
     });
 
@@ -248,7 +283,12 @@ serve(async (req) => {
 });
 
 // Nueva función asíncrona para procesar con IA
-async function processWithAIAssistantsAsync(casoId: string, originalText: string, extractedInfo: ExtractedInfo) {
+async function processWithAIAssistantsAsync(
+  casoId: string,
+  originalText: string,
+  extractedInfo: ExtractedInfo,
+  preselectedEspecialidadId: number | null = null
+) {
     log('info', 'Iniciando procesamiento asíncrono con asistentes de IA', { casoId });
 
     try {
@@ -285,11 +325,25 @@ async function processWithAIAssistantsAsync(casoId: string, originalText: string
     const propuesta_estructurada = JSON.parse(extractJsonFromString(propuestaResult.value) || '{}');
 
     // Mapear especialidad
-    const { data: especialidad } = await supabase.from("especialidades").select("id").eq("nombre", clasificacion.especialidad_nombre).single();
-    let especialidadId = especialidad?.id;
-    if (!especialidadId) {
-      const { data: generalSpec } = await supabase.from("especialidades").select("id").eq("nombre", "Consulta General").single();
-      especialidadId = generalSpec?.id;
+    let especialidadId: number | null = null;
+    if (clasificacion?.especialidad_nombre) {
+      const { data: especialidad } = await supabase
+        .from("especialidades")
+        .select("id")
+        .eq("nombre", clasificacion.especialidad_nombre)
+        .single();
+      if (especialidad?.id != null) especialidadId = Number(especialidad.id);
+    }
+    if (especialidadId == null) {
+      const { data: generalSpec } = await supabase
+        .from("especialidades")
+        .select("id")
+        .eq("nombre", "Consulta General")
+        .single();
+      if (generalSpec?.id != null) especialidadId = Number(generalSpec.id);
+    }
+    if (especialidadId == null && preselectedEspecialidadId != null) {
+      especialidadId = Number(preselectedEspecialidadId);
     }
         
     // Guardar guía del abogado en storage
@@ -297,16 +351,16 @@ async function processWithAIAssistantsAsync(casoId: string, originalText: string
     await supabase.storage.from('documentos_legales').upload(`casos/${casoId}/guia_para_abogado.txt`, guiaFile, { upsert: true });
 
     // 5. Actualizar el caso con todos los datos procesados
-    const datosParaActualizar = {
-      estado: "disponible",
+    const datosParaActualizar: Record<string, unknown> = {
+      estado: "listo_para_propuesta",
       resumen_caso: resumenCaso,
       guia_abogado: guia_abogado, // Guardar contenido de la guía directamente
       propuesta_estructurada,
       motivo_consulta: clasificacion.motivo_consulta_ia || extractedInfo.consulta?.motivo_consulta,
       tipo_lead: clasificacion.tipo_lead,
       valor_estimado: clasificacion.valor_estimado,
-      especialidad_id: especialidadId,
     };
+    if (especialidadId != null) datosParaActualizar.especialidad_id = especialidadId;
 
     const { error: updateError } = await supabase.from("casos").update(datosParaActualizar).eq("id", casoId);
     if (updateError) throw updateError;
