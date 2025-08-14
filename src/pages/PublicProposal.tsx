@@ -12,6 +12,9 @@ const PublicProposal = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [accepted, setAccepted] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
+  const [savingConsent, setSavingConsent] = useState(false);
   const [assistantMessage, setAssistantMessage] = useState<string | null>(null);
   const [casoId, setCasoId] = useState<string | null>(null);
   const [creatingCheckout, setCreatingCheckout] = useState(false);
@@ -141,11 +144,46 @@ const PublicProposal = () => {
           {!accepted && (
             <div className="p-4 border rounded-lg">
               <h2 className="font-semibold mb-2">Políticas y privacidad</h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Antes de continuar, confirma que aceptas las políticas de uso y privacidad de KlamAI.
-              </p>
-              <Button onClick={() => setAccepted(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
-                Acepto y deseo ver mi propuesta
+              <div className="text-sm space-y-2 text-muted-foreground mb-4">
+                <label className="flex items-start gap-2">
+                  <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} />
+                  <span>
+                    He leído y acepto los <a href="/aviso-legal" target="_blank" className="underline text-blue-600">Términos y Condiciones</a>.
+                  </span>
+                </label>
+                <label className="flex items-start gap-2">
+                  <input type="checkbox" checked={acceptPrivacy} onChange={(e) => setAcceptPrivacy(e.target.checked)} />
+                  <span>
+                    He leído y acepto la <a href="/politicas-privacidad" target="_blank" className="underline text-blue-600">Política de Privacidad</a>.
+                  </span>
+                </label>
+              </div>
+              <Button
+                disabled={!acceptTerms || !acceptPrivacy || savingConsent}
+                onClick={async () => {
+                  if (!token) return;
+                  try {
+                    setSavingConsent(true);
+                    await supabase.functions.invoke('record-consent', {
+                      body: {
+                        proposal_token: token,
+                        consent_type: 'proposal_view',
+                        accepted_terms: true,
+                        accepted_privacy: true,
+                        policy_terms_version: 1,
+                        policy_privacy_version: 1,
+                      },
+                    });
+                    setAccepted(true);
+                  } catch (e: any) {
+                    toast({ title: 'No se pudo registrar tu aceptación', description: e?.message || 'Inténtalo de nuevo.', variant: 'destructive' });
+                  } finally {
+                    setSavingConsent(false);
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {savingConsent ? 'Guardando…' : 'Aceptar y ver propuesta'}
               </Button>
             </div>
           )}
@@ -194,25 +232,11 @@ const PublicProposal = () => {
       <AuthModal
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
-        onSuccess={async () => {
-          setShowAuth(false);
-          try {
-            if (!token || !casoId) return;
-            const { error: linkError } = await supabase.rpc('link_case_by_proposal_token', { p_token: token as any });
-            if (linkError) throw new Error(linkError.message || 'No se pudo vincular el caso');
-            const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
-              body: { plan_id: 'consulta-estrategica', caso_id: casoId },
-            });
-            if (error) throw new Error(error.message);
-            if (data?.url) window.location.href = data.url;
-          } catch (e: any) {
-            toast({ title: 'Error', description: e?.message || 'No se pudo iniciar el pago', variant: 'destructive' });
-          }
-        }}
+        onSuccess={() => setShowAuth(false)}
         initialMode="signup"
         planId="consulta-estrategica"
         casoId={casoId ?? undefined}
-        redirectToUrl={`${window.location.origin}/auth-callback?intent=pay&token=${encodeURIComponent(token || '')}&planId=consulta-estrategica`}
+        redirectToUrl={`${window.location.origin}/auth-callback?intent=pay&token=${encodeURIComponent(token || '')}&planId=consulta-estrategica&casoId=${encodeURIComponent(casoId || '')}`}
       />
     </div>
   );

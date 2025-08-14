@@ -88,7 +88,8 @@ const ActivarCliente: React.FC = () => {
             estado
           )
         `)
-        .eq('token', token)
+        // @ts-ignore
+        .eq('token', token as any)
         .single();
 
       if (invitacionError || !invitacionData) {
@@ -97,22 +98,22 @@ const ActivarCliente: React.FC = () => {
         return;
       }
 
-      if (invitacionData.used) {
+      if ((invitacionData as any).used) {
         setError('Esta invitación ya ha sido utilizada');
         setLoading(false);
         return;
       }
 
-      if (new Date(invitacionData.expires_at) < new Date()) {
+      if (new Date((invitacionData as any).expires_at) < new Date()) {
         setError('Esta invitación ha expirado');
         setLoading(false);
         return;
       }
 
       setInvitacion({
-        token: invitacionData.token,
-        profile: invitacionData.profiles,
-        caso: invitacionData.casos
+        token: (invitacionData as any).token,
+        profile: (invitacionData as any).profiles,
+        caso: (invitacionData as any).casos
       });
 
     } catch (error) {
@@ -173,14 +174,30 @@ const ActivarCliente: React.FC = () => {
         throw authError;
       }
 
-      // Marcar invitación como usada
+      // Marcar invitación como usada y registrar consentimiento
       await supabase
         .from('invitaciones_clientes')
         .update({ 
-          used: true, 
-          used_at: new Date().toISOString() 
-        })
-        .eq('token', token);
+          used: true,
+          used_at: new Date().toISOString()
+        } as any)
+        // @ts-ignore
+        .eq('token', token as any);
+
+      // Registrar consentimiento legal en activación
+      try {
+        await supabase.functions.invoke('record-consent', {
+          body: {
+            consent_type: 'terms_privacy',
+            accepted_terms: true,
+            accepted_privacy: true,
+            policy_terms_version: 1,
+            policy_privacy_version: 1,
+          },
+        });
+      } catch (e) {
+        console.warn('No se pudo registrar consentimiento en activación:', e);
+      }
 
       toast({
         title: '¡Cuenta activada exitosamente!',

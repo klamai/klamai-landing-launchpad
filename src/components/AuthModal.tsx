@@ -107,6 +107,22 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
           title: "¡Cuenta creada!",
           description: "Tu cuenta ha sido creada exitosamente.",
         });
+
+        // Registrar consentimiento legal (términos/privacidad) tras signup
+        try {
+          await supabase.functions.invoke('record-consent', {
+            body: {
+              consent_type: 'terms_privacy',
+              accepted_terms: true,
+              accepted_privacy: true,
+              policy_terms_version: 1,
+              policy_privacy_version: 1,
+            },
+          });
+        } catch (e) {
+          // No bloquear el flujo por errores de logging
+          console.warn('No se pudo registrar consentimiento de signup:', e);
+        }
       }
 
       onSuccess();
