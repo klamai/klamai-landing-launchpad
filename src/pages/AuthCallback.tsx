@@ -39,6 +39,15 @@ const AuthCallback = () => {
       (async () => {
         try {
           console.log('AuthCallback - Flujo token propuesta: vinculando por token y creando checkout');
+          // Vincular consentimientos anónimos al usuario autenticado para este token
+          try {
+            await supabase.functions.invoke('record-consent', {
+              body: { proposal_token: proposalToken, link_only: true },
+            });
+            console.log('AuthCallback - Consentimientos vinculados exitosamente');
+          } catch (e) {
+            console.warn('AuthCallback - No se pudieron vincular consentimientos:', e);
+          }
           const linkedCasoId = await linkCaseByProposalToken(proposalToken);
           await createCheckout(planId, linkedCasoId);
         } catch (e) {

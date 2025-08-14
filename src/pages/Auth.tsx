@@ -230,6 +230,16 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        // Si el usuario llegó desde un enlace con token de propuesta, vincular consentimientos
+        const url = new URL(window.location.href);
+        const token = url.searchParams.get('token');
+        if (token) {
+          try {
+            await supabase.functions.invoke('record-consent', {
+              body: { proposal_token: token, link_only: true },
+            });
+          } catch (_) {}
+        }
         navigate('/dashboard');
       }
     };
@@ -356,6 +366,22 @@ const Auth = () => {
           title: "¡Registro exitoso!",
           description: "Por favor, revisa tu correo para confirmar tu cuenta.",
         });
+
+        // Registrar consentimiento legal (alta)
+        try {
+          await supabase.functions.invoke('record-consent', {
+            body: {
+              consent_type: 'terms_privacy',
+              accepted_terms: true,
+              accepted_privacy: true,
+              policy_terms_version: 1,
+              policy_privacy_version: 1,
+            },
+          });
+        } catch (e) {
+          // No bloquear el flujo por errores de logging
+          console.warn('Auth.tsx: no se pudo registrar consentimiento (signup):', e);
+        }
         
         // Limpiar formulario
         setSignupNombre("");
