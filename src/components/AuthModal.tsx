@@ -24,9 +24,10 @@ interface AuthModalProps {
   initialMode?: 'login' | 'signup';
   planId?: string;
   casoId?: string;
+  redirectToUrl?: string;
 }
 
-const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, casoId }: AuthModalProps) => {
+const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, casoId, redirectToUrl }: AuthModalProps) => {
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -124,16 +125,19 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      // Construir URL de redirección con contexto
-      let redirectUrl = `${window.location.origin}/dashboard`;
+      // Construir URL de redirección con prioridad a override explícito
+      let redirectUrl = redirectToUrl || `${window.location.origin}/dashboard`;
 
-      // Si hay planId y casoId => ir a callback con ambos (flujo de pago)
-      if (planId && casoId) {
-        redirectUrl = `${window.location.origin}/auth-callback?planId=${encodeURIComponent(planId)}&casoId=${encodeURIComponent(casoId)}`;
-      }
-      // Si NO hay planId pero SÍ hay casoId => ir a callback sólo para vincular el caso
-      else if (!planId && casoId) {
-        redirectUrl = `${window.location.origin}/auth-callback?casoId=${encodeURIComponent(casoId)}`;
+      // Si no hay override explícito, mantener lógica previa
+      if (!redirectToUrl) {
+        // Si hay planId y casoId => ir a callback con ambos (flujo de pago)
+        if (planId && casoId) {
+          redirectUrl = `${window.location.origin}/auth-callback?planId=${encodeURIComponent(planId)}&casoId=${encodeURIComponent(casoId)}`;
+        }
+        // Si NO hay planId pero SÍ hay casoId => ir a callback sólo para vincular el caso
+        else if (!planId && casoId) {
+          redirectUrl = `${window.location.origin}/auth-callback?casoId=${encodeURIComponent(casoId)}`;
+        }
       }
 
       console.log('AuthModal - Configurando redirección de Google a:', redirectUrl);

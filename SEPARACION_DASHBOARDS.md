@@ -1208,3 +1208,88 @@ VITE_DOCUMENSO_URL=https://documenso-r8swo0o4kksocggw04888cww.klamai.com
 - ✅ Compilación sin errores.
 - 🔒 RGPD: no almacenamos PII adicional; solo mostramos URL de avatar existente. Sin nuevos logs.
 - ▶️ Fase 2 pendiente: edición de avatar por el usuario (subida a Storage con validación y RLS).
+
+### (12/08/2025) Pendiente: Endurecimiento de borradores anónimos y checklist de producción
+- **Objetivo**: Asegurar el flujo de casos en borrador (sin `cliente_id`) para producción, cumpliendo RGPD y mínimos de seguridad.
+
+- **RLS (borradores)**:
+  - ▶️ Eliminar política amplia actual para `anon` ("Acceso a casos borrador" con `FOR ALL` y `cliente_id IS NULL`).
+  - ▶️ Opción A (recomendada): no exponer borradores via SELECT a `anon`; usar solo RPC segura (ver punto siguiente).
+  - ▶️ Opción B (alternativa): si se mantiene visibilidad para `anon`, recrear como `FOR SELECT TO anon` y limitar con ventana temporal (`created_at > now() - interval '24 hours'`).
+  - ▶️ En la política SELECT de autenticados, quitar la excepción global: `WHEN (cliente_id IS NULL) THEN true`.
+  - 📝 Escribir migración local y aplicar con Supabase MCP (no CLI). Nombrado sugerido: `YYYYMMDDHHMMSS_harden_rls_borradores.sql`.
+
+- **RPC segura para anónimos**:
+  - ▶️ Crear `public.get_anonymous_case_status(p_caso_id uuid, p_session_token text)` (SECURITY DEFINER) que devuelva datos mínimos: `id`, `estado`, `listo_para_propuesta`.
+  - ▶️ Validaciones: `cliente_id IS NULL` + coincidencia exacta de `session_token` + ventana 24h.
+  - ▶️ Índice ya presente: `idx_casos_session_token` (OK).
+  - ▶️ Frontend (`Chat.tsx`): cuando no hay usuario autenticado, consultar esta RPC en lugar de hacer `.from('casos').select(...)` directo.
+
+- **Vinculación de borrador al usuario**:
+  - ✅ Mantener `assign_anonymous_case_to_user(p_caso_id, p_session_token, p_user_id)` (ya valida token/24h y pasa a `esperando_pago`).
+  - ▶️ Revisar llamadas en `AuthCallback.tsx` y `Chat.tsx` para gestionar errores y limpieza de `localStorage` tras éxito.
+
+- **Sanitización de logs (RGPD)**:
+  - ▶️ `supabase/functions/crear-borrador-caso/index.ts`: dejar de loggear `motivo_consulta` y el `session_token` en claro. Enmascarar o eliminar logs sensibles.
+  - ✅ `stripe-webhook` y `crear-sesion-checkout` ya enmascaran PII; revisar que no se introduzcan nuevos logs sin sanitizar.
+
+- **Antispam / Rate limiting**:
+  - ▶️ Añadir CAPTCHA (Cloudflare Turnstile) o rate limit por IP en `crear-borrador-caso`.
+  - ▶️ Considerar bloqueo por frecuencia y tamaño de payload.
+
+- **Mantenimiento/TTL de borradores**:
+  - ✅ Función `cleanup_expired_anonymous_cases()` creada.
+  - ▶️ Programar ejecución periódica (pg_cron si disponible) o tarea programada externa.
+
+- **Hardening de cliente**:
+  - ▶️ Revisar CSP y endurecer contra XSS para proteger `localStorage` (token de sesión); evitar inyecciones en chat/UI.
+
+- **Documentación**:
+  - ▶️ Actualizar `SECURITY_AUDIT.md` y `SECURITY_SETUP.md` con cambios de RLS/RPC y sanitización.
+  - ▶️ Registrar el despliegue y pruebas en este documento.
+
+### (12/08/2025) Estados de propuesta, visibilidad y WhatsApp (Fase 1 aplicada)
+- ✅ Migración aplicada (Cloud MCP + local): `20250812_120000_casos_estados_propuesta_oportunidad.sql`
+  - Enum `caso_estado_enum`: añadidos `propuesta_enviada`, `oportunidad`
+  - Columnas en `casos`: `propuesta_enviada_at`, `chat_finalizado_at`
+  - Índices: `idx_casos_estado`, `idx_casos_propuesta_enviada_at`, `idx_casos_chat_finalizado_at`
+- ✅ RLS actualizada en `casos` para visibilidad:
+  - Superadmin ve también `propuesta_enviada` y `oportunidad`
+  - Abogado regular: solo ve casos asignados (activa/completada). Se elimina excepción de `cliente_id IS NULL`
+- ✅ RPC creada: `set_caso_listo_para_propuesta(p_caso_id uuid)` para mantener estado al elegir “Enviarme propuesta”
+- ✅ Edge Function desplegada: `enviar-propuesta-whatsapp` (placeholder: marca `propuesta_enviada`), JWT ON
+- ✅ UI:
+  - `ProposalDisplay.tsx`: “Enviarme la propuesta por email” ahora vincula el caso (si hay token) y lo deja en `listo_para_propuesta` sin Stripe ni email automático
+  - `admin/CaseDetailModal.tsx` y `lawyer/CaseDetailModal.tsx`: acción “Enviar propuesta” invoca `enviar-propuesta-whatsapp` cuando el estado es `listo_para_propuesta`
+- ✅ Tipos: `src/types/database.ts` actualizado con nuevos estados
+
+### (12/08/2025) Propuestas (Fase 2 - esquema base aplicado)
+- ✅ Migración aplicada (Cloud MCP + local): `20250812_122000_create_table_propuestas.sql`
+  - Tabla `public.propuestas`: versionado por `caso_id`, `content` JSONB, `rendered_html`, metadatos de envío, auditoría
+  - RLS: SELECT/INSERT para superadmin y abogado asignado (activa/completada)
+- ▶️ Pendiente Fase 2.1:
+  - Integrar generación/almacenado de propuesta en `propuestas`
+  - Edge Function `enviar-propuesta-whatsapp`: integrar plantilla y envío real por WhatsApp
+  - UI: sección en modales para listar propuestas y ver la última enviada
+
+### (12/08/2025) Propuestas (Fase 2.1 - tokens públicos y WhatsApp)
+- ✅ Migración aplicada (Cloud MCP + local): `20250812_130000_create_proposal_tokens_and_rpc.sql`
+  - Tabla `proposal_tokens` con TTL y revocación
+  - RPC `get_proposal_by_token(token)` (SECURITY DEFINER) devuelve contenido mínimo
+  - Columna `assistant_message` en `propuestas` para almacenar el texto de WhatsApp/propuesta breve
+- ✅ Edge `enviar-propuesta-whatsapp` actualizada:
+  - Usa `OPENAI_ASSISTANT_ID_PROPOSAL_WHATSAPP` y Threads API para generar mensaje
+  - Inserta en `propuestas` (versionado) y envía WhatsApp con `send-whatsapp`
+  - Genera token (72h) y utiliza `/p/:token` como enlace principal (toggle para incluir Stripe)
+- ▶️ Pendiente Fase 2.2:
+  - Página pública `/p/:token` con aceptación de políticas y visualización de propuesta + CTA Stripe
+  
+  
+#### (Hoy) Ajuste UX de landing pública de propuesta
+- Editado `src/pages/PublicProposal.tsx` para parsear `assistant_message` (que puede venir como JSON o arreglo con `output` anidado) y renderizar únicamente `analisis_caso` en Markdown.
+- El campo `mensaje_whatsapp` ya no se muestra en la landing; queda reservado para envío por WhatsApp.
+  - Modal de confirmación en UI (teléfono editable + toggle “Incluir enlace de pago”)
+  - Ajuste en `supabase/functions/send-whatsapp/index.ts`: ahora preserva saltos de línea y convierte enlaces Markdown `[Texto](URL)` a `Texto: URL` para asegurar que el enlace sea clicable en WhatsApp.
+  - Ajustes `crear-sesion-checkout` y webhook para leads sin `cliente_id`
+
+— Fin del bloque de tareas diferidas —

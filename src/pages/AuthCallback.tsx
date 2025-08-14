@@ -15,6 +15,8 @@ const AuthCallback = () => {
 
   const planId = searchParams.get('planId');
   const casoId = searchParams.get('casoId');
+  const intent = searchParams.get('intent');
+  const proposalToken = searchParams.get('token');
 
   useEffect(() => {
     console.log('AuthCallback - Estado inicial:', {
@@ -29,6 +31,21 @@ const AuthCallback = () => {
     if (!user) {
       console.log('AuthCallback - No hay usuario, redirigiendo a auth');
       navigate('/auth');
+      return;
+    }
+
+    // Nuevo flujo: si viene desde landing de propuesta con intent=pay y token
+    if (intent === 'pay' && proposalToken && planId) {
+      (async () => {
+        try {
+          console.log('AuthCallback - Flujo token propuesta: vinculando por token y creando checkout');
+          const linkedCasoId = await linkCaseByProposalToken(proposalToken);
+          await createCheckout(planId, linkedCasoId);
+        } catch (e) {
+          console.error('AuthCallback - Error en flujo por token de propuesta:', e);
+          navigate('/dashboard');
+        }
+      })();
       return;
     }
 
@@ -67,36 +84,9 @@ const AuthCallback = () => {
 
     try {
       console.log('AuthCallback - Paso 1: Vinculando caso al usuario');
-      
-      // 1. Vincular caso al usuario y transferir datos borrador
       await linkCaseToUser(casoId!, user!.id);
-      
       console.log('AuthCallback - Paso 2: Creando sesión de pago');
-
-      // 2. Crear sesión de pago en Stripe
-      const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
-        body: {
-          plan_id: planId,
-          caso_id: casoId
-        }
-      });
-
-      console.log('AuthCallback - Respuesta de crear-sesion-checkout:', { data, error });
-
-      if (error) {
-        throw new Error(`Error en la función: ${error.message}`);
-      }
-
-      if (!data?.url) {
-        throw new Error('No se recibió URL de pago de Stripe');
-      }
-
-      console.log('AuthCallback - Redirigiendo a Stripe:', data.url);
-      
-      // Esperar un momento antes de redirigir para asegurar que todo esté listo
-      setTimeout(() => {
-        window.location.href = data.url;
-      }, 500);
+      await createCheckout(planId!, casoId!);
 
     } catch (error) {
       console.error('AuthCallback - Error completo:', error);
@@ -116,6 +106,25 @@ const AuthCallback = () => {
     } finally {
       setProcessing(false);
     }
+  };
+
+  const createCheckout = async (planId: string, casoId: string) => {
+    const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
+      body: { plan_id: planId, caso_id: casoId }
+    });
+    console.log('AuthCallback - Respuesta de crear-sesion-checkout:', { data, error });
+    if (error) throw new Error(`Error en la función: ${error.message}`);
+    if (!data?.url) throw new Error('No se recibió URL de pago de Stripe');
+    setTimeout(() => { window.location.href = data.url; }, 300);
+  };
+
+  const linkCaseByProposalToken = async (token: string): Promise<string> => {
+    console.log('AuthCallback - linkCaseByProposalToken iniciado');
+    const { data, error } = await supabase.rpc('link_case_by_proposal_token', { p_token: token as any });
+    if (error) throw new Error(error.message || 'No se pudo vincular el caso por token');
+    const linkedCasoId = (data as any) as string;
+    if (!linkedCasoId) throw new Error('No se obtuvo caso_id al vincular por token');
+    return linkedCasoId;
   };
 
   const linkCaseToUser = async (casoId: string, userId: string) => {

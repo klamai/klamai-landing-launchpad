@@ -16,11 +16,13 @@ import {
   ShieldCheck,
   ChevronDown,
   Bot,
+  Send,
 } from 'lucide-react';
 import { useAdminCases, useSuperAdminAccess } from '@/hooks/queries/useAdminCases';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -29,6 +31,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Table, 
@@ -93,6 +97,11 @@ const AdminCasesManagement = () => {
   const { toast } = useToast();
   const [processingCases, setProcessingCases] = useState<Set<string>>(new Set());
   const [especialidades, setEspecialidades] = useState<Array<{ id: number; nombre: string }>>([]);
+  const [sendProposalOpen, setSendProposalOpen] = useState(false);
+  const [sendProposalCaso, setSendProposalCaso] = useState<any | null>(null);
+  const [proposalPhone, setProposalPhone] = useState('');
+  const [includeCheckoutLink, setIncludeCheckoutLink] = useState(false);
+  const [sendingProposal, setSendingProposal] = useState(false);
 
   // Cargar especialidades al montar el componente
   useEffect(() => {
@@ -106,7 +115,11 @@ const AdminCasesManagement = () => {
         if (error) {
           console.error('Error loading specialties:', error);
         } else {
-          setEspecialidades(data || []);
+          const safe = (data || []).map((row: any) => ({
+            id: Number(row.id),
+            nombre: String(row.nombre)
+          }));
+          setEspecialidades(safe);
         }
       } catch (error) {
         console.error('Error:', error);
@@ -188,13 +201,15 @@ const AdminCasesManagement = () => {
     const interval = setInterval(async () => {
       console.log('Verificando casos en procesamiento:', Array.from(processingCases));
       
-      const { data: casosActualizados } = await supabase
+      const { data: casosActualizadosRaw } = await supabase
         .from('casos')
         .select('id, estado, motivo_consulta')
-        .in('id', Array.from(processingCases))
-        .eq('estado', 'disponible');
+        .in('id', Array.from(processingCases) as any)
+        .eq('estado', 'disponible' as any);
 
-      if (casosActualizados && casosActualizados.length > 0) {
+      const casosActualizados = (casosActualizadosRaw || []) as Array<{ id: string; estado: string; motivo_consulta: string }>;
+
+      if (casosActualizados.length > 0) {
         console.log('Casos actualizados encontrados:', casosActualizados);
         
         casosActualizados.forEach(caso => {
@@ -277,20 +292,21 @@ const AdminCasesManagement = () => {
       agotado: { label: 'Agotado', className: 'bg-red-100 text-red-800 border-red-200' },
       cerrado: { label: 'Cerrado', className: 'bg-blue-100 text-blue-800 border-blue-200' },
       listo_para_propuesta: { label: 'Listo para Propuesta', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-      esperando_pago: { label: 'Esperando Pago', className: 'bg-orange-100 text-orange-800 border-orange-200' }
+      esperando_pago: { label: 'Esperando Pago', className: 'bg-orange-100 text-orange-800 border-orange-200' },
+      propuesta_enviada: { label: 'Propuesta Enviada', className: 'bg-indigo-100 text-indigo-800 border-indigo-200' }
     };
 
     const config = statusConfig[estado as keyof typeof statusConfig] || statusConfig.disponible;
-    
+
     return (
       <Badge variant="outline" className={config.className}>
-        {config.label}
+        {estado === 'propuesta_enviada' && <Send className="h-3 w-3 mr-1 inline" />} {config.label}
       </Badge>
     );
   };
 
   const estadosVisibles = [
-    'disponible', 'asignado', 'agotado', 'cerrado', 'listo_para_propuesta', 'esperando_pago'
+    'disponible', 'asignado', 'agotado', 'cerrado', 'listo_para_propuesta', 'propuesta_enviada', 'esperando_pago'
   ];
 
   const statusOptions = [
@@ -300,6 +316,7 @@ const AdminCasesManagement = () => {
     { value: 'agotado', label: 'Agotado' },
     { value: 'cerrado', label: 'Cerrado' },
     { value: 'listo_para_propuesta', label: 'Listo para Propuesta' },
+    { value: 'propuesta_enviada', label: 'Propuesta Enviada' },
     { value: 'esperando_pago', label: 'Esperando Pago' }
   ];
 
@@ -623,6 +640,15 @@ const AdminCasesManagement = () => {
                   onUploadDocument={handleUploadDocument}
                   onSendMessage={handleSendMessage}
                   onGenerateResolutionWithAgent={handleGenerateResolutionWithAgent}
+                  onOpenSendProposal={(id) => {
+                    const c = casos.find(x => x.id === id);
+                    if (c) {
+                      setSendProposalCaso(c);
+                      setProposalPhone((c as any)?.telefono_borrador || (c as any)?.profiles?.telefono || '');
+                      setIncludeCheckoutLink(false);
+                      setSendProposalOpen(true);
+                    }
+                  }}
                 />
               ))}
             </div>
@@ -785,6 +811,62 @@ const AdminCasesManagement = () => {
         }}
         caso={selectedCaseForAssignment}
       />
+
+      {/* Modal Enviar Propuesta (WhatsApp) directo desde card */}
+      <Dialog open={sendProposalOpen} onOpenChange={setSendProposalOpen}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Enviar propuesta por WhatsApp</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="proposalPhone">Número de WhatsApp</Label>
+              <Input
+                id="proposalPhone"
+                placeholder="Ej: +34 612 345 678"
+                value={proposalPhone}
+                onChange={(e) => setProposalPhone(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <div className="space-y-0.5">
+                <Label>Incluir enlace de checkout</Label>
+                <p className="text-xs text-muted-foreground">Añade el enlace para pagar la consulta directamente.</p>
+              </div>
+              <Switch checked={includeCheckoutLink} onCheckedChange={setIncludeCheckoutLink} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendProposalOpen(false)} disabled={sendingProposal}>Cancelar</Button>
+            <Button
+              onClick={async () => {
+                if (!sendProposalCaso?.id) return;
+                try {
+                  setSendingProposal(true);
+                  const session = await supabase.auth.getSession();
+                  const token = session.data.session?.access_token;
+                  const { error } = await supabase.functions.invoke('enviar-propuesta-whatsapp', {
+                    body: { caso_id: sendProposalCaso.id, include_checkout_url: includeCheckoutLink, phone_override: proposalPhone || undefined },
+                    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                  });
+                  if (error) throw new Error(error.message);
+                  toast({ title: 'Propuesta enviada', description: 'Se envió por WhatsApp y se actualizó el estado.' });
+                  setSendProposalOpen(false);
+                  setSendProposalCaso(null);
+                } catch (e: any) {
+                  toast({ title: 'Error', description: e?.message || 'No se pudo enviar la propuesta', variant: 'destructive' });
+                } finally {
+                  setSendingProposal(false);
+                }
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={sendingProposal || !proposalPhone}
+            >
+              {sendingProposal ? 'Enviando…' : 'Enviar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AddManualCaseModal
         isOpen={addManualCaseOpen}

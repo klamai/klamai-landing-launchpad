@@ -57,6 +57,7 @@ import CaseNotesSection from '@/components/shared/CaseNotesSection';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useQueryClient } from '@tanstack/react-query';
@@ -147,6 +148,11 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
   const [chargeConcept, setChargeConcept] = useState('');
   const [chargeAmount, setChargeAmount] = useState('');
   const [chargeExencion, setChargeExencion] = useState<'none' | 'b2b_ue' | 'fuera_ue' | 'suplido' | 'ajg'>('none');
+  // Envío de propuesta (WhatsApp)
+  const [showSendProposalModal, setShowSendProposalModal] = useState(false);
+  const [proposalPhone, setProposalPhone] = useState('');
+  const [includeCheckoutLink, setIncludeCheckoutLink] = useState(false);
+  const [sendingProposal, setSendingProposal] = useState(false);
   const queryClient = useQueryClient();
 
   const { 
@@ -1143,6 +1149,19 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                       <DropdownMenuItem onClick={() => onSendMessage(caso.id)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200">
                         <MessageSquare className="h-4 w-4 mr-1 text-emerald-600" /> Enviar Mensaje
                       </DropdownMenuItem>
+                      {caso?.estado === 'listo_para_propuesta' && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            const seedPhone = (caso as any)?.telefono_borrador || (caso as any)?.profiles?.telefono || '';
+                            setProposalPhone(seedPhone || '');
+                            setIncludeCheckoutLink(false);
+                            setShowSendProposalModal(true);
+                          }}
+                          className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200"
+                        >
+                          <Mail className="h-4 w-4 mr-1 text-indigo-600" /> Enviar propuesta
+                        </DropdownMenuItem>
+                      )}
                       {canCloseCase() && (
                         <DropdownMenuItem onClick={handleCerrarCaso} disabled={isClosing} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-rose-50 hover:text-rose-900 dark:hover:bg-rose-900/30 dark:hover:text-rose-200 data-[highlighted]:bg-rose-50 data-[highlighted]:text-rose-900 dark:data-[highlighted]:bg-rose-900/30 dark:data-[highlighted]:text-rose-200">
                           <ShieldCheck className="h-4 w-4 mr-1 text-rose-600" /> {isClosing ? 'Cerrando...' : 'Cerrar'}
@@ -1152,6 +1171,55 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                   </DropdownMenu>
                 </div>
               </div>
+              {/* Modal Enviar Propuesta (WhatsApp) */}
+              <Dialog open={showSendProposalModal} onOpenChange={setShowSendProposalModal}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Enviar propuesta por WhatsApp</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="proposalPhone">Teléfono del cliente</Label>
+                      <Input id="proposalPhone" value={proposalPhone} onChange={(e) => setProposalPhone(e.target.value)} placeholder="+34 600 000 000" />
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium">Incluir enlace de pago</p>
+                        <p className="text-xs text-muted-foreground">Opcional. No recomendado por defecto.</p>
+                      </div>
+                      <Switch checked={includeCheckoutLink} onCheckedChange={setIncludeCheckoutLink} />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowSendProposalModal(false)} disabled={sendingProposal}>Cancelar</Button>
+                    <Button
+                      onClick={async () => {
+                        if (!caso?.id) return;
+                        try {
+                          setSendingProposal(true);
+                          const session = await supabase.auth.getSession();
+                          const token = session.data.session?.access_token;
+                          const { data, error } = await supabase.functions.invoke('enviar-propuesta-whatsapp', {
+                            body: { caso_id: caso.id, include_checkout_url: includeCheckoutLink, phone_override: proposalPhone || undefined },
+                            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                          });
+                          if (error) throw new Error(error.message);
+                          toast({ title: 'Propuesta enviada', description: 'Se envió por WhatsApp y se actualizó el estado.' });
+                          setShowSendProposalModal(false);
+                        } catch (e: any) {
+                          toast({ title: 'Error', description: e?.message || 'No se pudo enviar la propuesta', variant: 'destructive' });
+                        } finally {
+                          setSendingProposal(false);
+                        }
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      disabled={sendingProposal || !proposalPhone}
+                    >
+                      {sendingProposal ? 'Enviando…' : 'Enviar'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
         </DialogContent>

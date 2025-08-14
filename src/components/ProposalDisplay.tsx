@@ -48,15 +48,15 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     }
 
     try {
-      // Vincular caso al usuario primero
+      // Vincular caso al usuario primero (si existe token de sesión)
       await linkCaseToUser(user.id, casoId);
-      
-      // Luego enviar resumen por email
-      await sendProgressSummary();
+
+      // Mantener el caso en 'listo_para_propuesta' sin iniciar pago ni enviar email automático
+      await supabase.rpc('set_caso_listo_para_propuesta', { p_caso_id: casoId });
       
       toast({
         title: "¡Progreso guardado!",
-        description: "Tu caso ha sido vinculado a tu cuenta y te hemos enviado un resumen por email.",
+        description: "Tu caso ha sido vinculado y quedará como 'Listo para propuesta'.",
       });
       
       // Redirigir al dashboard
@@ -123,14 +123,14 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
         // Si hay plan seleccionado, proceder al pago
         handlePayment(selectedPlan);
       } else {
-        // Si no hay plan, vincular caso y enviar resumen
+        // Si no hay plan, vincular caso y mantener 'listo_para_propuesta'
         if (user) {
           await linkCaseToUser(user.id, casoId);
-          await sendProgressSummary();
+          await supabase.rpc('set_caso_listo_para_propuesta', { p_caso_id: casoId });
           
           toast({
             title: "¡Bienvenido!",
-            description: "Tu cuenta ha sido creada y tu caso vinculado. Te hemos enviado un resumen por email.",
+            description: "Tu cuenta ha sido creada, tu caso vinculado y está 'Listo para propuesta'.",
           });
           
           // Redirigir al dashboard
@@ -153,10 +153,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
       
       const sessionToken = localStorage.getItem('current_session_token');
       
-      if (!sessionToken) {
-        console.error('No session token found for case linking');
-        throw new Error('Token de sesión no encontrado');
-      }
+      if (!sessionToken) return; // si no hay token, puede estar ya vinculado
 
       const { data, error } = await supabase.rpc('assign_anonymous_case_to_user', {
         p_caso_id: caseId,

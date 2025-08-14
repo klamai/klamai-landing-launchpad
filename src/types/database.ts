@@ -51,7 +51,7 @@ export interface Caso {
   id: string;
   cliente_id: string | null;
   especialidad_id: number | null;
-  estado: 'borrador' | 'esperando_pago' | 'disponible' | 'agotado' | 'cerrado' | 'listo_para_propuesta';
+  estado: 'borrador' | 'esperando_pago' | 'disponible' | 'asignado' | 'agotado' | 'cerrado' | 'listo_para_propuesta' | 'propuesta_enviada' | 'oportunidad';
   tipo_lead: 'estandar' | 'premium' | 'urgente' | null;
   motivo_consulta: string | null;
   resumen_caso: string | null;
