@@ -194,7 +194,7 @@ Consulta sobre despido improcedente. Trabajo en empresa X desde hace 3 años, me
                 <ul className="text-sm text-amber-700 dark:text-amber-300 space-y-1">
                   <li>• El caso se creará en estado "borrador" inicialmente</li>
                   <li>• La IA procesará el texto y extraerá los datos automáticamente</li>
-                  <li>• Una vez procesado, el caso pasará a estado "disponible"</li>
+                  <li>• Una vez procesado, el caso pasará a estado "listo_para_propuesta"</li>
                   <li>• Se generará un resumen profesional y guía para el abogado</li>
                 </ul>
               </div>
