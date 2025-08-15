@@ -117,13 +117,35 @@ const fetchEspecialidades = async (): Promise<{[key: number]: string}> => {
 // Función para aprobar solicitud automáticamente
 const approveLawyerAutomated = async (applicationId: string): Promise<AutomatedApprovalResult> => {
   try {
-    const { data, error } = await supabase.functions.invoke('approve-lawyer-automated', {
-      body: { solicitud_id: applicationId }
+    const { data, error } = await supabase.rpc('aprobar_solicitud_abogado_automatizado', {
+      p_solicitud_id: applicationId,
+      p_notas_admin: 'Aprobación automática realizada por super admin'
     });
 
     if (error) {
       console.error('Error approving application:', error);
       throw new Error('No se pudo aprobar la solicitud automáticamente');
+    }
+
+    // Enviar email de aprobación usando la función existente
+    if (data && data.success) {
+      try {
+        await supabase.functions.invoke('send-lawyer-approval-email', {
+          body: {
+            tipo: 'aprobacion',
+            email: data.email,
+            nombre: data.nombre,
+            apellido: data.apellido,
+            credenciales: {
+              email: data.email,
+              password: data.temp_password,
+              activationToken: data.activation_token
+            }
+          }
+        });
+      } catch (emailError) {
+        console.warn('Error enviando email (pero la aprobación fue exitosa):', emailError);
+      }
     }
 
     return data as AutomatedApprovalResult;

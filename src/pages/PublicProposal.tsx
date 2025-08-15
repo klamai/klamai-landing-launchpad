@@ -6,6 +6,26 @@ import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AuthModal from '@/components/AuthModal';
+import { FooterSection } from '@/components/ui/footer-section';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { 
+  CheckCircle2, 
+  Clock, 
+  Users2, 
+  Shield, 
+  FileText, 
+  MessageSquare, 
+  Zap, 
+  Star,
+  Scale,
+  ArrowRight,
+  Sparkles,
+  Eye,
+  Lock,
+  Check
+} from 'lucide-react';
 
 const PublicProposal = () => {
   const { token } = useParams();
@@ -132,102 +152,412 @@ const PublicProposal = () => {
     }
   };
 
-  return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">Propuesta de tu caso</h1>
-      {loading ? (
-        <p>Cargando…</p>
-      ) : !assistantMessage && !analysisMarkdown ? (
-        <p>Este enlace no es válido o ha caducado.</p>
-      ) : (
-        <div className="space-y-6">
-          {!accepted && (
-            <div className="p-4 border rounded-lg">
-              <h2 className="font-semibold mb-2">Políticas y privacidad</h2>
-              <div className="text-sm space-y-2 text-muted-foreground mb-4">
-                <label className="flex items-start gap-2">
-                  <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} />
-                  <span>
-                    He leído y acepto los <a href="/aviso-legal" target="_blank" className="underline text-blue-600">Términos y Condiciones</a>.
-                  </span>
-                </label>
-                <label className="flex items-start gap-2">
-                  <input type="checkbox" checked={acceptPrivacy} onChange={(e) => setAcceptPrivacy(e.target.checked)} />
-                  <span>
-                    He leído y acepto la <a href="/politicas-privacidad" target="_blank" className="underline text-blue-600">Política de Privacidad</a>.
-                  </span>
-                </label>
-              </div>
-              <Button
-                disabled={!acceptTerms || !acceptPrivacy || savingConsent}
-                onClick={async () => {
-                  if (!token) return;
-                  try {
-                    setSavingConsent(true);
-                    await supabase.functions.invoke('record-consent', {
-                      body: {
-                        proposal_token: token,
-                        consent_type: 'proposal_view',
-                        accepted_terms: true,
-                        accepted_privacy: true,
-                        policy_terms_version: 1,
-                        policy_privacy_version: 1,
-                      },
-                    });
-                    setAccepted(true);
-                  } catch (e: any) {
-                    toast({ title: 'No se pudo registrar tu aceptación', description: e?.message || 'Inténtalo de nuevo.', variant: 'destructive' });
-                  } finally {
-                    setSavingConsent(false);
-                  }
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {savingConsent ? 'Guardando…' : 'Aceptar y ver propuesta'}
-              </Button>
-            </div>
-          )}
-
-          {accepted && (
-            <>
-              <div className="p-4 border rounded-lg">
-                {analysisMarkdown ? (
-                  <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {analysisMarkdown}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No hay un análisis disponible por el momento.</p>
-                )}
-              </div>
-              {/* Card del plan de consulta */}
-              <div className="border rounded-xl p-4 bg-white/70 dark:bg-gray-900/40 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">Consulta estratégica con abogado</h3>
-                    <p className="text-sm text-muted-foreground">Primera consulta bonificada</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold">37,50 €</div>
-                    <div className="text-xs text-muted-foreground">IVA incl.</div>
-                  </div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        {/* Header con logo */}
+        <header className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center space-x-3">
+                <img src="/logo.svg" alt="klamAI Logo" className="h-10 w-auto" />
+                <div className="hidden sm:block">
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                    klamAI
+                  </h1>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Asistente Legal Inteligente</p>
                 </div>
-                <ul className="mt-3 text-sm list-disc list-inside text-muted-foreground">
-                  <li>30 min con abogado especialista</li>
-                  <li>Revisión inicial de documentos</li>
-                  <li>Recomendación de estrategia</li>
-                </ul>
-                <div className="mt-4">
-                  <Button onClick={handleCheckout} disabled={!casoId || creatingCheckout} className="bg-green-600 hover:bg-green-700 text-white w-full">
-                    {creatingCheckout ? 'Creando pago…' : 'Pagar consulta con abogado'}
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Loading State */}
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Preparando tu propuesta personalizada
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400">
+              Estamos analizando tu caso con inteligencia artificial...
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <FooterSection />
+      </div>
+    );
+  }
+
+  if (!assistantMessage && !analysisMarkdown) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        {/* Header con logo */}
+        <header className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center space-x-3">
+                <img src="/logo.svg" alt="klamAI Logo" className="h-10 w-auto" />
+                <div className="hidden sm:block">
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                    klamAI
+                  </h1>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Asistente Legal Inteligente</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Error State */}
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md mx-auto px-4">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-red-600 dark:text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Enlace no válido o caducado
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Este enlace de propuesta no es válido o ha expirado. Contacta con tu abogado para obtener un nuevo enlace.
+            </p>
+            <Button 
+              onClick={() => window.location.href = '/'}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl"
+            >
+              Volver al inicio
+            </Button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <FooterSection />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Header con logo */}
+      <header className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-3">
+              <img src="/logo.svg" alt="klamAI Logo" className="h-10 w-auto" />
+              <div className="hidden sm:block">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                  klamAI
+                </h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Asistente Legal Inteligente</p>
+              </div>
+            </div>
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+              <Sparkles className="w-3 h-3 mr-1" />
+              Propuesta Personalizada
+            </Badge>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="mb-8">
+            <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300 mb-4">
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Caso Analizado por IA
+            </Badge>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+              Tu <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                Propuesta Legal
+              </span> Está Lista
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Hemos analizado tu caso con inteligencia artificial y hemos preparado una propuesta personalizada 
+              para resolver tu situación legal de la manera más eficiente.
+            </p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Zap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Análisis IA</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Procesado en segundos</p>
+            </div>
+            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Shield className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">100% Seguro</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Datos protegidos RGPD</p>
+            </div>
+            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Users2 className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Abogados Expertos</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Especialistas verificados</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <section className="relative px-4 sm:px-6 lg:px-8 pb-16">
+        <div className="max-w-4xl mx-auto">
+          {!accepted ? (
+            /* Políticas y Consentimiento */
+            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-2 border-blue-200 dark:border-blue-800 shadow-2xl">
+              <CardHeader className="text-center pb-6">
+                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                </div>
+                <CardTitle className="text-2xl text-gray-900 dark:text-white">
+                  Políticas y Privacidad
+                </CardTitle>
+                <CardDescription className="text-lg text-gray-600 dark:text-gray-300">
+                  Para continuar y ver tu propuesta personalizada, necesitamos tu consentimiento
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <label className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={acceptTerms} 
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="mt-1 w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                    />
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        He leído y acepto los{' '}
+                        <a href="/aviso-legal" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold">
+                          Términos y Condiciones
+                        </a>
+                      </span>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={acceptPrivacy} 
+                      onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                      className="mt-1 w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                    />
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        He leído y acepto la{' '}
+                        <a href="/politicas-privacidad" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold">
+                          Política de Privacidad
+                        </a>
+                      </span>
+                    </div>
+                  </label>
+                </div>
+
+                <Separator />
+
+                <div className="text-center">
+                  <Button
+                    disabled={!acceptTerms || !acceptPrivacy || savingConsent}
+                    onClick={async () => {
+                      if (!token) return;
+                      try {
+                        setSavingConsent(true);
+                        await supabase.functions.invoke('record-consent', {
+                          body: {
+                            proposal_token: token,
+                            consent_type: 'proposal_view',
+                            accepted_terms: true,
+                            accepted_privacy: true,
+                            policy_terms_version: 1,
+                            policy_privacy_version: 1,
+                          },
+                        });
+                        setAccepted(true);
+                      } catch (e: any) {
+                        toast({ title: 'No se pudo registrar tu aceptación', description: e?.message || 'Inténtalo de nuevo.', variant: 'destructive' });
+                      } finally {
+                        setSavingConsent(false);
+                      }
+                    }}
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    {savingConsent ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-5 h-5 mr-2" />
+                        Aceptar y Ver Propuesta
+                      </>
+                    )}
                   </Button>
                 </div>
-              </div>
-            </>
+              </CardContent>
+            </Card>
+          ) : (
+            /* Propuesta y Plan de Pago */
+            <div className="space-y-8">
+              {/* Análisis del Caso */}
+              {analysisMarkdown && (
+                <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-xl">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl text-gray-900 dark:text-white">
+                          Análisis de tu Caso
+                        </CardTitle>
+                        <CardDescription className="text-gray-600 dark:text-gray-400">
+                          Evaluación detallada realizada por nuestro asistente legal inteligente
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:text-gray-900 prose-headings:dark:text-white prose-p:text-gray-700 prose-p:dark:text-gray-300">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {analysisMarkdown}
+                      </ReactMarkdown>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Plan de Consulta */}
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800 shadow-2xl overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-green-200 dark:bg-green-800/20 rounded-full -translate-y-16 translate-x-16 blur-3xl"></div>
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
+                        <Scale className="w-6 h-6 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-2xl text-gray-900 dark:text-white">
+                          Consulta Estratégica con Abogado
+                        </CardTitle>
+                        <CardDescription className="text-green-700 dark:text-green-300 text-lg">
+                          Primera consulta bonificada
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-4xl font-bold text-green-600 dark:text-green-400">37,50 €</div>
+                      <div className="text-sm text-green-600 dark:text-green-400">IVA incluido</div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="relative">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-lg mb-4">¿Qué incluye?</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+                          <span className="text-gray-700 dark:text-gray-300">30 min con abogado especialista</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+                          <span className="text-gray-700 dark:text-gray-300">Revisión inicial de documentos</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+                          <span className="text-gray-700 dark:text-gray-300">Recomendación de estrategia</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+                          <span className="text-gray-700 dark:text-gray-300">Plan de acción personalizado</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-lg mb-4">Beneficios</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <Star className="w-5 h-5 text-yellow-500" />
+                          <span className="text-gray-700 dark:text-gray-300">Abogados verificados y especializados</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Clock className="w-5 h-5 text-blue-500" />
+                          <span className="text-gray-700 dark:text-gray-300">Consulta inmediata sin esperas</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Shield className="w-5 h-5 text-green-500" />
+                          <span className="text-gray-700 dark:text-gray-300">Confidencialidad garantizada</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <MessageSquare className="w-5 h-5 text-purple-500" />
+                          <span className="text-gray-700 dark:text-gray-300">Seguimiento post-consulta</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator className="my-6" />
+
+                  <div className="text-center">
+                    <Button 
+                      onClick={handleCheckout} 
+                      disabled={!casoId || creatingCheckout} 
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 w-full md:w-auto"
+                    >
+                      {creatingCheckout ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          Creando pago...
+                        </>
+                      ) : (
+                        <>
+                          <ArrowRight className="w-5 h-5 mr-2" />
+                          Pagar Consulta con Abogado
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                      Pago seguro procesado por Stripe
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Información Adicional */}
+              <Card className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mt-1">
+                      <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                        ¿Tienes alguna pregunta?
+                      </h4>
+                      <p className="text-blue-800 dark:text-blue-200 text-sm">
+                        Nuestro equipo está disponible para ayudarte. Contacta con nosotros en{' '}
+                        <a href="mailto:gestiones@klamai.com" className="underline font-medium">
+                          gestiones@klamai.com
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
-      )}
+      </section>
+
       {/* Modal de autenticación para continuar con el pago */}
       <AuthModal
         isOpen={showAuth}
@@ -238,6 +568,9 @@ const PublicProposal = () => {
         casoId={casoId ?? undefined}
         redirectToUrl={`${window.location.origin}/auth-callback?intent=pay&token=${encodeURIComponent(token || '')}&planId=consulta-estrategica&casoId=${encodeURIComponent(casoId || '')}`}
       />
+
+      {/* Footer */}
+      <FooterSection />
     </div>
   );
 };
