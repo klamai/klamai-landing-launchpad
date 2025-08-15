@@ -20,7 +20,7 @@ export const SUBDOMAIN_CONFIG: Record<SubdomainType, SubdomainConfig> = {
     allowedRoles: ['super_admin'],
     showRegistration: false,
     showLawyerApplication: false,
-    redirectAfterAuth: '/abogados/dashboard',
+    redirectAfterAuth: 'https://abogados.klamai.com/abogados/dashboard',
     title: 'Portal de Administración',
     subtitle: 'Acceso exclusivo para administradores del sistema',
     isPublic: false, // No se muestra en landing público
@@ -67,7 +67,6 @@ export const getCurrentSubdomain = (): SubdomainType => {
   if (typeof window === 'undefined') return 'main';
   
   const hostname = window.location.hostname;
-  console.log('🌐 Detectando subdominio:', { hostname, pathname: window.location.pathname });
   
   // Variables de entorno para los subdominios
   const adminDomain = import.meta.env.VITE_ADMIN_DOMAIN;
@@ -75,20 +74,15 @@ export const getCurrentSubdomain = (): SubdomainType => {
   const clientesDomain = import.meta.env.VITE_CLIENTES_DOMAIN;
   
   // Verificar cada subdominio (tanto por variables de entorno como por hostname directo)
-  console.log('🔍 Variables de entorno:', { adminDomain, abogadosDomain, clientesDomain });
-  
   if ((adminDomain && hostname === adminDomain) || hostname === 'admin.klamai.com') {
-    console.log('✅ Detectado: admin');
     return 'admin';
   }
   
   if ((abogadosDomain && hostname === abogadosDomain) || hostname === 'abogados.klamai.com') {
-    console.log('✅ Detectado: abogados');
     return 'abogados';
   }
   
   if ((clientesDomain && hostname === clientesDomain) || hostname === 'clientes.klamai.com') {
-    console.log('✅ Detectado: clientes');
     return 'clientes';
   }
   
@@ -101,7 +95,6 @@ export const getCurrentSubdomain = (): SubdomainType => {
     if (path.startsWith('/clientes')) return 'clientes';
   }
   
-  console.log('🔄 Fallback a main');
   return 'main';
 };
 

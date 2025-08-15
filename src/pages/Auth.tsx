@@ -245,7 +245,15 @@ const Auth = () => {
             });
           } catch (_) {}
         }
-        navigate('/dashboard');
+        // Usar la redirección configurada para el subdominio
+        const redirectUrl = subdomainConfig.redirectAfterAuth;
+        if (redirectUrl.startsWith('http')) {
+          // URL completa (cross-domain)
+          window.location.href = redirectUrl;
+        } else {
+          // URL relativa
+          navigate(redirectUrl);
+        }
       }
     };
     checkUser();
@@ -309,7 +317,15 @@ const Auth = () => {
       });
 
       setTimeout(() => {
-        navigate('/dashboard');
+        // Usar la redirección configurada para el subdominio
+        const redirectUrl = subdomainConfig.redirectAfterAuth;
+        if (redirectUrl.startsWith('http')) {
+          // URL completa (cross-domain)
+          window.location.href = redirectUrl;
+        } else {
+          // URL relativa
+          navigate(redirectUrl);
+        }
       }, 1000);
 
     } catch (error: any) {
