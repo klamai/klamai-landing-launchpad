@@ -74,6 +74,11 @@ const SubdomainGuard = ({ children }: SubdomainGuardProps) => {
     return <>{children}</>;
   }
 
+  // Super admin puede acceder a cualquier subdominio
+  if (userRole === 'super_admin') {
+    return <>{children}</>;
+  }
+
   // Verificar si el rol del usuario está permitido en este subdominio
   if (!isRoleAllowedInCurrentSubdomain(userRole)) {
     // Mostrar mensaje de error y redirigir al subdominio correcto
