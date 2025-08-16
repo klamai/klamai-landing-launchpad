@@ -8,7 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardRedirect from "@/components/DashboardRedirect";
 import LawyerDashboardRouter from "@/components/LawyerDashboardRouter";
-import SubdomainGuard from "@/components/SubdomainGuard";
+import PathGuard from "@/components/PathGuard";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import Auth from "./pages/Auth";
@@ -62,7 +62,13 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            
+            {/* Rutas de autenticación específicas por perfil */}
+            <Route path="/admin/auth" element={<Auth />} />
             <Route path="/abogados/auth" element={<Auth />} />
+            <Route path="/clientes/auth" element={<Auth />} />
+            
+            {/* Otras rutas de autenticación */}
             <Route path="/abogados/activate" element={<LawyerActivation />} />
             <Route path="/auth-callback" element={<AuthCallback />} />
             <Route path="/chat" element={<Chat />} />
@@ -70,90 +76,90 @@ const App = () => (
             {/* Rutas protegidas del dashboard de clientes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
-                <SubdomainGuard>
+                <PathGuard>
                   <DashboardRedirect>
                     <ClientDashboard />
                   </DashboardRedirect>
-                </SubdomainGuard>
+                </PathGuard>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/nueva-consulta" element={
               <ProtectedRoute>
-                <SubdomainGuard>
+                <PathGuard>
                   <DashboardRedirect>
                     <ClientDashboard />
                   </DashboardRedirect>
-                </SubdomainGuard>
+                </PathGuard>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/casos" element={
               <ProtectedRoute>
-                <SubdomainGuard>
+                <PathGuard>
                   <DashboardRedirect>
                     <ClientDashboard />
                   </DashboardRedirect>
-                </SubdomainGuard>
+                </PathGuard>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/casos/:casoId" element={
               <ProtectedRoute>
-                <SubdomainGuard>
+                <PathGuard>
                   <DashboardRedirect>
                     <ClientDashboard />
                   </DashboardRedirect>
-                </SubdomainGuard>
+                </PathGuard>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/perfil" element={
               <ProtectedRoute>
-                <SubdomainGuard>
+                <PathGuard>
                   <DashboardRedirect>
                     <ClientDashboard />
                   </DashboardRedirect>
-                </SubdomainGuard>
+                </PathGuard>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/configuracion" element={
               <ProtectedRoute>
-                <SubdomainGuard>
+                <PathGuard>
                   <DashboardRedirect>
                     <ClientDashboard />
                   </DashboardRedirect>
-                </SubdomainGuard>
+                </PathGuard>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/facturacion" element={
               <ProtectedRoute>
-                <SubdomainGuard>
+                <PathGuard>
                   <DashboardRedirect>
                     <ClientDashboard />
                   </DashboardRedirect>
-                </SubdomainGuard>
+                </PathGuard>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/notificaciones" element={
               <ProtectedRoute>
-                <SubdomainGuard>
+                <PathGuard>
                   <DashboardRedirect>
                     <ClientDashboard />
                   </DashboardRedirect>
-                </SubdomainGuard>
+                </PathGuard>
               </ProtectedRoute>
             } />
             
             {/* Rutas protegidas del dashboard de abogados - Enrutador inteligente */}
             <Route path="/abogados/dashboard" element={
               <ProtectedRoute>
-                <SubdomainGuard>
+                <PathGuard>
                   <LawyerDashboardRouter />
-                </SubdomainGuard>
+                </PathGuard>
               </ProtectedRoute>
             } />
             <Route path="/abogados/dashboard/*" element={
               <ProtectedRoute>
-                <SubdomainGuard>
+                <PathGuard>
                   <LawyerDashboardRouter />
-                </SubdomainGuard>
+                </PathGuard>
               </ProtectedRoute>
             } />
             

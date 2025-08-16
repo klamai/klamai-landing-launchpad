@@ -33,9 +33,20 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Si no hay usuario autenticado, redirigir al login
+  // Si no hay usuario autenticado, redirigir al login apropiado
   if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    // Determinar a qué auth redirigir basado en la ruta actual
+    let authPath = '/auth';
+    
+    if (location.pathname.startsWith('/abogados')) {
+      authPath = '/abogados/auth';
+    } else if (location.pathname.startsWith('/clientes') || location.pathname.startsWith('/dashboard')) {
+      authPath = '/clientes/auth';
+    } else if (location.pathname.startsWith('/admin')) {
+      authPath = '/admin/auth';
+    }
+    
+    return <Navigate to={authPath} state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

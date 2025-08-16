@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRef } from "react";
 import { validatePassword } from "@/utils/passwordValidation";
 import { logError, logAuth } from "@/utils/secureLogging";
-import { getCurrentSubdomainConfig, getAuthCallbackUrl } from "@/utils/subdomain";
+import { getCurrentSubdomainConfig, getAuthCallbackUrl, getRedirectUrlForRole } from "@/utils/subdomain";
 import LawyerApplicationForm from "@/components/admin/LawyerApplicationForm";
 
 // Animated Background Component
@@ -245,15 +245,16 @@ const Auth = () => {
             });
           } catch (_) {}
         }
-        // Usar la redirección configurada para el subdominio
-        const redirectUrl = subdomainConfig.redirectAfterAuth;
-        if (redirectUrl.startsWith('http')) {
-          // URL completa (cross-domain)
-          window.location.href = redirectUrl;
-        } else {
-          // URL relativa
-          navigate(redirectUrl);
-        }
+        // Verificar el rol del usuario para redirigir correctamente
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single() as { data: { role: string } | null; error: any };
+
+        const userRole = profile?.role;
+        const correctRedirectUrl = userRole ? getRedirectUrlForRole(userRole) : subdomainConfig.redirectAfterAuth;
+        navigate(correctRedirectUrl);
       }
     };
     checkUser();
@@ -316,16 +317,18 @@ const Auth = () => {
         description: "Redirigiendo a tu dashboard...",
       });
 
+      // Verificar el rol del usuario para redirigir correctamente
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single() as { data: { role: string } | null; error: any };
+
+      const userRole = profile?.role;
+      const correctRedirectUrl = userRole ? getRedirectUrlForRole(userRole) : subdomainConfig.redirectAfterAuth;
+
       setTimeout(() => {
-        // Usar la redirección configurada para el subdominio
-        const redirectUrl = subdomainConfig.redirectAfterAuth;
-        if (redirectUrl.startsWith('http')) {
-          // URL completa (cross-domain)
-          window.location.href = redirectUrl;
-        } else {
-          // URL relativa
-          navigate(redirectUrl);
-        }
+        navigate(correctRedirectUrl);
       }, 1000);
 
     } catch (error: any) {
