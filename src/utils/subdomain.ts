@@ -61,38 +61,24 @@ export const SUBDOMAIN_CONFIG: Record<SubdomainType, SubdomainConfig> = {
 };
 
 /**
- * Obtiene el tipo de subdominio actual basado en la URL
+ * Obtiene el tipo de perfil actual basado en la URL path
  */
 export const getCurrentSubdomain = (): SubdomainType => {
   if (typeof window === 'undefined') return 'main';
   
-  const hostname = window.location.hostname;
+  const path = window.location.pathname;
   
-  // Variables de entorno para los subdominios
-  const adminDomain = import.meta.env.VITE_ADMIN_DOMAIN;
-  const abogadosDomain = import.meta.env.VITE_ABOGADOS_DOMAIN;
-  const clientesDomain = import.meta.env.VITE_CLIENTES_DOMAIN;
-  
-  // Verificar cada subdominio (tanto por variables de entorno como por hostname directo)
-  if ((adminDomain && hostname === adminDomain) || hostname === 'admin.klamai.com') {
+  // Detectar por path (nueva lógica principal)
+  if (path.startsWith('/admin')) {
     return 'admin';
   }
   
-  if ((abogadosDomain && hostname === abogadosDomain) || hostname === 'abogados.klamai.com') {
+  if (path.startsWith('/abogados')) {
     return 'abogados';
   }
   
-  if ((clientesDomain && hostname === clientesDomain) || hostname === 'clientes.klamai.com') {
+  if (path.startsWith('/clientes')) {
     return 'clientes';
-  }
-  
-  // Fallback para desarrollo local o dominio principal
-  if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
-    // En desarrollo, detectar por path si existe
-    const path = window.location.pathname;
-    if (path.startsWith('/abogados')) return 'abogados';
-    if (path.startsWith('/admin')) return 'admin';
-    if (path.startsWith('/clientes')) return 'clientes';
   }
   
   return 'main';
@@ -118,64 +104,21 @@ export const isRoleAllowedInCurrentSubdomain = (userRole: string): boolean => {
  * Obtiene la URL de redirección correcta para un rol específico
  */
 export const getRedirectUrlForRole = (userRole: string): string => {
-  // Mapeo de roles a subdominios
-  const roleSubdomainMap: Record<string, SubdomainType> = {
-    'super_admin': 'abogados', // Super admin va al portal de abogados
-    'abogado': 'abogados',
-    'cliente': 'clientes',
+  // Mapeo de roles a rutas
+  const rolePathMap: Record<string, string> = {
+    'super_admin': '/abogados/dashboard', // Super admin va al dashboard de abogados
+    'abogado': '/abogados/dashboard',
+    'cliente': '/dashboard',
   };
   
-  const targetSubdomain = roleSubdomainMap[userRole] || 'main';
-  const config = SUBDOMAIN_CONFIG[targetSubdomain];
-  
-  // Obtener el dominio del subdominio objetivo
-  let targetDomain = '';
-  switch (targetSubdomain) {
-    case 'admin':
-      targetDomain = import.meta.env.VITE_ADMIN_DOMAIN || window.location.hostname;
-      break;
-    case 'abogados':
-      targetDomain = import.meta.env.VITE_ABOGADOS_DOMAIN || window.location.hostname;
-      break;
-    case 'clientes':
-      targetDomain = import.meta.env.VITE_CLIENTES_DOMAIN || window.location.hostname;
-      break;
-    default:
-      targetDomain = window.location.hostname;
-  }
-  
-  // Construir URL completa
-  const protocol = window.location.protocol;
-  const port = window.location.port ? `:${window.location.port}` : '';
-  
-  return `${protocol}//${targetDomain}${port}${config.redirectAfterAuth}`;
+  return rolePathMap[userRole] || '/dashboard';
 };
 
 /**
- * Genera las URLs de callback para OAuth por subdominio
+ * Genera las URLs de callback para OAuth
  */
-export const getAuthCallbackUrl = (subdomain?: SubdomainType): string => {
-  const currentSubdomain = subdomain || getCurrentSubdomain();
-  
-  let domain = '';
-  switch (currentSubdomain) {
-    case 'admin':
-      domain = import.meta.env.VITE_ADMIN_DOMAIN || window.location.hostname;
-      break;
-    case 'abogados':
-      domain = import.meta.env.VITE_ABOGADOS_DOMAIN || window.location.hostname;
-      break;
-    case 'clientes':
-      domain = import.meta.env.VITE_CLIENTES_DOMAIN || window.location.hostname;
-      break;
-    default:
-      domain = window.location.hostname;
-  }
-  
-  const protocol = window.location.protocol;
-  const port = window.location.port ? `:${window.location.port}` : '';
-  
-  return `${protocol}//${domain}${port}/auth-callback`;
+export const getAuthCallbackUrl = (): string => {
+  return '/auth-callback'; // Usar ruta relativa, mismo dominio
 };
 
 /**

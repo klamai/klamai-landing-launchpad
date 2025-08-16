@@ -1,15 +1,19 @@
-# 🌐 CONFIGURACIÓN DE SUBDOMINIOS - KlamAI
+# 🛣️ CONFIGURACIÓN DE RUTAS POR PERFIL - KlamAI
+
+## ⚠️ ACTUALIZACIÓN: CAMBIO DE SUBDOMINIOS A RUTAS
+
+Se cambió de subdominios (`admin.klamai.com`) a rutas por perfil (`/admin/auth`) para mayor simplicidad y robustez.
 
 ## 📋 IMPLEMENTACIÓN COMPLETADA
 
-### 1. **Arquitectura de Subdominios**
+### 1. **Arquitectura de Rutas por Perfil**
 
-Se ha implementado un sistema de autenticación por subdominios que personaliza la experiencia según el tipo de usuario:
+Se ha implementado un sistema de autenticación por rutas que personaliza la experiencia según el tipo de usuario:
 
-- **`admin.klamai.com`**: Portal de administración (solo Super Admin)
-- **`abogados.klamai.com`**: Portal de abogados (Login + Solicitud de acceso)
-- **`clientes.klamai.com`**: Portal de clientes (Login + Registro)
-- **`klamai.com`**: Dominio principal (todos los roles)
+- **`/admin/auth`**: Portal de administración (solo Super Admin)
+- **`/abogados/auth`**: Portal de abogados (Login + Solicitud de acceso)  
+- **`/clientes/auth`**: Portal de clientes (Login + Registro)
+- **`/auth`**: Página general (detecta y redirige)
 
 ### 2. **Variables de Entorno Requeridas**
 
