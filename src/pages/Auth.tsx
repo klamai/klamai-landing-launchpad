@@ -12,8 +12,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRef } from "react";
 import { validatePassword } from "@/utils/passwordValidation";
 import { logError, logAuth } from "@/utils/secureLogging";
-import { getCurrentSubdomainConfig, getAuthCallbackUrl, getRedirectUrlForRole } from "@/utils/subdomain";
-import LawyerApplicationForm from "@/components/admin/LawyerApplicationForm";
 
 // Animated Background Component
 const AnimatedBackground = () => {
@@ -186,9 +184,6 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
-  
-  // Configuración del subdominio actual
-  const subdomainConfig = getCurrentSubdomainConfig();
 
   // Estados para el formulario de login
   const [loginEmail, setLoginEmail] = useState("");
@@ -245,38 +240,19 @@ const Auth = () => {
             });
           } catch (_) {}
         }
-        // Verificar el rol del usuario para redirigir correctamente
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single() as { data: { role: string } | null; error: any };
-
-        const userRole = profile?.role;
-        const correctRedirectUrl = userRole ? getRedirectUrlForRole(userRole) : subdomainConfig.redirectAfterAuth;
-        navigate(correctRedirectUrl);
+        navigate('/dashboard');
       }
     };
     checkUser();
   }, [navigate]);
 
   const handleGoogleSignIn = async () => {
-    // Verificar si el subdominio permite Google OAuth para abogados
-    if (subdomainConfig.type === 'abogados') {
-      toast({
-        title: "Función no disponible",
-        description: "El registro con Google para abogados no está disponible. Por favor, solicita acceso a través del formulario.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: getAuthCallbackUrl()
+          redirectTo: `${window.location.origin}/dashboard`
         }
       });
 
@@ -317,18 +293,8 @@ const Auth = () => {
         description: "Redirigiendo a tu dashboard...",
       });
 
-      // Verificar el rol del usuario para redirigir correctamente
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .single() as { data: { role: string } | null; error: any };
-
-      const userRole = profile?.role;
-      const correctRedirectUrl = userRole ? getRedirectUrlForRole(userRole) : subdomainConfig.redirectAfterAuth;
-
       setTimeout(() => {
-        navigate(correctRedirectUrl);
+        navigate('/dashboard');
       }, 1000);
 
     } catch (error: any) {
@@ -553,12 +519,7 @@ const Auth = () => {
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="flex w-full mb-8 bg-gray-100 dark:bg-gray-700">
                     <TabsTrigger value="login" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Iniciar Sesión</TabsTrigger>
-                    {subdomainConfig.showRegistration && (
-                      <TabsTrigger value="signup" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Registrarse</TabsTrigger>
-                    )}
-                    {subdomainConfig.showLawyerApplication && (
-                      <TabsTrigger value="lawyer-apply" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Solicitar Acceso</TabsTrigger>
-                    )}
+                    <TabsTrigger value="signup" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600">Registrarse</TabsTrigger>
                   </TabsList>
 
                   {/* Login Tab */}
@@ -568,8 +529,8 @@ const Auth = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5 }}
                     >
-                      <h1 className="text-2xl md:text-3xl font-bold mb-1 text-gray-800 dark:text-white">{subdomainConfig.title}</h1>
-                      <p className="text-gray-500 dark:text-gray-400 mb-8">{subdomainConfig.subtitle}</p>
+                      <h1 className="text-2xl md:text-3xl font-bold mb-1 text-gray-800 dark:text-white">Bienvenido de vuelta</h1>
+                      <p className="text-gray-500 dark:text-gray-400 mb-8">Inicia sesión en tu cuenta</p>
                       
                       {/* Google Sign In Button */}
                       <div className="mb-6">
@@ -822,26 +783,6 @@ const Auth = () => {
                       </form>
                     </motion.div>
                   </TabsContent>
-                  
-                  {/* Lawyer Application Tab */}
-                  {subdomainConfig.showLawyerApplication && (
-                    <TabsContent value="lawyer-apply">
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <h1 className="text-2xl md:text-3xl font-bold mb-1 text-gray-800 dark:text-white">Solicitar Acceso</h1>
-                        <p className="text-gray-500 dark:text-gray-400 mb-6">Aplica para unirte como abogado a klamAI</p>
-                        <LawyerApplicationForm onSuccess={() => {
-                          // Cambiar a tab de login después de enviar solicitud exitosamente
-                          setTimeout(() => {
-                            setActiveTab("login");
-                          }, 3000);
-                        }} />
-                      </motion.div>
-                    </TabsContent>
-                  )}
                 </Tabs>
               ) : (
                 /* Forgot Password Form */
