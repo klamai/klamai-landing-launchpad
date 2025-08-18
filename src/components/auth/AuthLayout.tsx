@@ -340,9 +340,9 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                 <div className="mt-8 space-y-4">
                   {showLawyerAccess && (
                     <div className="text-center">
-                      <button className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm transition-colors">
+                      <Link to="/abogados/solicitud" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm transition-colors hover:underline">
                         ¿Eres abogado? Solicitar acceso
-                      </button>
+                      </Link>
                     </div>
                   )}
                   

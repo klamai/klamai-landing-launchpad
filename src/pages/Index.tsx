@@ -731,7 +731,7 @@ const Index = () => {
                           Conoce Más
                         </Button>
                       </Link>
-                      <Link to="/abogados?action=join">
+                      <Link to="/abogados/solicitud"> {/* <-- ENLACE CORREGIDO */}
                         <Button variant="outline" size="lg" className="border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-8 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
                           <Briefcase className="w-5 h-5 mr-2" />
                           Solicitar Acceso

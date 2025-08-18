@@ -138,11 +138,95 @@
         ],
         "priority": "high",
         "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "[Frontend] Crear Página de Solicitud para Abogados (`/abogados/solicitud`)",
+        "description": "Diseñar y maquetar la interfaz de usuario para el formulario de solicitud de nuevos abogados en la ruta `/abogados/solicitud`. Debe ser profesional, atractiva y consistente con el diseño general del sitio.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "[Frontend] Implementar Formulario de Solicitud con Validación",
+        "description": "Implementar el formulario completo con todos los campos de la tabla `solicitudes_abogado`. Incluir validación de campos en el frontend (ej. con Zod y React Hook Form) y un componente de selección múltiple para las especialidades, cargadas dinámicamente desde la base de datos.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "[Frontend] Implementar Subida Segura de Archivos",
+        "description": "Crear un componente de frontend que permita a los usuarios subir de forma segura sus documentos de verificación (DNI, carnet de colegiado, etc.) directamente a un bucket de Supabase Storage. Debe manejar estados de carga, éxito y error.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "[Backend] Crear Edge Function `crear-solicitud-abogado`",
+        "description": "Desarrollar una nueva Supabase Edge Function que sirva como endpoint seguro para recibir los datos del formulario de solicitud. Debe estar configurada para aceptar únicamente peticiones POST.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "[Backend] Implementar Lógica de Inserción y Auditoría (RGPD)",
+        "description": "Dentro de la Edge Function, añadir la lógica para validar y sanitizar todos los datos recibidos. Luego, insertar la solicitud en la tabla `solicitudes_abogado`. Inmediatamente después, registrar el evento de consentimiento en la tabla `auditoria_seguridad` para cumplir con RGPD.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          4
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "[Integración] Conectar Frontend con Edge Function",
+        "description": "Utilizar React Query (useMutation) en el componente del formulario para enviar los datos a la nueva Edge Function `crear-solicitud-abogado`. Gestionar adecuadamente los estados de carga, éxito y error para proporcionar feedback al usuario.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          3,
+          5
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "[Testing] Realizar Pruebas E2E del Flujo de Solicitud",
+        "description": "Realizar pruebas completas del flujo de solicitud. Esto incluye enviar formularios con datos válidos e inválidos, verificar la subida de archivos, y confirmar que los registros se crean correctamente en `solicitudes_abogado` y `auditoria_seguridad` en la base de datos.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          6
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-08-18T11:54:54.067Z",
-      "updated": "2025-08-18T19:07:52.709Z",
+      "updated": "2025-08-18T21:10:41.856Z",
       "description": "Tasks for master context"
     }
   }

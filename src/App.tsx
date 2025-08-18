@@ -25,6 +25,7 @@ import AuthCallback from "./pages/AuthCallback";
 import ActivarCliente from "./pages/ActivarCliente";
 import NotFound from "./pages/NotFound";
 import PublicProposal from "./pages/PublicProposal";
+import SolicitudAbogadoPage from '@/pages/abogados/Solicitud'; // Importar la nueva página
 
 // Importar las secciones directamente para las rutas anidadas
 import DashboardSection from "@/components/dashboard/DashboardSection";
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/auth" element={<UnifiedAuth />} />
             <Route path="/abogados/auth" element={<UnifiedAuth />} />
             <Route path="/admin/auth" element={<UnifiedAuth />} />
+            <Route path="/abogados/solicitud" element={<SolicitudAbogadoPage />} />
             
             {/* Redirecciones para rutas base sin autenticación */}
             <Route path="/admin" element={<Navigate to="/admin/auth" replace />} />
