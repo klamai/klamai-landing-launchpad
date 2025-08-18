@@ -2,6 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { logError, logAuth } from '@/utils/secureLogging';
+import { SecureLogger } from '@/utils/secureLogging';
 
 interface RoleBasedRouteProps {
   children: React.ReactNode;
@@ -78,8 +79,8 @@ const RoleBasedRoute = ({
 
   // Si no tiene permisos, redirigir automáticamente
   if (!hasRequiredRole || !hasRequiredType) {
-    // Log detallado del acceso denegado
-    console.log(`🚫 Acceso denegado: rol=${profile.role}, tipo=${profile.tipo_abogado}, requerido=${allowedRoles}, tipo_requerido=${requiredType}`);
+    // Acceso denegado
+    SecureLogger.warn(`Acceso denegado: rol=${profile.role}, tipo=${profile.tipo_abogado}, requerido=${allowedRoles}, tipo_requerido=${requiredType}`, 'role_based_route');
     
     // Log de seguridad
     logAuth('login', false, `RoleBasedRoute - ${location.pathname} - Usuario: ${profile.role}/${profile.tipo_abogado}`);

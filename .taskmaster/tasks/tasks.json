@@ -2,105 +2,148 @@
   "master": {
     "tasks": [
       {
-        "id": 1,
-        "title": "Create Detailed Plan for SuperAdmin Dashboard Navigation Fix",
-        "description": "Develop a comprehensive plan to resolve navigation issues in the SuperAdmin dashboard by redesigning the security system, optimizing React Query, fixing sidebar URLs, and implementing proper testing.",
-        "details": "The plan should address the following key components:\n\n1. **Current Middleware Removal**:\n   - Document the existing middleware architecture\n   - Identify all security checks and permission verifications in the current implementation\n   - Plan for safe removal without compromising security\n   - Outline transition strategy to new security approach\n\n2. **Security System Redesign**:\n   - Implement a token-based authentication system with proper caching\n   - Design a role-based access control (RBAC) system that verifies permissions once per session\n   - Create a centralized permission store using React Context or Redux\n   - Implement security at the route level rather than component level\n   - Consider using higher-order components (HOCs) for protected routes\n\n3. **React Query Optimization**:\n   - Implement proper caching strategies for API responses\n   - Configure staleTime and cacheTime appropriately for different data types\n   - Use queryClient.prefetchQuery for anticipated navigation paths\n   - Implement optimistic updates where appropriate\n   - Consider implementing background refetching with lower priority\n\n4. **Sidebar URL Correction**:\n   - Audit all sidebar navigation links\n   - Implement consistent URL structure following RESTful principles\n   - Create a centralized routing configuration\n   - Ensure proper active state highlighting based on current route\n   - Add proper route guards based on user permissions\n\n5. **Testing and Validation Strategy**:\n   - Define acceptance criteria for successful navigation\n   - Create performance benchmarks for navigation speed\n   - Outline test cases for permission verification\n   - Plan for regression testing of existing functionality\n   - Establish monitoring for post-implementation performance\n\nThe plan should prioritize achieving instantaneous navigation between sections while maintaining proper security controls without redundant permission checks.",
-        "testStrategy": "The implementation will be tested through the following steps:\n\n1. **Performance Testing**:\n   - Measure and compare navigation times before and after implementation\n   - Use React DevTools Profiler to identify rendering bottlenecks\n   - Test navigation performance across different user roles and permissions\n   - Verify that navigation between sections occurs in under 300ms\n\n2. **Security Validation**:\n   - Perform penetration testing to ensure the new security system is robust\n   - Verify that unauthorized users cannot access restricted sections\n   - Test edge cases like token expiration, session timeout, and permission changes\n   - Ensure proper error handling for unauthorized access attempts\n\n3. **Functional Testing**:\n   - Create test scripts for all navigation paths in the SuperAdmin dashboard\n   - Verify correct active state highlighting in the sidebar\n   - Test breadcrumb navigation functionality\n   - Ensure proper URL structure and routing throughout the application\n\n4. **User Acceptance Testing**:\n   - Have SuperAdmin users validate the navigation experience\n   - Collect feedback on perceived performance improvements\n   - Verify that all required functionality is accessible\n   - Ensure the UI remains consistent during navigation\n\n5. **Regression Testing**:\n   - Verify that existing dashboard functionality remains intact\n   - Test integration with other system components\n   - Ensure data loading and submission still work correctly\n   - Check for any visual regressions in the UI\n\nAll tests should be documented with clear pass/fail criteria and expected outcomes.",
-        "status": "done",
+        "id": 3,
+        "title": "Implement Complete Row Level Security (RLS)",
+        "description": "Conduct a comprehensive audit of all database tables and implement strict RLS policies to ensure data access is properly restricted to authorized users only.",
+        "details": "1. Create a script to identify all tables in the Supabase database\n2. For each table containing user data or sensitive information:\n   - Review existing RLS policies\n   - Create or update policies for SELECT, INSERT, UPDATE, DELETE operations\n   - Ensure policies follow the principle of least privilege\n3. Implement specific policies based on user roles:\n   - Regular users should only access their own data\n   - Lawyers should only access assigned cases\n   - Admins should have appropriate access controls\n4. Example policy for a user_profiles table:\n```sql\nCREATE POLICY \"Users can view their own profiles\"\nON user_profiles\nFOR SELECT\nUSING (auth.uid() = user_id);\n\nCREATE POLICY \"Users can update their own profiles\"\nON user_profiles\nFOR UPDATE\nUSING (auth.uid() = user_id);\n```\n5. Document all policies in a central security document",
+        "testStrategy": "1. Create test cases for each table and policy\n2. Verify access control by attempting unauthorized operations:\n   - Try to access data belonging to other users\n   - Attempt to modify data without proper permissions\n3. Use Supabase's policy simulator to test policies\n4. Create automated tests that verify RLS is working correctly\n5. Document test results and any policy adjustments made",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Fix PostgreSQL Function Vulnerabilities",
+        "description": "Address performance issues in Row Level Security (RLS) policies that have been identified as critical after the search_path vulnerabilities were resolved.",
+        "status": "pending",
         "dependencies": [],
         "priority": "high",
+        "details": "The original search_path vulnerabilities in the 13 PostgreSQL functions have been fixed. Now we need to focus on optimizing RLS policies:\n\n1. Run `supabase db lint` to identify any remaining issues and focus on RLS policy performance warnings\n2. Analyze each RLS policy for performance bottlenecks, particularly:\n   - Policies with complex joins\n   - Policies without proper indexing\n   - Policies with expensive functions\n3. Create a migration SQL file to optimize the identified RLS policies\n4. For each problematic policy, consider:\n   - Adding appropriate indexes\n   - Simplifying policy expressions\n   - Rewriting policies to use more efficient patterns\n5. Example optimization format:\n```sql\n-- Optimize RLS policy for table_name\nDROP POLICY IF EXISTS policy_name ON table_name;\nCREATE POLICY policy_name ON table_name\nFOR operation\nTO role\nUSING (optimized_expression);\n\n-- Add supporting index if needed\nCREATE INDEX IF NOT EXISTS idx_name ON table_name(columns);\n```\n6. Apply the migration to both local and cloud environments\n7. Document all changes made to the policies and their performance impact",
+        "testStrategy": "1. Benchmark performance before and after policy changes\n2. Create test cases that specifically target the optimized policies\n3. Use EXPLAIN ANALYZE to verify query plans are using indexes properly\n4. Test with realistic data volumes to ensure optimizations are effective\n5. Monitor query performance in development environment before deploying to production\n6. Document performance improvements with metrics\n7. Include RLS policy performance checks in CI/CD pipeline",
         "subtasks": [
           {
             "id": 1,
-            "title": "Document and Analyze Current Middleware Architecture",
-            "description": "Thoroughly document the existing middleware architecture and identify all security checks and permission verifications in the current implementation.",
+            "title": "Document resolution of search_path vulnerabilities",
+            "description": "Create documentation noting that the original 13 PostgreSQL functions with mutable search_path issues have been fixed. Include the list of functions that were affected and how they were resolved.",
+            "status": "pending",
             "dependencies": [],
-            "details": "Create comprehensive documentation of the current middleware system including: authentication flow, permission verification points, security check implementation, data flow diagrams, and component dependencies. Identify performance bottlenecks related to redundant security checks. Map out all API endpoints that use middleware security verification.\n<info added on 2025-08-18T12:07:08.703Z>\n## COMPREHENSIVE ANALYSIS OF CURRENT MIDDLEWARE ARCHITECTURE\n\n**IDENTIFIED FILES:**\n1. `src/components/AdminSecurityMiddleware.tsx` - Main middleware (PROBLEMATIC)\n2. `src/App.tsx` - Route configuration with middleware\n3. `src/components/LawyerDashboardRouter.tsx` - Router using the middleware\n4. `src/components/ProtectedRoute.tsx` - Basic route protection\n5. `src/components/RoleBasedRoute.tsx` - Role verification\n6. `src/components/DashboardRedirect.tsx` - Role-based redirection\n\n**IDENTIFIED PROBLEMS:**\n- AdminSecurityMiddleware executes on every sidebar navigation\n- Repetitive permission checks causing slowness\n- Incorrect sidebar URLs (/abogados/dashboard instead of /admin/dashboard)\n- Circular redirections and \"Verifying permissions\" messages\n- No permission caching, always verifying from scratch\n\n**CURRENT ARCHITECTURE:**\n```\nApp.tsx → AdminSecurityMiddleware → LawyerDashboardRouter → SuperAdminDashboard\n                ↓\n        Complete verification on each navigation\n                ↓\n        \"Verifying permissions\" messages and slowness\n```\n\n**PERFORMANCE IMPACT:**\n- Navigation between sections: 2-3 seconds\n- Unnecessary verifications on each route change\n- Poor user experience compared to regular lawyer\n\n**STATUS: READY FOR REMOVAL AND REDESIGN**\n</info added on 2025-08-18T12:07:08.703Z>",
-            "status": "done",
-            "testStrategy": "Review documentation with senior developers to ensure accuracy. Validate middleware flow diagrams against actual code implementation. Create a checklist of all security features that must be preserved in the new implementation."
+            "details": "",
+            "testStrategy": ""
           },
           {
             "id": 2,
-            "title": "Design Token-Based Authentication System with Caching",
-            "description": "Create detailed specifications for a token-based authentication system with proper caching to replace the current middleware approach.",
+            "title": "Identify problematic RLS policies",
+            "description": "Run performance analysis to identify RLS policies causing performance issues. Create a prioritized list of policies that need optimization.",
+            "status": "pending",
             "dependencies": [],
-            "details": "Design JWT token structure with appropriate claims and expiration. Specify token storage strategy (HTTP-only cookies vs localStorage). Create token refresh mechanism. Design caching strategy to minimize authentication overhead. Document token validation process. Create sequence diagrams for authentication flows. Define error handling for authentication failures.",
-            "status": "done",
-            "testStrategy": "Create proof-of-concept implementation to validate token caching performance. Benchmark authentication speed compared to current implementation. Review security implications with security team."
+            "details": "",
+            "testStrategy": ""
           },
           {
             "id": 3,
-            "title": "Design Role-Based Access Control (RBAC) System",
-            "description": "Design a comprehensive RBAC system that verifies permissions once per session and stores them in a centralized store.",
+            "title": "Create optimization plan for each policy",
+            "description": "For each identified problematic policy, document the current implementation, performance issues, and proposed optimization approach.",
+            "status": "pending",
             "dependencies": [],
-            "details": "Define role hierarchy and permission structure. Design centralized permission store using React Context or Redux. Create permission verification utilities. Specify how permissions will be fetched and cached on login. Document the permission refresh strategy. Create interfaces for permission hooks or HOCs. Design permission-based UI adaptation strategy.",
-            "status": "done",
-            "testStrategy": "Create test cases for different user roles and permission combinations. Develop permission verification unit tests. Review design with UX team to ensure intuitive permission-based UI adaptation."
+            "details": "",
+            "testStrategy": ""
           },
           {
             "id": 4,
-            "title": "Plan React Query Optimization Strategy",
-            "description": "Develop a detailed plan for optimizing React Query implementation with proper caching strategies and prefetching.",
+            "title": "Implement RLS policy optimizations",
+            "description": "Create migration files with optimized RLS policies and supporting indexes.",
+            "status": "pending",
             "dependencies": [],
-            "details": "Analyze current React Query implementation. Define appropriate staleTime and cacheTime configurations for different data types. Design prefetching strategy for anticipated navigation paths. Specify optimistic update patterns for common operations. Create background refetching strategy with lower priority. Document query invalidation rules. Define query key structure for effective cache management.\n<info added on 2025-08-18T12:42:02.743Z>\n## ANÁLISIS Y OPTIMIZACIÓN DE REACT QUERY PARA SUPERADMIN\n\n### CONFIGURACIÓN ACTUAL EN App.tsx:\n```typescript\nconst queryClient = new QueryClient({\n  defaultOptions: {\n    queries: {\n      staleTime: 5 * 60 * 1000,        // 5 minutos - BUENO\n      gcTime: 10 * 60 * 1000,          // 10 minutos - BUENO\n      refetchOnWindowFocus: false,      // ✅ CORRECTO\n      refetchOnReconnect: true,         // ✅ CORRECTO\n      retry: (failureCount, error) => { // ✅ INTELIGENTE\n        if (error?.status === 404) return false;\n        return failureCount < 3;\n      },\n    },\n    mutations: {\n      retry: 1,                         // ✅ ADECUADO\n    },\n  },\n});\n```\n\n### OPTIMIZACIONES ESPECÍFICAS PARA SUPERADMIN:\n1. **staleTime para permisos**: 30 minutos (ya implementado en useSuperAdminPermissions)\n2. **gcTime para permisos**: 1 hora (ya implementado en useSuperAdminPermissions)\n3. **Configuración global**: La configuración actual es óptima para la mayoría de casos\n4. **Hooks específicos**: Los hooks de superadmin tienen configuraciones personalizadas\n\n### CONFIGURACIÓN FINAL RECOMENDADA:\n- Mantener la configuración global actual (es óptima)\n- Los hooks específicos de superadmin ya tienen configuraciones personalizadas\n- No se requieren cambios en la configuración global de React Query\n\n### RESULTADO:\nLa configuración actual de React Query es óptima y no requiere cambios. Los hooks específicos de superadmin ya tienen configuraciones personalizadas para permisos.\n</info added on 2025-08-18T12:42:02.743Z>",
-            "status": "done",
-            "testStrategy": "Benchmark query performance before and after optimization. Create test scenarios for cache hit rates. Develop tests for prefetching effectiveness on navigation paths."
+            "details": "",
+            "testStrategy": ""
           },
           {
             "id": 5,
-            "title": "Audit and Redesign Sidebar Navigation Structure",
-            "description": "Conduct a complete audit of all sidebar navigation links and design a consistent URL structure following RESTful principles.",
+            "title": "Performance testing",
+            "description": "Create and run benchmarks to measure performance improvements from the optimized policies.",
+            "status": "pending",
             "dependencies": [],
-            "details": "Document all current sidebar navigation links and their targets. Design consistent URL structure following RESTful principles. Create centralized routing configuration. Specify active state highlighting logic based on current route. Design route guards based on user permissions. Create navigation state management strategy. Document breadcrumb generation rules.\n<info added on 2025-08-18T12:43:27.456Z>\n**CRITICAL ISSUE IDENTIFIED IN SUPERADMIN SIDEBAR**\n\n**ERROR LOCATION:**\n- File: `src/components/SuperAdminDashboard.tsx`\n- Lines: 108-158 (`links` array)\n\n**SPECIFIC PROBLEM:**\nThe sidebar navigation links in the SuperAdmin dashboard are incorrectly pointing to `/abogados/dashboard/*` routes instead of `/admin/dashboard/*` routes, causing:\n1. Route conflicts between SuperAdmin and Lawyer dashboards\n2. Circular redirections when the security middleware detects a SuperAdmin user\n3. Broken navigation throughout the SuperAdmin interface\n4. Redundant security checks on each navigation attempt\n\n**REQUIRED SOLUTION:**\nAll sidebar URLs must be changed from `/abogados/dashboard/*` to `/admin/dashboard/*` to ensure:\n- Instant navigation between sections\n- Elimination of circular redirects\n- Reduction of redundant permission checks\n- Consistent and correct URL structure\n\nThis issue must be addressed in the centralized routing configuration and navigation structure design.\n</info added on 2025-08-18T12:43:27.456Z>",
-            "status": "done",
-            "testStrategy": "Test navigation paths for all user roles. Verify active state highlighting works correctly for nested routes. Validate that unauthorized routes are properly guarded."
-          },
-          {
-            "id": 6,
-            "title": "Create Implementation Plan for Protected Routes",
-            "description": "Design the implementation approach for protected routes using higher-order components (HOCs) or custom hooks.",
-            "dependencies": [],
-            "details": "Design HOC or custom hook for route protection. Specify redirect behavior for unauthorized access attempts. Create loading state handling during permission checks. Design error handling for permission failures. Document integration with React Router. Specify how to handle deep linking to protected routes. Create strategy for handling permission changes while user is active.\n<info added on 2025-08-18T12:45:13.632Z>\n# IMPLEMENTATION PLAN FOR SUPERADMIN PROTECTED ROUTES\n\n## CURRENT CONFIGURATION IN App.tsx\n```typescript\n<Route \n  path=\"/admin/dashboard/*\" \n  element={\n    <AdminSecurityMiddleware>           // ❌ PROBLEMATIC MIDDLEWARE\n      <LawyerDashboardRouter />\n    </AdminSecurityMiddleware>\n  } \n/>\n```\n\n## IDENTIFIED PROBLEM\n- Using `AdminSecurityMiddleware` causes repetitive permission checks\n- This middleware executes on every sidebar navigation\n- Results in \"Verifying permissions\" messages and slowness\n\n## PLANNED SOLUTION\n**REPLACE** `AdminSecurityMiddleware` with `SuperAdminRouteGuard`:\n\n```typescript\n<Route \n  path=\"/admin/dashboard/*\" \n  element={\n    <SuperAdminRouteGuard>             // ✅ OPTIMIZED NEW GUARD\n      <LawyerDashboardRouter />\n    </SuperAdminRouteGuard>\n  } \n/>\n```\n\n## IMPLEMENTATION BENEFITS\n1. **Single verification**: Executes only once when accessing the route\n2. **Intelligent caching**: Uses React Query to cache permissions\n3. **No re-verifications**: Doesn't execute on each sidebar navigation\n4. **Improved UX**: Eliminates repetitive \"Verifying permissions\" messages\n5. **Maintained security**: Same protection but more efficient\n\n## FILES TO MODIFY\n- `src/App.tsx` - Replace AdminSecurityMiddleware with SuperAdminRouteGuard\n- Import the new SuperAdminRouteGuard\n\n## IMPLEMENTATION STEPS\n1. Import SuperAdminRouteGuard in App.tsx\n2. Replace AdminSecurityMiddleware in the /admin/dashboard/* route\n3. Maintain LawyerDashboardRouter for navigation logic\n4. Test that navigation works correctly\n</info added on 2025-08-18T12:45:13.632Z>",
-            "status": "done",
-            "testStrategy": "Develop test cases for protected routes with various permission scenarios. Test redirect behavior for unauthorized access. Verify loading states display correctly during permission checks."
-          },
-          {
-            "id": 7,
-            "title": "Develop Transition Strategy from Current to New Security System",
-            "description": "Create a detailed transition plan for migrating from the current middleware to the new security approach without disrupting existing functionality.",
-            "dependencies": [],
-            "details": "Design phased implementation approach. Create feature flags for gradual rollout. Specify parallel running period for both systems. Document rollback procedures. Create migration scripts for any data structure changes. Design monitoring strategy during transition. Specify user communication plan for any visible changes. Create timeline with milestones for complete transition.\n<info added on 2025-08-18T12:46:54.668Z>\n**SECURITY SYSTEM TRANSITION STRATEGY - IMPLEMENTATION DETAILS**\n\n**CURRENT IMPLEMENTATION STATUS:**\n✅ **PHASE 1**: Optimized permissions hook (`useSuperAdminPermissions`)\n✅ **PHASE 2**: New route guard (`SuperAdminRouteGuard`)\n✅ **PHASE 3**: Sidebar URLs corrected (from `/abogados/dashboard/*` to `/admin/dashboard/*`)\n✅ **PHASE 4**: React Query configuration optimized\n✅ **PHASE 5**: Protected routes implemented in `App.tsx`\n\n**COMPLETED TRANSITIONS:**\n- `AdminSecurityMiddleware` → `SuperAdminRouteGuard` ✅\n- Sidebar URLs corrected ✅\n- New permissions caching system ✅\n\n**MODIFIED FILES:**\n1. `src/hooks/useSuperAdminPermissions.ts` - New hook with caching\n2. `src/components/SuperAdminRouteGuard.tsx` - New route guard\n3. `src/components/SuperAdminDashboard.tsx` - Corrected sidebar URLs\n4. `src/App.tsx` - Implemented protected routes\n\n**OBSOLETE FILES (PENDING REMOVAL):**\n- `src/components/AdminSecurityMiddleware.tsx` - No longer in use\n\n**ACHIEVED BENEFITS:**\n1. **Instant navigation** between sidebar sections\n2. **Eliminated redundant** permission checks\n3. **Intelligent caching** of permissions per session\n4. **Correct and consistent** URLs\n5. **Enhanced user experience** without \"Checking permissions\" messages\n\n**RECOMMENDED NEXT STEPS:**\n1. **Testing** - Test dashboard navigation\n2. **Cleanup** - Remove obsolete AdminSecurityMiddleware\n3. **Documentation** - Update project documentation\n4. **Validation** - Verify no regressions exist\n</info added on 2025-08-18T12:46:54.668Z>",
-            "status": "done",
-            "testStrategy": "Develop integration tests that verify both systems work during transition. Create smoke tests for critical paths. Plan for A/B testing of performance between old and new implementations."
-          },
-          {
-            "id": 8,
-            "title": "Define Comprehensive Testing and Validation Strategy",
-            "description": "Create a complete testing and validation plan covering performance benchmarks, acceptance criteria, and monitoring for the new implementation.",
-            "dependencies": [],
-            "details": "Define specific acceptance criteria for successful navigation. Create performance benchmarks for navigation speed. Design test cases for permission verification. Plan regression testing strategy for existing functionality. Establish monitoring for post-implementation performance. Create user acceptance testing plan. Design automated test suite for continuous validation. Specify performance testing methodology and tools.\n<info added on 2025-08-18T12:47:46.786Z>\n# COMPREHENSIVE TESTING AND VALIDATION STRATEGY\n\n## TESTING OBJECTIVES:\n1. **Verify instantaneous navigation** between sidebar sections\n2. **Confirm elimination** of repetitive permission checks\n3. **Validate permission cache** functions correctly\n4. **Ensure security** has not been compromised\n5. **Verify correct URLs** in all sections\n\n## CRITICAL TEST CASES:\n\n### TEST 1: Sidebar Navigation\n- Access `/admin/dashboard` as superadmin\n- Navigate between all sidebar sections\n- Verify absence of \"Verifying permissions\" messages\n- Confirm instantaneous navigation\n\n### TEST 2: Permission Cache\n- Verify permissions are cached for 30 minutes\n- Confirm no new verifications during navigation\n- Validate cache invalidation when session changes\n\n### TEST 3: URLs and Routes\n- Verify all sidebar URLs point to `/admin/dashboard/*`\n- Confirm no circular redirects\n- Validate nested routes work correctly\n\n### TEST 4: Security and Permissions\n- Verify non-superadmin users are redirected\n- Confirm guard correctly protects routes\n- Validate no security bypasses exist\n\n### TEST 5: Performance\n- Measure navigation time between sections\n- Verify no unnecessary API calls\n- Confirm React Query works efficiently\n\n## VALIDATION PROCEDURE:\n\n### STEP 1: Manual Testing\n1. Login as superadmin\n2. Navigate through all sidebar sections\n3. Verify response times\n4. Confirm absence of verification messages\n\n### STEP 2: Security Testing\n1. Attempt access without permissions\n2. Verify correct redirects\n3. Confirm route protection\n\n### STEP 3: Performance Testing\n1. Measure navigation times\n2. Verify cache usage\n3. Confirm React Query optimizations\n\n## SUCCESS CRITERIA:\n- Instantaneous navigation between sections\n- No \"Verifying permissions\" messages\n- Correct and consistent URLs\n- Maintained security\n- Correctly functioning cache\n- No functionality regressions\n</info added on 2025-08-18T12:47:46.786Z>",
-            "status": "done",
-            "testStrategy": "Implement automated performance testing using React DevTools Profiler. Create user testing sessions with actual SuperAdmin users. Develop monitoring dashboards for navigation performance metrics."
+            "details": "",
+            "testStrategy": ""
           }
         ]
       },
       {
-        "id": 2,
-        "title": "Unificar auth con UI anterior por rol + hotfix rutas/redirecciones",
-        "description": "Mantener UnifiedAuth con lógica unificada, pero renderizando plantillas con el diseño anterior por rol/URL. Corregir rutas y redirecciones para admin y abogado.",
-        "details": "",
-        "testStrategy": "",
+        "id": 5,
+        "title": "Implement Rate Limiting",
+        "description": "Configure rate limiting on authentication endpoints and other critical API functions to protect against brute force attacks and API abuse.",
+        "details": "1. Access Supabase dashboard and navigate to Authentication settings\n2. Configure rate limiting for the following operations:\n   - Login attempts (e.g., 5 attempts per minute)\n   - Password reset requests (e.g., 3 requests per hour)\n   - User registration (e.g., 3 registrations per hour per IP)\n   - API key usage (appropriate limits based on expected usage)\n3. For custom API endpoints, implement rate limiting using middleware:\n```javascript\n// Example using Express Rate Limit middleware\nconst rateLimit = require('express-rate-limit');\n\nconst authLimiter = rateLimit({\n  windowMs: 15 * 60 * 1000, // 15 minutes\n  max: 5, // 5 requests per windowMs\n  message: 'Too many authentication attempts, please try again later'\n});\n\napp.use('/api/auth/', authLimiter);\n```\n4. Implement appropriate client-side handling of rate limit responses\n5. Add monitoring for rate limit events",
+        "testStrategy": "1. Create automated tests that attempt to exceed rate limits\n2. Verify that rate limiting correctly blocks excessive requests\n3. Test client-side handling of rate limit responses\n4. Simulate various attack scenarios to ensure protection\n5. Monitor rate limit events in production to fine-tune limits as needed",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          4
+        ],
         "status": "pending",
-        "dependencies": [],
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Create Audit Trail System",
+        "description": "Develop a comprehensive audit logging system to track security events, user actions, and data access for compliance with GDPR and security incident response.",
+        "details": "1. Create a new `audit_log` table in Supabase:\n```sql\nCREATE TABLE audit_log (\n  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n  user_id UUID REFERENCES auth.users(id),\n  action TEXT NOT NULL,\n  table_name TEXT,\n  record_id TEXT,\n  old_data JSONB,\n  new_data JSONB,\n  ip_address TEXT,\n  user_agent TEXT,\n  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()\n);\n```\n2. Create PostgreSQL triggers for critical tables to automatically log changes:\n```sql\nCREATE OR REPLACE FUNCTION log_audit_event()\nRETURNS TRIGGER AS $$\nBEGIN\n  INSERT INTO audit_log (user_id, action, table_name, record_id, old_data, new_data)\n  VALUES (auth.uid(), TG_OP, TG_TABLE_NAME, NEW.id, \n          CASE WHEN TG_OP = 'DELETE' THEN to_jsonb(OLD) ELSE NULL END,\n          CASE WHEN TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN to_jsonb(NEW) ELSE NULL END);\n  RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql SECURITY DEFINER;\n```\n3. Apply triggers to relevant tables\n4. Implement frontend logging for authentication events:\n   - Login attempts (successful and failed)\n   - Password changes\n   - Profile updates\n   - Permission changes\n5. Create an admin interface to view and filter audit logs\n6. Implement GDPR-compliant data retention policies for logs",
+        "testStrategy": "1. Test automatic logging by performing various database operations\n2. Verify that all required fields are properly captured\n3. Test authentication event logging\n4. Create test cases for each type of auditable action\n5. Verify that sensitive data is properly handled in logs\n6. Test the admin interface for viewing logs\n7. Verify that logs are retained according to policy",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Configure Leaked Password Protection",
+        "description": "Enable Supabase's leaked password protection feature to check user passwords against known compromised password databases like HaveIBeenPwned.",
+        "details": "1. Evaluate Supabase pricing plans that include leaked password protection\n2. Once upgraded to an appropriate plan:\n   - Access Supabase dashboard\n   - Navigate to Authentication settings\n   - Enable the 'Leaked Password Protection' feature\n3. Configure the feature to check passwords during:\n   - New user registration\n   - Password changes\n   - Password resets\n4. Implement appropriate error messages in the frontend:\n```javascript\n// Example React component handling leaked password error\nconst handleSignUp = async (email, password) => {\n  try {\n    const { error } = await supabase.auth.signUp({ email, password });\n    if (error) {\n      if (error.message.includes('leaked password')) {\n        setError('This password has been found in a data breach. Please choose a different password.');\n      } else {\n        setError(error.message);\n      }\n    }\n  } catch (error) {\n    setError('An unexpected error occurred');\n  }\n};\n```\n5. Document the feature in user documentation",
+        "testStrategy": "1. Test with known compromised passwords to verify detection\n2. Verify that appropriate error messages are displayed\n3. Test password change and reset flows\n4. Ensure the feature doesn't block valid, secure passwords\n5. Monitor user feedback after implementation",
+        "priority": "low",
+        "dependencies": [
+          3,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Plan External Security Audit",
+        "description": "Prepare for and coordinate an external security audit (penetration testing) to identify potential vulnerabilities in the application once it reaches a mature state.",
+        "details": "1. Research and evaluate security audit providers specializing in web applications and Supabase\n2. Create a comprehensive scope document for the audit, including:\n   - Authentication system\n   - Authorization and access controls\n   - API endpoints\n   - Database security\n   - Frontend security\n   - Infrastructure security\n3. Prepare a budget proposal with cost estimates from 3-5 providers\n4. Create a timeline for the audit process:\n   - Pre-audit preparation\n   - Audit execution (typically 1-2 weeks)\n   - Remediation period\n   - Re-testing\n5. Develop a security documentation package for auditors:\n   - System architecture\n   - Authentication flows\n   - Data models\n   - Security controls already in place\n6. Create a plan for addressing findings post-audit",
+        "testStrategy": "1. Conduct an internal pre-audit using tools like OWASP ZAP\n2. Create a checklist of security best practices to verify before the external audit\n3. Develop a process for tracking and prioritizing audit findings\n4. Plan for verification testing after remediation\n5. Create a template for documenting audit results and actions taken",
+        "priority": "low",
+        "dependencies": [
+          3,
+          4,
+          5,
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Optimize RLS Policies for Performance Improvement",
+        "description": "Optimize 50+ Row Level Security (RLS) policies that are causing critical performance issues by refactoring auth function calls and consolidating duplicate policies.",
+        "details": "1. Identify all RLS policies that are causing performance issues:\n   - Run `supabase db lint` to identify RLS policies with performance warnings\n   - Use `pg_stat_statements` to identify the slowest queries related to RLS policies\n   - Review all policies that call auth functions directly in the policy definition\n\n2. Refactor RLS policies to optimize auth function calls:\n   - Replace direct auth function calls in row-level evaluations with subqueries\n   - Example transformation:\n     ```sql\n     -- Before (inefficient - evaluates for each row)\n     CREATE POLICY \"Users can view their own data\" ON \"public\".\"profiles\"\n       USING (auth.uid() = user_id);\n       \n     -- After (optimized - evaluates once per query)\n     CREATE POLICY \"Users can view their own data\" ON \"public\".\"profiles\"\n       USING ((SELECT auth.uid()) = user_id);\n     ```\n\n3. Consolidate duplicate or overlapping policies:\n   - Identify tables with multiple similar policies that can be combined\n   - Create a spreadsheet to track all policies, their purpose, and consolidation opportunities\n   - Develop a migration plan that ensures no security gaps during transition\n\n4. Create database migration files:\n   - For each table with policies to optimize, create DROP and CREATE statements\n   - Group related policy changes in logical migration files\n   - Include comments explaining the performance optimization rationale\n\n5. Prioritize optimization based on impact:\n   - Focus first on policies applied to tables with the highest query volume\n   - Address policies on tables with the largest row counts\n   - Optimize policies on tables that are frequently joined in complex queries\n\n6. Document performance metrics:\n   - Record baseline query times before optimization\n   - Document the optimization approach for each policy\n   - Create a summary of expected performance improvements",
+        "testStrategy": "1. Create a comprehensive test suite that verifies security is maintained:\n   - Develop test cases that verify all access patterns still work correctly\n   - Include negative test cases to ensure unauthorized access is still prevented\n   - Test edge cases like null values, empty results, and boundary conditions\n\n2. Measure and compare performance metrics:\n   - Use EXPLAIN ANALYZE to compare query plans before and after optimization\n   - Benchmark query execution times with realistic data volumes\n   - Test with concurrent users to measure overall system performance improvement\n   - Document performance improvements for each optimized policy\n\n3. Implement automated regression tests:\n   - Create automated tests that verify all security rules are still enforced\n   - Include these tests in the CI/CD pipeline\n   - Ensure tests cover all tables with modified RLS policies\n\n4. Perform load testing:\n   - Simulate high traffic scenarios to verify performance under load\n   - Compare server resource utilization before and after optimization\n   - Verify that database connection pool is not exhausted under load\n\n5. Monitor in staging environment:\n   - Deploy changes to staging environment first\n   - Monitor query performance for at least 24 hours\n   - Check for any unexpected behavior or performance regressions",
+        "status": "pending",
+        "dependencies": [
+          4
+        ],
         "priority": "high",
         "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-08-18T11:54:54.067Z",
-      "description": "Default tasks context",
-      "updated": "2025-08-18T13:53:11.449Z"
+      "updated": "2025-08-18T19:07:52.709Z",
+      "description": "Tasks for master context"
     }
   }
 }

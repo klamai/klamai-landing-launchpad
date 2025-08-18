@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { logError, logAuth } from "@/utils/secureLogging";
 import AuthLayout from "@/components/auth/AuthLayout";
+import { SecureLogger } from "@/utils/secureLogging";
 
 // Configuración por tipo de usuario
 const AUTH_CONFIG = {
@@ -194,7 +195,7 @@ const UnifiedAuth = () => {
       setForgotEmail("");
 
     } catch (error: any) {
-      console.error("Error al recuperar contraseña:", error.message);
+      SecureLogger.error(error, 'password_recovery');
       toast({
         title: "Error",
         description: error.message,
@@ -216,13 +217,13 @@ const UnifiedAuth = () => {
       onGoogleLogin={handleGoogleLogin}
     >
       <form onSubmit={handleLogin} className="space-y-5">
-        {config.secureLoginMessage && (
-          <div className="rounded-md bg-yellow-50 p-4 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
-            <p className="text-sm text-yellow-700 dark:text-yellow-300">{config.secureLoginMessage}</p>
-          </div>
-        )}
+                {config.secureLoginMessage && (
+                  <div className="rounded-md bg-yellow-50 p-4 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">{config.secureLoginMessage}</p>
+                  </div>
+                )}
         
-        <div>
+                  <div>
           <Label htmlFor="email-login" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Email <span className="text-blue-500">*</span>
           </Label>
@@ -235,13 +236,13 @@ const UnifiedAuth = () => {
             required
             className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500"
           />
-        </div>
+                  </div>
         
         <div>
           <Label htmlFor="password-login" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Contraseña <span className="text-blue-500">*</span>
           </Label>
-          <div className="relative">
+                  <div className="relative">
             <Input
               id="password-login"
               type={showPassword ? "text" : "password"}
@@ -257,9 +258,9 @@ const UnifiedAuth = () => {
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-        </div>
+                    </button>
+                  </div>
+                </div>
 
         <motion.div 
           whileHover={{ scale: 1.01 }}
@@ -300,7 +301,7 @@ const UnifiedAuth = () => {
           >
             ¿Olvidaste tu contraseña?
           </button>
-        </div>
+      </div>
       </form>
 
     </AuthLayout>

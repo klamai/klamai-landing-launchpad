@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star, X, Sparkles, Clock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { SecureLogger } from '@/utils/secureLogging';
 
 interface ProposalData {
   etiqueta_caso: string;
@@ -108,7 +109,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
 
   const sendProgressSummary = async () => {
     // TODO: Implementar envío de resumen por email
-    console.log('Enviando resumen de progreso para caso:', casoId);
+    SecureLogger.info('Enviando resumen de progreso para caso', 'proposal_display');
     toast({
       title: "Resumen enviado",
       description: "Te hemos enviado un resumen completo a tu email.",
@@ -149,7 +150,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
 
   const linkCaseToUser = async (userId: string, caseId: string) => {
     try {
-      console.log('Linking case to user:', { userId, caseId });
+      SecureLogger.info('Linking case to user', 'proposal_display');
       
       const sessionToken = localStorage.getItem('current_session_token');
       
@@ -171,7 +172,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
         throw new Error('No se pudo asignar el caso. El caso podría haber expirado o ya estar asignado.');
       }
 
-      console.log('Case linked to user successfully');
+      SecureLogger.info('Case linked to user successfully', 'proposal_display');
 
       // Clean up tokens after successful assignment
       localStorage.removeItem('current_caso_id');

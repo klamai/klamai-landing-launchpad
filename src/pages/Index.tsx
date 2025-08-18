@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2, Shield, ArrowUp, Square } from "lucide-react";
+import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2, Shield, ArrowUp, Square, Briefcase, Gavel, Award, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import SignOutButton from "@/components/SignOutButton";
+import { SecureLogger } from '@/utils/secureLogging';
 
 const transitionVariants = {
   item: {
@@ -160,14 +161,14 @@ const Index = () => {
       localStorage.setItem('casoId', casoId);
       localStorage.setItem('current_session_token', sessionToken);
       
-      console.log('Case created with ID:', casoId);
-      console.log('Consultation saved:', consultation.trim());
+      SecureLogger.info('Case created successfully', 'index');
+      SecureLogger.info('Consultation saved successfully', 'index');
 
       // 4. Navigate immediately - no delay
       navigate('/chat');
       
     } catch (error) {
-      console.error('Error in handleSubmit:', error);
+      SecureLogger.error(error, 'handle_submit');
       toast({
         title: "Error",
         description: "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.",
@@ -219,17 +220,42 @@ const Index = () => {
                     <>
                       {user ? (
                         <div className="flex items-center gap-4">
-                          <Link to="/dashboard">
-                            <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200">
-                              Dashboard
-                            </Button>
-                          </Link>
+                          {/* Usuario autenticado - mostrar dashboard según su rol */}
+                          {user.user_metadata?.role === 'abogado' ? (
+                            <Link to="/abogados/dashboard">
+                              <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200">
+                                Panel Abogado
+                              </Button>
+                            </Link>
+                          ) : (
+                            <Link to="/dashboard">
+                              <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200">
+                                Mi Cuenta
+                              </Button>
+                            </Link>
+                          )}
                           <SignOutButton />
                         </div>
                       ) : (
                         <>
+                          {/* Usuario NO autenticado - mostrar opciones de acceso */}
+                          <Link to="/abogados">
+                            <Button 
+                              size="sm" 
+                              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-0 font-medium group relative overflow-hidden"
+                            >
+                              {/* Shimmer effect */}
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                              
+                              <Scale className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                              Soy Abogado
+                              
+                              {/* Subtle glow */}
+                              <div className="absolute inset-0 bg-blue-400/20 rounded-xl blur-sm group-hover:bg-blue-400/30 transition-all duration-300"></div>
+                            </Button>
+                          </Link>
                           <Link to="/auth">
-                            <Button variant="ghost" size="sm" className=" text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-black-800 dark:hover:bg-black">
+                            <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-black-800 dark:hover:bg-black">
                               Iniciar Sesión
                             </Button>
                           </Link>
@@ -251,15 +277,31 @@ const Index = () => {
                       <>
                         {user ? (
                           <>
-                            <Link to="/dashboard">
-                              <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 w-full justify-center">
-                                Dashboard
-                              </Button>
-                            </Link>
+                            {/* Usuario autenticado - mostrar dashboard según su rol */}
+                            {user.user_metadata?.role === 'abogado' ? (
+                              <Link to="/abogados/dashboard">
+                                <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 w-full justify-center">
+                                  Panel Abogado
+                                </Button>
+                              </Link>
+                            ) : (
+                              <Link to="/dashboard">
+                                <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 w-full justify-center">
+                                  Mi Cuenta
+                                </Button>
+                              </Link>
+                            )}
                             <SignOutButton className="w-full justify-center" />
                           </>
                         ) : (
                           <>
+                            {/* Usuario NO autenticado - mostrar opciones de acceso */}
+                            <Link to="/abogados">
+                              <Button variant="outline" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center border-blue-500 hover:border-blue-600">
+                                <Scale className="w-4 h-4 mr-2" />
+                                Soy Abogado
+                              </Button>
+                            </Link>
                             <Link to="/auth">
                               <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center">
                                 Iniciar Sesión
@@ -461,6 +503,258 @@ const Index = () => {
                 </div>
                 <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                   {testimonials.map(testimonial => <Testimonial key={testimonial.name} {...testimonial} />)}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Lawyers Section - Sección mejorada para abogados */}
+          <section className="py-16 md:py-24 relative overflow-hidden" id="abogados">
+            {/* Background elements */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-gradient-to-br from-blue-100/40 to-transparent dark:from-blue-900/20 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+              <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-gradient-to-tr from-indigo-100/30 to-transparent dark:from-indigo-900/10 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
+              
+              {/* Subtle legal pattern overlay */}
+              <div className="absolute inset-0 opacity-5 dark:opacity-3 bg-[url('/patterns/scales-of-justice-pattern.svg')] bg-repeat bg-[length:300px_300px]"></div>
+            </div>
+            
+            <div className="container mx-auto px-4 relative z-10">
+              {/* Header with badge */}
+              <div className="text-center mb-16">
+                <div className="inline-flex items-center justify-center mb-4 px-4 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
+                  <Scale className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Área Profesional</span>
+                </div>
+                
+                <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight">
+                  Potencia tu Práctica Legal con Tecnología
+                </h2>
+                
+                <p className="text-xl text-gray-600 dark:text-gray-300 font-medium max-w-3xl mx-auto leading-relaxed">
+                  Únete a nuestra plataforma y conecta con clientes que buscan exactamente tu especialidad jurídica. Aprovecha el poder de la IA para optimizar tu trabajo.
+                </p>
+              </div>
+              
+              {/* Cards with benefits - Grid mejorado */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                {/* Card 1: Más Clientes */}
+                <div className="group relative bg-white dark:bg-gray-800/90 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 overflow-hidden">
+                  {/* Gradient accent */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-500 transform origin-left transition-transform duration-500 group-hover:scale-x-100 scale-x-0"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-2xl flex items-center justify-center mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/80">
+                      <Users2 className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Amplía tu Clientela</h3>
+                    
+                    <ul className="text-gray-600 dark:text-gray-300 space-y-3 mb-6">
+                      <li className="flex items-start">
+                        <div className="flex-shrink-0 h-5 w-5 text-blue-500 mr-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span>Recibe casos filtrados según tu especialidad</span>
+                      </li>
+                      <li className="flex items-start">
+                        <div className="flex-shrink-0 h-5 w-5 text-blue-500 mr-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span>Clientes preseleccionados y cualificados</span>
+                      </li>
+                      <li className="flex items-start">
+                        <div className="flex-shrink-0 h-5 w-5 text-blue-500 mr-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span>Aumenta tu visibilidad profesional</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  {/* Decorative element */}
+                  <div className="absolute bottom-0 right-0 w-24 h-24 bg-blue-50 dark:bg-blue-900/20 rounded-tl-3xl -mr-6 -mb-6 transition-all duration-500 group-hover:scale-125 group-hover:opacity-80"></div>
+                </div>
+
+                {/* Card 2: Tecnología IA */}
+                <div className="group relative bg-white dark:bg-gray-800/90 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 overflow-hidden">
+                  {/* Gradient accent */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-blue-500 transform origin-left transition-transform duration-500 group-hover:scale-x-100 scale-x-0"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/50 rounded-2xl flex items-center justify-center mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/80">
+                      <Sparkles className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Tecnología Avanzada</h3>
+                    
+                    <ul className="text-gray-600 dark:text-gray-300 space-y-3 mb-6">
+                      <li className="flex items-start">
+                        <div className="flex-shrink-0 h-5 w-5 text-purple-500 mr-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span>IA para análisis preliminar de casos</span>
+                      </li>
+                      <li className="flex items-start">
+                        <div className="flex-shrink-0 h-5 w-5 text-purple-500 mr-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span>Automatización de tareas administrativas</span>
+                      </li>
+                      <li className="flex items-start">
+                        <div className="flex-shrink-0 h-5 w-5 text-purple-500 mr-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span>Herramientas de investigación jurídica</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  {/* Decorative element */}
+                  <div className="absolute bottom-0 right-0 w-24 h-24 bg-purple-50 dark:bg-purple-900/20 rounded-tl-3xl -mr-6 -mb-6 transition-all duration-500 group-hover:scale-125 group-hover:opacity-80"></div>
+                </div>
+
+                {/* Card 3: Gestión Simplificada */}
+                <div className="group relative bg-white dark:bg-gray-800/90 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 overflow-hidden">
+                  {/* Gradient accent */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-green-500 transform origin-left transition-transform duration-500 group-hover:scale-x-100 scale-x-0"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 bg-cyan-100 dark:bg-cyan-900/50 rounded-2xl flex items-center justify-center mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:bg-cyan-200 dark:group-hover:bg-cyan-900/80">
+                      <Briefcase className="h-8 w-8 text-blue-400" />
+                    </div>
+                    
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Gestión Eficiente</h3>
+                    
+                    <ul className="text-gray-600 dark:text-gray-300 space-y-3 mb-6">
+                      <li className="flex items-start">
+                        <div className="flex-shrink-0 h-5 w-5 text-cyan-500 mr-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span>Panel de control unificado para casos</span>
+                      </li>
+                      <li className="flex items-start">
+                        <div className="flex-shrink-0 h-5 w-5 text-cyan-500 mr-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span>Comunicación segura con clientes</span>
+                      </li>
+                      <li className="flex items-start">
+                        <div className="flex-shrink-0 h-5 w-5 text-cyan-500 mr-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span>Gestión documental centralizada</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  {/* Decorative element */}
+                  <div className="absolute bottom-0 right-0 w-24 h-24 bg-cyan-50 dark:bg-cyan-900/20 rounded-tl-3xl -mr-6 -mb-6 transition-all duration-500 group-hover:scale-125 group-hover:opacity-80"></div>
+                </div>
+              </div>
+
+              {/* Especialidades legales */}
+              <div className="mt-20 max-w-5xl mx-auto">
+                <h3 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-8">
+                  Todas las Especialidades Jurídicas
+                </h3>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {[
+                    { icon: <Gavel className="h-5 w-5" />, name: "Derecho Civil" },
+                    { icon: <Briefcase className="h-5 w-5" />, name: "Derecho Mercantil" },
+                    { icon: <Users2 className="h-5 w-5" />, name: "Derecho Laboral" },
+                    { icon: <Scale className="h-5 w-5" />, name: "Derecho Penal" },
+                    { icon: <Award className="h-5 w-5" />, name: "Propiedad Intelectual" },
+                    { icon: <BookOpen className="h-5 w-5" />, name: "Derecho Administrativo" },
+                    { icon: <MapPin className="h-5 w-5" />, name: "Derecho Inmobiliario" },
+                    { icon: <Shield className="h-5 w-5" />, name: "Protección de Datos" },
+                  ].map((specialty, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-center gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-300"
+                    >
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                        {specialty.icon}
+                      </div>
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                        {specialty.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA para Abogados - Mejorado */}
+              <div className="mt-20 text-center">
+                <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-blue-900/50 p-8 md:p-12 rounded-3xl shadow-lg border border-blue-100 dark:border-blue-800/50 max-w-4xl mx-auto overflow-hidden">
+                  {/* Decorative elements */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-200/30 dark:bg-blue-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-200/30 dark:bg-indigo-500/10 rounded-full blur-3xl -ml-32 -mb-32"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center justify-center mb-4 px-4 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800">
+                      <Scale className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                      <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Únete a Nuestra Red</span>
+                    </div>
+                    
+                    <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                      Potencia tu Despacho con Tecnología
+                    </h3>
+                    
+                    <p className="text-lg text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+                      Forma parte de nuestra red de abogados especialistas y recibe casos adaptados a tu perfil profesional. Optimiza tu tiempo y aumenta tus ingresos.
+                    </p>
+                    
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <Link to="/abogados">
+                        <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-blue-700">
+                          <Scale className="w-5 h-5 mr-2" />
+                          Conoce Más
+                        </Button>
+                      </Link>
+                      <Link to="/abogados?action=join">
+                        <Button variant="outline" size="lg" className="border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-8 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                          <Briefcase className="w-5 h-5 mr-2" />
+                          Solicitar Acceso
+                        </Button>
+                      </Link>
+                    </div>
+                    
+                    {/* Testimonial mini */}
+                    <div className="mt-10 max-w-md mx-auto bg-white/80 dark:bg-gray-800/80 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                      <p className="text-gray-600 dark:text-gray-300 text-sm italic">
+                        "Desde que me uní a la plataforma, he aumentado mi cartera de clientes en un 40%. La tecnología me permite ser más eficiente."
+                      </p>
+                      <div className="mt-3 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-2">
+                          <Gavel className="h-4 w-4" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">Carlos Jiménez</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Abogado Mercantil, Madrid</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
