@@ -14,17 +14,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import DashboardSection from "./dashboard/DashboardSection";
-import NuevaConsultaSection from "./dashboard/NuevaConsultaSection";
-import MisCasosSection from "./dashboard/MisCasosSection";
-import PerfilSection from "./dashboard/PerfilSection";
-import ConfiguracionSection from "./dashboard/ConfiguracionSection";
-import FacturacionSection from "./dashboard/FacturacionSection";
-import NotificacionesSection from "./dashboard/NotificacionesSection";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { motion } from "framer-motion";
 
 const ClientDashboard = () => {
   const [open, setOpen] = useState(false);
@@ -47,6 +39,8 @@ const ClientDashboard = () => {
   }, []);
 
   // Get active section from URL
+  // NOTE: This logic is now handled by nested routes, but we keep it 
+  // para resaltar el enlace activo en la barra lateral.
   useEffect(() => {
     const path = location.pathname;
     if (path.includes('/nueva-consulta')) {
@@ -241,37 +235,12 @@ const ClientDashboard = () => {
             </div>
           </SidebarBody>
         </SidebarDashboard>
-        <DashboardContent activeSection={activeSection} />
-      </div>
-    </div>
-  );
-};
-
-const DashboardContent = ({ activeSection }: { activeSection: string }) => {
-  const renderContent = () => {
-    switch (activeSection) {
-      case "nueva-consulta":
-        return <NuevaConsultaSection />;
-      case "casos":
-        return <MisCasosSection />;
-      case "perfil":
-        return <PerfilSection />;
-      case "configuracion":
-        return <ConfiguracionSection />;
-      case "facturacion":
-        return <FacturacionSection />;
-      case "notificaciones":
-        return <NotificacionesSection />;
-      default:
-        return <DashboardSection />;
-    }
-  };
-
-  return (
-    <div className="flex flex-1 overflow-hidden">
-      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
-        <div className="p-2 md:p-10 rounded-tl-2xl bg-white dark:bg-neutral-900 min-h-full">
-          {renderContent()}
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
+            <div className="p-2 md:p-10 rounded-tl-2xl bg-white dark:bg-neutral-900 min-h-full">
+              <Outlet />
+            </div>
+          </div>
         </div>
       </div>
     </div>

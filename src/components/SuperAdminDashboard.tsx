@@ -18,7 +18,7 @@ import {
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperAdminStats } from "@/hooks/admin/useSuperAdminStats";
 import SuperAdminMetrics from "@/components/admin/SuperAdminMetrics";
@@ -117,70 +117,70 @@ const SuperAdminDashboard = () => {
   const links = [
     {
       label: "Dashboard",
-      href: "/abogados/dashboard",
+      href: "/admin/dashboard",
       icon: (
         <LayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
       label: "Gestión de Casos",
-      href: "/abogados/dashboard/casos",
+      href: "/admin/dashboard/casos",
       icon: (
         <Scale className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
       label: "Clientes",
-      href: "/abogados/dashboard/clientes",
+      href: "/admin/dashboard/clientes",
       icon: (
         <Users className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
       label: "Hojas de Encargo",
-      href: "/abogados/dashboard/hojas-encargo",
+      href: "/admin/dashboard/hojas-encargo",
       icon: (
         <FileText className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
       label: "Gestión de Abogados",
-      href: "/abogados/dashboard/abogados",
+      href: "/admin/dashboard/abogados",
       icon: (
         <Users className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
       label: "Solicitudes de Abogado",
-      href: "/abogados/dashboard/solicitudes-abogado",
+      href: "/admin/dashboard/solicitudes-abogado",
       icon: (
         <UserPlus className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
       label: "Reportes",
-      href: "/abogados/dashboard/reportes",
+      href: "/admin/dashboard/reportes",
       icon: (
         <FileText className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
       label: "Configuración",
-      href: "/abogados/dashboard/configuracion",
+      href: "/admin/dashboard/configuracion",
       icon: (
         <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
       label: "Notificaciones",
-      href: "/abogados/dashboard/notificaciones",
+      href: "/admin/dashboard/notificaciones",
       icon: (
         <Bell className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
       label: "Asistente IA",
-      href: "/abogados/dashboard/asistente-ia",
+      href: "/admin/dashboard/asistente-ia",
       icon: (
         <Bot className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
@@ -293,50 +293,19 @@ const SuperAdminDashboard = () => {
             </div>
           </SidebarBody>
         </SidebarDashboard>
-        <DashboardContent activeSection={activeSection} />
-      </div>
-    </div>
-  );
-};
-
-const DashboardContent = ({ activeSection }: { activeSection: string }) => {
-  const renderContent = () => {
-    switch (activeSection) {
-      case "casos":
-        return <CasesManagementSection />;
-      case "abogados":
-        return <LawyersManagementSection />;
-      case "clientes":
-        return <ClientsManagementSection />;
-      case "solicitudes-abogado":
-        return <LawyerApplicationsSection />;
-      case "hojas-encargo":
-        return <HojasEncargoSection />;
-      case "reportes":
-        return <ReportesSection />;
-      case "configuracion":
-        return <ConfiguracionSection />;
-      case "notificaciones":
-        return <NotificacionesSection />;
-      case "asistente-ia":
-        return <AsistenteIASection />;
-      default:
-        return <SuperAdminDashboardSection />;
-    }
-  };
-
-  return (
-    <div className="flex flex-1 overflow-hidden">
-      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
-        <div className="p-2 md:p-10 rounded-tl-2xl bg-white dark:bg-neutral-900 min-h-full">
-          {renderContent()}
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
+            <div className="p-2 md:p-10 rounded-tl-2xl bg-white dark:bg-neutral-900 min-h-full">
+              <Outlet />
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-const SuperAdminDashboardSection = () => {
+export const SuperAdminDashboardSection = () => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -409,7 +378,7 @@ const SuperAdminDashboardSection = () => {
   );
 };
 
-const CasesManagementSection = () => {
+export const CasesManagementSection = () => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -422,7 +391,7 @@ const CasesManagementSection = () => {
   );
 };
 
-const LawyersManagementSection = () => {
+export const LawyersManagementSection = () => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -435,7 +404,7 @@ const LawyersManagementSection = () => {
   );
 };
 
-const ClientsManagementSection = () => {
+export const ClientsManagementSection = () => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -448,7 +417,7 @@ const ClientsManagementSection = () => {
   );
 };
 
-const LawyerApplicationsSection = () => {
+export const LawyerApplicationsSection = () => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -461,7 +430,7 @@ const LawyerApplicationsSection = () => {
   );
 };
 
-const HojasEncargoSection = () => (
+export const HojasEncargoSection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -474,7 +443,7 @@ const HojasEncargoSection = () => (
   </motion.div>
 );
 
-const ReportesSection = () => (
+export const ReportesSection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -487,7 +456,7 @@ const ReportesSection = () => (
   </motion.div>
 );
 
-const ConfiguracionSection = () => (
+export const ConfiguracionSection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -500,7 +469,7 @@ const ConfiguracionSection = () => (
   </motion.div>
 );
 
-const NotificacionesSection = () => (
+export const NotificacionesSection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -513,7 +482,7 @@ const NotificacionesSection = () => (
   </motion.div>
 );
 
-const AsistenteIASection = () => (
+export const AsistenteIASection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}

@@ -17,7 +17,7 @@ import {
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAssignedCases } from "@/hooks/lawyer/useAssignedCases";
 import AssignedCasesManagement from "./lawyer/AssignedCasesManagement";
@@ -255,46 +255,23 @@ const RegularLawyerDashboard = () => {
             </div>
           </SidebarBody>
         </SidebarDashboard>
-        <DashboardContent activeSection={activeSection} />
-      </div>
-    </div>
-  );
-};
-
-const DashboardContent = ({ activeSection }: { activeSection: string }) => {
-  const renderContent = () => {
-    switch (activeSection) {
-      case "mis-casos":
-        return <MisCasosAsignadosSection />;
-      case "pagos":
-        return <PagosSection />;
-      case "asistentes-ia":
-        return <AsistentesIASection />;
-      case "perfil":
-        return <PerfilSection />;
-      case "configuracion":
-        return <ConfiguracionSection />;
-      default:
-        return <RegularLawyerDashboardSection />;
-    }
-  };
-
-  return (
-    <div className="flex flex-1 overflow-hidden">
-      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
-        <div className="p-2 md:p-10 rounded-tl-2xl bg-white dark:bg-neutral-900 min-h-full">
-          {renderContent()}
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black">
+            <div className="p-2 md:p-10 rounded-tl-2xl bg-white dark:bg-neutral-900 min-h-full">
+              <Outlet />
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-const RegularLawyerDashboardSection = () => {
+export const RegularLawyerDashboardSection = () => {
   return <RegularLawyerMetrics />;
 };
 
-const MisCasosAsignadosSection = () => (
+export const MisCasosAsignadosSection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -304,7 +281,7 @@ const MisCasosAsignadosSection = () => (
   </motion.div>
 );
 
-const PagosSection = () => (
+export const PagosSection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -318,7 +295,7 @@ const PagosSection = () => (
   </motion.div>
 );
 
-const AsistentesIASection = () => (
+export const AsistentesIASection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -346,7 +323,7 @@ const AsistentesIASection = () => (
   </motion.div>
 );
 
-const ConfiguracionSection = () => (
+export const ConfiguracionSection = () => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -360,7 +337,7 @@ const ConfiguracionSection = () => (
   </motion.div>
 );
 
-const PerfilSection = () => {
+export const PerfilSection = () => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

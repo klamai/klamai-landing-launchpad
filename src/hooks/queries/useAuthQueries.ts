@@ -25,9 +25,10 @@ export const useSession = () => {
       }
       return session;
     },
-    staleTime: 30 * 1000, // 30 segundos
-    gcTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 5 * 60 * 1000, // 5 minutos - mantener sesión fresca
+    gcTime: 10 * 60 * 1000, // 10 minutos en caché
     refetchOnWindowFocus: false,
+    refetchOnMount: true, // Re-verificar al montar para restaurar sesión
     retry: (failureCount, error: any) => {
       // No reintentar en errores de autenticación
       if (error?.message?.includes('session_not_found') || 

@@ -10,6 +10,7 @@ import {
   useSignOut,
   useSessionValidation 
 } from './queries/useAuthQueries';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Profile {
   id: string;
@@ -46,6 +47,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const queryClient = useQueryClient();
   // Usar React Query hooks
   const { data: session, isLoading: sessionLoading, error: sessionError } = useSession();
   const { data: profile, isLoading: profileLoading } = useProfile(session?.user?.id || null);
@@ -62,15 +64,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        console.log('Auth state change:', event, newSession?.user?.id);
+        console.log('🔄 AuthProvider: Auth state change:', event, newSession?.user?.id);
         
-        // React Query manejará automáticamente la invalidación de queries
-        // cuando la sesión cambie, gracias a los listeners configurados
+        // Invalidar la query de la sesión para forzar una actualización inmediata
+        queryClient.invalidateQueries({ queryKey: ['session'] });
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [queryClient]);
 
   // Funciones que mantienen la misma interfaz
   const signUp = async (email: string, password: string, name?: string) => {
@@ -100,8 +102,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Calcular loading state
-  const loading = sessionLoading || profileLoading;
+  // Calcular loading state de forma más precisa
+  // Solo mostrar loading si realmente no hay sesión y está cargando
+  const loading = sessionLoading || (!!session && profileLoading);
+
+  // Log del estado actual
+  console.log('🔍 AuthProvider: Estado actual - session:', !!session, 'profile:', !!profile, 'sessionLoading:', sessionLoading, 'profileLoading:', profileLoading, 'loading:', loading);
 
   // Manejar errores de sesión
   useEffect(() => {
@@ -115,11 +121,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [sessionError]);
 
+  // Asegurar que la sesión esté completamente cargada antes de renderizar
+  const isSessionReady = !sessionLoading && (!!session || !loading);
+
   const value: AuthContextType = {
     user: session?.user || null,
     session: session || null,
     profile: profile || null,
-    loading,
+    loading: loading || !isSessionReady,
     signUp,
     signIn,
     signOut,
