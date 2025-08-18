@@ -3,15 +3,17 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import RoleBasedRoute from "@/components/RoleBasedRoute";
 import DashboardRedirect from "@/components/DashboardRedirect";
 import LawyerDashboardRouter from "@/components/LawyerDashboardRouter";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
-import Auth from "./pages/Auth";
-import AuthAbogado from "./pages/AuthAbogado";
+import UnifiedAuth from "./pages/UnifiedAuth";
+import AdminAuthCallback from "./pages/AdminAuthCallback";
+import SuperAdminRouteGuard from "./components/SuperAdminRouteGuard";
 import LawyerActivation from "./pages/LawyerActivation";
 import Dashboard from "./pages/Dashboard";
 import ClientDashboard from "./components/ClientDashboard";
@@ -23,6 +25,16 @@ import AuthCallback from "./pages/AuthCallback";
 import ActivarCliente from "./pages/ActivarCliente";
 import NotFound from "./pages/NotFound";
 import PublicProposal from "./pages/PublicProposal";
+
+// Importar las secciones directamente para las rutas anidadas
+import DashboardSection from "@/components/dashboard/DashboardSection";
+import NuevaConsultaSection from "@/components/dashboard/NuevaConsultaSection";
+import MisCasosSection from "@/components/dashboard/MisCasosSection";
+import PerfilSection from "@/components/dashboard/PerfilSection";
+import ConfiguracionSection from "@/components/dashboard/ConfiguracionSection";
+import FacturacionSection from "@/components/dashboard/FacturacionSection";
+import NotificacionesSection from "@/components/dashboard/NotificacionesSection";
+
 
 // Configuración optimizada para producción
 const queryClient = new QueryClient({
@@ -60,81 +72,64 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/abogados/auth" element={<AuthAbogado />} />
+            <Route path="/auth" element={<UnifiedAuth />} />
+            <Route path="/abogados/auth" element={<UnifiedAuth />} />
+            <Route path="/admin/auth" element={<UnifiedAuth />} />
+            
+            {/* Redirecciones para rutas base sin autenticación */}
+            <Route path="/admin" element={<Navigate to="/admin/auth" replace />} />
+            <Route path="/abogados" element={<Navigate to="/abogados/auth" replace />} />
+            
             <Route path="/abogados/activate" element={<LawyerActivation />} />
             <Route path="/auth-callback" element={<AuthCallback />} />
             <Route path="/chat" element={<Chat />} />
             
-            {/* Rutas protegidas del dashboard de clientes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <DashboardRedirect>
-                  <ClientDashboard />
-                </DashboardRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/nueva-consulta" element={
-              <ProtectedRoute>
-                <DashboardRedirect>
-                  <ClientDashboard />
-                </DashboardRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/casos" element={
-              <ProtectedRoute>
-                <DashboardRedirect>
-                  <ClientDashboard />
-                </DashboardRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/casos/:casoId" element={
-              <ProtectedRoute>
-                <DashboardRedirect>
-                  <ClientDashboard />
-                </DashboardRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/perfil" element={
-              <ProtectedRoute>
-                <DashboardRedirect>
-                  <ClientDashboard />
-                </DashboardRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/configuracion" element={
-              <ProtectedRoute>
-                <DashboardRedirect>
-                  <ClientDashboard />
-                </DashboardRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/facturacion" element={
-              <ProtectedRoute>
-                <DashboardRedirect>
-                  <ClientDashboard />
-                </DashboardRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/notificaciones" element={
-              <ProtectedRoute>
-                <DashboardRedirect>
-                  <ClientDashboard />
-                </DashboardRedirect>
-              </ProtectedRoute>
-            } />
+            {/* FASE 1: RUTAS DE CLIENTES UNIFICADAS BAJO UN LAYOUT PROTEGIDO */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <DashboardRedirect>
+                    <ClientDashboard />
+                  </DashboardRedirect>
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<DashboardSection />} />
+              <Route path="nueva-consulta" element={<NuevaConsultaSection />} />
+              <Route path="casos" element={<MisCasosSection />} />
+              <Route path="casos/:casoId" element={<MisCasosSection />} />
+              <Route path="perfil" element={<PerfilSection />} />
+              <Route path="configuracion" element={<ConfiguracionSection />} />
+              <Route path="facturacion" element={<FacturacionSection />} />
+              <Route path="notificaciones" element={<NotificacionesSection />} />
+            </Route>
             
-            {/* Rutas protegidas del dashboard de abogados - Enrutador inteligente */}
-            <Route path="/abogados/dashboard" element={
-              <ProtectedRoute>
-                <LawyerDashboardRouter />
-              </ProtectedRoute>
-            } />
-            <Route path="/abogados/dashboard/*" element={
-              <ProtectedRoute>
-                <LawyerDashboardRouter />
-              </ProtectedRoute>
-            } />
+            {/* FASE 2: RUTAS DE ABOGADOS (REGULARES Y ADMINS) UNIFICADAS */}
+            <Route 
+              path="/abogados/dashboard/*" 
+              element={
+                <ProtectedRoute>
+                  <LawyerDashboardRouter />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/admin/dashboard/*" 
+              element={
+                <SuperAdminRouteGuard>
+                  <LawyerDashboardRouter />
+                </SuperAdminRouteGuard>
+              } 
+            />
+
+            {/* --- Rutas antiguas (serán eliminadas por las nuevas de arriba) --- */}
+            {/* 
+            <Route path="/dashboard/nueva-consulta" element={...} />
+            <Route path="/dashboard/casos" element={...} />
+            ... etc ...
+            */}
             
             {/* Rutas públicas */}
             <Route path="/politicas-privacidad" element={<PrivacyPolicy />} />

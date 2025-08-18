@@ -1,28 +1,16 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const { user, loading, session } = useAuth();
   const location = useLocation();
-  const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
-    // Dar tiempo para que la autenticación se inicialice
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Mostrar loading mientras se verifica la autenticación
-  if (loading || !isReady) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -33,9 +21,16 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Si no hay usuario autenticado, redirigir al login
-  if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+  if (!user || !session) {
+    let authRoute = "/auth";
+    
+    if (location.pathname.startsWith("/abogados/")) {
+      authRoute = "/abogados/auth";
+    } else if (location.pathname.startsWith("/admin/")) {
+      authRoute = "/admin/auth";
+    }
+    
+    return <Navigate to={authRoute} state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

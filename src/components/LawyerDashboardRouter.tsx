@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation, Routes, Route } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,59 +8,20 @@ import { supabase } from '@/integrations/supabase/client';
 const SuperAdminDashboard = React.lazy(() => import('./SuperAdminDashboard'));
 const RegularLawyerDashboard = React.lazy(() => import('./RegularLawyerDashboard'));
 
+// Import dashboard sections
+import { SuperAdminDashboardSection, CasesManagementSection, LawyersManagementSection, ClientsManagementSection, LawyerApplicationsSection, HojasEncargoSection, ReportesSection, ConfiguracionSection as AdminConfigSection, NotificacionesSection as AdminNotifSection, AsistenteIASection as AdminIASection } from './SuperAdminDashboard';
+import { RegularLawyerDashboardSection, MisCasosAsignadosSection, PagosSection, AsistentesIASection as LawyerIASection, PerfilSection, ConfiguracionSection as LawyerConfigSection } from './RegularLawyerDashboard';
+
+
 interface LawyerDashboardRouterProps {
   children?: React.ReactNode;
 }
 
 const LawyerDashboardRouter = ({ children }: LawyerDashboardRouterProps) => {
-  const { user, loading } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [lawyerType, setLawyerType] = useState<string | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true);
+  const { user, loading, profile } = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
-    const fetchUserRoleAndType = async () => {
-      if (!user) {
-        setRoleLoading(false);
-        return;
-      }
-
-      try {
-        console.log('🔍 Fetcheando rol y tipo de abogado:', user.id);
-        
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role, tipo_abogado')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error('❌ Error fetching user profile:', error);
-          setUserRole(null);
-          setLawyerType(null);
-        } else if (profile) {
-          console.log('✅ Perfil obtenido:', profile);
-          setUserRole(profile.role);
-          setLawyerType(profile.tipo_abogado);
-        } else {
-          console.log('⚠️ No se encontró perfil de usuario');
-          setUserRole(null);
-          setLawyerType(null);
-        }
-      } catch (error) {
-        console.error('❌ Error general fetching user profile:', error);
-        setUserRole(null);
-        setLawyerType(null);
-      } finally {
-        setRoleLoading(false);
-      }
-    };
-
-    fetchUserRoleAndType();
-  }, [user]);
-
-  // Show loading while auth or role is loading
-  if (loading || roleLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -71,15 +32,23 @@ const LawyerDashboardRouter = ({ children }: LawyerDashboardRouterProps) => {
     );
   }
 
-  // Security check: only lawyers can access this router
-  if (userRole !== 'abogado') {
-    console.log('🚫 Acceso denegado: usuario no es abogado');
-    return <Navigate to="/auth" replace />;
+  if (!profile || profile.role !== 'abogado') {
+    let authRoute = "/auth";
+    
+    if (location.pathname.startsWith("/admin/")) {
+      authRoute = "/admin/auth";
+    } else if (location.pathname.startsWith("/abogados/")) {
+      authRoute = "/abogados/auth";
+    }
+    
+    return <Navigate to={authRoute} replace />;
   }
 
-  // Route to appropriate dashboard based on lawyer type
-  if (lawyerType === 'super_admin') {
-    console.log('🚀 Redirigiendo a dashboard de super admin');
+  if (profile.tipo_abogado === 'super_admin') {
+    if (location.pathname.startsWith('/abogados/dashboard')) {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+    
     return (
       <React.Suspense fallback={
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -89,11 +58,23 @@ const LawyerDashboardRouter = ({ children }: LawyerDashboardRouterProps) => {
           </div>
         </div>
       }>
-        <SuperAdminDashboard />
+        <Routes>
+          <Route path="/" element={<SuperAdminDashboard />}>
+            <Route index element={<SuperAdminDashboardSection />} />
+            <Route path="casos" element={<CasesManagementSection />} />
+            <Route path="abogados" element={<LawyersManagementSection />} />
+            <Route path="clientes" element={<ClientsManagementSection />} />
+            <Route path="solicitudes-abogado" element={<LawyerApplicationsSection />} />
+            <Route path="hojas-encargo" element={<HojasEncargoSection />} />
+            <Route path="reportes" element={<ReportesSection />} />
+            <Route path="configuracion" element={<AdminConfigSection />} />
+            <Route path="notificaciones" element={<AdminNotifSection />} />
+            <Route path="asistente-ia" element={<AdminIASection />} />
+          </Route>
+        </Routes>
       </React.Suspense>
     );
-  } else if (lawyerType === 'regular') {
-    console.log('🚀 Redirigiendo a dashboard de abogado regular');
+  } else if (profile.tipo_abogado === 'regular') {
     return (
       <React.Suspense fallback={
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -103,11 +84,19 @@ const LawyerDashboardRouter = ({ children }: LawyerDashboardRouterProps) => {
           </div>
         </div>
       }>
-        <RegularLawyerDashboard />
+        <Routes>
+          <Route path="/" element={<RegularLawyerDashboard />}>
+            <Route index element={<RegularLawyerDashboardSection />} />
+            <Route path="mis-casos" element={<MisCasosAsignadosSection />} />
+            <Route path="pagos" element={<PagosSection />} />
+            <Route path="asistentes-ia" element={<LawyerIASection />} />
+            <Route path="perfil" element={<PerfilSection />} />
+            <Route path="configuracion" element={<LawyerConfigSection />} />
+          </Route>
+        </Routes>
       </React.Suspense>
     );
   } else {
-    console.log('🚫 Tipo de abogado no válido o no encontrado');
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -119,7 +108,17 @@ const LawyerDashboardRouter = ({ children }: LawyerDashboardRouterProps) => {
               Tu cuenta no tiene permisos para acceder a este dashboard.
             </p>
             <button
-              onClick={() => window.location.href = '/auth'}
+              onClick={() => {
+                let authRoute = "/auth";
+                
+                if (location.pathname.startsWith("/admin/")) {
+                  authRoute = "/admin/auth";
+                } else if (location.pathname.startsWith("/abogados/")) {
+                  authRoute = "/abogados/auth";
+                }
+                
+                window.location.href = authRoute;
+              }}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
             >
               Volver al Login
