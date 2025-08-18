@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { SecureLogger } from '@/utils/secureLogging';
 
 interface RegularLawyerStats {
   totalCasosAsignados: number;
@@ -30,7 +31,7 @@ export const useRegularLawyerStats = () => {
       }
 
       try {
-        console.log('🔍 Validando acceso a useRegularLawyerStats:', user.id);
+        SecureLogger.info(`🔍 Validando acceso a useRegularLawyerStats: ${user.id}`);
         
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -39,17 +40,17 @@ export const useRegularLawyerStats = () => {
           .single();
 
         if (error) {
-          console.error('❌ Error validando acceso:', error);
+          SecureLogger.error('❌ Error validando acceso:', error);
           setAccessDenied(true);
         } else if (profile && profile.role === 'abogado' && profile.tipo_abogado === 'regular') {
-          console.log('✅ Acceso autorizado para abogado regular');
+          SecureLogger.info('✅ Acceso autorizado para abogado regular');
           setAccessDenied(false);
         } else {
-          console.log('🚫 Acceso denegado:', { role: profile?.role, tipo: profile?.tipo_abogado });
+          SecureLogger.warn(`🚫 Acceso denegado: role=${profile?.role}, tipo=${profile?.tipo_abogado}`, 'regular_lawyer_stats');
           setAccessDenied(true);
         }
       } catch (error) {
-        console.error('❌ Error general en validación:', error);
+        SecureLogger.error('❌ Error general en validación:', error);
         setAccessDenied(true);
       } finally {
         setLoading(false);
@@ -83,7 +84,7 @@ export const useRegularLawyerStats = () => {
         .in('estado_asignacion', ['activa', 'completada']);
 
       if (assignedError) {
-        console.error('Error fetching assigned cases stats:', assignedError);
+        SecureLogger.error('Error fetching assigned cases stats:', assignedError);
         return;
       }
 
@@ -95,7 +96,7 @@ export const useRegularLawyerStats = () => {
         .eq('es_version_final', false);
 
       if (documentsError) {
-        console.error('Error fetching documents stats:', documentsError);
+        SecureLogger.error('Error fetching documents stats:', documentsError);
       }
 
       // Calcular estadísticas
@@ -115,7 +116,7 @@ export const useRegularLawyerStats = () => {
         documentosPendientes
       });
     } catch (error) {
-      console.error('Error fetching lawyer stats:', error);
+      SecureLogger.error('Error fetching lawyer stats:', error);
     } finally {
       setLoading(false);
     }

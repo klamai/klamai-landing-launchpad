@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { SecureLogger } from '@/utils/secureLogging';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -121,16 +122,17 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
           });
         } catch (e) {
           // No bloquear el flujo por errores de logging
-          console.warn('No se pudo registrar consentimiento de signup:', e);
+          SecureLogger.warn('No se pudo registrar consentimiento de signup', 'auth_modal');
         }
       }
 
       onSuccess();
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : "Ocurrió un error inesperado";
+    } catch (error: any) {
+      SecureLogger.error(error, 'auth_modal_submit');
+      
       toast({
         title: "Error",
-        description: errMsg,
+        description: error.message || "Ocurrió un error inesperado",
         variant: "destructive",
       });
     } finally {
@@ -156,7 +158,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
         }
       }
 
-      console.log('AuthModal - Configurando redirección de Google a:', redirectUrl);
+      SecureLogger.info('Configurando redirección de Google', 'auth_modal');
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -172,17 +174,17 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
       });
       
       if (error) {
-        console.error('AuthModal - Error en Google OAuth:', error);
+        SecureLogger.error(error, 'google_oauth_error');
         toast({
           title: "Error",
-          description: error.message,
+          description: error.message || "No se pudo conectar con Google",
           variant: "destructive",
         });
       } else {
-        console.log('AuthModal - Google OAuth iniciado exitosamente');
+        SecureLogger.info('Google OAuth iniciado exitosamente', 'auth_modal');
       }
     } catch (error) {
-      console.error('AuthModal - Error inesperado en Google OAuth:', error);
+      SecureLogger.error(error, 'google_oauth_unexpected');
       const errMsg = error instanceof Error ? error.message : "Error al conectar con Google";
       toast({
         title: "Error",

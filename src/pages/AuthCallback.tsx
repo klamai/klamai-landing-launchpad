@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { SecureLogger } from '@/utils/secureLogging';
 
 const AuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -40,12 +41,12 @@ const AuthCallback = () => {
     if (authLoading) return;
 
     if (!user) {
-      console.log('AuthCallback - No hay usuario, redirigiendo a /auth');
+      SecureLogger.info('No hay usuario, redirigiendo a /auth', 'auth_callback');
       navigate('/auth');
       return;
     }
 
-    console.log(`AuthCallback - Intención detectada: ${callbackIntent.type}`);
+    SecureLogger.info(`Intención detectada: ${callbackIntent.type}`, 'auth_callback');
 
     switch (callbackIntent.type) {
       case 'google-login':
@@ -78,13 +79,13 @@ const AuthCallback = () => {
     setError(null);
 
     try {
-      console.log('AuthCallback - Paso 1: Vinculando caso al usuario');
+      SecureLogger.info('Paso 1: Vinculando caso al usuario', 'auth_callback');
       await linkCaseToUser(casoId, user!.id);
-      console.log('AuthCallback - Paso 2: Creando sesión de pago');
+      SecureLogger.info('Paso 2: Creando sesión de pago', 'auth_callback');
       await createCheckout(planId, casoId);
 
     } catch (error) {
-      console.error('AuthCallback - Error completo:', error);
+      SecureLogger.error(error, 'process_payment');
       const errorMessage = error instanceof Error ? error.message : 'Error inesperado';
       setError(errorMessage);
       
@@ -108,19 +109,19 @@ const AuthCallback = () => {
     setProcessing(true);
     setError(null);
     try {
-      console.log('AuthCallback - Flujo token propuesta: vinculando por token y creando checkout');
+      SecureLogger.info('Flujo token propuesta: vinculando por token y creando checkout', 'auth_callback');
       try {
         await supabase.functions.invoke('record-consent', {
           body: { proposal_token: token, link_only: true },
         });
-        console.log('AuthCallback - Consentimientos vinculados exitosamente');
+        SecureLogger.info('Consentimientos vinculados exitosamente', 'auth_callback');
       } catch (e) {
-        console.warn('AuthCallback - No se pudieron vincular consentimientos:', e);
+        SecureLogger.warn('No se pudieron vincular consentimientos', 'auth_callback');
       }
       const linkedCasoId = await linkCaseByProposalToken(token);
       await createCheckout(planId, linkedCasoId);
     } catch (e: any) {
-       console.error('AuthCallback - Error en flujo por token de propuesta:', e);
+       SecureLogger.error(e, 'process_payment_proposal');
        setError(e.message || 'Ocurrió un error al procesar la propuesta.');
        setTimeout(() => navigate('/dashboard'), 3000);
     } finally {
@@ -133,13 +134,13 @@ const AuthCallback = () => {
      setProcessing(true);
      setError(null);
      try {
-       console.log('AuthCallback - Vinculación sin compra: intentando asignar caso');
+       SecureLogger.info('Vinculación sin compra: intentando asignar caso', 'auth_callback');
        await linkCaseToUser(casoId, user!.id);
        toast({ title: "Éxito", description: "El caso ha sido vinculado a tu cuenta." });
-       console.log('AuthCallback - Vinculación OK. Redirigiendo al dashboard');
+       SecureLogger.info('Vinculación OK. Redirigiendo al dashboard', 'auth_callback');
        navigate('/dashboard');
      } catch (e: any) {
-       console.error('AuthCallback - Error al vincular sin compra:', e);
+       SecureLogger.error(e, 'link_case_only');
        setError(e.message || 'Ocurrió un error al vincular el caso.');
        setTimeout(() => navigate('/dashboard'), 3000);
      } finally {
@@ -147,19 +148,18 @@ const AuthCallback = () => {
      }
   };
 
-
   const createCheckout = async (planId: string, casoId: string) => {
     const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
       body: { plan_id: planId, caso_id: casoId }
     });
-    console.log('AuthCallback - Respuesta de crear-sesion-checkout:', { data, error });
+    SecureLogger.info('Respuesta de crear-sesion-checkout recibida', 'auth_callback');
     if (error) throw new Error(`Error en la función: ${error.message}`);
     if (!data?.url) throw new Error('No se recibió URL de pago de Stripe');
     setTimeout(() => { window.location.href = data.url; }, 300);
   };
 
   const linkCaseByProposalToken = async (token: string): Promise<string> => {
-    console.log('AuthCallback - linkCaseByProposalToken iniciado');
+    SecureLogger.info('linkCaseByProposalToken iniciado', 'auth_callback');
     const { data, error } = await supabase.rpc('link_case_by_proposal_token', { p_token: token as any });
     if (error) throw new Error(error.message || 'No se pudo vincular el caso por token');
     const linkedCasoId = (data as any) as string;
@@ -168,7 +168,7 @@ const AuthCallback = () => {
   };
 
   const linkCaseToUser = async (casoId: string, userId: string) => {
-    console.log('AuthCallback - linkCaseToUser iniciado:', { casoId, userId });
+    SecureLogger.info('linkCaseToUser iniciado', 'auth_callback');
     
     try {
       // Obtener session_token del localStorage
@@ -178,7 +178,7 @@ const AuthCallback = () => {
         throw new Error('Token de sesión no encontrado');
       }
 
-      console.log('AuthCallback - Usando función segura para asignar caso');
+      SecureLogger.info('Usando función segura para asignar caso', 'auth_callback');
       
       // Usar la función segura para asignar el caso
       const { data, error } = await supabase.rpc('assign_anonymous_case_to_user', {
@@ -188,7 +188,7 @@ const AuthCallback = () => {
       });
 
       if (error) {
-        console.error('AuthCallback - Error en función assign_anonymous_case_to_user:', error);
+        SecureLogger.error(error, 'assign_anonymous_case_error');
         throw new Error(`Error al asignar caso: ${error.message}`);
       }
 
@@ -196,14 +196,14 @@ const AuthCallback = () => {
         throw new Error('No se pudo asignar el caso. El caso podría haber expirado o ya estar asignado.');
       }
 
-      console.log('AuthCallback - Caso asignado exitosamente');
+      SecureLogger.info('Caso asignado exitosamente', 'auth_callback');
 
       // Limpiar tokens del localStorage después de asignación exitosa
       localStorage.removeItem('current_caso_id');
       localStorage.removeItem('current_session_token');
 
     } catch (error) {
-      console.error('AuthCallback - Error en linkCaseToUser:', error);
+      SecureLogger.error(error, 'link_case_to_user');
       throw error;
     }
   };
@@ -220,13 +220,14 @@ const AuthCallback = () => {
         .single();
 
       if (profileError || !profile) {
-        console.error('AuthCallback - Error al obtener perfil:', profileError);
+        SecureLogger.error(profileError, 'get_profile_error');
         // Si no se puede obtener el perfil, redirigir al dashboard por defecto
         navigate('/dashboard');
         return;
       }
 
-      console.log('AuthCallback - Perfil obtenido para redirección:', profile);
+      // Log seguro: solo información no sensible
+      SecureLogger.info(`Perfil obtenido para redirección: role=${profile.role}, tipo=${profile.tipo_abogado}`, 'auth_callback');
 
       // Redirigir según el rol del perfil
       const userProfile = profile as { role: string; tipo_abogado: string };
@@ -240,7 +241,7 @@ const AuthCallback = () => {
       }
 
     } catch (error) {
-      console.error('AuthCallback - Error en redirección del login con Google:', error);
+      SecureLogger.error(error, 'handle_google_login_redirect');
       // En caso de error, redirigir al dashboard por defecto
       navigate('/dashboard');
     }

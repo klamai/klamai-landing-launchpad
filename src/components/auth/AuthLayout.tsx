@@ -221,27 +221,27 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         {/* Header con botones mejorados */}
         <header className="fixed z-20 top-4 left-4 right-4">
           <div className="flex justify-between items-center">
-            <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-full px-4 py-2 border border-white/20">
-              <img src="/logo.svg" alt="klamAI Logo" className="h-8" />
-              <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">KlamAI</span>
+            <Link to="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-full px-3 sm:px-4 py-2 border border-white/20">
+              <img src="/logo.svg" alt="klamAI Logo" className="h-6 sm:h-8" />
+              <span className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">KlamAI</span>
               {roleLabel && (
-                <span className="ml-2 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                <span className="ml-2 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
                   {roleLabel}
                 </span>
               )}
             </Link>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button 
                 onClick={toggleDarkMode} 
-                className="rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg border-white/20 p-2 hover:opacity-80 transition-opacity"
+                className="rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg border-white/20 p-1.5 sm:p-2 hover:opacity-80 transition-opacity"
               >
-                {darkMode ? <Sun className="h-4 w-4 text-gray-700 dark:text-white" /> : <Moon className="h-4 w-4 text-gray-700 dark:text-white" />}
+                {darkMode ? <Sun className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-700 dark:text-white" /> : <Moon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-700 dark:text-white" />}
               </button>
               <Link to="/">
-                <button className="text-gray-700 dark:text-white bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-full border border-white/20 px-4 py-2 hover:opacity-80 transition-opacity flex items-center gap-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  Volver
+                <button className="text-gray-700 dark:text-white bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-full border border-white/20 px-3 sm:px-4 py-1.5 sm:py-2 hover:opacity-80 transition-opacity flex items-center gap-2">
+                  <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Volver</span>
                 </button>
               </Link>
             </div>

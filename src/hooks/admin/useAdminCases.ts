@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { SecureLogger } from '@/utils/secureLogging';
 
 // Interfaz específica para casos del super admin (igual que en useSuperAdminStats)
 interface CasosSuperAdmin {
@@ -82,26 +83,26 @@ export const useAdminCases = () => {
       }
 
       try {
-        console.log('🔍 Validando acceso a useAdminCases:', user.id);
+        SecureLogger.info('Validando acceso a useAdminCases', 'admin_cases');
         
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('role, tipo_abogado')
           .eq('id', user.id)
           .single();
 
-        if (profileError) {
-          console.error('❌ Error obteniendo perfil:', profileError);
+        if (error) {
+          SecureLogger.error(error, 'profile_validation_error');
           setAccessDenied(true);
         } else if (profile && profile.role === 'abogado' && profile.tipo_abogado === 'super_admin') {
-          console.log('✅ Acceso autorizado para super admin');
+          SecureLogger.info('Acceso autorizado para super admin', 'admin_cases');
           setAccessDenied(false);
         } else {
-          console.log('🚫 Acceso denegado:', { role: profile?.role, tipo: profile?.tipo_abogado });
+          SecureLogger.warn(`Acceso denegado: role=${profile?.role}, tipo=${profile?.tipo_abogado}`, 'admin_cases');
           setAccessDenied(true);
         }
       } catch (error) {
-        console.error('❌ Error general en validación:', error);
+        SecureLogger.error(error, 'validation_error');
         setAccessDenied(true);
       } finally {
         setLoading(false);
@@ -216,8 +217,10 @@ export const useAdminCases = () => {
         return;
       }
 
-      console.log('Casos cargados para super admin:', data?.length || 0);
-      setCasos(data || []);
+      if (data) {
+        SecureLogger.info(`Casos cargados para super admin: ${data.length}`, 'admin_cases');
+        setCasos(data);
+      }
     } catch (err) {
       console.error('Error in fetchAdminCases:', err);
       setError('Error inesperado al cargar casos');

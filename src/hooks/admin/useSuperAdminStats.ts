@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { SecureLogger } from '@/utils/secureLogging';
 
 interface SuperAdminStats {
   totalCasos: number;
@@ -113,8 +114,6 @@ export const useSuperAdminStats = () => {
       }
 
       try {
-        console.log('🔍 Validando acceso a useSuperAdminStats:', user.id);
-        
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('role, tipo_abogado')
@@ -125,10 +124,10 @@ export const useSuperAdminStats = () => {
           console.error('❌ Error validando acceso:', error);
           setAccessDenied(true);
         } else if (profile && profile.role === 'abogado' && profile.tipo_abogado === 'super_admin') {
-          console.log('✅ Acceso autorizado para super admin');
+          SecureLogger.info(`Acceso autorizado para super admin`, 'super_admin_stats');
           setAccessDenied(false);
         } else {
-          console.log('🚫 Acceso denegado:', { role: profile?.role, tipo: profile?.tipo_abogado });
+          SecureLogger.warn(`Acceso denegado: role=${profile?.role}, tipo=${profile?.tipo_abogado}`, 'super_admin_stats');
           setAccessDenied(true);
         }
       } catch (error) {

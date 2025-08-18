@@ -15,6 +15,7 @@ import AuthModal from "@/components/AuthModal";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TYPEBOT_CONFIG } from "@/config/constants";
+import { SecureLogger } from '@/utils/secureLogging';
 
 const Chat = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -88,10 +89,7 @@ const Chat = () => {
     localStorage.removeItem('userConsultation');
     localStorage.removeItem('casoId');
 
-    console.log('Essential data loaded for Typebot:', {
-      consultation: savedConsultation,
-      casoId: savedCasoId
-    });
+    SecureLogger.info('Essential data loaded for Typebot', 'chat');
   }, [navigate]);
 
   // PRIORITY 2: Background operations - only run after Typebot is ready
@@ -100,15 +98,35 @@ const Chat = () => {
 
     // Longer delay to ensure Typebot loads completely first
     const backgroundTimer = setTimeout(() => {
-      // Execute background operations
-      backgroundOperations();
-    }, 3000);
+      SecureLogger.info('Starting background operations', 'chat');
+      
+      // Check case status immediately
+      checkCaseStatus(casoId);
+      
+      // Setup realtime subscriptions
+      const cleanupRealtime = setupRealtimeSubscriptions();
+      
+      // Setup polling fallback
+      const cleanupPolling = setupPollingFallback();
+      
+      return () => {
+        cleanupRealtime?.();
+        cleanupPolling?.();
+      };
+    }, 3000); // 3 seconds delay
 
     return () => clearTimeout(backgroundTimer);
-  }, [typebotReady, casoId, user, loading]);
+  }, [typebotReady, casoId]);
+
+  // Debug effect to monitor proposal state
+  useEffect(() => {
+    if (showProposal) {
+      SecureLogger.info(`Proposal modal state: showProposal=${showProposal}, proposalData=${!!proposalData}`, 'chat');
+    }
+  }, [showProposal, proposalData]);
 
   const backgroundOperations = async () => {
-    console.log('Starting background operations...');
+    SecureLogger.info('Starting background operations', 'chat');
     
     // Link case to user if authenticated
     if (user && !caseLinked) {
@@ -129,12 +147,12 @@ const Chat = () => {
     if (!userId || !caseId || caseLinked) return;
 
     try {
-      console.log('Linking case to user:', { userId, caseId });
+      SecureLogger.info('Linking case to user', 'chat');
       
       const sessionToken = localStorage.getItem('current_session_token');
       
       if (!sessionToken) {
-        console.error('No session token found for case linking');
+        SecureLogger.error('No session token found for case linking', 'chat');
         return;
       }
 
@@ -145,16 +163,16 @@ const Chat = () => {
       });
 
       if (error) {
-        console.error('Error in assign_anonymous_case_to_user function:', error);
+        SecureLogger.error(error, 'assign_anonymous_case_error');
         return;
       }
 
       if (!data) {
-        console.error('Case assignment returned false');
+        SecureLogger.error('Case assignment returned false', 'chat');
         return;
       }
 
-      console.log('Case linked to user successfully');
+      SecureLogger.info('Case linked to user successfully', 'chat');
       setCaseLinked(true);
 
       // Transfer case data to profile
@@ -165,7 +183,7 @@ const Chat = () => {
       localStorage.removeItem('current_session_token');
       
     } catch (error) {
-      console.error('Error in linkCaseToUser:', error);
+      SecureLogger.error(error, 'link_case_to_user');
     }
   };
 
@@ -173,7 +191,7 @@ const Chat = () => {
     if (!caseId) return;
     
     try {
-      console.log('Checking case status for ID:', caseId);
+      SecureLogger.info('Checking case status', 'chat');
       
       const { data, error } = await supabase
         .from('casos')
@@ -182,148 +200,154 @@ const Chat = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error checking case status:', error);
+        SecureLogger.error(error, 'check_case_status');
         return;
       }
 
       if (!data) {
-        console.log('No case found with ID:', caseId);
+        SecureLogger.info('No case found', 'chat');
         return;
       }
 
-      if (data.estado === 'listo_para_propuesta' && data.propuesta_estructurada && !proposalNotificationShown) {
-        console.log('Case is ready for proposal!');
+      SecureLogger.info(`Case status: ${data.estado}, has proposal: ${!!data.propuesta_estructurada}`, 'chat');
+
+      if (data.estado === 'listo_para_propuesta' && data.propuesta_estructurada) {
+        SecureLogger.info('Case is ready for proposal - SHOWING MODAL', 'chat');
         setProposalData(data.propuesta_estructurada);
         setShowProposal(true);
         setShowPaymentButton(false);
         setProposalNotificationShown(true);
       }
     } catch (error) {
-      console.error('Error in checkCaseStatus:', error);
+      SecureLogger.error(error, 'check_case_status');
     }
   };
 
   const setupRealtimeSubscriptions = () => {
-    if (!casoId) return;
+    if (!casoId) return () => {};
 
-    console.log('Setting up realtime subscription for caso:', casoId);
+    SecureLogger.info('Setting up realtime subscription for caso', 'chat');
 
     const channel = supabase
-      .channel('caso-changes')
+      .channel(`caso-${casoId}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'casos',
-          filter: `id=eq.${casoId}`
+          filter: `id=eq.${casoId}`,
         },
         (payload) => {
-          console.log('Realtime: Caso updated:', payload);
+          SecureLogger.info('Realtime: Caso updated', 'chat');
           const newCaso = payload.new;
           
           if (newCaso && newCaso.estado === 'listo_para_propuesta' && newCaso.propuesta_estructurada) {
-            console.log('Realtime: Showing proposal');
+            SecureLogger.info('Realtime: Showing proposal', 'chat');
             setProposalData(newCaso.propuesta_estructurada);
             setShowProposal(true);
+            setShowPaymentButton(false);
+            setProposalNotificationShown(true);
           }
         }
       )
       .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
+        SecureLogger.info('Realtime subscription status', 'chat');
       });
 
     // Clean up on unmount
     return () => {
-      console.log('Cleaning up realtime subscription');
+      SecureLogger.info('Cleaning up realtime subscription', 'chat');
       supabase.removeChannel(channel);
     };
   };
 
   const setupPollingFallback = () => {
-    if (!casoId || showProposal) return;
+    if (!casoId) return () => {};
 
-    console.log('Setting up polling fallback for case:', casoId);
+    SecureLogger.info('Setting up polling fallback for case', 'chat');
     
-    const pollingInterval = setInterval(() => {
-      if (!showProposal) {
-        console.log('Polling: Checking case status...');
+    // Polling más agresivo al inicio, luego más lento
+    let pollCount = 0;
+    const initialInterval = setInterval(() => {
+      if (pollCount < 10) { // Primeros 10 polls cada 5 segundos
+        SecureLogger.info('Initial polling: Checking case status', 'chat');
         checkCaseStatus(casoId);
+        pollCount++;
+      } else {
+        clearInterval(initialInterval);
+        // Después de 10 polls, cambiar a polling más lento
+        const slowInterval = setInterval(() => {
+          if (!showProposal) {
+            SecureLogger.info('Slow polling: Checking case status', 'chat');
+            checkCaseStatus(casoId);
+          } else {
+            clearInterval(slowInterval);
+          }
+        }, 30000); // Cada 30 segundos
       }
-    }, 30000); // Every 30 seconds
+    }, 5000); // Cada 5 segundos al inicio
 
     return () => {
-      console.log('Cleaning up polling interval');
-      clearInterval(pollingInterval);
+      clearInterval(initialInterval);
     };
   };
 
   const transferCaseDataToProfile = async (userId: string, caseId: string) => {
     try {
-      console.log('Starting data transfer process for user:', userId, 'case:', caseId);
+      SecureLogger.info('Starting data transfer process for user', 'chat');
       
       const { data: existingProfile, error: profileError } = await supabase
         .from('profiles')
         .select('nombre, apellido, email, telefono')
         .eq('id', userId)
-        .maybeSingle();
+        .single();
 
       if (profileError) {
-        console.error('Error checking existing profile:', profileError);
+        SecureLogger.error(profileError, 'profile_error');
         return;
       }
 
-      const isNewProfile = !existingProfile || 
-        (!existingProfile.nombre && !existingProfile.apellido) ||
-        existingProfile.nombre === '' || existingProfile.apellido === '';
-
-      if (isNewProfile) {
+      // Solo actualizar si no hay datos existentes
+      if (!existingProfile?.nombre || !existingProfile?.apellido) {
         const { data: casoData, error: casoError } = await supabase
           .from('casos')
-          .select(`
-            nombre_borrador, apellido_borrador, email_borrador, telefono_borrador, 
-            razon_social_borrador, nif_cif_borrador, tipo_perfil_borrador,
-            ciudad_borrador, direccion_fiscal_borrador, nombre_gerente_borrador
-          `)
+          .select('nombre_borrador, apellido_borrador, email_borrador, telefono_borrador, nombre_gerente_borrador, apellido_gerente_borrador, email_gerente_borrador, telefono_gerente_borrador')
           .eq('id', caseId)
-          .maybeSingle();
+          .single();
 
         if (casoError) {
-          console.error('Error fetching case data:', casoError);
+          SecureLogger.error(casoError, 'case_data_error');
         } else if (casoData) {
           const { data: { user: currentUser } } = await supabase.auth.getUser();
           
-          const profileUpdate = {
-            nombre: casoData.nombre_borrador || currentUser?.user_metadata?.nombre || '',
-            apellido: casoData.apellido_borrador || currentUser?.user_metadata?.apellido || '',
-            email: casoData.email_borrador || currentUser?.email || '',
-            telefono: casoData.telefono_borrador || null,
-            razon_social: casoData.razon_social_borrador || null,
-            nif_cif: casoData.nif_cif_borrador || null,
-            tipo_perfil: casoData.tipo_perfil_borrador || 'individual',
-            ciudad: casoData.ciudad_borrador || null,
-            direccion_fiscal: casoData.direccion_fiscal_borrador || null,
-            nombre_gerente: casoData.nombre_gerente_borrador || null
-          };
+          if (currentUser) {
+            const profileUpdate = {
+              nombre: casoData.nombre_borrador || existingProfile?.nombre,
+              apellido: casoData.apellido_borrador || existingProfile?.apellido,
+              email: casoData.email_borrador || existingProfile?.email || currentUser.email,
+              telefono: casoData.telefono_borrador || existingProfile?.telefono,
+            };
 
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update(profileUpdate)
-            .eq('id', userId);
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update(profileUpdate)
+              .eq('id', userId);
 
-          if (updateError) {
-            console.error('Error updating profile:', updateError);
-          } else {
-            console.log('Profile updated successfully with case data');
-            toast({
-              title: "¡Datos guardados!",
-              description: "Tus datos han sido transferidos correctamente a tu perfil.",
-            });
+            if (updateError) {
+              SecureLogger.error(updateError, 'profile_update');
+            } else {
+              SecureLogger.info('Profile updated successfully with case data', 'chat');
+              toast({
+                title: "¡Datos guardados!",
+                description: "Tus datos han sido transferidos correctamente a tu perfil.",
+              });
+            }
           }
         }
       }
     } catch (error) {
-      console.error('Error in transferCaseDataToProfile:', error);
+      SecureLogger.error(error, 'transfer_case_data_to_profile');
     }
   };
 
@@ -335,7 +359,7 @@ const Chat = () => {
       const { type, mode } = event.data;
 
       if (type === 'SHOW_AUTH_MODAL' && (mode === 'login' || mode === 'signup')) {
-        console.log('Valid auth modal request received:', { type, mode });
+        SecureLogger.info('Valid auth modal request received', 'chat');
         setAuthModalMode(mode);
         setShowAuthModal(true);
       }
@@ -351,7 +375,7 @@ const Chat = () => {
 
   const handleSelectSession = (sessionId: string) => {
     setSelectedSessionId(sessionId);
-    console.log('Selected session:', sessionId);
+    SecureLogger.info('Selected session', 'chat');
   };
 
   const handleProposalClose = () => {
@@ -360,7 +384,7 @@ const Chat = () => {
   };
 
   const handleAuthSuccessWithCaseData = async () => {
-    console.log('Starting handleAuthSuccessWithCaseData process...');
+    SecureLogger.info('Starting handleAuthSuccessWithCaseData process', 'chat');
     setShowAuthModal(false);
     
     setTimeout(async () => {
@@ -388,7 +412,7 @@ const Chat = () => {
       const typebotIframe = document.querySelector('iframe');
       if (typebotIframe && typebotIframe.contentWindow) {
         typebotIframe.contentWindow.postMessage(successMessage, '*');
-        console.log('Auth success message sent to Typebot:', successMessage);
+        SecureLogger.info('Auth success message sent to Typebot', 'chat');
       }
     }, 1000);
   };
@@ -577,6 +601,8 @@ const Chat = () => {
                   "utm_value": userConsultation || "Hola, necesito asesoramiento legal",
                   "caso_id": casoId || ""
                 }}
+                disableLogs={true}
+                isPreview={false}
               />
               
               {/* Floating payment button */}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logError, logAuth } from '@/utils/secureLogging';
+import { SecureLogger } from '@/utils/secureLogging';
 
 interface AdminSecurityMiddlewareProps {
   children: React.ReactNode;
@@ -23,13 +24,13 @@ const AdminSecurityMiddleware = ({ children }: AdminSecurityMiddlewareProps) => 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Error verificando sesión admin:', sessionError);
+          SecureLogger.error(sessionError, 'admin_session_error');
           await logError('admin_session_error', sessionError as any);
           throw new Error('Error de sesión');
         }
 
         if (!session?.user) {
-          console.log('No hay sesión activa - redirigiendo a login admin');
+          SecureLogger.info('No hay sesión activa - redirigiendo a login admin', 'admin_middleware');
           await logAuth('login', false, 'AdminSecurityMiddleware - No session');
           navigate('/admin/auth', { replace: true });
           return;
@@ -43,7 +44,7 @@ const AdminSecurityMiddleware = ({ children }: AdminSecurityMiddlewareProps) => 
           .single();
 
         if (profileError) {
-          console.error('Error verificando perfil admin:', profileError);
+          SecureLogger.error(profileError, 'admin_profile_error');
           await logError('admin_profile_error', profileError as any);
           throw new Error('Error verificando perfil');
         }
@@ -56,12 +57,8 @@ const AdminSecurityMiddleware = ({ children }: AdminSecurityMiddlewareProps) => 
             profile.role !== 'abogado' || 
             profile.tipo_abogado !== 'super_admin') {
           
-          console.log('Acceso denegado - Usuario no es superadmin:', {
-            role: profile?.role,
-            tipo: profile?.tipo_abogado,
-            userId: session.user.id,
-            email: session.user.email
-          });
+          // Log seguro: solo información no sensible
+          SecureLogger.warn(`Acceso denegado - Usuario no es superadmin: role=${profile?.role}, tipo=${profile?.tipo_abogado}`, 'admin_middleware');
           
           await logAuth('login', false, `AdminSecurityMiddleware - Access denied: ${profile?.role}/${profile?.tipo_abogado}`);
           
@@ -77,19 +74,14 @@ const AdminSecurityMiddleware = ({ children }: AdminSecurityMiddlewareProps) => 
           return;
         }
 
-        // Verificación exitosa
-        console.log('✅ Acceso admin verificado:', {
-          userId: session.user.id,
-          email: session.user.email,
-          nombre: profile.nombre,
-          apellido: profile.apellido
-        });
+        // Verificación exitosa - log seguro
+        SecureLogger.info(`Acceso admin verificado: ${profile.nombre} ${profile.apellido}`, 'admin_middleware');
         
         await logAuth('login', true, `AdminSecurityMiddleware - Access granted: ${profile.nombre} ${profile.apellido}`);
         setIsVerified(true);
 
       } catch (error: any) {
-        console.error('Error en middleware de seguridad admin:', error);
+        SecureLogger.error(error, 'admin_middleware_error');
         await logError('admin_middleware_error', error);
         
         toast({

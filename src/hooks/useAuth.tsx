@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -11,6 +11,7 @@ import {
   useSessionValidation 
 } from './queries/useAuthQueries';
 import { useQueryClient } from '@tanstack/react-query';
+import { SecureLogger } from '@/utils/secureLogging';
 
 interface Profile {
   id: string;
@@ -64,7 +65,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        console.log('🔄 AuthProvider: Auth state change:', event, newSession?.user?.id);
+        // Log seguro: solo el evento, no el ID del usuario
+        SecureLogger.info(`Auth state change: ${event}`, 'auth_provider');
         
         // Invalidar la query de la sesión para forzar una actualización inmediata
         queryClient.invalidateQueries({ queryKey: ['session'] });
@@ -97,7 +99,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       await signOutMutation.mutateAsync();
     } catch (error: any) {
-      console.error('Error during sign out:', error);
+      // Log seguro del error de sign out
+      SecureLogger.error(error, 'sign_out');
       // Asegurar que el estado se limpie incluso si hay error
     }
   };
@@ -106,13 +109,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Solo mostrar loading si realmente no hay sesión y está cargando
   const loading = sessionLoading || (!!session && profileLoading);
 
-  // Log del estado actual
-  console.log('🔍 AuthProvider: Estado actual - session:', !!session, 'profile:', !!profile, 'sessionLoading:', sessionLoading, 'profileLoading:', profileLoading, 'loading:', loading);
+  // Log seguro del estado actual (sin información sensible)
+  SecureLogger.debug(`Estado: session=${!!session}, profile=${!!profile}, loading=${loading}`, 'auth_provider');
 
   // Manejar errores de sesión
   useEffect(() => {
     if (sessionError) {
-      console.error('Session error:', sessionError);
+      // Log seguro del error de sesión
+      SecureLogger.error(sessionError, 'session_error');
       // Si hay error de sesión, limpiar estado
       if (sessionError.message?.includes('session_not_found') || 
           sessionError.code === 'session_not_found') {

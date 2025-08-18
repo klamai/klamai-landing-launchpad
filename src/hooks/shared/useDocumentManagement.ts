@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { SecureLogger } from '@/utils/secureLogging';
 
 interface DocumentoResolucion {
   id: string;
@@ -51,7 +52,10 @@ export const useDocumentManagement = (casoId?: string) => {
           return;
         }
 
-        console.log('Perfil del usuario:', profile);
+        if (!profile) {
+          SecureLogger.warn('No se pudo obtener el perfil del usuario', 'document_management');
+          return;
+        }
 
         // Solo abogados pueden acceder a documentos de resolución
         if (profile.role !== 'abogado') {
