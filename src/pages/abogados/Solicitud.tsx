@@ -198,16 +198,30 @@ const SolicitudAbogadoPage = () => {
       const { data: responseData, error } = await supabase.functions.invoke('crear-solicitud-abogado', {
         body: data,
       });
-      if (error) throw new Error(error.message);
+
+      if (error) {
+        // Esto captura errores de red o de la propia Edge Function (5xx)
+        console.error("Error al invocar la función:", error);
+        throw new Error("No pudimos procesar tu solicitud en este momento. Por favor, inténtalo más tarde.");
+      }
+
+      // La función ahora siempre devuelve éxito, así que no es necesario
+      // comprobar un campo de error interno. Simplemente pasamos la data.
       return responseData;
     },
     onSuccess: () => {
-      toast.success("Solicitud enviada con éxito!");
+      // El mensaje de éxito siempre se muestra, lo cual es correcto.
+      // Mantenemos el mensaje genérico aquí.
+      toast.success("¡Solicitud recibida!", {
+        description: "Gracias por tu interés. Revisaremos tu información y te contactaremos pronto.",
+      });
       setShowSuccessModal(true);
     },
     onError: (error) => {
-      toast.error("Error al enviar la solicitud", {
-        description: (error as Error).message,
+      // Este bloque ahora solo se activará para errores de red o del servidor.
+      // Mostramos un mensaje genérico para no exponer detalles.
+      toast.error("Hubo un problema al enviar tu solicitud", {
+        description: (error as Error).message || "Por favor, verifica tu conexión e inténtalo de nuevo.",
       });
     },
   });

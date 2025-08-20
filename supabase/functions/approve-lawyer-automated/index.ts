@@ -2,9 +2,10 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://vwnoznuznmrdaumjyctg.supabase.co',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Credentials': 'true',
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -82,11 +83,8 @@ const handler = async (req: Request): Promise<Response> => {
           email: approvalData.email,
           nombre: approvalData.nombre,
           apellido: approvalData.apellido,
-          credenciales: {
-            email: approvalData.email,
-            password: approvalData.temp_password,
-            activationToken: approvalData.activation_token
-          }
+          // Se elimina el objeto anidado 'credenciales' y la contraseña temporal
+          activationToken: approvalData.activation_token
         }
       });
       console.log('Email de aprobación enviado');
@@ -101,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
       nombre: approvalData.nombre,
       apellido: approvalData.apellido,
       activation_token: approvalData.activation_token,
-      temp_password: approvalData.temp_password,
+      // Se elimina la contraseña temporal de la respuesta
       profile_created: approvalData.profile_created || false
     };
 
@@ -120,7 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
       nombre: '',
       apellido: '',
       activation_token: '',
-      temp_password: '',
+      // Se elimina la contraseña temporal de la respuesta de error
       profile_created: false,
       error: error.message
     };

@@ -51,6 +51,35 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // PASO 1: Verificación de seguridad para evitar enumeración de usuarios
+    // Comprobar si el email ya existe en 'profiles'
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', validatedData.email)
+      .single();
+
+    // Comprobar si ya existe una solicitud pendiente o aprobada
+    const { data: existingSolicitud } = await supabase
+      .from('solicitudes_abogado')
+      .select('id')
+      .eq('email', validatedData.email)
+      .in('estado', ['pendiente', 'aprobada'])
+      .single();
+
+    // Si ya existe un perfil o una solicitud, retornar éxito para no dar pistas.
+    if (existingProfile || existingSolicitud) {
+      console.log(`Solicitud duplicada o email ya registrado para: ${validatedData.email}. Respondiendo con éxito genérico.`);
+      // Opcional: Aquí se podría encolar un trabajo para enviar un email informativo.
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Solicitud enviada correctamente',
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
     // Obtener información del cliente para auditoría
     let clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
     // Si hay una lista de IPs, tomar solo la primera
@@ -85,17 +114,7 @@ serve(async (req) => {
 
     if (solicitudError) {
       console.error('Error al insertar solicitud:', solicitudError)
-      
-      // Manejo específico para error de email duplicado
-      if (solicitudError.code === '23505') {
-        return new Response(JSON.stringify({ 
-          error: 'Ya existe una solicitud con este correo electrónico.' 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 409, // 409 Conflict es el código adecuado para este caso
-        })
-      }
-      
+      // Ya no se maneja el error de duplicado aquí, se hace en la verificación previa.
       throw new Error('Error al procesar la solicitud')
     }
 
