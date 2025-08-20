@@ -10,27 +10,26 @@ import { FooterSection } from '@/components/ui/footer-section';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { PricingCard } from '@/components/ui/pricing-card';
 import { 
   CheckCircle2, 
-  Clock, 
-  Users2, 
-  Shield, 
   FileText, 
-  MessageSquare, 
-  Zap, 
-  Star,
-  Scale,
-  ArrowRight,
   Sparkles,
   Eye,
   Lock,
-  Check
+  Sun,
+  Moon,
+  Gavel
 } from 'lucide-react';
 
 const PublicProposal = () => {
   const { token } = useParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? saved === 'true' : false;
+  });
   const [accepted, setAccepted] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
@@ -41,6 +40,12 @@ const PublicProposal = () => {
   const [analysisMarkdown, setAnalysisMarkdown] = useState<string | null>(null);
   const [mensajeWhatsapp, setMensajeWhatsapp] = useState<string | null>(null);
   const [showAuth, setShowAuth] = useState(false);
+
+  useEffect(() => {
+    // aplicar tema al cargar
+    if (darkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  }, [darkMode]);
 
   useEffect(() => {
     const fetchProposal = async () => {
@@ -58,12 +63,7 @@ const PublicProposal = () => {
           setAssistantMessage(raw);
           setCasoId((rows[0] as any)?.caso_id ?? null);
 
-          // Extraer analisis_caso y mensaje_whatsapp soportando múltiples estructuras:
-          // - raw string JSON con { analisis_caso, mensaje_whatsapp }
-          // - raw string JSON array con { output: string JSON }
-          // - raw objeto JSONB con claves directas
-          // - raw array JSONB con objetos que tengan output string JSON
-          // - fallback: considerar raw como texto de WhatsApp
+          // Extraer analisis_caso y mensaje_whatsapp soportando múltiples estructuras
           const tryParse = (text: string) => {
             try { return JSON.parse(text); } catch { return null; }
           };
@@ -152,40 +152,61 @@ const PublicProposal = () => {
     }
   };
 
+  // Shared Header Component
+  const toggleDarkMode = () => {
+    const next = !darkMode;
+    setDarkMode(next);
+    localStorage.setItem('darkMode', String(next));
+  };
+
+  const Header = () => (
+    <header className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-white/20 dark:border-gray-800/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-3">
+          <a href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+            <img src="/logo.svg" alt="klamAI Logo" className="h-8" />
+            <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">KlamAI</span>
+          </a>
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="hidden sm:flex bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+              <Sparkles className="w-3 h-3 mr-1.5" />
+              Propuesta Personalizada
+            </Badge>
+            <Button onClick={toggleDarkMode} variant="outline" size="icon" className="rounded-full">
+              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        {/* Header con logo */}
-        <header className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center space-x-3">
-                <img src="/logo.svg" alt="klamAI Logo" className="h-10 w-auto" />
-                <div className="hidden sm:block">
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                    klamAI
-                  </h1>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Asistente Legal Inteligente</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
+        <Header />
 
         {/* Loading State */}
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Preparando tu propuesta personalizada
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <div className="text-center max-w-md mx-auto px-4">
+            <div className="relative mx-auto mb-6">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <Gavel className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-3">
+              Preparando tu propuesta
             </h2>
-            <p className="text-gray-500 dark:text-gray-400">
-              Estamos analizando tu caso con inteligencia artificial...
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
+              Estamos cargando tu caso con nuestro equipo de abogados...
             </p>
+            <div className="w-full max-w-xs mx-auto mt-6 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-blue-600 h-full rounded-full animate-pulse" style={{ width: '75%' }}></div>
+            </div>
           </div>
         </div>
 
-        {/* Footer */}
         <FooterSection />
       </div>
     );
@@ -194,45 +215,29 @@ const PublicProposal = () => {
   if (!assistantMessage && !analysisMarkdown) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        {/* Header con logo */}
-        <header className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center space-x-3">
-                <img src="/logo.svg" alt="klamAI Logo" className="h-10 w-auto" />
-                <div className="hidden sm:block">
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                    klamAI
-                  </h1>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Asistente Legal Inteligente</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
+        <Header />
 
         {/* Error State */}
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center max-w-md mx-auto px-4">
-            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <div className="text-center max-w-md mx-auto px-6">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
               <Lock className="w-10 h-10 text-red-600 dark:text-red-400" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
               Enlace no válido o caducado
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-8">
               Este enlace de propuesta no es válido o ha expirado. Contacta con tu abogado para obtener un nuevo enlace.
             </p>
             <Button 
               onClick={() => window.location.href = '/'}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg"
             >
               Volver al inicio
             </Button>
           </div>
         </div>
 
-        {/* Footer */}
         <FooterSection />
       </div>
     );
@@ -240,128 +245,59 @@ const PublicProposal = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Header con logo */}
-      <header className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <img src="/logo.svg" alt="klamAI Logo" className="h-10 w-auto" />
-              <div className="hidden sm:block">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                  klamAI
-                </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Asistente Legal Inteligente</p>
-              </div>
-            </div>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
-              <Sparkles className="w-3 h-3 mr-1" />
-              Propuesta Personalizada
-            </Badge>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="relative py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-8">
-            <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300 mb-4">
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Caso Analizado por IA
-            </Badge>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
-              Tu <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                Propuesta Legal
-              </span> Está Lista
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Hemos analizado tu caso con inteligencia artificial y hemos preparado una propuesta personalizada 
-              para resolver tu situación legal de la manera más eficiente.
-            </p>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Zap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Análisis IA</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Procesado en segundos</p>
-            </div>
-            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">100% Seguro</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Datos protegidos RGPD</p>
-            </div>
-            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Users2 className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Abogados Expertos</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Especialistas verificados</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Header />
 
       {/* Main Content */}
-      <section className="relative px-4 sm:px-6 lg:px-8 pb-16">
+      <main className="relative px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="max-w-4xl mx-auto">
-          {!accepted ? (
-            /* Políticas y Consentimiento */
-            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-2 border-blue-200 dark:border-blue-800 shadow-2xl">
-              <CardHeader className="text-center pb-6">
-                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Shield className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+          {/* Políticas y Consentimiento - Siempre visible primero */}
+          {!accepted && (
+            <Card className="bg-gradient-to-br from-white via-blue-50/30 to-cyan-50/30 dark:from-gray-800 dark:via-blue-900/20 dark:to-cyan-900/20 backdrop-blur-sm border border-blue-200/80 dark:border-blue-800/60 shadow-2xl mb-8 overflow-hidden mx-4 sm:mx-6 md:mx-12 lg:mx-20 xl:mx-28">
+              <CardHeader className="flex flex-col items-center text-center pb-6 border-b border-gray-100 dark:border-gray-700 px-6 sm:px-8 md:px-12 lg:px-16 pt-8">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Gavel className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-2xl text-gray-900 dark:text-white">
-                  Políticas y Privacidad
+                <CardTitle className="text-3xl font-bold text-gray-900 dark:text-white mb-2 max-w-full">
+                  ¡Tu Análisis Legal Está Listo!
                 </CardTitle>
-                <CardDescription className="text-lg text-gray-600 dark:text-gray-300">
-                  Para continuar y ver tu propuesta personalizada, necesitamos tu consentimiento
+                <CardDescription className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl leading-relaxed">
+                  Un abogado especialista ya ha revisado tu caso <span className="font-semibold text-green-600 dark:text-green-400">gratuitamente</span> y ha preparado una propuesta personalizada. Solo necesitamos tu consentimiento para mostrarte el análisis completo.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 pt-6 px-4 sm:px-6 md:px-12 lg:px-16">
                 <div className="space-y-4">
-                  <label className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                                    <div className="bg-gradient-to-r from-blue-50/80 via-cyan-50/60 to-blue-50/80 dark:from-blue-900/30 dark:via-cyan-900/20 dark:to-blue-900/30 rounded-2xl p-6 sm:p-7 lg:p-8 border border-blue-200/60 dark:border-blue-700/40 shadow-lg">
+                    <label className="flex items-start gap-5 cursor-pointer group">
+                      <div className="flex-shrink-0 mt-1">
                     <input 
                       type="checkbox" 
-                      checked={acceptTerms} 
-                      onChange={(e) => setAcceptTerms(e.target.checked)}
-                      className="mt-1 w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                    />
+                          checked={acceptTerms && acceptPrivacy}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setAcceptTerms(checked);
+                            setAcceptPrivacy(checked);
+                          }}
+                          className="w-7 h-7 text-blue-600 bg-white border-2 border-blue-300 rounded-lg focus:ring-blue-500 focus:ring-2 focus:ring-offset-2 transition-all duration-200 group-hover:border-blue-400 group-hover:scale-105"
+                        />
+                      </div>
                     <div className="flex-1">
-                      <span className="font-medium text-gray-900 dark:text-white">
+                        <span className="text-base font-medium text-gray-900 dark:text-white leading-relaxed">
                         He leído y acepto los{' '}
-                        <a href="/aviso-legal" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold">
+                          <a href="/aviso-legal" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold transition-colors duration-200 hover:text-blue-800">
                           Términos y Condiciones
                         </a>
-                      </span>
-                    </div>
-                  </label>
-                  
-                  <label className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={acceptPrivacy} 
-                      onChange={(e) => setAcceptPrivacy(e.target.checked)}
-                      className="mt-1 w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                    />
-                    <div className="flex-1">
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        He leído y acepto la{' '}
-                        <a href="/politicas-privacidad" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold">
+                          {' '}y la{' '}
+                          <a href="/politicas-privacidad" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold transition-colors duration-200 hover:text-blue-800">
                           Política de Privacidad
                         </a>
+                          {' '}para acceder a mi análisis legal personalizado
                       </span>
                     </div>
                   </label>
+                  </div>
                 </div>
 
-                <Separator />
+                                 <Separator className="my-6" />
 
                 <div className="text-center">
                   <Button
@@ -387,46 +323,68 @@ const PublicProposal = () => {
                         setSavingConsent(false);
                       }
                     }}
-                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-600 hover:from-blue-700 hover:via-blue-600 hover:to-cyan-700 text-white px-10 py-5 rounded-2xl text-lg font-semibold shadow-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25"
+                    size="lg"
                   >
                     {savingConsent ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        Guardando...
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
+                        Guardando consentimiento...
                       </>
                     ) : (
                       <>
-                        <Eye className="w-5 h-5 mr-2" />
-                        Aceptar y Ver Propuesta
+                        <Eye className="w-6 h-6 mr-3" />
+                        Ver Mi Análisis Legal
                       </>
                     )}
                   </Button>
                 </div>
               </CardContent>
             </Card>
-          ) : (
-            /* Propuesta y Plan de Pago */
+          )}
+
+          {/* Hero Section - Solo visible después de aceptar */}
+          {accepted && (
+            <section className="mb-10">
+              <div className="text-center mb-8">
+                <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 mb-4 py-1.5 px-3">
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                  Caso Revisado por Abogado Especialista
+                </Badge>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                  Tu <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                    Propuesta Legal
+                  </span> Está Lista
+                </h1>
+                <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                  Nuestro abogado especialista ha revisado tu caso y ha preparado una propuesta personalizada 
+                  para resolver tu situación legal de la manera más eficiente.
+                </p>
+              </div>
+
+              {/* (Eliminadas) Tarjetas de estadísticas para simplificar la vista */}
+            </section>
+          )}
+
+          {/* Contenido principal - Solo visible después de aceptar */}
+          {accepted && (
             <div className="space-y-8">
               {/* Análisis del Caso */}
               {analysisMarkdown && (
-                <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-xl">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-xl text-gray-900 dark:text-white">
-                          Análisis de tu Caso
-                        </CardTitle>
-                        <CardDescription className="text-gray-600 dark:text-gray-400">
-                          Evaluación detallada realizada por nuestro asistente legal inteligente
-                        </CardDescription>
-                      </div>
+                <Card className="bg-gradient-to-br from-white via-blue-50/50 to-cyan-50/30 dark:from-gray-900 dark:via-blue-900/30 dark:to-cyan-950/20 backdrop-blur-sm border border-gray-200/80 dark:border-blue-800/60 shadow-xl overflow-hidden">
+                  <CardHeader className="flex flex-col items-center text-center pb-6 border-b border-gray-100 dark:border-gray-700 px-6 sm:px-8 pt-8">
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg mx-auto mb-6">
+                      <FileText className="w-7 h-7 text-white" />
                     </div>
+                    <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-3 max-w-full">
+                      Análisis de tu Caso
+                    </CardTitle>
+                    <CardDescription className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+                      Evaluación detallada realizada por nuestro abogado especialista
+                    </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:text-gray-900 prose-headings:dark:text-white prose-p:text-gray-700 prose-p:dark:text-gray-300">
+                  <CardContent className="pt-8 px-6 sm:px-8">
+                    <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:text-gray-900 prose-headings:dark:text-white prose-p:text-gray-700 prose-p:dark:text-gray-300 prose-headings:font-medium prose-h2:text-xl prose-h3:text-lg prose-li:text-gray-700 prose-li:dark:text-gray-300 prose-strong:text-gray-900 prose-strong:dark:text-white prose-headings:font-bold prose-h2:text-2xl prose-h3:text-xl">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {analysisMarkdown}
                       </ReactMarkdown>
@@ -436,127 +394,40 @@ const PublicProposal = () => {
               )}
 
               {/* Plan de Consulta */}
-              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800 shadow-2xl overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-green-200 dark:bg-green-800/20 rounded-full -translate-y-16 translate-x-16 blur-3xl"></div>
-                <CardHeader className="relative">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
-                        <Scale className="w-6 h-6 text-green-600 dark:text-green-400" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-2xl text-gray-900 dark:text-white">
-                          Consulta Estratégica con Abogado
-                        </CardTitle>
-                        <CardDescription className="text-green-700 dark:text-green-300 text-lg">
-                          Primera consulta bonificada
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-4xl font-bold text-green-600 dark:text-green-400">37,50 €</div>
-                      <div className="text-sm text-green-600 dark:text-green-400">IVA incluido</div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="relative">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-gray-900 dark:text-white text-lg mb-4">¿Qué incluye?</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
-                          <span className="text-gray-700 dark:text-gray-300">30 min con abogado especialista</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
-                          <span className="text-gray-700 dark:text-gray-300">Revisión inicial de documentos</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
-                          <span className="text-gray-700 dark:text-gray-300">Recomendación de estrategia</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
-                          <span className="text-gray-700 dark:text-gray-300">Plan de acción personalizado</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-gray-900 dark:text-white text-lg mb-4">Beneficios</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <Star className="w-5 h-5 text-yellow-500" />
-                          <span className="text-gray-700 dark:text-gray-300">Abogados verificados y especializados</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Clock className="w-5 h-5 text-blue-500" />
-                          <span className="text-gray-700 dark:text-gray-300">Consulta inmediata sin esperas</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Shield className="w-5 h-5 text-green-500" />
-                          <span className="text-gray-700 dark:text-gray-300">Confidencialidad garantizada</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <MessageSquare className="w-5 h-5 text-purple-500" />
-                          <span className="text-gray-700 dark:text-gray-300">Seguimiento post-consulta</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator className="my-6" />
-
-                  <div className="text-center">
-                    <Button 
-                      onClick={handleCheckout} 
-                      disabled={!casoId || creatingCheckout} 
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 w-full md:w-auto"
-                    >
-                      {creatingCheckout ? (
-                        <>
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                          Creando pago...
-                        </>
-                      ) : (
-                        <>
-                          <ArrowRight className="w-5 h-5 mr-2" />
-                          Pagar Consulta con Abogado
-                        </>
-                      )}
-                    </Button>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-                      Pago seguro procesado por Stripe
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Información Adicional */}
-              <Card className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mt-1">
-                      <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                        ¿Tienes alguna pregunta?
-                      </h4>
-                      <p className="text-blue-800 dark:text-blue-200 text-sm">
-                        Nuestro equipo está disponible para ayudarte. Contacta con nosotros en{' '}
-                        <a href="mailto:gestiones@klamai.com" className="underline font-medium">
-                          gestiones@klamai.com
-                        </a>
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <PricingCard
+                title="Consulta Estratégica con Abogado"
+                description="Primera consulta bonificada"
+                price={37.50}
+                originalPrice={127.00}
+                features={[
+                  {
+                    title: "¿Qué incluye?",
+                    items: [
+                      "30 min con abogado especialista",
+                      "Revisión inicial de documentos",
+                      "Recomendación de estrategia",
+                      "Plan de acción personalizado"
+                    ]
+                  },
+                  {
+                    title: "Beneficios",
+                    items: [
+                      "Abogados verificados y especializados",
+                      "Consulta inmediata sin esperas",
+                      "Confidencialidad garantizada",
+                      "Seguimiento post-consulta"
+                    ]
+                  }
+                ]}
+                buttonText="Pagar Consulta"
+                onButtonClick={handleCheckout}
+                disabled={!casoId}
+                loading={creatingCheckout}
+              />
             </div>
           )}
         </div>
-      </section>
+      </main>
 
       {/* Modal de autenticación para continuar con el pago */}
       <AuthModal

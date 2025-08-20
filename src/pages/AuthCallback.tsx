@@ -16,10 +16,10 @@ const AuthCallback = () => {
   const [message, setMessage] = useState('Verificando sesión...');
 
   const callbackIntent = useMemo(() => {
-    const planId = searchParams.get('planId');
-    const casoId = searchParams.get('casoId');
-    const intent = searchParams.get('intent');
-    const proposalToken = searchParams.get('token');
+  const planId = searchParams.get('planId');
+  const casoId = searchParams.get('casoId');
+  const intent = searchParams.get('intent');
+  const proposalToken = searchParams.get('token');
     const role = searchParams.get('role');
 
     if (role && !planId && !casoId && !intent && !proposalToken) {
@@ -68,7 +68,7 @@ const AuthCallback = () => {
       case 'redirect-dashboard':
       default:
         setMessage('Redirigiendo a tu dashboard...');
-        navigate('/dashboard');
+          navigate('/dashboard');
         break;
     }
   }, [user, authLoading, callbackIntent, navigate]);
@@ -143,9 +143,9 @@ const AuthCallback = () => {
        SecureLogger.error(e, 'link_case_only');
        setError(e.message || 'Ocurrió un error al vincular el caso.');
        setTimeout(() => navigate('/dashboard'), 3000);
-     } finally {
-       setProcessing(false);
-     }
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const createCheckout = async (planId: string, casoId: string) => {
