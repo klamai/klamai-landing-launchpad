@@ -2,15 +2,18 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://vwnoznuznmrdaumjyctg.supabase.co',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Credentials': 'true',
 };
 
 const handler = async (req: Request): Promise<Response> => {
+  // Manejar preflight OPTIONS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      status: 204,
+      headers: corsHeaders 
+    });
   }
 
   try {
@@ -66,16 +69,16 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     if (approvalError) {
-      console.error('Error en aprobación automática:', approvalError);
-      throw new Error(`Error en aprobación automática: ${approvalError.message}`);
+      throw new Error(`Error en la base de datos al aprobar: ${approvalError.message}`);
     }
 
     if (!approvalData || !approvalData.success) {
-      throw new Error('La función de aprobación no retornó éxito');
+      throw new Error('La función de la base de datos no retornó éxito o no devolvió datos.');
     }
 
-    console.log('Solicitud aprobada exitosamente:', approvalData);
+    console.log('Solicitud aprobada en BD exitosamente:', approvalData);
 
+    // Nota: El envío de email se ha centralizado aquí. El frontend ya no lo llama.
     try {
       await supabase.functions.invoke('send-lawyer-approval-email', {
         body: {
@@ -83,13 +86,13 @@ const handler = async (req: Request): Promise<Response> => {
           email: approvalData.email,
           nombre: approvalData.nombre,
           apellido: approvalData.apellido,
-          // Se elimina el objeto anidado 'credenciales' y la contraseña temporal
           activationToken: approvalData.activation_token
         }
       });
-      console.log('Email de aprobación enviado');
+      console.log('Invocación para enviar email de aprobación realizada.');
     } catch (emailError) {
-      console.warn('Error enviando email (pero la aprobación fue exitosa):', emailError);
+      console.warn('Error al invocar la función de envío de email (la aprobación en BD fue exitosa):', emailError);
+      // No relanzamos el error para no fallar toda la operación si solo falla el email
     }
 
     const response = {
@@ -99,33 +102,33 @@ const handler = async (req: Request): Promise<Response> => {
       nombre: approvalData.nombre,
       apellido: approvalData.apellido,
       activation_token: approvalData.activation_token,
-      // Se elimina la contraseña temporal de la respuesta
       profile_created: approvalData.profile_created || false
     };
 
+    // SOLUCIÓN FINAL: Aplicar headers CORS a la respuesta de éxito
     return new Response(JSON.stringify(response), {
       status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json' 
+      },
     });
 
   } catch (error: any) {
-    console.error('Error en approve-lawyer-automated:', error);
+    console.error('Error fatal en approve-lawyer-automated:', error);
     
     const errorResponse = {
       success: false,
-      solicitud_id: '',
-      email: '',
-      nombre: '',
-      apellido: '',
-      activation_token: '',
-      // Se elimina la contraseña temporal de la respuesta de error
-      profile_created: false,
       error: error.message
     };
 
+    // SOLUCIÓN FINAL: Aplicar headers CORS a la respuesta de error
     return new Response(JSON.stringify(errorResponse), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json' 
+      },
     });
   }
 };
