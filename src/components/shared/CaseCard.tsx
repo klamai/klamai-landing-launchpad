@@ -150,97 +150,89 @@ const CaseCard: React.FC<CaseCardProps> = ({
     const statusConfig = {
       'disponible': {
         label: 'Disponible',
-        className: 'bg-gradient-to-r from-blue-500 to-blue-600 text-white dark:from-blue-600 dark:to-blue-700 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm'
+        className: 'bg-blue-100 dark:bg-blue-800/50 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700'
       },
       'asignado': {
         label: 'Asignado',
-        className: 'bg-gradient-to-r from-stone-500 to-stone-600 text-white dark:from-stone-800 dark:to-stone-900 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm'
+        className: 'bg-stone-100 dark:bg-stone-800/50 text-stone-800 dark:text-stone-200 border-stone-200 dark:border-stone-700'
       },
       'agotado': {
         label: 'Agotado',
-        className: 'bg-gradient-to-r from-rose-500 to-rose-600 text-white dark:from-rose-600 dark:to-rose-700 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm'
+        className: 'bg-rose-100 dark:bg-rose-800/50 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-700'
       },
       'cerrado': {
         label: 'Cerrado',
-        className: 'bg-gradient-to-r from-gray-500 to-gray-600 text-white dark:from-gray-600 dark:to-gray-700 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm'
+        className: 'bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
       },
       'esperando_pago': {
         label: 'Esperando Pago',
-        className: 'bg-gradient-to-r from-amber-500 to-amber-600 text-white dark:from-amber-600 dark:to-amber-700 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm'
+        className: 'bg-amber-100 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-700'
       },
       'listo_para_propuesta': {
         label: 'Listo para Propuesta',
-        className: 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white dark:from-indigo-600 dark:to-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm'
+        className: 'bg-indigo-100 dark:bg-indigo-800/50 text-indigo-800 dark:text-indigo-200 border-indigo-200 dark:border-indigo-700'
       },
       'propuesta_enviada': {
         label: 'Propuesta Enviada',
-        className: 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white dark:from-indigo-600 dark:to-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm'
+        className: 'bg-teal-100 dark:bg-teal-800/50 text-teal-800 dark:text-teal-200 border-teal-200 dark:border-teal-700'
       }
     };
     
     const config = statusConfig[estado as keyof typeof statusConfig] || statusConfig.disponible;
     return (
-      <Badge className={config.className}>
+      <Badge variant="outline" className={`text-xs font-semibold px-2 py-1 rounded-md shadow-sm ${config.className}`}>
         {estado === 'propuesta_enviada' && <Send className="h-3 w-3 mr-1 inline" />} {config.label}
       </Badge>
     );
   };
 
   const getLeadTypeBadge = (tipo: string) => {
-    const typeConfig = {
-      'premium': {
-        label: 'Premium',
-        className: 'bg-gradient-to-r from-purple-500 to-purple-600 text-white dark:from-purple-600 dark:to-purple-700 text-xs font-semibold px-2 py-1 rounded-full border-0 shadow-sm'
-      },
-      'urgente': {
-        label: 'Urgente',
-        className: 'bg-gradient-to-r from-red-500 to-red-600 text-white dark:from-red-600 dark:to-red-700 text-xs font-semibold px-2 py-1 rounded-full border-0 shadow-sm'
-      },
-      'estandar': {
-        label: 'Estándar',
-        className: 'bg-gradient-to-r from-blue-500 to-blue-600 text-white dark:from-blue-600 dark:to-blue-700 text-xs font-semibold px-2 py-1 rounded-full border-0 shadow-sm'
-      }
-    };
-    const config = typeConfig[tipo as keyof typeof typeConfig] || typeConfig.estandar;
-    return <Badge variant="secondary" className={config.className}>{config.label}</Badge>;
-  };
-
-  const getProfileTypeBadge = (tipo: string) => {
+    // ESTILO UNIFICADO: Gris neutro para consistencia
     return (
-      <Badge variant="outline" className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 shadow-sm backdrop-blur-sm">
-        {tipo === 'empresa' ? (
+      <Badge variant="outline" className="text-xs font-medium px-2 py-1 rounded-md bg-gray-200/80 dark:bg-gray-700/60 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm">
+        {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+      </Badge>
+    );
+  };
+  
+  const getProfileTypeBadge = (tipo: string) => {
+    // ESTILO UNIFICADO: Gris neutro para consistencia
+    const isEmpresa = tipo === 'empresa';
+    return (
+      <Badge variant="outline" className="text-xs font-medium px-2 py-1 rounded-md bg-gray-200/80 dark:bg-gray-700/60 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm">
+        {isEmpresa ? (
           <>
-            <Building className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
+            <Building className="h-3 w-3 mr-1.5" />
             Empresa
           </>
         ) : (
           <>
-            <User className="h-3 w-3 mr-1 text-green-600 dark:text-green-400" />
+            <User className="h-3 w-3 mr-1.5" />
             Individual
           </>
         )}
       </Badge>
     );
   };
-
+  
   const getOriginBadge = (canal: string) => {
-    if (canal === 'manual_admin') {
-      return (
-        <Badge variant="outline" className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur-sm">
-          <FileSignature className="h-3 w-3 mr-1 text-slate-600 dark:text-slate-400" />
-          Manual
-        </Badge>
-      );
-    }
-    if (canal === 'web') {
-      return (
-        <Badge variant="outline" className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 shadow-sm backdrop-blur-sm">
-          <Globe className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
-          Web
-        </Badge>
-      );
-    }
-    return null;
+    // ESTILO UNIFICADO: Gris neutro para consistencia
+    const isManual = canal === 'manual_admin';
+    return (
+      <Badge variant="outline" className="text-xs font-medium px-2 py-1 rounded-md bg-gray-200/80 dark:bg-gray-700/60 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm">
+        {isManual ? (
+          <>
+            <FileSignature className="h-3 w-3 mr-1.5" />
+            Manual
+          </>
+        ) : (
+          <>
+            <Globe className="h-3 w-3 mr-1.5" />
+            Web
+          </>
+        )}
+      </Badge>
+    );
   };
 
 
@@ -249,20 +241,17 @@ const CaseCard: React.FC<CaseCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="group"
+      whileHover={{ scale: 1.03, y: -5 }}
+      className="group h-full"
     >
       <Card
-        className={`relative overflow-hidden transition-all duration-300 h-full flex flex-col rounded-xl bg-white dark:bg-gray-900/70 backdrop-blur-sm
+        className={`relative overflow-hidden transition-all duration-300 h-full flex flex-col rounded-xl bg-white dark:bg-gray-800/70 backdrop-blur-sm
           ${caso.estado === 'cerrado' ? 'opacity-75 grayscale' : ''}
-          ${hideAssignmentStyling ? 'border-gray-200 dark:border-gray-800' : ''}
-          ${(caso as any)?.fecha_pago ? 'border-2 border-green-300 dark:border-green-700' : ''}
+          ${hideAssignmentStyling ? 'border-gray-200 dark:border-gray-700' : ''}
+          ${(caso as any)?.fecha_pago ? 'border-2 border-green-300 dark:border-green-600' : ''}
           ${caso.estado === 'asignado' && !hideAssignmentStyling 
-            ? 'shadow-md dark:shadow-stone-900/10 before:absolute before:inset-0 before:rounded-xl before:p-[1.5px] before:bg-gradient-to-r before:from-stone-300 before:via-stone-400 before:to-stone-300 dark:before:from-stone-800/60 dark:before:via-stone-700/60 dark:before:to-stone-800/60 before:opacity-70 before:-z-10' 
-            : `shadow-md dark:shadow-blue-900/10 hover:shadow-lg dark:hover:shadow-blue-800/20 before:absolute before:inset-0 before:rounded-xl before:p-[1.5px] 
-               ${((caso.estado === 'disponible' && !!caso.cliente_id && !!caso.fecha_pago) || forceAvailableHighlight)
-                ? 'before:bg-gradient-to-r before:from-blue-200/0 before:via-blue-300/50 before:to-blue-200/0 dark:before:from-blue-800/0 dark:before:via-blue-700/30 dark:before:to-blue-800/0 before:opacity-100'
-                : 'before:bg-gradient-to-r before:from-blue-200/0 before:via-blue-300/50 before:to-blue-200/0 dark:before:from-blue-800/0 dark:before:via-blue-700/30 dark:before:to-blue-800/0 before:opacity-0 group-hover:before:opacity-100'} 
-               before:transition-opacity before:duration-300 before:-z-10`}
+            ? 'shadow-lg dark:shadow-stone-900/20 ring-2 ring-stone-500 dark:ring-stone-600' 
+            : `shadow-md dark:shadow-black/20 hover:shadow-lg dark:hover:shadow-black/30 ring-1 ring-gray-200 dark:ring-gray-700 hover:ring-blue-500 dark:hover:ring-blue-600`}
         `}
       >
         {/* Sello visual de cerrado */}
@@ -286,13 +275,13 @@ const CaseCard: React.FC<CaseCardProps> = ({
           <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1">
             <div className={`flex items-center gap-1 px-3 py-1 rounded-full shadow font-bold text-xs uppercase tracking-wider ${
               hideAssignmentStyling 
-                ? 'bg-blue-200 dark:bg-blue-700 text-blue-700 dark:text-blue-200' 
+                ? 'bg-blue-200 dark:bg-blue-800/50 text-blue-800 dark:text-blue-100' 
                 : 'bg-stone-300 dark:bg-stone-800 text-stone-800 dark:text-stone-100'
             }`}>
               <UserPlus className={`h-4 w-4 ${
                 hideAssignmentStyling 
                   ? 'text-blue-500' 
-                  : 'text-stone-600'
+                  : 'text-stone-600 dark:text-stone-300'
               }`} />
               ASIGNADO
             </div>
@@ -308,8 +297,8 @@ const CaseCard: React.FC<CaseCardProps> = ({
         <CardContent className="p-5 flex-1 flex flex-col gap-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white truncate leading-tight">{clientData.nombre} {clientData.apellido}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{clientData.email}</p>
+              <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-50 truncate leading-tight">{clientData.nombre} {clientData.apellido}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{clientData.email}</p>
             </div>
             <div className="ml-1 flex items-center gap-1">
               {/* Mostrar badge de estado solo si NO está cerrado y NO está asignado, o si está asignado pero hideAssignmentStyling es true */}
@@ -318,49 +307,47 @@ const CaseCard: React.FC<CaseCardProps> = ({
                getStatusBadge(caso.estado === 'asignado' && hideAssignmentStyling ? 'disponible' : caso.estado)}
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5 mt-2">
+          <div className="flex flex-wrap items-center gap-1.5 mt-2 text-xs">
             {caso.tipo_lead && getLeadTypeBadge(caso.tipo_lead)}
             {getProfileTypeBadge(clientData.tipo_perfil)}
             {caso.canal_atencion && getOriginBadge(caso.canal_atencion)}
+             <Badge variant="outline" className="px-2 py-1 rounded-md bg-gray-200/80 dark:bg-gray-700/60 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm">
+                <Scale className="h-3 w-3 mr-1.5" />
+                {caso.especialidades?.nombre || 'Sin especialidad'}
+              </Badge>
+              {clientData.ciudad && (
+                <Badge variant="outline" className="px-2 py-1 rounded-md bg-gray-200/80 dark:bg-gray-700/60 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm">
+                  <MapPin className="h-3 w-3 mr-1.5" />
+                  {clientData.ciudad}
+                </Badge>
+              )}
           </div>
-          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-            <div className="flex items-center gap-1 bg-gray-50/80 dark:bg-gray-800/50 px-2 py-1 rounded-full backdrop-blur-sm">
+          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-3">
+            <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-gray-900/50 px-2 py-1 rounded-full">
               <Calendar className="h-3 w-3 text-blue-500 dark:text-blue-400" />
               <span>{format(casoDate, 'dd/MM/yy HH:mm', { locale: es })}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-gray-50/80 dark:bg-gray-800/50 px-2 py-1 rounded-full backdrop-blur-sm">
+              <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-gray-900/50 px-2 py-1 rounded-full">
                 <span className="font-mono tracking-tight">#{caso.id.substring(0,8)}</span>
               </div>
-              <div className="flex items-center gap-1 bg-gray-50/80 dark:bg-gray-800/50 px-2 py-1 rounded-full backdrop-blur-sm">
+              <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-gray-900/50 px-2 py-1 rounded-full">
                 <Clock className="h-3 w-3 text-amber-500 dark:text-amber-400" />
                 <span>Hace {formatDistanceToNow(casoDate, { locale: es, addSuffix: false }).replace('hace ', '').replace('alrededor de ', '')}</span>
               </div>
               {caso.fecha_pago && (
-                <div className="flex items-center gap-1 bg-green-50/80 dark:bg-green-900/40 px-2 py-1 rounded-full backdrop-blur-sm text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-1 bg-green-100/80 dark:bg-green-800/40 px-2 py-1 rounded-full text-green-700 dark:text-green-200 border border-green-200 dark:border-green-700">
                   <CheckCircle className="h-3 w-3" />
                   <span>Pagado</span>
                 </div>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs mt-1">
-            <div className="flex items-center gap-1 bg-blue-50/80 dark:bg-blue-900/30 px-2.5 py-1.5 rounded-full text-blue-700 dark:text-blue-300 font-semibold shadow-sm backdrop-blur-sm">
-              <Scale className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-              <span className="truncate">{caso.especialidades?.nombre || 'Sin especialidad'}</span>
-            </div>
-            {clientData.ciudad && (
-              <div className="flex items-center gap-1 bg-red-50/80 dark:bg-red-900/30 px-2.5 py-1.5 rounded-full text-red-700 dark:text-red-300 font-semibold shadow-sm backdrop-blur-sm">
-                <MapPin className="h-3 w-3 text-red-600 dark:text-red-400" />
-                <span className="truncate">{clientData.ciudad}</span>
-              </div>
-            )}
-          </div>
           
           {/* Notas de Asignación - Posición prominente (solo para abogados regulares) */}
           {showProminentNotes && caso.asignaciones_casos && caso.asignaciones_casos.length > 0 && 
            caso.asignaciones_casos[0].notas_asignacion && (
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-2.5 rounded-lg mt-2 border border-blue-200 dark:border-blue-700">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-2.5 rounded-lg mt-3 border border-blue-200 dark:border-blue-800">
               <div className="flex items-start gap-2">
                 <StickyNote className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -374,23 +361,24 @@ const CaseCard: React.FC<CaseCardProps> = ({
           )}
           
           {clientData.tipo_perfil === 'empresa' && clientData.razon_social && (
-            <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded text-xs font-semibold text-blue-900 dark:text-blue-100">
+            <div className="bg-blue-50 dark:bg-blue-950/30 p-2 rounded text-xs font-semibold text-blue-900 dark:text-blue-100 mt-2">
               {clientData.razon_social}
             </div>
           )}
-          <div className="bg-gradient-to-r from-gray-50/90 to-gray-100/90 dark:from-gray-900/70 dark:to-gray-800/70 p-3 rounded-lg shadow-sm backdrop-blur-sm mt-1">
+          <div className="bg-gray-50/90 dark:bg-gray-900/70 p-3 rounded-lg shadow-inner mt-2">
             <p className="text-xs font-semibold text-gray-800 dark:text-white mb-1">Motivo:</p>
-            <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed">{caso.motivo_consulta}</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 leading-relaxed">{caso.motivo_consulta}</p>
           </div>
-          <div className="flex items-center justify-between mt-1">
+          <div className="flex-grow" />
+          <div className="flex items-center justify-between mt-3">
             {caso.valor_estimado && (
-              <div className="flex items-center gap-1 text-xs bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded-full font-semibold border border-green-200 dark:border-green-700">
-                <Euro className="h-3 w-3 text-green-600 dark:text-green-400" />
-                <span className="text-green-700 dark:text-green-300">{caso.valor_estimado}</span>
+              <div className="flex items-center gap-1 text-xs bg-green-100 dark:bg-green-900/40 px-2 py-1 rounded-full font-semibold border border-green-200 dark:border-green-600">
+                <Euro className="h-3 w-3 text-green-600 dark:text-green-300" />
+                <span className="text-green-800 dark:text-green-200">{caso.valor_estimado}</span>
               </div>
             )}
             {!caso.asignaciones_casos || caso.asignaciones_casos.length === 0 ? (
-              <div className="text-xs bg-gray-100 dark:bg-gray-800/40 px-2 py-1 rounded-full text-gray-600 dark:text-gray-400 flex items-center gap-1 font-semibold">
+              <div className="text-xs bg-gray-100 dark:bg-gray-700/50 px-2 py-1 rounded-full text-gray-600 dark:text-gray-300 flex items-center gap-1 font-semibold">
                 <Clock className="h-3 w-3 text-orange-500 dark:text-orange-400" />
                 <span>Sin asignar</span>
               </div>
@@ -403,7 +391,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
               variant="default"
               size="sm"
               onClick={() => onViewDetails(caso.id)}
-              className="flex items-center gap-2 flex-1 min-w-0 h-9 text-xs font-semibold rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md hover:shadow-blue-500/20 dark:shadow-blue-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1 dark:focus:ring-blue-600/40"
+              className="flex items-center gap-2 flex-1 min-w-0 h-9 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all duration-200"
             >
               <Eye className="h-4 w-4 mr-1 flex-shrink-0" />
               <span className="truncate">Ver</span>
@@ -415,7 +403,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
                     variant="default"
                     size="sm"
                     onClick={() => onAssignLawyer(caso.id)}
-                    className="flex items-center gap-2 flex-1 min-w-0 h-9 text-xs font-semibold rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
+                    className="flex items-center gap-2 flex-1 min-w-0 h-9 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     <UserPlus className="h-4 w-4 mr-1 flex-shrink-0" />
                     <span className="truncate">Asignar</span>
@@ -426,7 +414,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 min-w-0 h-9 text-xs font-semibold rounded-xl bg-white dark:bg-gray-800/50 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-purple-800 dark:hover:text-purple-200 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-purple-500/10 dark:hover:shadow-purple-900/10 transform hover:scale-[1.02] focus:ring-2 focus:ring-purple-500/40 focus:ring-offset-1 dark:focus:ring-purple-600/40"
+                      className="flex-1 min-w-0 h-9 text-xs font-semibold rounded-lg bg-transparent dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700/70 hover:text-gray-900 dark:hover:text-white"
                     >
                       <Bot className="h-4 w-4 mr-1 flex-shrink-0" />
                       <span className="truncate">IA</span>
