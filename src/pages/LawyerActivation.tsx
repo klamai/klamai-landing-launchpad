@@ -7,14 +7,34 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Link } from "react-router-dom";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const passwordSchema = z.object({
+  newPassword: z.string()
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .regex(/[a-z]/, "Debe contener al menos una letra minúscula")
+    .regex(/[A-Z]/, "Debe contener al menos una letra mayúscula")
+    .regex(/[0-9]/, "Debe contener al menos un número")
+    .regex(/[^a-zA-Z0-9]/, "Debe contener al menos un carácter especial"),
+  confirmPassword: z.string(),
+  acceptedTerms: z.boolean().refine(val => val === true, "Debes aceptar los términos y condiciones"),
+}).refine(data => data.newPassword === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
+});
+
+type PasswordFormData = z.infer<typeof passwordSchema>;
 
 interface ActivationToken {
   id: string;
   token: string;
   email: string;
-  temp_password: string;
+  // temp_password ya no es necesaria
   created_at: string;
-  expires_at: string;
   used_at: string | null;
   solicitud_id: string;
 }
@@ -28,9 +48,16 @@ const LawyerActivation = () => {
   const [tokenValid, setTokenValid] = useState(false);
   const [tokenData, setTokenData] = useState<ActivationToken | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    newPassword: '',
-    confirmPassword: ''
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const { register, handleSubmit, formState: { errors, isValid, control } } = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+    mode: 'onChange',
+    defaultValues: {
+      newPassword: '',
+      confirmPassword: '',
+      acceptedTerms: false,
+    }
   });
 
   const token = searchParams.get('token');
@@ -77,37 +104,20 @@ const LawyerActivation = () => {
     }
   };
 
-  const handleActivation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (formData.newPassword !== formData.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Las contraseñas no coinciden",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (formData.newPassword.length < 6) {
-      toast({
-        title: "Error",
-        description: "La contraseña debe tener al menos 6 caracteres",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleActivation = async (formData: PasswordFormData) => {
+    if (!tokenData) return;
 
     setLoading(true);
+
     try {
       console.log('🔧 Iniciando proceso de activación de abogado...');
 
       // Usar la nueva Edge Function para crear el usuario confirmado
       const { data: activationData, error: activationError } = await supabase.functions.invoke('activate-lawyer-account', {
         body: {
-          token: token,
-          password: formData.newPassword
-        }
+          token,
+          password: formData.newPassword,
+        },
       });
 
       if (activationError) {
@@ -161,13 +171,6 @@ const LawyerActivation = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
   };
 
   if (validatingToken) {
@@ -229,20 +232,16 @@ const LawyerActivation = () => {
             </div>
           </div>
 
-          <form onSubmit={handleActivation} className="space-y-4">
+          <form onSubmit={handleSubmit(handleActivation)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="newPassword">Nueva Contraseña</Label>
               <div className="relative">
                 <Input
                   id="newPassword"
-                  name="newPassword"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Ingresa tu nueva contraseña"
-                  value={formData.newPassword}
-                  onChange={handleInputChange}
-                  required
-                  minLength={6}
+                  {...register("newPassword")}
                 />
+                {errors.newPassword && <p className="text-red-500 text-sm mt-1">{errors.newPassword.message}</p>}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -257,29 +256,47 @@ const LawyerActivation = () => {
               <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
               <Input
                 id="confirmPassword"
-                name="confirmPassword"
-                type={showPassword ? "text" : "password"}
-                placeholder="Confirma tu nueva contraseña"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                required
-                minLength={6}
+                type={showConfirmPassword ? "text" : "password"}
+                {...register("confirmPassword")}
               />
+              {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>}
             </div>
 
+            <div className="items-top flex space-x-2 mt-6">
+              <Controller
+                name="acceptedTerms"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    id="terms"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                )}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="terms"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Acepto los términos y condiciones
+                </label>
+                <p className="text-sm text-muted-foreground">
+                  Al activar tu cuenta, confirmas que has leído y aceptas nuestra 
+                  <Link to="/politicas-privacidad" target="_blank" className="underline hover:text-primary"> Política de Privacidad</Link> y los 
+                  <Link to="/aviso-legal" target="_blank" className="underline hover:text-primary"> Términos y Condiciones</Link>.
+                </p>
+              </div>
+            </div>
+            {errors.acceptedTerms && <p className="text-red-500 text-sm mt-1">{errors.acceptedTerms.message}</p>}
+
             <Button 
-              type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={loading}
+              onClick={handleSubmit(handleActivation)} 
+              disabled={loading || !isValid} 
+              className="w-full mt-6"
             >
-              {loading ? (
-                <div className="flex items-center">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Activando cuenta...
-                </div>
-              ) : (
-                "Activar Cuenta"
-              )}
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Activar Cuenta
             </Button>
           </form>
 

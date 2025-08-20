@@ -12,11 +12,8 @@ interface EmailRequest {
   email: string;
   nombre: string;
   apellido: string;
-  credenciales?: {
-    email: string;
-    password: string;
-    activationToken: string;
-  };
+  // Simplificado: ya no se necesita el objeto credenciales anidado
+  activationToken?: string;
   motivoRechazo?: string;
 }
 
@@ -26,7 +23,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { tipo, email, nombre, apellido, credenciales, motivoRechazo }: EmailRequest = await req.json();
+    const { tipo, email, nombre, apellido, activationToken, motivoRechazo }: EmailRequest = await req.json();
 
     console.log(`Enviando email de ${tipo} a ${email}`);
 
@@ -48,11 +45,9 @@ const handler = async (req: Request): Promise<Response> => {
     let subject: string;
     let htmlContent: string;
 
-    if (tipo === 'aprobacion' && credenciales) {
-      subject = '¡Bienvenido a KlamAI - Tu cuenta de abogado ha sido aprobada!';
-      
-      // Generar la URL de activación correcta
-      const activationUrl = `${origin}/abogados/activate?token=${credenciales.activationToken}`;
+    if (tipo === 'aprobacion' && activationToken) {
+      subject = '¡Tu solicitud en KlamAI ha sido aprobada!';
+      const activationUrl = `${origin}/abogados/activate?token=${activationToken}`;
       
       htmlContent = `
         <!DOCTYPE html>
@@ -71,8 +66,8 @@ const handler = async (req: Request): Promise<Response> => {
             <h2 style="color: #4A90E2; margin-top: 0;">Datos de acceso a tu cuenta</h2>
             
             <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #4A90E2; margin: 20px 0;">
-              <p style="margin: 0 0 10px 0;"><strong>Email:</strong> ${credenciales.email}</p>
-              <p style="margin: 0 0 10px 0;"><strong>Contraseña temporal:</strong> <code style="background: #f1f3f4; padding: 2px 6px; border-radius: 4px;">${credenciales.password}</code></p>
+              <p style="margin: 0 0 10px 0;"><strong>Email:</strong> ${email}</p>
+              <p style="margin: 0 0 10px 0;"><strong>Contraseña temporal:</strong> <code style="background: #f1f3f4; padding: 2px 6px; border-radius: 4px;">${activationToken}</code></p>
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
@@ -150,12 +145,12 @@ const handler = async (req: Request): Promise<Response> => {
         </html>
       `;
     } else {
-      throw new Error('Tipo de email no válido o faltan credenciales para aprobación');
+      throw new Error('Tipo de email no válido o falta activationToken para aprobación');
     }
 
     // Enviar email usando Resend con el dominio configurado
     console.log('Enviando email a través de Resend...');
-    console.log('URL de activación generada:', tipo === 'aprobacion' ? `${origin}/abogados/activate?token=${credenciales?.activationToken}` : 'N/A');
+    console.log('URL de activación generada:', tipo === 'aprobacion' ? `${origin}/abogados/activate?token=${activationToken}` : 'N/A');
     console.log('Enviando desde:', fromEmail);
     
     const emailResponse = await resend.emails.send({
@@ -172,7 +167,7 @@ const handler = async (req: Request): Promise<Response> => {
       message: `Email de ${tipo} enviado exitosamente`,
       emailSent: true,
       emailId: emailResponse.data?.id,
-      activationUrl: tipo === 'aprobacion' ? `${origin}/abogados/activate?token=${credenciales?.activationToken}` : undefined,
+      activationUrl: tipo === 'aprobacion' ? `${origin}/abogados/activate?token=${activationToken}` : undefined,
       fromEmail: fromEmail
     }), {
       status: 200,

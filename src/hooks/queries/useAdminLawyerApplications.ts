@@ -116,43 +116,21 @@ const fetchEspecialidades = async (): Promise<{[key: number]: string}> => {
 
 // Función para aprobar solicitud automáticamente
 const approveLawyerAutomated = async (applicationId: string): Promise<AutomatedApprovalResult> => {
-  try {
-    const { data, error } = await supabase.rpc('aprobar_solicitud_abogado_automatizado', {
-      p_solicitud_id: applicationId,
-      p_notas_admin: 'Aprobación automática realizada por super admin'
-    });
+  // La lógica ahora se centraliza en una única Edge Function para mayor seguridad y atomicidad.
+  // El frontend ya no llama a la BD y luego al email, solo invoca al orquestador.
+  const { data, error } = await supabase.functions.invoke('approve-lawyer-automated', {
+    body: {
+      solicitud_id: applicationId,
+    },
+  });
 
-    if (error) {
-      console.error('Error approving application:', error);
-      throw new Error('No se pudo aprobar la solicitud automáticamente');
-    }
-
-    // Enviar email de aprobación usando la función existente
-    if (data && data.success) {
-      try {
-        await supabase.functions.invoke('send-lawyer-approval-email', {
-          body: {
-            tipo: 'aprobacion',
-            email: data.email,
-            nombre: data.nombre,
-            apellido: data.apellido,
-            credenciales: {
-              email: data.email,
-              password: data.temp_password,
-              activationToken: data.activation_token
-            }
-          }
-        });
-      } catch (emailError) {
-        console.warn('Error enviando email (pero la aprobación fue exitosa):', emailError);
-      }
-    }
-
-    return data as AutomatedApprovalResult;
-  } catch (error) {
-    console.error('Error:', error);
-    throw new Error('Error inesperado durante la aprobación');
+  if (error) {
+    console.error('Error al invocar la función de aprobación automática:', error);
+    throw new Error('No se pudo completar el proceso de aprobación. Inténtalo de nuevo.');
   }
+
+  // La Edge Function ahora devuelve el resultado final.
+  return data as AutomatedApprovalResult;
 };
 
 // Función para rechazar solicitud
