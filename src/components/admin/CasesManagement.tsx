@@ -129,6 +129,24 @@ const AdminCasesManagement = () => {
     loadEspecialidades();
   }, []);
 
+  const hasActiveFilters = 
+    statusFilter !== 'all' || 
+    paidFilter !== 'all' || 
+    specialtyFilter !== 'all' || 
+    typeFilter !== 'all' || 
+    cityFilter !== 'all' || 
+    profileTypeFilter !== 'all';
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setPaidFilter('all');
+    setSpecialtyFilter('all');
+    setTypeFilter('all');
+    setCityFilter('all');
+    setProfileTypeFilter('all');
+  };
+
   // Sistema de notificaciones en tiempo real SEGURO
   useEffect(() => {
     if (!user || !hasAccess) return;
@@ -470,154 +488,160 @@ const AdminCasesManagement = () => {
         </div>
       )}
 
-      <Card className="border shadow-sm bg-gray-50 dark:bg-black">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="h-4 w-4 text-blue-600" />
-            <span className="font-medium text-sm text-gray-700 dark:text-gray-300">Filtros</span>
+      <div className="border-b border-gray-200 dark:border-gray-800 pb-4 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <Filter className="h-4 w-4 text-blue-500" />
+          <h3 className="font-semibold text-md text-gray-800 dark:text-gray-200">Filtros</h3>
+        </div>
+        
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Buscar por cliente, motivo, email o ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 h-9 text-sm rounded-md"
+          />
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className={`h-9 text-xs rounded-md ${statusFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
+              <SelectValue placeholder="Filtrar por estado" />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+            <SelectTrigger className={`h-9 text-xs rounded-md ${specialtyFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
+              <SelectValue placeholder="Rama" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las ramas</SelectItem>
+              {especialidades.map(specialty => (
+                <SelectItem key={specialty.id} value={specialty.nombre}>{specialty.nombre}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className={`h-9 text-xs rounded-md ${typeFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los tipos</SelectItem>
+              {leadTypes.map(type => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={cityFilter} onValueChange={setCityFilter}>
+            <SelectTrigger className={`h-9 text-xs rounded-md ${cityFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
+              <SelectValue placeholder="Ciudad" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las ciudades</SelectItem>
+              {cities.map(city => (
+                <SelectItem key={city} value={city}>{city}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={profileTypeFilter} onValueChange={setProfileTypeFilter}>
+            <SelectTrigger className={`h-9 text-xs rounded-md ${profileTypeFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
+              <SelectValue placeholder="Tipo de perfil" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los perfiles</SelectItem>
+              {profileTypes.map(type => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={paidFilter} onValueChange={(v) => setPaidFilter(v as any)}>
+            <SelectTrigger className={`h-9 text-xs rounded-md ${paidFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
+              <SelectValue placeholder="Pago consulta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Pago: Todos</SelectItem>
+              <SelectItem value="pagados">Pagados</SelectItem>
+              <SelectItem value="no_pagados">No pagados</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex gap-1">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              className="h-9 px-2 text-xs flex-1 rounded-md"
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="h-9 px-2 text-xs flex-1 rounded-md"
+            >
+              <List className="h-4 w-4" />
+            </Button>
           </div>
-          
-          <div className="relative mb-3">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar casos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 h-8 text-sm"
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mb-3">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filtrar por estado" />
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value} className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">{opt.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="h-9 px-3 text-xs flex-1 rounded-md text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+            >
+              Limpiar filtros
+            </Button>
+          )}
+        </div>
+      </div>
 
-            <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Rama" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Todas las ramas</SelectItem>
-                {especialidades.map(specialty => (
-                  <SelectItem key={specialty.id} value={specialty.nombre} className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">{specialty.nombre}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Todos los tipos</SelectItem>
-                {leadTypes.map(type => (
-                  <SelectItem key={type} value={type} className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={cityFilter} onValueChange={setCityFilter}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Ciudad" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Todas las ciudades</SelectItem>
-                {cities.map(city => (
-                  <SelectItem key={city} value={city} className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">{city}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={profileTypeFilter} onValueChange={setProfileTypeFilter}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Tipo de perfil" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Todos los perfiles</SelectItem>
-                {profileTypes.map(type => (
-                  <SelectItem key={type} value={type} className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={paidFilter} onValueChange={(v) => setPaidFilter(v as any)}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Pago consulta" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Pago: Todos</SelectItem>
-                <SelectItem value="pagados" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">Pagados</SelectItem>
-                <SelectItem value="no_pagados" className="hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900">No pagados</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="flex gap-1">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="h-8 px-2 text-xs flex-1"
-              >
-                <Grid3X3 className="h-3 w-3" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="h-8 px-2 text-xs flex-1"
-              >
-                <List className="h-3 w-3" />
-              </Button>
+      <div>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-1">
+              {sectionIcon}
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {sectionTitle}
+              </h2>
             </div>
+            <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
+              {sectionDescription}
+            </p>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-0 shadow-md bg-gray-100 dark:bg-black">
-        <CardHeader className="pb-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                {sectionIcon}
-                <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {sectionTitle}
-                </CardTitle>
-              </div>
-              <CardDescription className="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
-                {sectionDescription}
-              </CardDescription>
-            </div>
-            <div className="flex-shrink-0">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 font-medium shadow-sm transition-all duration-200 hover:shadow-md">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Añadir Caso
-                    <ChevronDown className="h-4 w-4 ml-2" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-60 p-1 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 shadow-lg">
-                  <DropdownMenuItem onClick={() => setAddManualCaseOpen(true)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200 py-2">
-                    <FileText className="h-4 w-4 mr-1 text-blue-600" />
-                    Añadir caso manual
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setAddAICaseOpen(true)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-purple-50 hover:text-purple-900 dark:hover:bg-purple-900/30 dark:hover:text-purple-200 data-[highlighted]:bg-purple-50 data-[highlighted]:text-purple-900 dark:data-[highlighted]:bg-purple-900/30 dark:data-[highlighted]:text-purple-200 py-2">
-                    <Bot className="h-4 w-4 mr-1 text-purple-600" />
-                    Añadir caso con IA
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+          <div className="flex-shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 font-medium shadow-sm transition-all duration-200 hover:shadow-md rounded-lg">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Añadir Caso
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-60 p-1 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 shadow-lg">
+                <DropdownMenuItem onClick={() => setAddManualCaseOpen(true)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-900 dark:data-[highlighted]:bg-blue-900/30 dark:data-[highlighted]:text-blue-200 py-2">
+                  <FileText className="h-4 w-4 mr-1 text-blue-600" />
+                  Añadir caso manual
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setAddAICaseOpen(true)} className="flex items-center gap-2 text-sm font-medium rounded-lg hover:bg-purple-50 hover:text-purple-900 dark:hover:bg-purple-900/30 dark:hover:text-purple-200 data-[highlighted]:bg-purple-50 data-[highlighted]:text-purple-900 dark:data-[highlighted]:bg-purple-900/30 dark:data-[highlighted]:text-purple-200 py-2">
+                  <Bot className="h-4 w-4 mr-1 text-purple-600" />
+                  Añadir caso con IA
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div>
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-3 gap-4">
               {activeCasos.map((caso) => (
@@ -778,8 +802,8 @@ const AdminCasesManagement = () => {
               </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <CaseDetailModal
         caso={selectedCaseDetail}
