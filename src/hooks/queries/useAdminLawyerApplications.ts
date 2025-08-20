@@ -33,7 +33,6 @@ interface AutomatedApprovalResult {
   nombre: string;
   apellido: string;
   activation_token: string;
-  temp_password: string;
 }
 
 interface Especialidad {
