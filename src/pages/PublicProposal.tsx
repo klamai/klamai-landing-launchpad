@@ -271,26 +271,26 @@ const PublicProposal = () => {
                       <div className="flex-shrink-0 mt-1">
                     <input 
                       type="checkbox" 
-                          checked={acceptTerms && acceptPrivacy}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            setAcceptTerms(checked);
-                            setAcceptPrivacy(checked);
-                          }}
-                          className="w-7 h-7 text-blue-600 bg-white border-2 border-blue-300 rounded-lg focus:ring-blue-500 focus:ring-2 focus:ring-offset-2 transition-all duration-200 group-hover:border-blue-400 group-hover:scale-105"
-                        />
-                      </div>
+                        checked={acceptTerms && acceptPrivacy}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setAcceptTerms(checked);
+                          setAcceptPrivacy(checked);
+                        }}
+                        className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 bg-white border-2 border-blue-300 rounded-lg focus:ring-blue-500 focus:ring-2 focus:ring-offset-2 transition-all duration-200 group-hover:border-blue-400 group-hover:scale-105"
+                      />
+                    </div>
                     <div className="flex-1">
-                        <span className="text-base font-medium text-gray-900 dark:text-white leading-relaxed">
+                      <span className="text-sm sm:text-base font-medium text-gray-900 dark:text-white leading-relaxed">
                         He leído y acepto los{' '}
-                          <a href="/aviso-legal" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold transition-colors duration-200 hover:text-blue-800">
+                        <a href="/aviso-legal" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold transition-colors duration-200 hover:text-blue-800">
                           Términos y Condiciones
                         </a>
-                          {' '}y la{' '}
-                          <a href="/politicas-privacidad" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold transition-colors duration-200 hover:text-blue-800">
+                        {' '}y la{' '}
+                        <a href="/politicas-privacidad" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold transition-colors duration-200 hover:text-blue-800">
                           Política de Privacidad
                         </a>
-                          {' '}para acceder a mi análisis legal personalizado
+                        {' '}para acceder a mi análisis legal personalizado
                       </span>
                     </div>
                   </label>
@@ -323,17 +323,17 @@ const PublicProposal = () => {
                         setSavingConsent(false);
                       }
                     }}
-                    className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-600 hover:from-blue-700 hover:via-blue-600 hover:to-cyan-700 text-white px-10 py-5 rounded-2xl text-lg font-semibold shadow-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25"
+                    className="w-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-600 hover:from-blue-700 hover:via-blue-600 hover:to-cyan-700 text-white px-6 py-3 sm:px-10 sm:py-5 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold shadow-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25"
                     size="lg"
                   >
                     {savingConsent ? (
                       <>
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
-                        Guardando consentimiento...
+                        <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-white mr-2 sm:mr-3"></div>
+                        Guardando...
                       </>
                     ) : (
                       <>
-                        <Eye className="w-6 h-6 mr-3" />
+                        <Eye className="w-5 h-5 sm:w-6 sm:w-6 mr-2 sm:mr-3" />
                         Ver Mi Análisis Legal
                       </>
                     )}
@@ -371,17 +371,17 @@ const PublicProposal = () => {
             <div className="space-y-8">
               {/* Análisis del Caso */}
               {analysisMarkdown && (
-                <Card className="bg-gradient-to-br from-white via-blue-50/50 to-cyan-50/30 dark:from-gray-900 dark:via-blue-900/30 dark:to-cyan-950/20 backdrop-blur-sm border border-gray-200/80 dark:border-blue-800/60 shadow-xl overflow-hidden">
-                  <CardHeader className="flex flex-col items-center text-center pb-6 border-b border-gray-100 dark:border-gray-700 px-6 sm:px-8 pt-8">
+                <Card className="bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900/90 dark:via-blue-950/80 dark:to-cyan-950/90 backdrop-blur-sm border-2 border-blue-200 dark:border-blue-700 shadow-2xl dark:shadow-blue-900/50 overflow-hidden">
+                  <CardHeader className="flex flex-col items-center text-center pb-6 border-b border-gray-100 dark:border-gray-800 px-6 sm:px-8 pt-8">
                     <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg mx-auto mb-6">
                       <FileText className="w-7 h-7 text-white" />
-                    </div>
+                      </div>
                     <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-3 max-w-full">
-                      Análisis de tu Caso
-                    </CardTitle>
+                          Análisis de tu Caso
+                        </CardTitle>
                     <CardDescription className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
                       Evaluación detallada realizada por nuestro abogado especialista
-                    </CardDescription>
+                        </CardDescription>
                   </CardHeader>
                   <CardContent className="pt-8 px-6 sm:px-8">
                     <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:text-gray-900 prose-headings:dark:text-white prose-p:text-gray-700 prose-p:dark:text-gray-300 prose-headings:font-medium prose-h2:text-xl prose-h3:text-lg prose-li:text-gray-700 prose-li:dark:text-gray-300 prose-strong:text-gray-900 prose-strong:dark:text-white prose-headings:font-bold prose-h2:text-2xl prose-h3:text-xl">
@@ -423,6 +423,7 @@ const PublicProposal = () => {
                 onButtonClick={handleCheckout}
                 disabled={!casoId}
                 loading={creatingCheckout}
+                urgentMessage="🔥 ¡OFERTA ESPECIAL! Este descuento es válido SOLO POR HOY."
               />
             </div>
           )}

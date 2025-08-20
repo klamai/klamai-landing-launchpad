@@ -40,23 +40,6 @@ const PrivacyPolicy = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12 max-w-4xl">
-        {/* Card de aceptación de políticas */}
-        <div className="mb-8">
-          <BackgroundGradient className="rounded-3xl p-6 sm:p-8 bg-white dark:bg-gray-900">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Antes de continuar</h2>
-              <p className="text-gray-700 dark:text-gray-300">
-                Para ver el análisis de tu caso y continuar, por favor acepta nuestras{' '} 
-                <Link to="/aviso-legal" className="text-blue-600 hover:text-blue-700 underline font-medium">Políticas</Link>{' '}y{' '}
-                <Link to="/politicas-privacidad" className="text-blue-600 hover:text-blue-700 underline font-medium">Política de Privacidad</Link>.
-              </p>
-              <label className="flex items-center gap-3">
-                <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                <span className="text-gray-700 dark:text-gray-300">Confirmo que he leído y acepto las políticas para continuar</span>
-              </label>
-            </div>
-          </BackgroundGradient>
-        </div>
         <div className="prose prose-lg max-w-none dark:prose-invert">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Política de Privacidad de Klamai.com</h1>
           

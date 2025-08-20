@@ -23,6 +23,7 @@ interface PricingCardProps {
   onButtonClick?: () => void;
   disabled?: boolean;
   loading?: boolean;
+  urgentMessage?: string;
 }
 
 export function PricingCard({
@@ -35,6 +36,7 @@ export function PricingCard({
   onButtonClick,
   disabled = false,
   loading = false,
+  urgentMessage,
 }: PricingCardProps) {
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: true, amount: 0.2 });
@@ -96,7 +98,7 @@ export function PricingCard({
       <Card className="relative mx-auto w-full max-w-6xl overflow-hidden bg-white dark:bg-gray-950 shadow-2xl dark:shadow-blue-900/50 border border-blue-200/80 dark:border-blue-700/60">
         <div className="flex flex-col lg:flex-row">
           <motion.div
-            className="flex flex-col justify-between p-6 lg:w-2/5 lg:p-10 bg-gradient-to-br from-blue-200/50 to-blue-50/50 dark:from-blue-950/70 dark:to-blue-900/60 border-r border-blue-300/50 dark:border-blue-800/50"
+            className="flex flex-col justify-between p-6 lg:w-2/5 lg:p-10 bg-gradient-to-br from-blue-100 to-cyan-50 dark:from-blue-950/80 dark:to-cyan-900/70 border-r border-blue-200 dark:border-blue-800"
             variants={itemVariants}
           >
               <div>
@@ -105,6 +107,13 @@ export function PricingCard({
                     <div>
                       <CardTitle className="text-3xl font-bold">{title}</CardTitle>
                       <CardDescription className="mt-2">{description}</CardDescription>
+                      {urgentMessage && (
+                        <div className="mt-4 p-3 bg-orange-100/80 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg">
+                          <p className="text-sm font-semibold text-orange-800 dark:text-orange-200 text-center">
+                            {urgentMessage}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
@@ -140,9 +149,9 @@ export function PricingCard({
                 </Button>
               </motion.div>
           </motion.div>
-          <Separator className="lg:my-6 lg:hidden dark:bg-gray-700" />
+          <Separator className="lg:my-6 lg:hidden dark:bg-gray-800" />
           <motion.div
-            className="bg-muted/50 p-6 lg:w-3/5 lg:p-10 dark:bg-gray-925"
+            className="bg-gray-50/80 p-6 lg:w-3/5 lg:p-10 dark:bg-gray-900"
             variants={itemVariants}
           >
             <div className="space-y-6">
