@@ -322,26 +322,26 @@ const Chat = () => {
           const { data: { user: currentUser } } = await supabase.auth.getUser();
           
           if (currentUser) {
-            const profileUpdate = {
+          const profileUpdate = {
               nombre: casoData.nombre_borrador || existingProfile?.nombre,
               apellido: casoData.apellido_borrador || existingProfile?.apellido,
               email: casoData.email_borrador || existingProfile?.email || currentUser.email,
               telefono: casoData.telefono_borrador || existingProfile?.telefono,
-            };
+          };
 
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update(profileUpdate)
-              .eq('id', userId);
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update(profileUpdate)
+            .eq('id', userId);
 
-            if (updateError) {
+          if (updateError) {
               SecureLogger.error(updateError, 'profile_update');
-            } else {
+          } else {
               SecureLogger.info('Profile updated successfully with case data', 'chat');
-              toast({
-                title: "¡Datos guardados!",
-                description: "Tus datos han sido transferidos correctamente a tu perfil.",
-              });
+            toast({
+              title: "¡Datos guardados!",
+              description: "Tus datos han sido transferidos correctamente a tu perfil.",
+            });
             }
           }
         }

@@ -1,111 +1,62 @@
 import { Button } from "@/components/ui/button";
 import { FooterSection } from "@/components/ui/footer-section";
-import { Scale, Menu, X, Moon, Sun } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useTheme } from "next-themes";
+import { BackgroundGradient } from "@/components/ui/background-gradient";
 
 const PrivacyPolicy = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? saved === 'true' : false;
+  });
+
+  useEffect(() => {
+    if (darkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  }, [darkMode]);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with Navigation */}
-      <header className="border-b bg-white/50 backdrop-blur-sm sticky top-0 z-50 dark:bg-gray-900/50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3">
-            <img src="/logo.svg" alt="klamAI Logo" className="h-8" />
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">KlamAI</h1>
+      {/* Header con navbar como en PublicProposal */}
+      <header className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-white/20 dark:border-gray-800/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-3">
+            <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+              <img src="/logo.svg" alt="klamAI Logo" className="h-8" />
+              <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">KlamAI</span>
             </Link>
-            
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition-colors">
-                Inicio
-              </Link>
-              <Link to="/chat" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition-colors">
-                Chat con VitorIA  
-              </Link>
-              <a href="#features" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition-colors">
-                Características
-              </a>
-              <a href="#testimonials" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition-colors">
-                Testimonios
-              </a>
-              
-              {/* Theme Toggle */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="h-9 w-9"
-              >
-                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                <span className="sr-only">Toggle theme</span>
+            <div className="flex items-center gap-3">
+              <Button onClick={() => {
+                const next = !darkMode; setDarkMode(next); localStorage.setItem('darkMode', String(next));
+              }} variant="outline" size="icon" className="rounded-full">
+                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
-
-              {/* Auth Buttons */}
-              <Button variant="ghost" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400">
-                Login
-              </Button>
-              <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white">
-                Sign Up
-              </Button>
-            </nav>
-
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+            </div>
           </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <nav className="md:hidden mt-4 pb-4 border-t pt-4">
-              <div className="flex flex-col space-y-2">
-                <Link to="/" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition-colors py-2">
-                  Inicio
-                </Link>
-                <Link to="/chat" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition-colors py-2">
-                  Chat con VitorIA
-                </Link>
-                <a href="#features" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition-colors py-2">
-                  Características
-                </a>
-                <a href="#testimonials" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition-colors py-2">
-                  Testimonios
-                </a>
-                <div className="flex items-center gap-2 pt-2">
-                  <Button
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="h-9 w-9"
-                  >
-                    <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                  </Button>
-                  <Button variant="ghost" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400">
-                    Login
-                  </Button>
-                  <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white">
-                    Sign Up
-                  </Button>
-                </div>
-              </div>
-            </nav>
-          )}
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12 max-w-4xl">
+        {/* Card de aceptación de políticas */}
+        <div className="mb-8">
+          <BackgroundGradient className="rounded-3xl p-6 sm:p-8 bg-white dark:bg-gray-900">
+            <div className="space-y-4">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Antes de continuar</h2>
+              <p className="text-gray-700 dark:text-gray-300">
+                Para ver el análisis de tu caso y continuar, por favor acepta nuestras{' '} 
+                <Link to="/aviso-legal" className="text-blue-600 hover:text-blue-700 underline font-medium">Políticas</Link>{' '}y{' '}
+                <Link to="/politicas-privacidad" className="text-blue-600 hover:text-blue-700 underline font-medium">Política de Privacidad</Link>.
+              </p>
+              <label className="flex items-center gap-3">
+                <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <span className="text-gray-700 dark:text-gray-300">Confirmo que he leído y acepto las políticas para continuar</span>
+              </label>
+            </div>
+          </BackgroundGradient>
+        </div>
         <div className="prose prose-lg max-w-none dark:prose-invert">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Política de Privacidad de Klamai.com</h1>
           
