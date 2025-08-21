@@ -294,7 +294,7 @@ const SuperAdminDashboard = () => {
           </SidebarBody>
         </SidebarDashboard>
         <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black dark:bg-neutral-800">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden bg-black dark:bg-black">
             <div className="p-4 sm:p-6 md:p-8 rounded-tl-2xl bg-white dark:bg-gray-950 min-h-full">
               <Outlet />
             </div>

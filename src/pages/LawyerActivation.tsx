@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { ConsentCheckbox } from "@/components/shared/ConsentCheckbox";
 
 const passwordSchema = z.object({
   newPassword: z.string()
@@ -21,7 +22,7 @@ const passwordSchema = z.object({
     .regex(/[0-9]/, "Debe contener al menos un número")
     .regex(/[^a-zA-Z0-9]/, "Debe contener al menos un carácter especial"),
   confirmPassword: z.string(),
-  acceptedTerms: z.boolean().refine(val => val === true, "Debes aceptar los términos y condiciones"),
+  acepta_politicas: z.boolean().refine(val => val === true, "Debes aceptar las políticas de privacidad y términos de uso"),
 }).refine(data => data.newPassword === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
@@ -30,14 +31,14 @@ const passwordSchema = z.object({
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
 // NUEVO COMPONENTE INTERNO PARA EL FORMULARIO
-const ActivationForm = ({ token, email, onActivationSuccess }) => {
+const ActivationForm = ({ token, email, solicitudId, onActivationSuccess }) => {
   const { register, handleSubmit, formState: { errors, isValid }, control } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
     mode: 'onChange',
     defaultValues: {
       newPassword: '',
       confirmPassword: '',
-      acceptedTerms: false,
+      acepta_politicas: false,
     }
   });
   
@@ -59,7 +60,7 @@ const ActivationForm = ({ token, email, onActivationSuccess }) => {
       
       toast({ title: "¡Cuenta activada!", description: "Iniciando sesión..." });
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password: formData.newPassword,
       });
@@ -67,7 +68,21 @@ const ActivationForm = ({ token, email, onActivationSuccess }) => {
       if (signInError) {
         toast({ title: "Cuenta activada", description: "Por favor, inicia sesión manualmente." });
         navigate('/abogados/auth', { replace: true });
-      } else {
+      } else if (signInData.user) {
+        // Registro del consentimiento después de iniciar sesión exitosamente
+        supabase.functions.invoke('record-consent', {
+          body: {
+            user_id: signInData.user.id,
+            solicitud_id: solicitudId,
+            consent_type: 'lawyer_activation',
+            accepted_terms: formData.acepta_politicas,
+            accepted_privacy: formData.acepta_politicas,
+          }
+        }).catch(error => {
+          console.error("Error al registrar el consentimiento post-activación:", error);
+          // No bloqueamos al usuario, pero es bueno tener un registro del fallo
+        });
+        
         onActivationSuccess();
       }
     } catch (error: any) {
@@ -96,26 +111,13 @@ const ActivationForm = ({ token, email, onActivationSuccess }) => {
         <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} {...register("confirmPassword")} />
         {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>}
       </div>
-      <div className="items-top flex space-x-2 mt-6">
-        <Controller
-          name="acceptedTerms"
+      <div className="mt-6">
+        <ConsentCheckbox
           control={control}
-          render={({ field }) => (
-            <Checkbox id="terms" checked={field.value} onCheckedChange={field.onChange} />
-          )}
+          name="acepta_politicas"
+          error={errors.acepta_politicas?.message}
         />
-        <div className="grid gap-1.5 leading-none">
-          <label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Acepto los términos y condiciones
-          </label>
-          <p className="text-sm text-muted-foreground">
-            Al activar tu cuenta, confirmas que has leído y aceptas nuestra 
-            <Link to="/politicas-privacidad" target="_blank" className="underline hover:text-primary"> Política de Privacidad</Link> y los 
-            <Link to="/aviso-legal" target="_blank" className="underline hover:text-primary"> Términos y Condiciones</Link>.
-          </p>
-        </div>
       </div>
-      {errors.acceptedTerms && <p className="text-red-500 text-sm mt-1">{errors.acceptedTerms.message}</p>}
       <Button type="submit" disabled={loading || !isValid} className="w-full mt-6">
         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         Activar Cuenta
@@ -130,48 +132,48 @@ const LawyerActivation = () => {
   const { toast } = useToast();
   const [validatingToken, setValidatingToken] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
-  const [tokenData, setTokenData] = useState<{ email: string } | null>(null);
-  
+  const [tokenData, setTokenData] = useState<{ email: string; solicitud_id: string } | null>(null);
+
   const token = searchParams.get('token');
 
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
-        setValidatingToken(false);
+      setValidatingToken(false);
         toast({ title: "Token faltante", variant: "destructive" });
         return;
       }
-      try {
-        const { data, error } = await supabase
-          .from('lawyer_activation_tokens')
-          .select('email')
-          .eq('token', token)
-          .is('used_at', null)
-          .gt('expires_at', new Date().toISOString())
-          .single();
+    try {
+      const { data, error } = await supabase
+        .from('lawyer_activation_tokens')
+          .select('email, solicitud_id')
+        .eq('token', token)
+        .is('used_at', null)
+        .gt('expires_at', new Date().toISOString())
+        .single();
 
         if (error || !data) throw new Error('Token inválido o expirado');
-        
+
         setTokenData(data);
-        setTokenValid(true);
-      } catch (error: any) {
-        setTokenValid(false);
+      setTokenValid(true);
+    } catch (error: any) {
+      setTokenValid(false);
         toast({ title: "Token inválido", description: error.message, variant: "destructive" });
-      } finally {
-        setValidatingToken(false);
-      }
-    };
+    } finally {
+      setValidatingToken(false);
+    }
+  };
     validateToken();
   }, [token, toast]);
 
   const handleSuccess = () => {
-    setTimeout(() => {
-      navigate('/abogados/dashboard', { replace: true });
+      setTimeout(() => {
+        navigate('/abogados/dashboard', { replace: true });
     }, 1500);
   };
 
   // ... JSX para los estados de carga y error ...
-  
+
   if (validatingToken) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -221,6 +223,7 @@ const LawyerActivation = () => {
           <ActivationForm 
             token={token!}
             email={tokenData.email}
+            solicitudId={tokenData.solicitud_id}
             onActivationSuccess={handleSuccess}
           />
           <div className="mt-6 text-center">

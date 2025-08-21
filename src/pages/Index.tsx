@@ -14,6 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import SignOutButton from "@/components/SignOutButton";
 import { SecureLogger } from '@/utils/secureLogging';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { ConsentCheckbox } from "@/components/shared/ConsentCheckbox";
 
 const transitionVariants = {
   item: {
@@ -60,16 +64,39 @@ const testimonials = [{
 
 const frequentQuestions = ["Quiero vender mi casa, cuál es el proceso legal?", "Cómo proteger la propiedad intelectual de mi negocio?", "Puedo modificar el acuerdo de custodia de mis hijos?", "Qué hacer si recibo una demanda por accidente de tráfico?", "Cómo resolver una disputa contractual con un proveedor?", "Qué pasos seguir si quiero divorciarme?"];
 
+const consultationSchema = z.object({
+  consultation: z.string().min(10, { message: "Por favor, detalla un poco más tu consulta para poder ayudarte mejor." }),
+  acceptedTerms: z.boolean().refine(val => val === true, { message: "Debes aceptar las políticas para continuar." }),
+});
+
+type ConsultationFormData = z.infer<typeof consultationSchema>;
+
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
-  const [consultation, setConsultation] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading } = useAuth();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    control,
+    watch,
+    setValue,
+    formState: { errors, isValid }
+  } = useForm<ConsultationFormData>({
+    resolver: zodResolver(consultationSchema),
+    mode: 'onChange',
+    defaultValues: {
+      consultation: '',
+      acceptedTerms: false,
+    }
+  });
+
+  const consultationValue = watch('consultation');
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('darkMode');
@@ -83,13 +110,6 @@ const Index = () => {
       }
     }
   }, []);
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-    }
-  }, [consultation]);
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
@@ -117,8 +137,8 @@ const Index = () => {
     });
   };
 
-  const handleSubmit = async () => {
-    if (!consultation.trim()) return;
+  const onSubmit = async (formData: ConsultationFormData) => {
+    if (!isValid) return;
     setIsSubmitting(true);
     
     try {
@@ -128,7 +148,7 @@ const Index = () => {
       // 2. Create draft case in Supabase
       const { data, error } = await supabase.functions.invoke('crear-borrador-caso', {
         body: {
-          motivo_consulta: consultation.trim(),
+          motivo_consulta: formData.consultation.trim(),
           session_token: sessionToken
         }
       });
@@ -156,8 +176,23 @@ const Index = () => {
         return;
       }
 
+      // 2.5. Record consent
+      if (formData.acceptedTerms) {
+        // We don't await this, it can run in the background
+        supabase.functions.invoke('record-consent', {
+          body: {
+            caso_id: casoId,
+            consent_type: 'initial_consultation',
+            accepted_terms: true,
+            accepted_privacy: true,
+            policy_terms_version: 1, // Asignar versión actual
+            policy_privacy_version: 1, // Asignar versión actual
+          },
+        });
+      }
+
       // 3. Save essential data for immediate Typebot loading
-      localStorage.setItem('userConsultation', consultation.trim());
+      localStorage.setItem('userConsultation', formData.consultation.trim());
       localStorage.setItem('casoId', casoId);
       localStorage.setItem('current_session_token', sessionToken);
       
@@ -178,12 +213,8 @@ const Index = () => {
     }
   };
 
-  const handleValueChange = (value: string) => {
-    setConsultation(value);
-  };
-
   const handleFrequentQuestion = (question: string) => {
-    setConsultation(question);
+    setValue('consultation', question, { shouldValidate: true });
   };
 
   return (
@@ -354,65 +385,69 @@ const Index = () => {
 
                     {/* Modern Google-style Search Bar - Principal - MOVED UP */}
                     <div className="mt-14 sm:mt-20 max-w-4xl mx-auto px-4 sm:px-0">
-                      {/* Main Search Bar with Enhanced Effects */}
-                      <div className="relative group">
-                        {/* Floating particles background */}
-                        <div className="absolute -inset-4 opacity-30">
-                          <div className="absolute top-2 left-4 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                          <div className="absolute top-8 right-8 w-1 h-1 bg-cyan-400 rounded-full animate-ping" style={{animationDelay: '0.5s'}}></div>
-                          <div className="absolute bottom-4 left-12 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
-                          <div className="absolute bottom-8 right-4 w-1 h-1 bg-blue-300 rounded-full animate-ping" style={{animationDelay: '1.5s'}}></div>
-                        </div>
-                        
-                        {/* Gradient breathing border */}
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-500 animate-pulse"></div>
-                        <div className="absolute -inset-2 bg-gradient-to-r from-cyan-100 via-blue-600 to-purple-600 rounded-full blur-sm opacity-10 group-hover:opacity-20 transition duration-700" style={{animation: 'pulse 3s ease-in-out infinite'}}></div>
-                        
-                        <div className="relative bg-white dark:bg-gray-200 rounded-full shadow-2xl border border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-all duration-500 group-hover:border-blue-300 dark:group-hover:border-blue-600 group-hover:scale-[1.02]">
-                          <div className="flex items-center p-1.5 sm:p-2">
-                            <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-blue-600 dark:text-blue-400 ml-1 sm:ml-2 flex-shrink-0">
-                              <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 group-hover:scale-110 transition-transform duration-300" />
-                            </div>
-                            <input
-                              type="text"
-                              maxLength={500}
-                              value={consultation}
-                              onChange={(e) => setConsultation(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleSubmit();
-                                }
-                              }}
-                              placeholder="Escribe tu Consulta Legal Aqui..."
-                              className="flex-1 px-2 sm:px-4 py-3 sm:py-4 text-base sm:text-lg bg-transparent border-none outline-none text-gray-900 dark:text-gray-900 placeholder-gray-500 dark:placeholder-gray-500 min-w-0"
-                              disabled={isSubmitting}
-                            />
-                            <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-2 flex-shrink-0">
-                              {consultation.trim() && (
-                                <div className="hidden sm:block text-xs text-gray-400">
-                                  {consultation.length}/500
-                                </div>
-                              )}
-                              <button
-                                onClick={handleSubmit}
-                                disabled={isSubmitting || !consultation.trim()}
-                                className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110 group-hover:shadow-blue-500/25"
-                              >
-                                {isSubmitting ? (
-                                  <Square className="h-4 w-4 sm:h-5 sm:w-5 animate-pulse" />
-                                ) : (
-                                  <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <form onSubmit={handleFormSubmit(onSubmit)}>
+                        {/* Main Search Bar with Enhanced Effects */}
+                        <div className="relative group">
+                          {/* Floating particles background */}
+                          <div className="absolute -inset-4 opacity-30">
+                            <div className="absolute top-2 left-4 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                            <div className="absolute top-8 right-8 w-1 h-1 bg-cyan-400 rounded-full animate-ping" style={{animationDelay: '0.5s'}}></div>
+                            <div className="absolute bottom-4 left-12 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+                            <div className="absolute bottom-8 right-4 w-1 h-1 bg-blue-300 rounded-full animate-ping" style={{animationDelay: '1.5s'}}></div>
+                          </div>
+                          
+                          {/* Gradient breathing border */}
+                          <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-500 animate-pulse"></div>
+                          <div className="absolute -inset-2 bg-gradient-to-r from-cyan-100 via-blue-600 to-purple-600 rounded-full blur-sm opacity-10 group-hover:opacity-20 transition duration-700" style={{animation: 'pulse 3s ease-in-out infinite'}}></div>
+                          
+                          <div className="relative bg-white dark:bg-gray-200 rounded-full shadow-2xl border border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-all duration-500 group-hover:border-blue-300 dark:group-hover:border-blue-600 group-hover:scale-[1.02]">
+                            <div className="flex items-center p-1.5 sm:p-2">
+                              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-blue-600 dark:text-blue-400 ml-1 sm:ml-2 flex-shrink-0">
+                                <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 group-hover:scale-110 transition-transform duration-300" />
+                              </div>
+                              <input
+                                {...register("consultation")}
+                                maxLength={500}
+                                placeholder="Escribe tu Consulta Legal Aqui..."
+                                className="flex-1 px-2 sm:px-4 py-3 sm:py-4 text-base sm:text-lg bg-transparent border-none outline-none text-gray-900 dark:text-gray-900 placeholder-gray-500 dark:placeholder-gray-500 min-w-0"
+                                disabled={isSubmitting}
+                              />
+                              <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-2 flex-shrink-0">
+                                {consultationValue && consultationValue.trim() && (
+                                  <div className="hidden sm:block text-xs text-gray-400">
+                                    {consultationValue.length}/500
+                                  </div>
                                 )}
-                              </button>
+                                <button
+                                  type="submit"
+                                  disabled={isSubmitting || !isValid}
+                                  className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110 group-hover:shadow-blue-500/25"
+                                >
+                                  {isSubmitting ? (
+                                    <Square className="h-4 w-4 sm:h-5 sm:w-5 animate-pulse" />
+                                  ) : (
+                                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                                  )}
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                      
-                      {consultation.trim() && (
+                        
+                        {/* Componente de Consentimiento y Errores */}
+                        <div className="mt-6 px-4 flex flex-col items-center">
+                          <ConsentCheckbox 
+                            control={control} 
+                            name="acceptedTerms" 
+                          />
+                          {errors.consultation && <p className="text-sm font-medium text-destructive mt-2 text-center">{errors.consultation.message}</p>}
+                          {errors.acceptedTerms && <p className="text-sm font-medium text-destructive mt-2 text-center">{errors.acceptedTerms.message}</p>}
+                        </div>
+                      </form>
+
+                      {consultationValue && consultationValue.trim() && (
                         <div className="sm:hidden text-xs text-gray-400 animate-fade-in">
-                          {consultation.length}/500 caracteres
+                          {consultationValue.length}/500 caracteres
                         </div>
                       )}
                       
@@ -425,8 +460,9 @@ const Index = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                           {frequentQuestions.slice(0, 4).map((question, index) => (
                             <button
+                              type="button"
                               key={index}
-                              onClick={() => setConsultation(question)}
+                              onClick={() => handleFrequentQuestion(question)}
                               className="px-5 sm:px-6 py-4 sm:py-5 bg-gray-100 dark:bg-gray-800/60 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl text-sm sm:text-base text-white-700 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-300 border border-gray-200 dark:border-blue-500/30 hover:border-blue-300 dark:hover:border-blue-600 text-left hover:scale-105 hover:shadow-lg min-h-[48px] sm:min-h-[56px]"
                             >
                               {question.length > (window.innerWidth < 640 ? 95 : 60) ? 
