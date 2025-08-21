@@ -26,6 +26,7 @@ import ActivarCliente from "./pages/ActivarCliente";
 import NotFound from "./pages/NotFound";
 import PublicProposal from "./pages/PublicProposal";
 import SolicitudAbogadoPage from '@/pages/abogados/Solicitud'; // Importar la nueva página
+import RegistroPage from "./pages/auth/Registro"; // Importar la nueva página de registro
 
 // Importar las secciones directamente para las rutas anidadas
 import DashboardSection from "@/components/dashboard/DashboardSection";
@@ -74,6 +75,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<UnifiedAuth />} />
+            <Route path="/auth/registro" element={<RegistroPage />} />
             <Route path="/abogados/auth" element={<UnifiedAuth />} />
             <Route path="/admin/auth" element={<UnifiedAuth />} />
             <Route path="/abogados/solicitud" element={<SolicitudAbogadoPage />} />

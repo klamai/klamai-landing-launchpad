@@ -28,6 +28,7 @@ import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConsentCheckbox } from "@/components/shared/ConsentCheckbox";
 
 const steps = [
   { title: "Información Personal" },
@@ -205,13 +206,36 @@ const SolicitudAbogadoPage = () => {
         throw new Error("No pudimos procesar tu solicitud en este momento. Por favor, inténtalo más tarde.");
       }
 
-      // La función ahora siempre devuelve éxito, así que no es necesario
-      // comprobar un campo de error interno. Simplemente pasamos la data.
-      return responseData;
+      // Pasamos tanto la respuesta como los datos originales del formulario al onSuccess
+      return { responseData, formData: data };
     },
-    onSuccess: () => {
-      // El mensaje de éxito siempre se muestra, lo cual es correcto.
-      // Mantenemos el mensaje genérico aquí.
+    onSuccess: ({ responseData, formData }) => {
+      // Si la creación de la solicitud fue exitosa y tenemos un ID, registramos el consentimiento.
+      if (responseData && responseData.solicitud_id) {
+        // Llamada no bloqueante para registrar el consentimiento.
+        supabase.functions.invoke('record-consent', {
+          body: {
+            solicitud_id: responseData.solicitud_id,
+            consent_type: 'lawyer_application',
+            // El campo acepta_politicas del formulario cubre ambos consentimientos
+            accepted_terms: formData.acepta_politicas,
+            accepted_privacy: formData.acepta_politicas,
+            policy_terms_version: 1,
+            policy_privacy_version: 1,
+          },
+        }).then(({ error }) => {
+          if (error) {
+            console.error('Error al registrar el consentimiento:', error);
+            // Opcional: notificar al usuario de forma no intrusiva si falla.
+            toast.warning("Tu solicitud fue enviada, pero hubo un problema al registrar tu consentimiento.");
+          }
+        });
+      } else {
+        // Esto indicaría un problema en el backend si no recibimos el ID.
+        console.warn('Solicitud enviada pero no se recibió un ID para registrar el consentimiento.');
+      }
+      
+      // La retroalimentación de éxito al usuario se mantiene igual y es inmediata.
       toast.success("¡Solicitud recibida!", {
         description: "Gracias por tu interés. Revisaremos tu información y te contactaremos pronto.",
       });
@@ -574,59 +598,12 @@ const SolicitudAbogadoPage = () => {
                                           </div>
                                         </motion.div>
                                         
-                                        <motion.div variants={fadeInUp} className="space-y-4">
-                                          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                                            <div className="flex items-start space-x-3">
-                                              <div className="w-5 h-5 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mt-0.5">
-                                                <span className="text-amber-600 dark:text-amber-400 text-xs font-bold">!</span>
-                                              </div>
-                                              <div className="flex-1">
-                                                <p className="text-sm text-amber-800 dark:text-amber-200 font-medium mb-2">
-                                                  Políticas y Términos Requeridos
-                                                </p>
-                                                <div className="space-y-3">
-                                                  <label className="flex items-start gap-3 cursor-pointer group">
-                                                    <Checkbox
-                                                      id="acepta_politicas"
-                                                      checked={watch('acepta_politicas')}
-                                                      onCheckedChange={(checked) =>
-                                                        setValue("acepta_politicas", !!checked, { shouldValidate: true })
-                                                      }
-                                                      className="mt-0.5"
-                                                    />
-                                                    <div className="flex-1">
-                                                      <span className="text-sm text-amber-800 dark:text-amber-200">
-                                                        He leído y acepto la{' '}
-                                                        <a 
-                                                          href="/politicas-privacidad" 
-                                                          target="_blank" 
-                                                          rel="noopener noreferrer"
-                                                          className="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline font-medium"
-                                                        >
-                                                          Política de Privacidad
-                                                        </a>
-                                                        {' '}y los{' '}
-                                                        <a 
-                                                          href="/aviso-legal" 
-                                                          target="_blank" 
-                                                          rel="noopener noreferrer"
-                                                          className="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline font-medium"
-                                                        >
-                                                          Términos y Condiciones
-                                                        </a>
-                                                      </span>
-                                                    </div>
-                                                  </label>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          {errors.acepta_politicas && (
-                                            <p className="text-red-500 text-sm mt-2 flex items-center gap-2">
-                                              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                                              {errors.acepta_politicas.message}
-                                            </p>
-                                          )}
+                                        <motion.div variants={fadeInUp}>
+                                          <ConsentCheckbox
+                                            control={control}
+                                            name="acepta_politicas"
+                                            error={errors.acepta_politicas?.message}
+                                          />
                                         </motion.div>
                                       </CardContent>
                                     </>

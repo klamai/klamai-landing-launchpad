@@ -222,11 +222,88 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Fase 1: Implementar Migración de BD para Kanban",
+        "description": "Crear un nuevo tipo ENUM en la base de datos llamado etapa_kanban_enum y añadir una nueva columna llamada `etapa` a la tabla `casos`. Esta columna utilizará el nuevo ENUM y tendrá un valor por defecto. Todo esto se gestionará a través de un nuevo archivo de migración de Supabase.",
+        "details": "",
+        "testStrategy": "Verificar que la migración se aplica correctamente en el entorno local de Supabase y que la nueva columna `etapa` existe en la tabla `casos` con el tipo y valor por defecto correctos.",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Fase 2: Instalar Librería y Crear Componente Kanban",
+        "description": "Instalar la librería `shadcn-kanban-board` usando el comando `npx shadcn@latest add ...` y crear el archivo para el nuevo componente `KanbanBoard.tsx` en la estructura de componentes del frontend. El componente debe renderizar una estructura básica con columnas fijas que representen las etapas del Kanban.",
+        "details": "",
+        "testStrategy": "Verificar que la librería se instala correctamente y que el nuevo componente `KanbanBoard.tsx` se renderiza sin errores en la aplicación, mostrando las columnas vacías.",
+        "status": "done",
+        "dependencies": [
+          17
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Fase 2: Conectar Kanban con Datos de Supabase",
+        "description": "En el componente `KanbanBoard.tsx`, implementar una función para llamar a Supabase y obtener todos los casos asignados al abogado actual. Los datos recuperados se deben procesar y utilizar para renderizar los componentes `CaseCard` dentro de las columnas correspondientes del tablero Kanban, según su valor en el nuevo campo `etapa`.",
+        "details": "",
+        "testStrategy": "Verificar que el tablero Kanban muestra correctamente los `CaseCard` en sus columnas respectivas. Probar con casos en diferentes `etapas` para asegurar que la distribución es correcta.",
+        "status": "done",
+        "dependencies": [
+          18
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Fase 3: Crear RPC para Actualizar Etapa del Caso",
+        "description": "Crear una nueva función de base de datos (RPC) en Supabase llamada `actualizar_etapa_caso`. Esta función recibirá un `caso_id` y una `nueva_etapa` como parámetros. Implementará la lógica para verificar los permisos del usuario (debe ser el abogado asignado o un admin) antes de actualizar la columna `etapa` del caso correspondiente en la base de datos.",
+        "details": "",
+        "testStrategy": "Probar la función RPC directamente desde el editor SQL de Supabase para asegurar que actualiza la etapa correctamente cuando los permisos son válidos y devuelve un error cuando no lo son.",
+        "status": "done",
+        "dependencies": [
+          17
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Fase 3: Implementar Lógica Drag and Drop en Frontend",
+        "description": "En `KanbanBoard.tsx`, configurar la lógica de `dnd-kit`. Al detectar el evento `onDragEnd`, se debe obtener el `caso_id` y la `nueva_etapa` (la columna de destino). Luego, invocar la función RPC `actualizar_etapa_caso` de Supabase. Implementar una actualización optimista de la UI para una experiencia fluida.",
+        "details": "",
+        "testStrategy": "Arrastrar un `CaseCard` a una nueva columna y verificar en la base de datos que el campo `etapa` se ha actualizado correctamente. Asegurarse de que la UI refleja el cambio de forma inmediata y persistente.",
+        "status": "done",
+        "dependencies": [
+          19,
+          20
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Fase 4: Mejoras de UI/UX para Kanban (Post-MVP)",
+        "description": "Una vez que el tablero Kanban sea completamente funcional, añadir funcionalidades adicionales para mejorar la experiencia del usuario. Esto incluye: 1. Controles de filtro en la UI para buscar casos por cliente o prioridad. 2. Indicadores visuales en las `CaseCard` (ej. para urgencia o notificaciones). 3. Una nueva vista o página para consultar los casos archivados (aquellos en etapa `finalizado`).",
+        "details": "",
+        "testStrategy": "Verificar que los filtros funcionan correctamente y que los nuevos indicadores visuales se muestran según la lógica definida. Comprobar que la vista de archivo solo muestra los casos finalizados.",
+        "status": "pending",
+        "dependencies": [
+          21
+        ],
+        "priority": "low",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-08-18T11:54:54.067Z",
-      "updated": "2025-08-18T21:10:41.856Z",
+      "updated": "2025-08-21T07:57:16.830Z",
       "description": "Tasks for master context"
     }
   }

@@ -24,6 +24,8 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const {
       proposal_token,
+      caso_id: body_caso_id, // Renombramos para evitar conflicto de nombres
+      solicitud_id = null, // NUEVO: Capturamos el ID de la solicitud
       consent_type = 'proposal_view',
       accepted_terms = false,
       accepted_privacy = false,
@@ -34,15 +36,15 @@ Deno.serve(async (req) => {
       link_only = false,
     } = body || {};
 
-    let caso_id: string | null = null;
+    let caso_id: string | null = body_caso_id || null; // Priorizamos el caso_id del body
     let user_id: string | null = null;
 
     // Si hay sesión, capturar user_id
     const { data: session } = await sb.auth.getUser();
     user_id = session?.user?.id || null;
 
-    // Buscar caso por token si se envía
-    if (proposal_token) {
+    // Buscar caso por token si se envía Y AÚN NO TENEMOS un caso_id
+    if (proposal_token && !caso_id) {
       const { data, error } = await sb.rpc('get_proposal_by_token', { p_token: proposal_token });
       if (!error && Array.isArray(data) && data.length > 0) {
         const row: any = data[0];
@@ -75,6 +77,7 @@ Deno.serve(async (req) => {
     const insertPayload: any = {
       user_id,
       caso_id,
+      solicitud_id, // NUEVO: Añadimos el ID de la solicitud al payload
       proposal_token: proposal_token || null,
       consent_type,
       accepted_terms,
@@ -89,6 +92,22 @@ Deno.serve(async (req) => {
 
     const { error: insErr } = await sb.from('consent_logs').insert(insertPayload);
     if (insErr) return json({ error: 'No se pudo registrar el consentimiento', details: String(insErr.message || insErr) }, 400);
+
+    // Si hay un usuario logueado, actualizar su perfil con el estado del consentimiento
+    if (user_id && (accepted_terms || accepted_privacy)) {
+      const profileUpdate: { [key: string]: unknown } = {
+        // Si se aceptó cualquiera de las dos, marcamos que el usuario ha aceptado las políticas
+        acepta_politicas: accepted_terms && accepted_privacy,
+        politicas_aceptadas_at: new Date().toISOString(),
+        // Guardamos la versión de las políticas que se acaban de aceptar
+        politicas_version: `${policy_terms_version || 1};${policy_privacy_version || 1}`
+      };
+
+      await sbAdmin
+        .from('profiles')
+        .update(profileUpdate)
+        .eq('id', user_id);
+    }
 
     // Marcar en caso (si aplica)
     if (caso_id && consent_type === 'proposal_view' && accepted_terms && accepted_privacy) {

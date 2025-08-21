@@ -348,9 +348,9 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                   
                   {showClientSignup && (
                     <div className="text-center">
-                      <button className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm transition-colors">
+                      <Link to="/auth/registro" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm transition-colors hover:underline">
                         ¿No tienes cuenta? Crear cuenta de cliente
-                      </button>
+                      </Link>
                     </div>
                   )}
                 </div>
