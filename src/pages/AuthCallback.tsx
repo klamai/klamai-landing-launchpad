@@ -114,9 +114,10 @@ const AuthCallback = () => {
         await supabase.functions.invoke('record-consent', {
           body: { proposal_token: token, link_only: true },
         });
-        SecureLogger.info('Consentimientos vinculados exitosamente', 'auth_callback');
+        SecureLogger.info('Intent de vinculación de consentimientos completado.', 'auth_callback');
       } catch (e) {
-        SecureLogger.warn('No se pudieron vincular consentimientos', 'auth_callback');
+        // No es un error crítico, el flujo de pago puede continuar.
+        SecureLogger.warn('No se pudieron vincular los consentimientos anónimos.', 'auth_callback');
       }
       const linkedCasoId = await linkCaseByProposalToken(token);
       await createCheckout(planId, linkedCasoId);

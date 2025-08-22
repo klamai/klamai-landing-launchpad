@@ -211,7 +211,7 @@ const Chat = () => {
 
       SecureLogger.info(`Case status: ${data.estado}, has proposal: ${!!data.propuesta_estructurada}`, 'chat');
 
-      if (data.estado === 'listo_para_propuesta' && data.propuesta_estructurada) {
+      if (data && data.estado === 'listo_para_propuesta' && data.propuesta_estructurada) {
         SecureLogger.info('Case is ready for proposal - SHOWING MODAL', 'chat');
         setProposalData(data.propuesta_estructurada);
         setShowProposal(true);
@@ -309,7 +309,7 @@ const Chat = () => {
       }
 
       // Solo actualizar si no hay datos existentes
-      if (!existingProfile?.nombre || !existingProfile?.apellido) {
+      if (existingProfile && (!existingProfile.nombre || !existingProfile.apellido)) {
         const { data: casoData, error: casoError } = await supabase
           .from('casos')
           .select('nombre_borrador, apellido_borrador, email_borrador, telefono_borrador, nombre_gerente_borrador, apellido_gerente_borrador, email_gerente_borrador, telefono_gerente_borrador')
@@ -323,10 +323,10 @@ const Chat = () => {
           
           if (currentUser) {
           const profileUpdate = {
-              nombre: casoData.nombre_borrador || existingProfile?.nombre,
-              apellido: casoData.apellido_borrador || existingProfile?.apellido,
-              email: casoData.email_borrador || existingProfile?.email || currentUser.email,
-              telefono: casoData.telefono_borrador || existingProfile?.telefono,
+              nombre: casoData.nombre_borrador || existingProfile.nombre,
+              apellido: casoData.apellido_borrador || existingProfile.apellido,
+              email: casoData.email_borrador || existingProfile.email || currentUser.email,
+              telefono: casoData.telefono_borrador || existingProfile.telefono,
           };
 
           const { error: updateError } = await supabase
@@ -601,7 +601,6 @@ const Chat = () => {
                   "utm_value": userConsultation || "Hola, necesito asesoramiento legal",
                   "caso_id": casoId || ""
                 }}
-                disableLogs={true}
                 isPreview={false}
               />
               

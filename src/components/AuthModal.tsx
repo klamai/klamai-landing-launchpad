@@ -10,6 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +20,28 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SecureLogger } from '@/utils/secureLogging';
+import { ConsentCheckbox } from '@/components/shared/ConsentCheckbox';
+
+const loginSchema = z.object({
+  email: z.string().email({ message: "Por favor, introduce un email válido." }),
+  password: z.string().min(1, { message: "La contraseña no puede estar vacía." }),
+});
+
+const signupSchema = z.object({
+  name: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
+  email: z.string().email({ message: "Por favor, introduce un email válido." }),
+  password: z.string().min(8, { message: "La contraseña debe tener al menos 8 caracteres." }),
+  confirmPassword: z.string(),
+  acepta_politicas: z.boolean().refine(val => val === true, {
+    message: "Debes aceptar los términos y la política de privacidad.",
+  }),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden.",
+  path: ["confirmPassword"],
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+type SignupFormData = z.infer<typeof signupSchema>;
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -32,45 +57,48 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    name: "",
-    confirmPassword: ""
+  
+  const currentSchema = isLogin ? loginSchema : signupSchema;
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<LoginFormData | SignupFormData>({
+    resolver: zodResolver(currentSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      name: "",
+      confirmPassword: "",
+      acepta_politicas: false,
+    },
   });
 
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
 
-  // Sync modal mode with prop changes
+  // Sync modal mode with prop changes and reset form
   useEffect(() => {
     setIsLogin(initialMode === 'login');
-  }, [initialMode]);
-
-  // Reset accept terms when switching modes
+    reset(); // Reset form state when mode changes
+  }, [initialMode, reset]);
+  
+  // Reset form when modal closes
   useEffect(() => {
-    setAcceptTerms(false);
-  }, [isLogin]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate terms acceptance for signup
-    if (!isLogin && !acceptTerms) {
-      toast({
-        title: "Error",
-        description: "Debes aceptar los términos y condiciones para continuar",
-        variant: "destructive",
-      });
-      return;
+    if (!isOpen) {
+      reset();
     }
+  }, [isOpen, reset]);
 
+  const onSubmit = async (data: LoginFormData | SignupFormData) => {
     setIsLoading(true);
-
     try {
       if (isLogin) {
-        const { error } = await signIn(formData.email, formData.password);
+        const { email, password } = data as LoginFormData;
+        const { error } = await signIn(email, password);
         if (error) {
           toast({
             title: "Error al iniciar sesión",
@@ -79,22 +107,14 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
           });
           return;
         }
-        
         toast({
           title: "¡Bienvenido de vuelta!",
           description: "Has iniciado sesión correctamente.",
         });
       } else {
-        if (formData.password !== formData.confirmPassword) {
-          toast({
-            title: "Error",
-            description: "Las contraseñas no coinciden",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const { error } = await signUp(formData.email, formData.password, formData.name);
+        const { email, password, name, acepta_politicas } = data as SignupFormData;
+        const { data: signUpData, error } = await signUp(email, password, name || '');
+        
         if (error) {
           toast({
             title: "Error al registrarse",
@@ -104,32 +124,34 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
           return;
         }
 
+        if (signUpData.user && acepta_politicas) {
+          try {
+            await supabase.functions.invoke('record-consent', {
+              body: {
+                user_id: signUpData.user.id,
+                caso_id: casoId, // Asociar al caso si existe
+                consent_type: 'client_registration',
+                accepted_terms: true,
+                accepted_privacy: true,
+                policy_terms_version: 1,
+                policy_privacy_version: 1,
+              },
+            });
+            SecureLogger.info('Consentimiento de registro guardado.', 'auth_modal');
+          } catch (e) {
+            SecureLogger.warn('No se pudo registrar consentimiento de signup', 'auth_modal');
+          }
+        }
+
         toast({
           title: "¡Cuenta creada!",
           description: "Tu cuenta ha sido creada exitosamente.",
         });
-
-        // Registrar consentimiento legal (términos/privacidad) tras signup
-        try {
-          await supabase.functions.invoke('record-consent', {
-            body: {
-              consent_type: 'terms_privacy',
-              accepted_terms: true,
-              accepted_privacy: true,
-              policy_terms_version: 1,
-              policy_privacy_version: 1,
-            },
-          });
-        } catch (e) {
-          // No bloquear el flujo por errores de logging
-          SecureLogger.warn('No se pudo registrar consentimiento de signup', 'auth_modal');
-        }
       }
 
       onSuccess();
     } catch (error: any) {
       SecureLogger.error(error, 'auth_modal_submit');
-      
       toast({
         title: "Error",
         description: error.message || "Ocurrió un error inesperado",
@@ -196,13 +218,6 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 shadow-2xl">
@@ -252,7 +267,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
             {!isLogin && (
               <div className="space-y-1">
                 <Label htmlFor="name" className="text-gray-700 dark:text-gray-300 text-sm">Nombre completo</Label>
@@ -260,15 +275,13 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
                   <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
                     id="name"
-                    name="name"
                     type="text"
                     placeholder="Tu nombre completo"
                     className="pl-9 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm h-9 focus:border-blue-500 focus:ring-blue-500"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
+                    {...register("name")}
                   />
                 </div>
+                {errors.name && <p className="text-xs text-red-500 mt-1">{(errors.name as any).message}</p>}
               </div>
             )}
 
@@ -278,15 +291,13 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
                 <Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   id="email"
-                  name="email"
                   type="email"
                   placeholder="tu@email.com"
                   className="pl-9 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm h-9 focus:border-blue-500 focus:ring-blue-500"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
+                  {...register("email")}
                 />
               </div>
+               {errors.email && <p className="text-xs text-red-500 mt-1">{(errors.email as any).message}</p>}
             </div>
 
             <div className="space-y-1">
@@ -295,13 +306,10 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
                 <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   id="password"
-                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Tu contraseña"
                   className="pl-9 pr-9 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm h-9 focus:border-blue-500 focus:ring-blue-500"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
+                  {...register("password")}
                 />
                 <button
                   type="button"
@@ -311,6 +319,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
                   {showPassword ? <EyeOff /> : <Eye />}
                 </button>
               </div>
+              {errors.password && <p className="text-xs text-red-500 mt-1">{(errors.password as any).message}</p>}
             </div>
 
             {!isLogin && (
@@ -320,60 +329,28 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
                   <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
                     id="confirmPassword"
-                    name="confirmPassword"
                     type={showPassword ? "text" : "password"}
                     placeholder="Confirma tu contraseña"
                     className="pl-9 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm h-9 focus:border-blue-500 focus:ring-blue-500"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    required
+                    {...register("confirmPassword")}
                   />
                 </div>
+                {errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{(errors.confirmPassword as any).message}</p>}
               </div>
             )}
 
             {!isLogin && (
-              <div className="flex items-start space-x-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                <Checkbox
-                  id="terms"
-                  checked={acceptTerms}
-                  onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
-                  className="mt-0.5"
-                />
-                <div className="text-xs leading-relaxed">
-                  <label
-                    htmlFor="terms"
-                    className="text-gray-700 dark:text-gray-300 cursor-pointer"
-                  >
-                    Acepto los términos y condiciones
-                  </label>
-                  <p className="text-gray-500 dark:text-gray-400 mt-1">
-                    Al registrarte, aceptas nuestros{" "}
-                    <Link 
-                      to="/aviso-legal" 
-                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                      target="_blank"
-                    >
-                      términos y condiciones
-                    </Link>
-                    {" "}y{" "}
-                    <Link 
-                      to="/politicas-privacidad" 
-                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                      target="_blank"
-                    >
-                      política de privacidad
-                    </Link>
-                    .
-                  </p>
-                </div>
-              </div>
+               <ConsentCheckbox 
+                control={control} 
+                name="acepta_politicas"
+                error={(errors as any).acepta_politicas?.message}
+              />
             )}
 
             <Button 
               type="submit" 
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg h-9 transition-colors"
-              disabled={isLoading || (!isLogin && !acceptTerms)}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
