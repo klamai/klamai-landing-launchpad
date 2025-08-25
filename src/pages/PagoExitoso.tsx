@@ -1,157 +1,50 @@
 
-import { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { CheckCircle, ArrowRight, Home } from 'lucide-react';
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { CheckCircle, Mail } from 'lucide-react';
+import AnimatedBackground from '@/components/AnimatedBackground';
+import { SecureLogger } from '@/utils/secureLogging';
 
 const PagoExitoso = () => {
-  const [searchParams] = useSearchParams();
-  const sessionId = searchParams.get('session_id');
-  const casoId = searchParams.get('caso_id');
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [casoActualizado, setCasoActualizado] = useState(false);
-
   useEffect(() => {
-    verificarEstadoCaso();
+    // Log para confirmar que el usuario ha llegado a esta página
+    SecureLogger.info('User landed on success page after payment', 'payment_flow');
   }, []);
 
-  const verificarEstadoCaso = async () => {
-    if (!casoId) {
-      setLoading(false);
-      return;
-    }
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-800 flex items-center justify-center p-4">
+      <AnimatedBackground darkMode={true} />
+      <div className="relative z-10 max-w-md w-full text-center bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700">
+        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+          ¡Pago Realizado con Éxito!
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300 mb-8">
+          Hemos recibido tu pago correctamente. El siguiente paso es acceder a tu cuenta para gestionar tu consulta.
+        </p>
+        
+        <div className="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-lg text-left space-y-4">
+            <div className="flex items-start">
+                <Mail className="w-6 h-6 text-blue-500 mr-4 mt-1" />
+                <div>
+                    <h2 className="font-semibold text-gray-800 dark:text-white">Revisa tu correo electrónico</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Te hemos enviado un mensaje con un enlace seguro para que puedas establecer tu contraseña y acceder a tu nueva cuenta.
+                    </p>
+                </div>
+            </div>
+        </div>
 
-    try {
-      // Verificar el estado del caso
-      const { data: caso, error } = await supabase
-        .from('casos')
-        .select('estado')
-        .eq('id', casoId)
-        .single();
-
-      if (error) {
-        console.error('Error verificando caso:', error);
-        toast({
-          title: "Error",
-          description: "No se pudo verificar el estado del caso",
-          variant: "destructive"
-        });
-      } else if (caso) {
-        setCasoActualizado(caso.estado === 'disponible');
-        if (caso.estado === 'disponible') {
-          toast({
-            title: "¡Caso activado!",
-            description: "Tu caso ha sido procesado y está disponible para los abogados.",
-          });
-        } else {
-          // Polling ligero: hasta 3 reintentos cada 1.5s
-          let intentos = 0;
-          const intervalo = setInterval(async () => {
-            intentos += 1;
-            const { data: casoRetry } = await supabase
-              .from('casos')
-              .select('estado')
-              .eq('id', casoId)
-              .single();
-            if (casoRetry?.estado === 'disponible') {
-              setCasoActualizado(true);
-              clearInterval(intervalo);
-              toast({ title: "¡Caso activado!", description: "Tu caso ya está disponible." });
-            }
-            if (intentos >= 3) clearInterval(intervalo);
-          }, 1500);
-        }
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 dark:from-gray-900 dark:via-green-950 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600 dark:text-gray-300">Verificando tu pago y actualizando el caso...</p>
+        <div className="mt-8">
+            <Button asChild className="w-full">
+                <Link to="/">Volver a la página principal</Link>
+            </Button>
+            <p className="text-xs text-gray-500 mt-4">
+                Si no recibes el correo en unos minutos, por favor, revisa tu carpeta de spam o correo no deseado.
+            </p>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 dark:from-gray-900 dark:via-green-950 dark:to-gray-800 flex items-center justify-center p-4">
-      <Card className="max-w-2xl w-full p-8 text-center">
-        <div className="flex justify-center mb-6">
-          <CheckCircle className="h-20 w-20 text-green-500" />
-        </div>
-        
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-          ¡Pago Exitoso!
-        </h1>
-        
-        <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-          Tu pago ha sido procesado con exito. 
-          {casoActualizado 
-            ? " Hemos activado tu caso y ahora está siendo revisado por nuestro equipo."
-            : " En breve tu caso será activado y procesado por nuestro sistema."
-          }
-        </p>
-
-        {/* Por seguridad y simplicidad, ocultamos IDs sensibles */}
-
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Próximos pasos:
-          </h3>
-          <ul className="text-left space-y-2 text-gray-600 dark:text-gray-300">
-            <li className="flex items-start">
-              <span className="text-green-500 mr-2">•</span>
-              {casoActualizado 
-                ? "Revisa tu bandeja de entrada"
-                : "Recibirás un email de confirmación en los próximos minutos"
-              }
-            </li>
-            <li className="flex items-start">
-              <span className="text-green-500 mr-2">•</span>
-              Los abogados especializados pueden revisar tu caso
-            </li>
-            <li className="flex items-start">
-              <span className="text-green-500 mr-2">•</span>
-              Te contactaremos en un plazo máximo de 24 horas
-            </li>
-            <li className="flex items-start">
-              <span className="text-green-500 mr-2">•</span>
-              Puedes seguir el progreso desde tu dashboard
-            </li>
-          </ul>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 mt-8">
-          {casoId && (
-            <Button asChild className="flex-1">
-              <Link to={`/dashboard/casos/${casoId}`}>
-                <Home className="w-4 h-4 mr-2" />
-                Ir al caso
-              </Link>
-            </Button>
-          )}
-          {/* El reintento de pago se mantiene solo en Pago Cancelado */}
-          <Button asChild variant="outline" className="flex-1">
-            <Link to="/dashboard">
-              <ArrowRight className="w-4 h-4 mr-2" />
-              Ir al Dashboard
-            </Link>
-          </Button>
-        </div>
-      </Card>
     </div>
   );
 };
