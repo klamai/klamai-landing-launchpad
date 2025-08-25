@@ -188,15 +188,19 @@ async function handleAnonymousPayment(session, supabase) {
   }
   
   try {
-    // ✅ MÉTODO CORREGIDO: Obtener usuarios y buscar manualmente
-    const { data: { users }, error: listUsersError } = await supabase.auth.admin.listUsers();
+    // Buscar si existe un usuario con el email exacto proporcionado en la página de pago
+    const { data: { users }, error: listUsersError } = await supabase.auth.admin.listUsers({
+      filter: {
+        email: customerEmail,
+      },
+    });
 
     if (listUsersError) {
       throw new Error(`Error listing users: ${listUsersError.message}`);
     }
     
-    // ✅ BÚSQUEDA MANUAL: Encontrar usuario exacto por email
-    const existingUser = users.find(user => user.email === customerEmail);
+    // Buscar el email exacto en la lista de usuarios devueltos
+    const existingUser = users.find(user => user.email === customerEmail) || null;
 
     if (!existingUser) {
       // --- FLUJO A: USUARIO NUEVO ---
