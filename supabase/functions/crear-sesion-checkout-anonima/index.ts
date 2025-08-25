@@ -1,89 +1,176 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import Stripe from "https://esm.sh/stripe@14.21.0";
-
-// Logging estructurado para facilitar la búsqueda en producción
-function log(level, message, context = {}) {
-  console.log(JSON.stringify({
-    level,
-    message,
-    ...context,
-    timestamp: new Date().toISOString()
-  }));
-}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, x-client-version, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS"
+};
+
+// Utilidades de sanitización para logs
+const maskEmail = (email?: string) => {
+  if (!email || typeof email !== 'string') return email;
+  const [user, domain] = email.split('@');
+  const visible = user.slice(0, 2);
+  return `${visible}***@${domain}`;
+};
+const maskId = (id?: string) => {
+  if (!id || typeof id !== 'string') return id;
+  return `${id.slice(0, 6)}...`;
+};
+const sanitizeDetails = (value: unknown): unknown => {
+  if (value == null) return value;
+  if (typeof value === 'string') return value.length > 40 ? `${value.slice(0, 12)}...` : value;
+  if (Array.isArray(value)) return value.map(sanitizeDetails);
+  if (typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (k.toLowerCase().includes('email')) out[k] = maskEmail(v as string);
+      else if (k.toLowerCase().includes('id')) out[k] = maskId(String(v));
+      else if (k.toLowerCase().includes('url')) out[k] = typeof v === 'string' ? `${(v as string).split('?')[0]}?...` : v;
+      else out[k] = sanitizeDetails(v);
+    }
+    return out;
+  }
+  return value;
+};
+const logStep = (step: string, details?: unknown) => {
+  try {
+    const detailsStr = details ? ` - ${JSON.stringify(sanitizeDetails(details))}` : '';
+    console.log(`[CREAR-SESION-CHECKOUT-ANONIMA] ${step}${detailsStr}`);
+  } catch {
+    console.log(`[CREAR-SESION-CHECKOUT-ANONIMA] ${step}`);
+  }
 };
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
-  let caso_id_logging = "unknown";
   try {
-    const { caso_id } = await req.json();
-    caso_id_logging = caso_id || "unknown";
+    logStep("Función iniciada");
 
-    if (!caso_id) {
-      throw new Error("El 'caso_id' es requerido para crear una sesión de checkout.");
-    }
-
-    log('info', 'Iniciando creación de sesión de checkout anónima', { caso_id });
-
-    const supabase = await Deno.connect({
-      hostname: "db.supabase.co",
-      port: 5432,
-      db: "postgres",
-      user: "postgres",
-      password: "postgres",
-    });
-
-    const { data: caso, error } = await supabase
-      .from("casos")
-      .select("id, cliente_id, datos_contacto")
-      .eq("id", caso_id)
-      .single();
-
-    if (error) {
-      throw new Error(`Error al buscar el caso: ${error.message}`);
-    }
-
-    if (!caso) {
-      throw new Error(`Caso con ID ${caso_id} no encontrado.`);
-    }
-
-    // Comprobación adicional para evitar procesar casos ya pagados o vinculados
-    if (caso.cliente_id) {
-       return new Response(
-        JSON.stringify({ error: `El caso ya está asociado a un cliente.` }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    
-    // Obtener el email del contacto del caso
-    if (!caso.datos_contacto?.email) {
-      throw new Error(`El caso con ID ${caso_id} no tiene un email de contacto registrado.`);
-    }
-    const customerEmail = caso.datos_contacto.email;
-
-
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    // Verificar variables de entorno
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const priceId = Deno.env.get("STRIPE_PRICE_ID_CONSULTA_ESTRATEGICA");
     const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:5173";
 
-    if (!stripeKey || !priceId) {
-      throw new Error("Las variables de entorno STRIPE_SECRET_KEY y STRIPE_PRICE_ID_CONSULTA_ESTRATEGICA son requeridas.");
+    if (!stripeSecretKey || !supabaseUrl || !supabaseServiceKey || !priceId) {
+      logStep("ERROR - Variables de entorno faltantes");
+      throw new Error("Variables de entorno requeridas no configuradas");
     }
 
-    const stripe = new Stripe(stripeKey, {
+    logStep("Variables de entorno verificadas");
+
+    // Obtener datos del request
+    const { caso_id, customer_email } = await req.json();
+
+    if (!caso_id) {
+      logStep("ERROR - Parámetro caso_id faltante");
+      throw new Error("Se requiere caso_id");
+    }
+
+    logStep("Parámetros recibidos", { caso_id, customer_email: customer_email ? maskEmail(customer_email) : "no proporcionado" });
+
+    // Inicializar Supabase con service role
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false }
+    });
+
+    // Verificar que el caso existe y está en estado permitido
+    logStep("Buscando caso en la base de datos", { caso_id });
+    
+    const { data: caso, error: casoError } = await supabase
+      .from("casos")
+      .select("id, cliente_id, email_borrador, estado, stripe_session_id")
+      .eq("id", caso_id)
+      .single();
+
+    if (casoError || !caso) {
+      logStep("ERROR - Caso no encontrado", {
+        error: casoError?.message,
+        caso_id,
+        error_details: casoError
+      });
+      throw new Error("Caso no encontrado");
+    }
+
+    logStep("Caso encontrado exitosamente", {
+      casoId: caso.id,
+      estado: caso.estado,
+      tieneClienteId: !!caso.cliente_id,
+      tieneStripeSessionId: !!caso.stripe_session_id
+    });
+
+    // Comprobación adicional para evitar procesar casos ya pagados o vinculados
+    if (caso.cliente_id) {
+      logStep("ERROR - Caso ya vinculado a un cliente", { casoId: caso_id });
+      return new Response(JSON.stringify({ error: "El caso ya está asociado a un cliente." }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // Validar estados permitidos para crear sesión
+    const allowedStates = ["borrador", "listo_para_propuesta", "esperando_pago"];
+    if (!allowedStates.includes(caso.estado)) {
+      logStep("ERROR - Estado de caso no permitido para pago", { estado: caso.estado });
+      return new Response(JSON.stringify({
+        error: "Estado del caso no permite iniciar pago",
+        estado_actual: caso.estado
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400
+      });
+    }
+
+    // Usar el email proporcionado por el usuario o el email del caso
+    const finalEmail = customer_email || caso.email_borrador;
+    
+    if (!finalEmail) {
+      logStep("ERROR - No se encontró email de contacto", { casoId: caso_id });
+      throw new Error("No se encontró un email de contacto para el caso");
+    }
+    
+    logStep("Email de pago determinado", {
+      email_provided: customer_email ? maskEmail(customer_email) : "no proporcionado",
+      email_caso: maskEmail(caso.email_borrador),
+      email_final: maskEmail(finalEmail)
+    });
+
+    // Inicializar Stripe
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
     });
 
+    // Reutilizar sesión existente si sigue abierta y no expirada
+    if (caso.stripe_session_id) {
+      try {
+        const existing = await stripe.checkout.sessions.retrieve(caso.stripe_session_id);
+        const isOpen = existing?.status === "open";
+        const notExpired = typeof existing?.expires_at === "number" ? (existing.expires_at * 1000) > Date.now() : true;
+        if (isOpen && notExpired && existing?.url) {
+          logStep("Reutilizando sesión de checkout existente", { sessionId: existing.id, expires_at: existing.expires_at });
+          return new Response(JSON.stringify({ checkoutUrl: existing.url, session_id: existing.id }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200
+          });
+        } else {
+          logStep("Sesión existente no reutilizable (completada/expirada/sin url)", { sessionId: existing?.id, status: existing?.status, expires_at: existing?.expires_at });
+        }
+      } catch (e) {
+        logStep("No se pudo recuperar sesión existente, se creará nueva", { error: (e as Error)?.message });
+      }
+    }
+
+    // Crear sesión de checkout sin pre-rellenar email
+    const idempotencyKey = `${caso_id}:${Math.floor(Date.now()/60000)}`; // por minuto para evitar duplicaciones
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'], // <-- AÑADIDO: Especificamos solo tarjeta
-      customer_email: customerEmail, // <-- AÑADIDO: Pre-rellenamos el email
+      payment_method_types: ["card"],
       line_items: [
         {
           price: priceId,
@@ -91,34 +178,62 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${siteUrl}/pago-exitoso`,
+      success_url: `${siteUrl}/pago-exitoso?caso_id=${caso_id}`,
       cancel_url: `${siteUrl}/chat?caso_id=${caso_id}&pago=cancelado`,
       metadata: {
         caso_id: caso_id,
         flujo_origen: 'chat_anonimo'
       },
-      // Hacemos que Stripe pida el email, ya que no tenemos un usuario logueado
-      customer_creation: "always", 
+      payment_intent_data: {
+        metadata: {
+          caso_id: caso_id,
+          flujo_origen: 'chat_anonimo'
+        }
+      }
+    }, {
+      // Evita duplicaciones ante reintentos rápidos
+      idempotencyKey
     });
     
     if (!session.url) {
-        throw new Error("Stripe no devolvió una URL de sesión.");
+      throw new Error("Stripe no devolvió una URL de sesión.");
     }
 
-    log('info', 'Sesión de checkout anónima creada exitosamente', { caso_id });
+    // Guardar el session_id en el caso para futuras reutilizaciones
+    const { error: updateError } = await supabase
+      .from("casos")
+      .update({
+        stripe_session_id: session.id,
+        estado: "esperando_pago",
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", caso_id);
 
-    return new Response(JSON.stringify({ checkoutUrl: session.url }), {
+    if (updateError) {
+      logStep("ERROR - Error actualizando caso con session_id", { error: updateError.message });
+      throw new Error(`Error actualizando caso: ${updateError.message}`);
+    }
+
+    // No creamos ni vinculamos clientes aquí, eso se hará en el webhook después del pago
+    // Solo registramos el email para referencia futura
+    logStep("Email registrado para referencia futura", { email: maskEmail(finalEmail) });
+
+    logStep("Sesión de checkout anónima creada exitosamente", {
+      sessionId: session.id,
+      casoId: caso_id
+    });
+
+    return new Response(JSON.stringify({ checkoutUrl: session.url, session_id: session.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    log('error', error.message, {
-      caso_id: caso_id_logging,
-      stack: error.stack
-    });
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR en crear-sesion-checkout-anonima", { message: errorMessage });
+    
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

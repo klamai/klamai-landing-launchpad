@@ -115,6 +115,48 @@ serve(async (req) => {
             processingResult = { success: false, message: "Webhook session is missing user_id or caso_id in metadata" };
           }
       }
+    } else if (event.type === "payment_intent.succeeded") {
+      const paymentIntent = event.data.object;
+      
+      // Verificar si el payment_intent tiene metadata con caso_id
+      if (paymentIntent.metadata?.caso_id) {
+        logStep("Processing payment intent for anonymous flow", { casoId: paymentIntent.metadata.caso_id });
+        
+        // Para payment_intent, necesitamos obtener la sesión de checkout para obtener el email del cliente
+        try {
+          // Obtener el charge para luego obtener la sesión de checkout
+          const charge = await stripe.charges.retrieve(paymentIntent.latest_charge);
+          if (charge && charge.payment_intent) {
+            // Obtener la sesión de checkout a partir del payment intent
+            const sessions = await stripe.checkout.sessions.list({
+              payment_intent: paymentIntent.id,
+              limit: 1
+            });
+            
+            if (sessions.data.length > 0 && sessions.data[0].customer_details?.email) {
+              const session = sessions.data[0];
+              // Crear un objeto de sesión simulado para usar con la función existente
+              const simulatedSession = {
+                metadata: session.metadata || paymentIntent.metadata,
+                customer_details: {
+                  email: session.customer_details.email
+                }
+              };
+              processingResult = await handleAnonymousPayment(simulatedSession, supabase);
+            } else {
+              processingResult = { success: false, message: "Could not retrieve customer email from checkout session" };
+            }
+          } else {
+            processingResult = { success: false, message: "Could not retrieve charge from payment intent" };
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logStep("Error retrieving checkout session", { message: errorMessage });
+          processingResult = { success: false, message: `Error retrieving checkout session: ${errorMessage}` };
+        }
+      } else {
+        processingResult = { success: false, message: "Payment intent is missing caso_id in metadata" };
+      }
     } else {
         // Aquí puedes añadir el manejo de otros eventos si es necesario
         processingResult = { success: true, message: `Event type ${event.type} acknowledged but not handled.` };
@@ -146,57 +188,49 @@ async function handleAnonymousPayment(session, supabase) {
   }
   
   try {
-    // *** SOLUCIÓN DEFINITIVA APLICADA AQUÍ ***
+    // Buscar si existe un usuario con el email exacto proporcionado en la página de pago
     const { data: { users }, error: listUsersError } = await supabase.auth.admin.listUsers({
-      email: customerEmail,
+      filter: {
+        email: customerEmail,
+      },
     });
 
     if (listUsersError) {
       throw new Error(`Error listing users: ${listUsersError.message}`);
     }
     
-    const existingUser = users.length > 0 ? users[0] : null;
+    // Buscar el email exacto en la lista de usuarios devueltos
+    const existingUser = users.find(user => user.email === customerEmail) || null;
 
-    if (!existingUser || !existingUser.email_confirmed_at) {
-      let userId, userEmail;
+    if (!existingUser) {
+      // --- FLUJO A: USUARIO NUEVO ---
+      logStep("User not found, creating new account", { email: maskEmail(customerEmail) });
+      
+      const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
+        email: customerEmail,
+        email_confirm: true,
+      });
 
-      if (!existingUser) {
-        // --- FLUJO A: USUARIO NUEVO ---
-        logStep("User not found, creating new account", { email: maskEmail(customerEmail) });
-        
-        const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
-          email: customerEmail,
-          email_confirm: true,
-        });
-
-        if (createUserError) throw new Error(`Failed to create user: ${createUserError.message}`);
-        userId = newUser.user.id;
-        userEmail = newUser.user.email;
-      } else {
-        // --- FLUJO B: USUARIO EXISTENTE PERO NO CONFIRMADO ---
-        logStep("Existing user found but not confirmed, re-sending activation", { userId: maskId(existingUser.id) });
-        userId = existingUser.id;
-        userEmail = existingUser.email;
-      }
-
-      await linkCaseToUser(supabase, casoId, userId);
+      if (createUserError) throw new Error(`Failed to create user: ${createUserError.message}`);
+      
+      await linkCaseToUser(supabase, casoId, newUser.user.id);
 
       const { data: link, error: linkError } = await supabase.auth.admin.generateLink({
         type: 'recovery',
-        email: userEmail,
+        email: customerEmail,
       });
       if (linkError) throw new Error(`Failed to generate recovery link: ${linkError.message}`);
       
       const emailText = `¡Bienvenido a Klam.ai!\n\nGracias por tu confianza. Para acceder a tu consulta y gestionar tu caso, por favor, establece tu contraseña a través del siguiente enlace:\n\n${link.properties.action_link}\n\nUna vez establecida, podrás iniciar sesión con tu email.\n\nEl equipo de Klam.ai`;
       const { error: sendError } = await supabase.functions.invoke('send-email', {
-          body: { to: userEmail, subject: "Bienvenido a Klam.ai - Accede a tu consulta", text: emailText }
+          body: { to: customerEmail, subject: "Bienvenido a Klam.ai - Accede a tu consulta", text: emailText }
       });
       if (sendError) logStep("Failed to send welcome email", { error: sendError.message });
-      else logStep("Welcome email sent successfully", { userId });
+      else logStep("Welcome email sent successfully", { userId: newUser.user.id });
 
     } else {
-      // --- FLUJO C: USUARIO EXISTENTE Y CONFIRMADO ---
-      logStep("Existing and confirmed user found, linking case", { userId: maskId(existingUser.id) });
+      // --- FLUJO B: USUARIO EXISTENTE ---
+      logStep("Existing user found, linking case", { userId: maskId(existingUser.id) });
       await linkCaseToUser(supabase, casoId, existingUser.id);
       
       const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:5173";
