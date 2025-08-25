@@ -27,16 +27,51 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('signup');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false); // Estado de carga
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const handlePlanSelect = (planId: string) => {
+  const handlePlanSelect = async (planId: string) => {
     setSelectedPlan(planId);
+    setIsLoadingPayment(true); // Inicia el estado de carga
+
     if (!user) {
-      setAuthModalMode('signup');
-      setShowAuthModal(true);
+      // --- NUEVO FLUJO DE PAGO ANÓNIMO ---
+      try {
+        toast({
+          title: "Redirigiendo a la pasarela de pago...",
+          description: "Estás a punto de asegurar tu consulta.",
+        });
+
+        const { data, error } = await supabase.functions.invoke('crear-sesion-checkout-anonima', {
+          body: {
+            caso_id: casoId,
+            flujo_origen: 'chat_anonimo' // Etiqueta clave para el webhook
+          }
+        });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        if (data?.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+        } else {
+          throw new Error('No se recibió una URL de pago válida.');
+        }
+
+      } catch (error) {
+        toast({
+          title: "Error al iniciar el pago",
+          description: error instanceof Error ? error.message : "No pudimos conectar con la pasarela de pago. Por favor, inténtalo de nuevo.",
+          variant: "destructive"
+        });
+        setIsLoadingPayment(false); // Detiene la carga en caso de error
+      }
+      // No se detiene la carga en caso de éxito porque hay redirección
+
     } else {
-      // Proceder al pago
+      // --- FLUJO EXISTENTE PARA USUARIOS REGISTRADOS (ahora usa handlePayment) ---
       handlePayment(planId);
     }
   };
@@ -74,16 +109,20 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
   };
 
   const handlePayment = async (planId: string) => {
+    // Aseguramos que el estado de carga esté activo
+    if (!isLoadingPayment) setIsLoadingPayment(true);
+
     try {
       toast({
-        title: "Procesando pago",
-        description: "Creando sesión de pago...",
+        title: "Procesando...",
+        description: "Creando tu sesión de pago segura.",
       });
 
       const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
         body: {
           plan_id: planId,
-          caso_id: casoId
+          caso_id: casoId,
+          flujo_origen: 'dashboard_registrado' // Etiqueta para el webhook
         }
       });
 
@@ -92,18 +131,17 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
       }
 
       if (data?.url) {
-        // Redirigir a Stripe Checkout
         window.location.href = data.url;
       } else {
         throw new Error('No se recibió URL de pago');
       }
     } catch (error) {
-      console.error('Error al crear sesión de pago:', error);
       toast({
         title: "Error en el pago",
         description: error instanceof Error ? error.message : "Error al procesar el pago. Inténtalo de nuevo.",
         variant: "destructive"
       });
+      setIsLoadingPayment(false); // Detiene la carga en caso de error
     }
   };
 
@@ -216,7 +254,8 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
     highlight: true,
     badge: 'Oferta Especial',
     priceId: 'price_1Rc0kkI0mIGG72Op6Rk4GulG', // Price ID real de Stripe
-    onSelect: () => handlePlanSelect('consulta-estrategica')
+    onSelect: () => handlePlanSelect('consulta-estrategica'),
+    isLoading: isLoadingPayment // Pasamos el estado de carga
   };
 
   // Planes ocultos para uso futuro

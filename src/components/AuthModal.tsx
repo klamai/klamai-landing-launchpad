@@ -124,7 +124,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess, initialMode = 'login', planId, 
           return;
         }
 
-        if (signUpData.user && acepta_politicas) {
+        if (signUpData && signUpData.user && acepta_politicas) {
           try {
             await supabase.functions.invoke('record-consent', {
               body: {

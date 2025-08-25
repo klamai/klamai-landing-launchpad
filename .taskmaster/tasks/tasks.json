@@ -299,11 +299,75 @@
         ],
         "priority": "low",
         "subtasks": []
+      },
+      {
+        "id": 23,
+        "title": "[Pago Anónimo] Modificar Base de Datos",
+        "description": "Crear una migración de Supabase para añadir la columna 'token_reclamacion_pago' a la tabla 'casos' y el estado 'pago_realizado_pendiente_registro' al ENUM 'caso_estado_enum'.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 24,
+        "title": "[Pago Anónimo] Crear Edge Function de Checkout",
+        "description": "Crear una nueva Supabase Edge Function llamada 'crear-sesion-checkout-anonima' que reciba un 'caso_id', cree una sesión de Stripe con el 'caso_id' en los metadatos y devuelva la URL de pago.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          23
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 25,
+        "title": "[Pago Anónimo] Refactorizar Webhook de Stripe",
+        "description": "Refactorizar la función 'stripe-webhook' para manejar el evento 'checkout.session.completed' de pagos anónimos. Debe crear un usuario si no existe (o vincularlo si ya existe) y enviar un email con un enlace para establecer la contraseña.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          23
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 26,
+        "title": "[Pago Anónimo] Implementar Flujo en Frontend",
+        "description": "Modificar Chat.tsx para que al hacer clic en 'Pagar Consulta' se llame a la nueva función 'crear-sesion-checkout-anonima' y se redirija al usuario a Stripe. Crear una nueva página '/pago-exitoso' para mostrar un mensaje de confirmación post-pago.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          24
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 27,
+        "title": "[Pago Anónimo] Pruebas Integrales del Nuevo Flujo",
+        "description": "Realizar pruebas de extremo a extremo del nuevo flujo. Verificar el pago anónimo, la creación automática de la cuenta, la recepción del email para establecer contraseña y la correcta vinculación del caso a la nueva cuenta. Probar también el caso de un usuario ya existente.",
+        "details": "",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [
+          25,
+          26
+        ],
+        "priority": "high",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-08-18T11:54:54.067Z",
-      "updated": "2025-08-21T07:57:16.830Z",
+      "updated": "2025-08-25T11:21:49.203Z",
       "description": "Tasks for master context"
     }
   }
