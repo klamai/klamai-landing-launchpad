@@ -23,6 +23,7 @@ import PagoExitoso from "./pages/PagoExitoso";
 import PagoCancelado from "./pages/PagoCancelado";
 import AuthCallback from "./pages/AuthCallback";
 import ActivarCliente from "./pages/ActivarCliente";
+import ClientActivation from "./pages/ClientActivation";
 import NotFound from "./pages/NotFound";
 import PublicProposal from "./pages/PublicProposal";
 import SolicitudAbogadoPage from '@/pages/abogados/Solicitud'; // Importar la nueva página
@@ -141,6 +142,7 @@ const App = () => (
             <Route path="/pago-exitoso" element={<PagoExitoso />} />
             <Route path="/pago-cancelado" element={<PagoCancelado />} />
             <Route path="/activar-cliente" element={<ActivarCliente />} />
+        <Route path="/client-activation" element={<ClientActivation />} />
             <Route path="/p/:token" element={<PublicProposal />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

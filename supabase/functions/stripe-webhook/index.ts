@@ -204,20 +204,35 @@ async function handleAnonymousPayment(session, supabase) {
       
       const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
         email: customerEmail,
-        email_confirm: true,
+        email_confirm: false,
       });
 
       if (createUserError) throw new Error(`Failed to create user: ${createUserError.message}`);
       
-      await linkCaseToUser(supabase, casoId, newUser.user.id);
+      // Cambiar estado del caso a pendiente de registro
+      const { error: updateError } = await supabase
+        .from("casos")
+        .update({ 
+          estado: "pago_realizado_pendiente_registro",
+          fecha_pago: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", casoId);
 
-      const { data: link, error: linkError } = await supabase.auth.admin.generateLink({
-        type: 'recovery',
-        email: customerEmail,
+      if (updateError) throw new Error(`Failed to update case status: ${updateError.message}`);
+
+      // Generar token de activación personalizado
+      const { data: tokenData, error: tokenError } = await supabase.functions.invoke('generate-client-activation-token', {
+        body: { caso_id: casoId, email: customerEmail }
       });
-      if (linkError) throw new Error(`Failed to generate recovery link: ${linkError.message}`);
+
+      if (tokenError) throw new Error(`Failed to generate activation token: ${tokenError.message}`);
+
+      // Enviar email con enlace personalizado
+      const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:5173";
+      const activationUrl = `${siteUrl}/client-activation?token=${tokenData.token}`;
       
-      const emailText = `¡Bienvenido a Klam.ai!\n\nGracias por tu confianza. Para acceder a tu consulta y gestionar tu caso, por favor, establece tu contraseña a través del siguiente enlace:\n\n${link.properties.action_link}\n\nUna vez establecida, podrás iniciar sesión con tu email.\n\nEl equipo de Klam.ai`;
+      const emailText = `¡Bienvenido a Klam.ai!\n\nGracias por tu confianza. Para acceder a tu consulta y gestionar tu caso, por favor, establece tu contraseña a través del siguiente enlace:\n\n${activationUrl}\n\nUna vez establecida, podrás iniciar sesión con tu email.\n\nEl equipo de Klam.ai`;
       const { error: sendError } = await supabase.functions.invoke('send-email', {
           body: { to: customerEmail, subject: "Bienvenido a Klam.ai - Accede a tu consulta", text: emailText }
       });
@@ -227,15 +242,49 @@ async function handleAnonymousPayment(session, supabase) {
     } else {
       // --- FLUJO B: USUARIO EXISTENTE ---
       logStep("Existing user found, linking case", { userId: maskId(existingUser.id) });
-      await linkCaseToUser(supabase, casoId, existingUser.id);
       
-      const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:5173";
-      const emailText = `Hola,\n\nHemos añadido una nueva consulta a tu cuenta de Klam.ai.\n\nPuedes ver los detalles iniciando sesión y accediendo a tu dashboard:\n\n${siteUrl}/dashboard\n\nGracias por seguir confiando en nosotros.\n\nEl equipo de Klam.ai`;
-      const { error: sendError } = await supabase.functions.invoke('send-email', {
-          body: { to: existingUser.email, subject: "Nueva consulta añadida a tu cuenta de Klam.ai", text: emailText }
-      });
-      if (sendError) logStep("Failed to send notification email", { error: sendError.message });
-      else logStep("Notification email sent successfully", { userId: existingUser.id });
+      if (!existingUser.email_confirmed_at) {
+        // Usuario existente NO confirmado → cambiar estado y generar token
+        const { error: updateError } = await supabase
+          .from("casos")
+          .update({ 
+            estado: "pago_realizado_pendiente_registro",
+            fecha_pago: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", casoId);
+
+        if (updateError) throw new Error(`Failed to update case status: ${updateError.message}`);
+
+        // Generar token de activación personalizado
+        const { data: tokenData, error: tokenError } = await supabase.functions.invoke('generate-client-activation-token', {
+          body: { caso_id: casoId, email: existingUser.email }
+        });
+
+        if (tokenError) throw new Error(`Failed to generate activation token: ${tokenError.message}`);
+
+        // Enviar email con enlace personalizado
+        const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:5173";
+        const activationUrl = `${siteUrl}/client-activation?token=${tokenData.token}`;
+        
+        const recoveryEmailText = `Hola,\n\nHemos recibido tu pago. Para activar tu cuenta y gestionar tu consulta, por favor establece tu contraseña con este enlace:\n\n${activationUrl}\n\nEl equipo de Klam.ai`;
+        const { error: sendError } = await supabase.functions.invoke('send-email', {
+          body: { to: existingUser.email, subject: "Activa tu cuenta en Klam.ai", text: recoveryEmailText }
+        });
+        if (sendError) logStep("Failed to send recovery email to existing unconfirmed user", { error: sendError.message });
+        else logStep("Recovery email sent to existing unconfirmed user", { userId: existingUser.id });
+      } else {
+        // Usuario existente confirmado → vincular caso y notificar
+        await linkCaseToUser(supabase, casoId, existingUser.id);
+        
+        const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:5173";
+        const emailText = `Hola,\n\nHemos añadido una nueva consulta a tu cuenta de Klam.ai.\n\nPuedes ver los detalles iniciando sesión y accediendo a tu dashboard:\n\n${siteUrl}/dashboard\n\nGracias por seguir confiando en nosotros.\n\nEl equipo de Klam.ai`;
+        const { error: sendError } = await supabase.functions.invoke('send-email', {
+            body: { to: existingUser.email, subject: "Nueva consulta añadida a tu cuenta de Klam.ai", text: emailText }
+        });
+        if (sendError) logStep("Failed to send notification email", { error: sendError.message });
+        else logStep("Notification email sent successfully", { userId: existingUser.id });
+      }
 
     }
 

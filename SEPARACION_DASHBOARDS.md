@@ -98,6 +98,43 @@
   - **SANITIZACIÓN 100% COMPLETADA**
 - ✅ **Herramientas de Seguridad**:
   - Sanitización automática de información sensible
+
+#### **🔐 FASE 6: Sistema de Tokens de Activación para Clientes que Pagan (15/01/2025)**
+- ✅ **Problema Identificado**: 
+  - Clientes anónimos que pagan no reciben email de activación
+  - Tokens de activación más cortos que los de abogados
+  - No se vincula el caso al usuario creado
+  - Estado del caso no cambia a "disponible"
+  - Página de activación da error por tabla incorrecta
+- ✅ **Solución Implementada**:
+  - **Nueva tabla**: `client_activation_tokens` con estructura idéntica a `lawyer_activation_tokens`
+  - **Tokens de 64 caracteres**: Igual formato que abogados (2 UUIDs concatenados)
+  - **Nueva función Edge**: `generate-client-activation-token` para crear tokens personalizados
+  - **Nueva página**: `ClientActivation.tsx` específica para activación de clientes que pagan
+  - **Flujo corregido**: 
+    - Pago anónimo → Genera token → Envía email → Cliente activa cuenta → Caso vinculado y disponible
+- ✅ **Archivos Modificados/Creados**:
+  - `supabase/migrations/20250115000000_create_client_activation_tokens_table.sql` - Nueva tabla
+  - `supabase/functions/generate-client-activation-token/index.ts` - Función de generación de tokens
+  - `supabase/functions/stripe-webhook/index.ts` - Actualizado para usar nuevo sistema
+  - `src/pages/ClientActivation.tsx` - Nueva página de activación
+  - `src/App.tsx` - Nueva ruta `/client-activation`
+- ✅ **Funcionalidades Implementadas**:
+  - Generación de tokens únicos de 64 caracteres
+  - Verificación de tokens con expiración (7 días)
+  - Activación de cuenta con establecimiento de contraseña
+  - Vinculación automática del caso al usuario
+  - Cambio de estado del caso a "disponible"
+  - Registro de consentimiento legal
+  - Inicio de sesión automático tras activación
+  - Redirección al dashboard del cliente
+- ✅ **Seguridad y Cumplimiento**:
+  - Tokens únicos y seguros (igual que abogados)
+  - Verificación de expiración y uso único
+  - Validación de contraseñas (mínimo 8 caracteres)
+  - Aceptación obligatoria de términos y privacidad
+  - Logging seguro sin información sensible
+  - Cumplimiento GDPR con registro de consentimiento
   - Logs estructurados para auditoría
   - Diferentes niveles de logging (info, warn, error, debug)
   - Cumplimiento GDPR en logging
