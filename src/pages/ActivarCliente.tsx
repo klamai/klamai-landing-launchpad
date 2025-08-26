@@ -21,15 +21,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface InvitacionData {
+interface TokenData {
   token: string;
-  profile: {
-    id: string;
-    nombre: string;
-    apellido: string;
-    email: string;
-    tipo_perfil: string;
-  };
+  email: string;
   caso: {
     id: string;
     motivo_consulta: string;
@@ -44,7 +38,7 @@ const ActivarCliente: React.FC = () => {
   
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState(false);
-  const [invitacion, setInvitacion] = useState<InvitacionData | null>(null);
+  const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [error, setError] = useState<string | null>(null);
   
   const [password, setPassword] = useState('');
@@ -63,69 +57,62 @@ const ActivarCliente: React.FC = () => {
       return;
     }
 
-    verificarInvitacion();
+    verificarToken();
   }, [token]);
 
-  const verificarInvitacion = async () => {
+  const verificarToken = async () => {
     try {
-      // Verificar el token y obtener datos de la invitación
-      const { data: invitacionData, error: invitacionError } = await supabase
-        .from('invitaciones_clientes')
+      // Verificar el token y obtener datos del caso
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('client_activation_tokens')
         .select(`
           token,
+          email,
           expires_at,
-          used,
-          profiles:profile_id (
-            id,
-            nombre,
-            apellido,
-            email,
-            tipo_perfil
-          ),
+          used_at,
           casos:caso_id (
             id,
             motivo_consulta,
             estado
           )
         `)
-        // @ts-ignore
         .eq('token', token as any)
         .single();
 
-      if (invitacionError || !invitacionData) {
-        setError('Invitación no encontrada o inválida');
+      if (tokenError || !tokenData) {
+        setError('Token de activación no válido');
         setLoading(false);
         return;
       }
 
-      if ((invitacionData as any).used) {
-        setError('Esta invitación ya ha sido utilizada');
+      if ((tokenData as any).used_at) {
+        setError('Este token ya ha sido utilizado');
         setLoading(false);
         return;
       }
 
-      if (new Date((invitacionData as any).expires_at) < new Date()) {
-        setError('Esta invitación ha expirado');
+      if (new Date((tokenData as any).expires_at) < new Date()) {
+        setError('Este token ha expirado');
         setLoading(false);
         return;
       }
 
-      setInvitacion({
-        token: (invitacionData as any).token,
-        profile: (invitacionData as any).profiles,
-        caso: (invitacionData as any).casos
+      setTokenData({
+        token: (tokenData as any).token,
+        email: (tokenData as any).email,
+        caso: (tokenData as any).casos
       });
 
     } catch (error) {
-      console.error('Error al verificar invitación:', error);
-      setError('Error al verificar la invitación');
+      console.error('Error al verificar token:', error);
+      setError('Error al verificar el token');
     } finally {
       setLoading(false);
     }
   };
 
   const handleActivarCuenta = async () => {
-    if (!invitacion) return;
+    if (!tokenData) return;
 
     // Validaciones
     if (password.length < 8) {
@@ -160,11 +147,10 @@ const ActivarCliente: React.FC = () => {
     try {
       // Crear usuario en Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: invitacion.profile.email,
+        email: tokenData.email,
         password: password,
         options: {
           data: {
-            profile_id: invitacion.profile.id,
             role: 'cliente'
           }
         }
@@ -174,15 +160,23 @@ const ActivarCliente: React.FC = () => {
         throw authError;
       }
 
-      // Marcar invitación como usada y registrar consentimiento
+      // Marcar token como usado
       await supabase
-        .from('invitaciones_clientes')
+        .from('client_activation_tokens')
         .update({ 
-          used: true,
           used_at: new Date().toISOString()
         } as any)
-        // @ts-ignore
         .eq('token', token as any);
+
+      // Cambiar estado del caso a disponible y vincular al usuario
+      await supabase
+        .from('casos')
+        .update({ 
+          estado: 'disponible',
+          cliente_id: authData.user?.id,
+          updated_at: new Date().toISOString()
+        } as any)
+        .eq('id', tokenData.caso.id as any);
 
       // Registrar consentimiento legal en activación
       try {
@@ -274,7 +268,7 @@ const ActivarCliente: React.FC = () => {
             </div>
             <CardTitle className="text-2xl">Activar tu cuenta</CardTitle>
             <p className="text-gray-600">
-              Bienvenido, {invitacion?.profile.nombre} {invitacion?.profile.apellido}
+              Bienvenido, {tokenData?.email}
             </p>
           </CardHeader>
           
@@ -283,9 +277,9 @@ const ActivarCliente: React.FC = () => {
             <Alert>
               <FileText className="h-4 w-4" />
               <AlertDescription>
-                <strong>Caso:</strong> {invitacion?.caso.motivo_consulta}
+                <strong>Caso:</strong> {tokenData?.caso.motivo_consulta}
                 <br />
-                <strong>Estado:</strong> {invitacion?.caso.estado}
+                <strong>Estado:</strong> {tokenData?.caso.estado}
               </AlertDescription>
             </Alert>
 
@@ -296,7 +290,7 @@ const ActivarCliente: React.FC = () => {
                 <Input
                   id="email"
                   type="email"
-                  value={invitacion?.profile.email}
+                  value={tokenData?.email}
                   disabled
                   className="bg-gray-50"
                 />
