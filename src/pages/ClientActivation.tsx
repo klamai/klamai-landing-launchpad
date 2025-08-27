@@ -51,11 +51,6 @@ const ActivationForm = ({ token, email, onActivationSuccess }) => {
   const handleActivation = async (formData: PasswordFormData) => {
     setLoading(true);
     try {
-      console.log('🔐 Activando cuenta de cliente:', {
-        email: email.substring(0, 3) + '***',
-        token: token.substring(0, 8) + '...'
-      });
-
       // ✅ CORREGIDO: Usar Edge Function como abogados
       const { data: activationData, error: activationError } = await supabase.functions.invoke('activate-client-account', {
         body: { token, password: formData.newPassword },
@@ -149,8 +144,6 @@ const ClientActivation = () => {
       }
       
       try {
-        console.log('🔍 Validando token de cliente:', token.substring(0, 8) + '...');
-        
         // ✅ CORREGIDO: Solo verificar el token, NO acceder al caso
         const { data, error } = await supabase
           .from('client_activation_tokens')
@@ -161,11 +154,6 @@ const ClientActivation = () => {
           .single();
 
         if (error || !data) throw new Error('Token inválido o expirado');
-
-        console.log('✅ Token válido encontrado:', {
-          email: (data as any).email?.substring(0, 3) + '***',
-          casoId: (data as any).caso_id?.substring(0, 8)
-        });
 
         setTokenData(data as any);
         setTokenValid(true);
