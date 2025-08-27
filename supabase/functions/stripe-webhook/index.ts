@@ -83,8 +83,25 @@ serve(async (req) => {
       return new Response(JSON.stringify({ received: true, status: "already_processed" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     
-    // Registrar evento (se mueve aquí para asegurar que todos los eventos se registran)
-    await supabase.from("stripe_webhook_events").insert({ stripe_event_id: event.id, event_type: event.type, data_sanitizada: sanitizeDetails(event.data.object), processed: false });
+    // Registrar evento con campos específicos extraídos del evento de Stripe
+    const eventData = event.data.object;
+    const webhookEventData = {
+      stripe_event_id: event.id,
+      event_type: event.type,
+      data_sanitizada: sanitizeDetails(eventData),
+      processed: false,
+      // Extraer campos específicos según el tipo de evento
+      caso_id: eventData.metadata?.caso_id || null,
+      stripe_session_id: event.type === "checkout.session.completed" ? eventData.id : null,
+      stripe_payment_intent_id: event.type === "payment_intent.succeeded" ? eventData.id : (eventData.payment_intent || null),
+      amount_total_cents: eventData.amount_total || eventData.amount || null,
+      currency: eventData.currency || null,
+      user_id: eventData.metadata?.user_id || null,
+      price_id: eventData.line_items?.data?.[0]?.price?.id || null,
+      product_id: eventData.line_items?.data?.[0]?.price?.product || null
+    };
+    
+    await supabase.from("stripe_webhook_events").insert(webhookEventData);
 
     let processingResult = { success: false, message: "Event type not handled" };
 
@@ -118,9 +135,10 @@ serve(async (req) => {
     } else if (event.type === "payment_intent.succeeded") {
       const paymentIntent = event.data.object;
       
-      // Verificar si el payment_intent tiene metadata con caso_id
-      if (paymentIntent.metadata?.caso_id) {
-        logStep("Processing payment intent for anonymous flow", { casoId: paymentIntent.metadata.caso_id });
+      // ✅ MODIFICACIÓN: Solo procesar payment_intent.succeeded para flujos NO anónimos
+      // Para flujos anónimos, checkout.session.completed ya procesó todo correctamente
+      if (paymentIntent.metadata?.caso_id && !paymentIntent.metadata?.flujo_origen) {
+        logStep("Processing payment intent for non-anonymous flow", { casoId: paymentIntent.metadata.caso_id });
         
         // Para payment_intent, necesitamos obtener la sesión de checkout para obtener el email del cliente
         try {
@@ -154,6 +172,13 @@ serve(async (req) => {
           logStep("Error retrieving checkout session", { message: errorMessage });
           processingResult = { success: false, message: `Error retrieving checkout session: ${errorMessage}` };
         }
+      } else if (paymentIntent.metadata?.caso_id && paymentIntent.metadata?.flujo_origen) {
+        // ✅ MODIFICACIÓN: Para flujos anónimos, solo marcar como procesado sin hacer nada
+        logStep("Skipping payment_intent.succeeded for anonymous flow", { 
+          casoId: paymentIntent.metadata?.caso_id,
+          flujoOrigen: paymentIntent.metadata?.flujo_origen 
+        });
+        processingResult = { success: true, message: "Payment intent skipped for anonymous flow (already processed by checkout.session.completed)" };
       } else {
         processingResult = { success: false, message: "Payment intent is missing caso_id in metadata" };
       }
@@ -300,6 +325,7 @@ async function handleAnonymousPayment(session, supabase) {
       moneda: session.currency || 'eur',
       estado: 'succeeded',
       descripcion: `Pago para caso ${casoId.toString().slice(0, 8)}`,
+      stripe_session_id: session.id,
         stripe_payment_intent_id: session.payment_intent,
       metadata_pago: {
         stripe_session_id: session.id,
@@ -565,6 +591,7 @@ async function handleRegisteredUserPayment(session, supabase, stripe) {
       moneda: session.currency || 'eur',
       estado: 'succeeded',
       descripcion: `Pago para caso ${casoId.toString().slice(0, 8)}`,
+      stripe_session_id: session.id,
       stripe_payment_intent_id: session.payment_intent,
       metadata_pago: {
         stripe_session_id: session.id,
@@ -777,6 +804,7 @@ async function handleExistingConfirmedUser(
       moneda: session.currency || 'eur',
       estado: 'succeeded',
       descripcion: `Pago para caso ${casoId.toString().slice(0, 8)}`,
+      stripe_session_id: session.id,
       stripe_payment_intent_id: session.payment_intent,
       metadata_pago: {
         stripe_session_id: session.id,
@@ -932,6 +960,7 @@ async function handleExistingUnconfirmedUser(
       moneda: session.currency || 'eur',
       estado: 'succeeded',
       descripcion: `Pago para caso ${casoId.toString().slice(0, 8)}`,
+      stripe_session_id: session.id,
       stripe_payment_intent_id: session.payment_intent,
       metadata_pago: {
         stripe_session_id: session.id,

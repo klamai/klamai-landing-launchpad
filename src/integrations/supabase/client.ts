@@ -108,11 +108,11 @@ export const validateProductionConfig = () => {
   const isProduction = import.meta.env.PROD;
   
   if (isProduction) {
-    console.log('🔒 Configuración de producción activada (OPTIMIZADA):');
-    console.log(`- Timeout DB: ${PRODUCTION_CONFIG.db.timeout}ms (balanceado para UX)`);
-    console.log(`- Retry attempts: ${PRODUCTION_CONFIG.db.retry} (suficiente sin saturar)`);
-    console.log(`- Retry delay: ${PRODUCTION_CONFIG.db.retryDelay}ms (backoff exponencial)`);
-    console.log(`- Max connections: Automático (escalabilidad)`);
+    // 🔒 Configuración de producción activada (logs eliminados por seguridad)
+    // - Timeout DB: 5000ms (balanceado para UX)
+    // - Retry attempts: 2 (suficiente sin saturar)
+    // - Retry delay: 2000ms (backoff exponencial)
+    // - Max connections: Automático (escalabilidad)
   } else {
     console.log('️ Modo desarrollo - configuraciones de producción optimizadas disponibles');
   }
