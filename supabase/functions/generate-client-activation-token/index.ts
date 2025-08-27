@@ -37,7 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Verificar que el caso existe y tiene el estado correcto
     const { data: caso, error: casoError } = await supabaseAdmin
       .from('casos')
-      .select('id, estado, email_borrador')
+      .select('id, estado, email_borrador, cliente_id')
       .eq('id', caso_id)
       .single();
 
@@ -45,9 +45,61 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Caso no encontrado');
     }
 
-    if (caso.estado !== 'pago_realizado_pendiente_registro') {
-      throw new Error('El caso no está en estado de pago realizado pendiente de registro');
+    console.log('🔍 Caso encontrado:', { 
+      caso_id, 
+      estado: caso.estado, 
+      email_borrador: caso.email_borrador?.substring(0, 3) + '***',
+      email_solicitado: email.substring(0, 3) + '***'
+    });
+
+    // ✅ CORREGIDO: Aceptar estados válidos para casos pagados y casos recién vinculados
+    const validStates = ['pago_realizado_pendiente_registro', 'disponible', 'asignado'];
+    console.log('🔍 Verificando estado del caso:', {
+      caso_id,
+      estado_actual: caso.estado,
+      estados_validos: validStates,
+      email: email.substring(0, 3) + '***',
+      tiene_cliente_id: !!caso.cliente_id
+    });
+
+    if (!validStates.includes(caso.estado)) {
+      console.log('⚠️ Caso en estado inesperado:', {
+        caso_id,
+        estado_actual: caso.estado,
+        estados_validos: validStates,
+        email: email.substring(0, 3) + '***',
+        tiene_cliente_id: !!caso.cliente_id
+      });
+
+      // ✅ CORREGIDO: Intentar corregir el estado si es necesario
+      if (caso.cliente_id) {
+        console.log('🔧 Corrigiendo estado del caso a disponible');
+        const { error: updateError } = await supabaseAdmin
+          .from('casos')
+          .update({ 
+            estado: 'disponible',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', caso_id);
+
+        if (updateError) {
+          console.error('❌ Error corrigiendo estado del caso:', updateError);
+          throw new Error(`Error corrigiendo estado del caso: ${updateError.message}`);
+        }
+
+        console.log('✅ Estado del caso corregido a disponible');
+        caso.estado = 'disponible'; // Actualizar el objeto local
+      } else {
+        console.error('❌ Caso sin cliente_id y en estado inválido:', caso.estado);
+        throw new Error(`El caso no está en estado válido para generar token de activación. Estado actual: ${caso.estado}`);
+      }
     }
+
+    console.log('✅ Estado del caso verificado correctamente:', {
+      caso_id,
+      estado_final: caso.estado,
+      email: email.substring(0, 3) + '***'
+    });
 
     // Verificar si ya existe un token válido para este caso
     if (!force_new) {
@@ -96,7 +148,12 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Error al crear token: ${insertError.message}`);
     }
 
-    console.log('✅ Token de activación generado exitosamente');
+    console.log('✅ Token de activación generado exitosamente', { 
+      token: newToken.token.substring(0, 8) + '...',
+      caso_id,
+      email: email.substring(0, 3) + '***',
+      expires_at: newToken.expires_at
+    });
 
     return new Response(JSON.stringify({
       success: true,

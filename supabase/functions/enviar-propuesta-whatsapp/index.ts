@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     if (!phone) return json({ error: "Sin teléfono para WhatsApp en el caso" }, 400);
 
     // 2) Token/URL (TTL 72h)
-    const siteUrl = (Deno.env.get("SITE_URL") || "http://localhost:5173").replace(/\/$/, "");
+    const siteUrl = (Deno.env.get("SITE_URL") || "http://localhost:8080").replace(/\/$/, "");
     const token = await generateToken();
     const expires = new Date(Date.now() + 72 * 3600 * 1000).toISOString();
     const { error: tokErr } = await sb.from("proposal_tokens").insert({ token, caso_id, expires_at: expires });
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
       "Negritas solo con *asteriscos* (no **).",
       `Incluye el enlace al análisis del caso: ${viewUrl}.`,
       checkoutUrl ? `Incluye una línea final con CTA breve al pago: ${checkoutUrl}.` : "No incluyas enlace de pago.",
-      "El analisis debe ser detallado",
+      "El analisis debe ser muy detallado y estructurado, incluyendo algunos emojis formateado en markdown, dando el analisis del caso, las especialidades, puntos clave, recomendaciones, y documentos necesarios, etc",
       "Devuelve JSON con las claves 'mensaje_whatsapp' y 'analisis_caso' en 'output'."
     ].join("\n");
 

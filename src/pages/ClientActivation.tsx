@@ -58,6 +58,9 @@ const ClientActivation: React.FC = () => {
   const verificarToken = async () => {
     try {
       // Verificar el token y obtener datos del caso
+      console.log('🔍 Verificando token:', token.substring(0, 8) + '...');
+      
+      // @ts-ignore - Supabase types are complex, using any for simplicity
       const { data: tokenData, error: tokenError } = await supabase
         .from('client_activation_tokens')
         .select(`
@@ -65,37 +68,96 @@ const ClientActivation: React.FC = () => {
           email,
           expires_at,
           used_at,
-          casos:caso_id (
-            id,
-            motivo_consulta,
-            estado
-          )
+          caso_id,
+          created_at
         `)
         .eq('token', token)
         .single();
 
-      if (tokenError || !tokenData) {
-        setError('Token de activación no válido');
+      if (tokenError) {
+        console.error('❌ Error verificando token:', tokenError);
+        
+        // Proporcionar información más específica sobre el error
+        if (tokenError.code === 'PGRST116') {
+          setError('Token no encontrado. Verifica que el enlace sea correcto o que el token no haya expirado.');
+        } else {
+          setError(`Error al verificar el token: ${tokenError.message}`);
+        }
         setLoading(false);
         return;
       }
 
-      if (tokenData.used_at) {
-        setError('Este token ya ha sido utilizado');
+      if (!tokenData) {
+        console.error('❌ No se recibieron datos del token');
+        setError('No se pudo obtener información del token de activación');
         setLoading(false);
         return;
       }
 
-      if (new Date(tokenData.expires_at) < new Date()) {
-        setError('Este token ha expirado');
+      // Type assertion para asegurar que tokenData tiene los campos correctos
+      const tokenInfo = tokenData as any;
+
+      console.log('✅ Token encontrado:', {
+        email: tokenInfo.email?.substring(0, 3) + '***',
+        casoId: tokenInfo.caso_id?.substring(0, 8),
+        expiresAt: tokenInfo.expires_at,
+        usedAt: tokenInfo.used_at,
+        createdAt: tokenInfo.created_at
+      });
+
+      if (tokenInfo.used_at) {
+        setError('Este token ya ha sido utilizado. Si necesitas activar tu cuenta, contacta con soporte.');
         setLoading(false);
         return;
       }
+
+      if (new Date(tokenInfo.expires_at) < new Date()) {
+        setError('Este token ha expirado. Por favor, solicita un nuevo enlace de activación.');
+        setLoading(false);
+        return;
+      }
+
+      // ✅ CORREGIDO: Obtener datos del caso por separado para evitar problemas de JOIN
+      console.log('🔍 Obteniendo datos del caso:', tokenInfo.caso_id);
+      
+      // @ts-ignore - Supabase types are complex, using any for simplicity
+      const { data: casoData, error: casoError } = await supabase
+        .from('casos')
+        .select(`
+          id,
+          motivo_consulta,
+          estado,
+          cliente_id,
+          email_borrador
+        `)
+        .eq('id', tokenInfo.caso_id)
+        .single();
+
+      if (casoError || !casoData) {
+        console.error('❌ Error obteniendo datos del caso:', casoError);
+        setError('No se pudo obtener la información del caso. Por favor, contacta con soporte.');
+        setLoading(false);
+        return;
+      }
+
+      // Type assertion para asegurar que casoData tiene los campos correctos
+      const caso = casoData as any;
+
+      console.log('✅ Caso encontrado:', {
+        id: caso.id?.substring(0, 8),
+        estado: caso.estado,
+        tieneClienteId: !!caso.cliente_id,
+        emailBorrador: caso.email_borrador?.substring(0, 3) + '***'
+      });
 
       setTokenData({
-        token: tokenData.token,
-        email: tokenData.email,
-        caso: tokenData.casos as any
+        token: tokenInfo.token,
+        email: tokenInfo.email,
+        caso: {
+          id: caso.id,
+          motivo_consulta: caso.motivo_consulta,
+          estado: caso.estado
+        }
       });
 
     } catch (error) {

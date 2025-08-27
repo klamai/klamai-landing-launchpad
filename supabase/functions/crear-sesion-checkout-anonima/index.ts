@@ -57,7 +57,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const priceId = Deno.env.get("STRIPE_PRICE_ID_CONSULTA_ESTRATEGICA");
-    const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:5173";
+    const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:8080";
 
     if (!stripeSecretKey || !supabaseUrl || !supabaseServiceKey || !priceId) {
       logStep("ERROR - Variables de entorno faltantes");
