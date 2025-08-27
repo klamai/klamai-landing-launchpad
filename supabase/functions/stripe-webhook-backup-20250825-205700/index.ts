@@ -233,7 +233,7 @@ async function handleAnonymousPayment(session, supabase) {
       logStep("Existing user found, linking case", { userId: maskId(existingUser.id) });
       await linkCaseToUser(supabase, casoId, existingUser.id);
       
-      const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:5173";
+      const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:8080";
       const emailText = `Hola,\n\nHemos añadido una nueva consulta a tu cuenta de Klam.ai.\n\nPuedes ver los detalles iniciando sesión y accediendo a tu dashboard:\n\n${siteUrl}/dashboard\n\nGracias por seguir confiando en nosotros.\n\nEl equipo de Klam.ai`;
       const { error: sendError } = await supabase.functions.invoke('send-email', {
           body: { to: existingUser.email, subject: "Nueva consulta añadida a tu cuenta de Klam.ai", text: emailText }

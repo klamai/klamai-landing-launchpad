@@ -34,7 +34,7 @@ Deno.serve(async (req: Request) => {
       }
 
       const payload = {
-        from: `Klam.ai <${FROM_EMAIL}>`,
+        from: `Klamai.com <${FROM_EMAIL}>`,
         to: [to],
         subject: subject,
         text: text,

@@ -136,7 +136,7 @@ serve(async (req) => {
     }
 
     // Generate invitation link
-    const baseUrl = Deno.env.get('FRONTEND_URL') || 'http://localhost:5173'
+    const baseUrl = Deno.env.get('FRONTEND_URL') || 'http://localhost:8080'
     const invitationLink = `${baseUrl}/auth/invitation?token=${invitationToken}`
 
     // Send invitation email (you can implement this with your email service)
