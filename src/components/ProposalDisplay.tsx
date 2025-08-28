@@ -139,6 +139,11 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
       // 3. Marcar caso como listo para propuesta
       await supabase.rpc('set_caso_listo_para_propuesta', { p_caso_id: casoId });
       
+      // 3.1. Disparar WhatsApp inmediatamente (sin delay para evitar timeout)
+      supabase.functions.invoke('enviar-mensaje-presupuesto-whatsapp', {
+        body: { caso_id: casoId, delaySecs: 0 }
+      }).catch(() => {});
+
       // 4. Marcar solicitud como enviada para prevenir re-apertura
       setBudgetRequestSent(true);
       
