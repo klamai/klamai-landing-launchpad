@@ -65,8 +65,10 @@ const testimonials = [{
 const frequentQuestions = ["Quiero vender mi casa, cuál es el proceso legal?", "Cómo proteger la propiedad intelectual de mi negocio?", "Puedo modificar el acuerdo de custodia de mis hijos?", "Qué hacer si recibo una demanda por accidente de tráfico?", "Cómo resolver una disputa contractual con un proveedor?", "Qué pasos seguir si quiero divorciarme?"];
 
 const consultationSchema = z.object({
-  consultation: z.string().min(10, { message: "Por favor, detalla un poco más tu consulta para poder ayudarte mejor." }),
-  acceptedTerms: z.boolean().refine(val => val === true, { message: "Debes aceptar las políticas para continuar." }),
+  consultation: z.string()
+    .min(10, 'La consulta debe tener al menos 10 caracteres')
+    .max(500, 'La consulta no puede exceder 500 caracteres')
+    .refine(val => val.trim().length > 0, 'La consulta no puede estar vacía'),
 });
 
 type ConsultationFormData = z.infer<typeof consultationSchema>;
@@ -83,16 +85,14 @@ const Index = () => {
   const {
     register,
     handleSubmit: handleFormSubmit,
-    control,
     watch,
     setValue,
-    formState: { errors, isValid }
+    formState: { errors }
   } = useForm<ConsultationFormData>({
     resolver: zodResolver(consultationSchema),
     mode: 'onChange',
     defaultValues: {
       consultation: '',
-      acceptedTerms: false,
     }
   });
 
@@ -138,7 +138,7 @@ const Index = () => {
   };
 
   const onSubmit = async (formData: ConsultationFormData) => {
-    if (!isValid) return;
+    if (!formData.consultation?.trim()) return;
     setIsSubmitting(true);
     
     try {
@@ -177,19 +177,17 @@ const Index = () => {
       }
 
       // 2.5. Record consent
-      if (formData.acceptedTerms) {
-        // We don't await this, it can run in the background
-        supabase.functions.invoke('record-consent', {
-          body: {
-            caso_id: casoId,
-            consent_type: 'initial_consultation',
-            accepted_terms: true,
-            accepted_privacy: true,
-            policy_terms_version: 1, // Asignar versión actual
-            policy_privacy_version: 1, // Asignar versión actual
-          },
-        });
-      }
+      // Al hacer clic en el botón se considera aceptación de políticas
+      supabase.functions.invoke('record-consent', {
+        body: {
+          caso_id: casoId,
+          consent_type: 'initial_consultation',
+          accepted_terms: true,
+          accepted_privacy: true,
+          policy_terms_version: 1, // Asignar versión actual
+          policy_privacy_version: 1, // Asignar versión actual
+        },
+      });
 
       // 3. Save essential data for immediate Typebot loading
       localStorage.setItem('userConsultation', formData.consultation.trim());
@@ -402,9 +400,6 @@ const Index = () => {
                           
                           <div className="relative bg-white dark:bg-gray-200 rounded-full shadow-2xl border border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-all duration-500 group-hover:border-blue-300 dark:group-hover:border-blue-600 group-hover:scale-[1.02]">
                             <div className="flex items-center p-1.5 sm:p-2">
-                              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-blue-600 dark:text-blue-400 ml-1 sm:ml-2 flex-shrink-0">
-                                <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 group-hover:scale-110 transition-transform duration-300" />
-                              </div>
                               <input
                                 {...register("consultation")}
                                 maxLength={500}
@@ -420,7 +415,7 @@ const Index = () => {
                                 )}
                                 <button
                                   type="submit"
-                                  disabled={isSubmitting || !isValid}
+                                  disabled={isSubmitting || !consultationValue?.trim()}
                                   className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110 group-hover:shadow-blue-500/25"
                                 >
                                   {isSubmitting ? (
@@ -436,12 +431,25 @@ const Index = () => {
                         
                         {/* Componente de Consentimiento y Errores */}
                         <div className="mt-6 px-4 flex flex-col items-center">
-                          <ConsentCheckbox 
-                            control={control} 
-                            name="acceptedTerms" 
-                          />
                           {errors.consultation && <p className="text-sm font-medium text-destructive mt-2 text-center">{errors.consultation.message}</p>}
-                          {errors.acceptedTerms && <p className="text-sm font-medium text-destructive mt-2 text-center">{errors.acceptedTerms.message}</p>}
+                          
+                          {/* Aviso de políticas - Caja informativa compacta y responsive */}
+                          <div className="mt-3 sm:mt-4 w-full max-w-xs sm:max-w-sm">
+                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2.5 sm:p-3 shadow-sm">
+                              <div className="text-center sm:text-left">
+                                <p className="text-xs text-blue-800 dark:text-blue-200 leading-tight">
+                                  Al hacer clic en el botón de envío, confirmas que aceptas nuestros{" "}
+                                  <a href="/aviso-legal" className="text-blue-600 dark:text-blue-400 hover:underline font-medium" target="_blank" rel="noopener noreferrer">
+                                    Términos y Condiciones
+                                  </a>{" "}
+                                  y{" "}
+                                  <a href="/politicas-privacidad" className="text-blue-600 dark:text-blue-400 hover:underline font-medium" target="_blank" rel="noopener noreferrer">
+                                    Política de Privacidad
+                                  </a>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </form>
 
