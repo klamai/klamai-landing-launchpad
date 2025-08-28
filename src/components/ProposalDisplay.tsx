@@ -1,14 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
-import { Star, X, Sparkles, Clock, Mail } from 'lucide-react';
+import { Star, X, Sparkles, Clock, Mail, CheckCircle, FileText, User, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PricingSection } from '@/components/ui/pricing-section';
-import AuthModal from '@/components/AuthModal';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { SecureLogger } from '@/utils/secureLogging';
+import { ConsentCheckbox } from '@/components/shared/ConsentCheckbox';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const PricingSection = lazy(() => import('@/components/ui/pricing-section').then(m => ({ default: m.PricingSection })));
+const AuthModal = lazy(() => import('@/components/AuthModal'));
+
+// Esquema de validación para el formulario de presupuesto
+const budgetRequestSchema = z.object({
+  email: z.string().email({ message: "Por favor, introduce un email válido." }),
+  acepta_politicas: z.boolean().refine(val => val === true, {
+    message: "Debes aceptar los términos y la política de privacidad.",
+  }),
+});
+
+type BudgetRequestFormData = z.infer<typeof budgetRequestSchema>;
 
 interface ProposalData {
   etiqueta_caso: string;
@@ -28,8 +48,174 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('signup');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false); // Estado de carga
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showSuccessView, setShowSuccessView] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [budgetRequestSent, setBudgetRequestSent] = useState(false); // Prevenir re-apertura
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  
+  // Formulario para solicitud de presupuesto
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<BudgetRequestFormData>({
+    resolver: zodResolver(budgetRequestSchema),
+    defaultValues: {
+      email: "",
+      acepta_politicas: false,
+    },
+  });
+  const fetchCaso = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('casos')
+        .select('id, estado')
+        .eq('id', casoId as any)
+        .single();
+      if (error) return null;
+      return data;
+    } catch {
+      return null;
+    }
+  };
+  const prefetchCaso = () => {
+    queryClient.prefetchQuery({
+      queryKey: ['caso', casoId],
+      queryFn: fetchCaso,
+      staleTime: 120000
+    });
+  };
+  const preloadAuthModal = () => {
+    import('@/components/AuthModal');
+  };
+
+  const handleRequestBudget = async () => {
+    // Prevenir re-apertura si ya se envió la solicitud
+    if (budgetRequestSent) {
+      toast({
+        title: "Solicitud ya enviada",
+        description: "Ya has solicitado un presupuesto para este caso. Te enviaremos la respuesta por email.",
+      });
+      return;
+    }
+    
+    // Siempre mostrar modal de email, sin verificar autenticación
+    setShowEmailModal(true);
+  };
+
+  const handleBudgetRequest = async (data: BudgetRequestFormData) => {
+    try {
+      setIsSubmitting(true);
+      
+      // 1. Actualizar email_borrador en la BD
+      const { error: updateError } = await supabase
+        .from('casos')
+        .update({ email_borrador: data.email } as any)
+        .eq('id', casoId as any);
+      
+      if (updateError) {
+        throw new Error('Error al actualizar email');
+      }
+
+      // 2. Registrar consentimiento legalmente
+      await supabase.functions.invoke('record-consent', {
+        body: {
+          user_id: null, // Usuario anónimo
+          caso_id: casoId,
+          consent_type: 'budget_request',
+          accepted_terms: data.acepta_politicas,
+          accepted_privacy: data.acepta_politicas,
+          policy_terms_version: 1,
+          policy_privacy_version: 1,
+        },
+      });
+
+      // 3. Marcar caso como listo para propuesta
+      await supabase.rpc('set_caso_listo_para_propuesta', { p_caso_id: casoId });
+      
+      // 4. Marcar solicitud como enviada para prevenir re-apertura
+      setBudgetRequestSent(true);
+      
+      // 5. Cerrar modal de email y mostrar éxito
+      setShowEmailModal(false);
+      setShowSuccessView(true);
+      
+      // 6. Mostrar toast de confirmación
+      toast({
+        title: "¡Solicitud recibida!",
+        description: "Te enviaremos un presupuesto personalizado por email en 24-48 horas.",
+      });
+      
+      // 7. Resetear formulario
+      reset();
+      
+    } catch (error) {
+      console.error('Error al solicitar presupuesto:', error);
+      toast({
+        title: "Error al procesar solicitud",
+        description: "No se pudo procesar tu solicitud. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Función para redirigir al inicio cuando se cierre el modal de éxito
+  const handleCloseSuccessModal = () => {
+    setShowSuccessView(false);
+    navigate('/'); // Redirigir al inicio
+  };
+
+  const handleGoToDashboard = async () => {
+    if (!user) {
+      setAuthModalMode('signup');
+      setShowAuthModal(true);
+      return;
+    }
+    
+    // Intentar vincular caso si hay token de sesión
+    try {
+      await linkCaseToUser(user.id, casoId);
+    } catch (error) {
+      // No bloquear la redirección si falla la vinculación
+      console.error('Error al vincular caso:', error);
+    }
+    
+    window.location.href = '/dashboard';
+  };
+
+  const handleAttachDocuments = async () => {
+    if (!user) {
+      setAuthModalMode('signup');
+      setShowAuthModal(true);
+      return;
+    }
+    
+    // Intentar vincular caso si hay token de sesión
+    try {
+      await linkCaseToUser(user.id, casoId);
+    } catch (error) {
+      console.error('Error al vincular caso:', error);
+    }
+    
+    // Aquí se abriría el modal de documentos (no implementado aún)
+    toast({
+      title: "Funcionalidad en desarrollo",
+      description: "La subida de documentos estará disponible próximamente.",
+    });
+  };
+  useEffect(() => {
+    if (isModal) {
+      prefetchCaso();
+    }
+  }, [isModal, prefetchCaso]);
 
   const handlePlanSelect = async (planId: string) => {
     setSelectedPlan(planId);
@@ -91,8 +277,8 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
       await supabase.rpc('set_caso_listo_para_propuesta', { p_caso_id: casoId });
       
       toast({
-        title: "¡Progreso guardado!",
-        description: "Tu caso ha sido vinculado y quedará como 'Listo para propuesta'.",
+        title: "¡Solicitud registrada!",
+        description: "Tu caso ha sido vinculado y quedará 'Listo para propuesta'. Un abogado especialista analizará tu situación y te enviaremos un presupuesto personalizado por email.",
       });
       
       // Redirigir al dashboard
@@ -168,8 +354,8 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
           await supabase.rpc('set_caso_listo_para_propuesta', { p_caso_id: casoId });
           
           toast({
-            title: "¡Bienvenido!",
-            description: "Tu cuenta ha sido creada, tu caso vinculado y está 'Listo para propuesta'.",
+            title: "¡Solicitud registrada!",
+            description: "Tu cuenta ha sido creada, tu caso vinculado y está 'Listo para propuesta'. Un abogado especialista te enviará un presupuesto personalizado por email.",
           });
           
           // Redirigir al dashboard
@@ -294,7 +480,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
               onClick={onClose}
               variant="ghost"
               size="icon"
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full shadow-sm hover:shadow-md transition-all"
             >
               <X className="h-5 w-5" />
             </Button>
@@ -328,7 +514,9 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
         >
+          <Suspense fallback={<div className="animate-pulse bg-white/60 dark:bg-gray-800/60 rounded-xl h-64 sm:h-72 w-full" />}> 
           <PricingSection tier={singlePlan} />
+          </Suspense>
         </motion.div>
 
         {/* Sección de guardar progreso */}
@@ -338,26 +526,119 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700">
-            <Mail className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-gray-700">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+              <Mail className="w-6 h-6" />
+            </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              ¿Necesitas más tiempo para decidir?
+              ¿Prefieres recibir un presupuesto personalizado?
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Recibe un resumen completo de tu caso por email. Podrás revisar toda la información y decidir con calma.
+              Un abogado especialista analizará tu caso y te enviaremos por email un <strong>presupuesto a medida</strong> con el plan de acción recomendado. Sin pago ahora, sin compromiso.
             </p>
             <Button
-              onClick={handleSaveProgress}
+              onClick={handleRequestBudget}
               variant="outline"
-              className="px-8 py-3 text-lg font-medium border-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-300"
+              disabled={budgetRequestSent}
+              onMouseEnter={() => { preloadAuthModal(); prefetchCaso(); }}
+              onFocus={() => { preloadAuthModal(); prefetchCaso(); }}
+              className="w-full sm:w-auto px-4 sm:px-6 py-3 text-sm sm:text-base font-medium border-2 border-blue-500 text-blue-600 bg-white dark:bg-transparent hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 break-words whitespace-normal text-center leading-snug hyphens-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Enviarme la propuesta por email
+              {budgetRequestSent ? 'Presupuesto solicitado ✓' : 'Enviarme un presupuesto personalizado'}
             </Button>
           </div>
         </motion.div>
       </div>
 
+      {/* Modal de confirmación de email */}
+      {showEmailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md">
+            <div className="text-center mb-6">
+              <Mail className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Confirmar tu email
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Te enviaremos el presupuesto personalizado a este email
+              </p>
+            </div>
+            
+            <form onSubmit={handleSubmit(handleBudgetRequest)} className="space-y-4">
+              <div>
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="tu@email.com"
+                  className="mt-1"
+                  {...register("email")}
+                />
+                {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+              </div>
+              
+              <ConsentCheckbox 
+                control={control} 
+                name="acepta_politicas"
+                error={errors.acepta_politicas?.message}
+              />
+              
+              <div className="flex space-x-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowEmailModal(false);
+                    reset(); // Resetear formulario al cerrar
+                  }}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1"
+                >
+                  {isSubmitting ? 'Procesando...' : 'Confirmar'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Vista de éxito */}
+      {showSuccessView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-lg">
+            <div className="text-center mb-6">
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                ¡Solicitud recibida!
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Un abogado especialista analizará tu caso y te enviaremos un presupuesto personalizado por email en 24-48 horas.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <Button
+                variant="ghost"
+                onClick={handleCloseSuccessModal}
+                className="w-full py-2 text-gray-500 hover:text-gray-700"
+              >
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Autenticación */}
+      <Suspense fallback={null}>
       <AuthModal 
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
@@ -366,6 +647,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
         planId={selectedPlan}
         casoId={casoId}
       />
+      </Suspense>
     </div>
   );
 };
