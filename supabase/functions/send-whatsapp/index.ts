@@ -27,9 +27,34 @@ type MediaPayload = {
   server_url?: string
 }
 
+type AudioPayload = {
+  numero: string
+  audio_base64: string
+  delay?: number
+  // Los siguientes campos ya no se usan; la función toma secretos de env
+  apikey?: string
+  instancia?: string
+  server_url?: string
+}
+
+type LocationPayload = {
+  numero: string
+  latitude: number
+  longitude: number
+  name?: string
+  address?: string
+  delay?: number
+  // Los siguientes campos ya no se usan; la función toma secretos de env
+  apikey?: string
+  instancia?: string
+  server_url?: string
+}
+
 type InputPayload =
   | (TextPayload & { tipo: 'texto' })
   | (MediaPayload & { tipo: 'media' })
+  | (AudioPayload & { tipo: 'audio' })
+  | (LocationPayload & { tipo: 'ubicacion' })
 
 function sanitizePhone(number: string): string {
   return number.replace(/[^0-9+]/g, '').trim()
@@ -214,7 +239,85 @@ Deno.serve(async (req: Request) => {
       return new Response(evoText, { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
     }
 
-    return new Response(JSON.stringify({ error: 'tipo inválido. Use "texto" o "media".' }), { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
+    if (tipo === 'audio') {
+      const audioBase64 = sanitizeText((body as any)?.audio_base64 || '')
+      if (!audioBase64) {
+        return new Response(JSON.stringify({ error: 'audio_base64 requerido' }), { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
+      }
+
+      const url = `${envServerUrl.replace(/\/$/, '')}/message/sendWhatsAppAudio/${encodeURIComponent(envInstance)}`
+      const payload = {
+        number: numero,
+        audio: audioBase64,
+        delay,
+      }
+
+      const evoRes = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: envApiKey,
+        },
+        body: JSON.stringify(payload),
+      })
+      const evoText = await evoRes.text()
+      if (!evoRes.ok) {
+        return new Response(JSON.stringify({ error: 'Evolution API error', details: safeJson(evoText) }), {
+          status: 502,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        })
+      }
+      return new Response(evoText, { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
+    }
+
+    if (tipo === 'ubicacion') {
+      const latitude = (body as any)?.latitude
+      const longitude = (body as any)?.longitude
+      const name = sanitizeText((body as any)?.name || '')
+      const address = sanitizeText((body as any)?.address || '')
+
+      if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+        return new Response(JSON.stringify({ error: 'Latitud y longitud requeridas para ubicaciones' }), { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
+      }
+
+      // Validar rangos de coordenadas
+      if (latitude < -90 || latitude > 90) {
+        return new Response(JSON.stringify({ error: 'Latitud debe estar entre -90 y 90' }), { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
+      }
+      if (longitude < -180 || longitude > 180) {
+        return new Response(JSON.stringify({ error: 'Longitud debe estar entre -180 y 180' }), { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
+      }
+
+      const url = `${envServerUrl.replace(/\/$/, '')}/message/sendLocation/${encodeURIComponent(envInstance)}`
+      const payload = {
+        number: numero,
+        latitude,
+        longitude,
+        name: name, // Preservar strings vacíos
+        address: address || undefined,
+        delay,
+        linkPreview: true
+      }
+
+      const evoRes = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: envApiKey,
+        },
+        body: JSON.stringify(payload),
+      })
+      const evoText = await evoRes.text()
+      if (!evoRes.ok) {
+        return new Response(JSON.stringify({ error: 'Evolution API error', details: safeJson(evoText) }), {
+          status: 502,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        })
+      }
+      return new Response(evoText, { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
+    }
+
+    return new Response(JSON.stringify({ error: 'tipo inválido. Use "texto", "media", "audio" o "ubicacion".' }), { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
   } catch (e) {
     return new Response(JSON.stringify({ error: 'Unexpected error', details: (e as Error)?.message ?? String(e) }), {
       status: 500,

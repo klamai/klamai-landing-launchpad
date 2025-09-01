@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import AuthModal from '@/components/AuthModal';
+
 import { FooterSection } from '@/components/ui/footer-section';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,18 @@ import {
   Lock,
   Sun,
   Moon,
-  Gavel
+  Gavel,
+  User,
+  Shield,
+  Clock,
+  Star,
+  MessageCircle,
+  Phone,
+  Mail,
+  Award,
+  TrendingUp,
+  Users,
+  Zap
 } from 'lucide-react';
 
 const PublicProposal = () => {
@@ -39,7 +50,9 @@ const PublicProposal = () => {
   const [creatingCheckout, setCreatingCheckout] = useState(false);
   const [analysisMarkdown, setAnalysisMarkdown] = useState<string | null>(null);
   const [mensajeWhatsapp, setMensajeWhatsapp] = useState<string | null>(null);
-  const [showAuth, setShowAuth] = useState(false);
+  const [lawyerInfo, setLawyerInfo] = useState<any>(null);
+  const [caseInfo, setCaseInfo] = useState<any>(null);
+
 
   useEffect(() => {
     // aplicar tema al cargar
@@ -107,6 +120,44 @@ const PublicProposal = () => {
           const { analysis, whatsapp } = extractFromAny(raw);
           setAnalysisMarkdown(analysis);
           setMensajeWhatsapp(whatsapp);
+
+          // Cargar información adicional del caso y abogado
+          if (casoId) {
+            try {
+              const { data: casoData, error: casoError } = await supabase
+                .from('casos')
+                .select(`
+                  id,
+                  motivo_consulta,
+                  especialidades:especialidades_id(nombre),
+                  asignaciones_casos(
+                    abogado_id,
+                    estado_asignacion,
+                    profiles:abogado_id(
+                      nombre,
+                      apellido,
+                      email,
+                      telefono,
+                      tipo_abogado
+                    )
+                  )
+                `)
+                .eq('id', casoId as any)
+                .single();
+
+              if (!casoError && casoData && 'asignaciones_casos' in casoData) {
+                setCaseInfo(casoData);
+                
+                // Obtener información del abogado asignado
+                const asignacion = (casoData as any).asignaciones_casos?.[0];
+                if (asignacion?.profiles) {
+                  setLawyerInfo(asignacion.profiles);
+                }
+              }
+            } catch (e) {
+              console.log('No se pudo cargar información adicional del caso:', e);
+            }
+          }
         }
       } catch (e: any) {
         console.error(e);
@@ -122,25 +173,15 @@ const PublicProposal = () => {
     if (!casoId || !token) return;
     try {
       setCreatingCheckout(true);
-      // 1) Verificar sesión
-      const { data: sessionData } = await supabase.auth.getSession();
-      const isLogged = !!sessionData.session?.access_token;
-      if (!isLogged) {
-        // Abrir modal de autenticación
-        setShowAuth(true);
-        return;
-      }
-
-      // 2) Ligar caso por token (idempotente)
-      const { error: linkError } = await supabase.rpc('link_case_by_proposal_token', { p_token: token });
-      if (linkError) throw new Error(linkError.message || 'No se pudo vincular el caso');
-
-      // 3) Crear sesión de checkout
-      const { data, error } = await supabase.functions.invoke('crear-sesion-checkout', {
-        body: { plan_id: 'consulta-estrategica', caso_id: casoId },
+      
+      // Crear sesión de checkout anónima usando el token de propuesta
+      const { data, error } = await supabase.functions.invoke('crear-sesion-checkout-anonima-por-token', {
+        body: { proposal_token: token },
       });
+      
       if (error) throw new Error(error.message);
       if (data?.url) {
+        // Redirigir directamente a Stripe sin autenticación
         window.location.href = data.url;
       } else {
         throw new Error('No se recibió URL de pago');
@@ -245,6 +286,20 @@ const PublicProposal = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* CSS personalizado para animación de pulso lento */}
+      <style>{`
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 0.1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.3;
+            transform: scale(1.05);
+          }
+        }
+      `}</style>
+      
       <Header />
 
       {/* Main Content */}
@@ -261,7 +316,23 @@ const PublicProposal = () => {
                   ¡Tu Análisis Legal Está Listo!
                 </CardTitle>
                 <CardDescription className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl leading-relaxed">
-                  Un abogado especialista ya ha revisado tu caso <span className="font-semibold text-green-600 dark:text-green-400">gratuitamente</span> y ha preparado una propuesta personalizada. Solo necesitamos tu consentimiento para mostrarte el análisis completo.
+                  Un abogado especialista ya ha revisado tu caso <span className="font-semibold text-green-600 dark:text-green-400">gratuitamente</span> y ha preparado una propuesta personalizada. 
+                  <br /><br />
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">Tu análisis incluye:</span>
+                  <ul className="mt-2 text-left space-y-1">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <span>Evaluación legal completa de tu situación</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <span>Recomendaciones estratégicas personalizadas</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <span>Plan de acción detallado</span>
+                    </li>
+                  </ul>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6 pt-6 px-4 sm:px-6 md:px-12 lg:px-16">
@@ -356,10 +427,44 @@ const PublicProposal = () => {
                     Propuesta Legal
                   </span> Está Lista
                 </h1>
-                <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
                   Nuestro abogado especialista ha revisado tu caso y ha preparado una propuesta personalizada 
                   para resolver tu situación legal de la manera más eficiente.
                 </p>
+                
+                {/* Botón de Pago Principal */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+                  <Button
+                    onClick={handleCheckout}
+                    disabled={!casoId || creatingCheckout}
+                    size="lg"
+                    className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-600 hover:from-blue-700 hover:via-blue-600 hover:to-cyan-700 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25 min-w-[200px]"
+                  >
+                    {creatingCheckout ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        Procesando...
+                      </>
+                    ) : (
+                      <>
+                        <Gavel className="w-5 h-5 mr-2" />
+                        Pagar Visita - €37.50
+                      </>
+                    )}
+                  </Button>
+                  
+                  <div className="text-center sm:text-left">
+                    <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+                      <span className="text-2xl font-bold text-red-500 dark:text-red-400 line-through">€127.00</span>
+                      <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                        70% OFF
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Oferta válida solo por 24 horas
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* (Eliminadas) Tarjetas de estadísticas para simplificar la vista */}
@@ -393,10 +498,156 @@ const PublicProposal = () => {
                 </Card>
               )}
 
+              {/* Información del Abogado */}
+              {lawyerInfo && (
+                <Card className="bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-green-950/80 dark:via-gray-900/90 dark:to-emerald-950/90 backdrop-blur-sm border-2 border-green-200 dark:border-green-700 shadow-2xl dark:shadow-green-900/50 overflow-hidden">
+                  <CardHeader className="flex flex-col items-center text-center pb-6 border-b border-gray-100 dark:border-gray-800 px-6 sm:px-8 pt-8">
+                    <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg mx-auto mb-6">
+                      <User className="w-7 h-7 text-white" />
+                    </div>
+                    <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-3 max-w-full">
+                      Tu Abogado Especialista
+                    </CardTitle>
+                    <CardDescription className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+                      Un profesional cualificado ha revisado tu caso
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-8 px-6 sm:px-8">
+                    <div className="flex flex-col md:flex-row items-center gap-6">
+                      <div className="flex-shrink-0">
+                        <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                          <User className="w-12 h-12 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1 text-center md:text-left">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                          {lawyerInfo.nombre} {lawyerInfo.apellido}
+                        </h3>
+                        <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                            <Award className="w-3 h-3 mr-1" />
+                            Abogado Verificado
+                          </Badge>
+                          {lawyerInfo.tipo_abogado === 'super_admin' && (
+                            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                              <Star className="w-3 h-3 mr-1" />
+                              Especialista Senior
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-400 mb-4">
+                          Profesional especializado en {caseInfo?.especialidades?.nombre || 'derecho general'} 
+                          con amplia experiencia en casos similares al tuyo.
+                        </p>
+                        <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <Shield className="w-4 h-4 text-green-600" />
+                            <span>Colegiado y Verificado</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <Clock className="w-4 h-4 text-green-600" />
+                            <span>Disponible 24/7</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Estadísticas de Confianza */}
+              <Card className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-blue-950/80 dark:via-gray-900/90 dark:to-indigo-950/90 backdrop-blur-sm border-2 border-blue-200 dark:border-blue-700 shadow-2xl dark:shadow-blue-900/50 overflow-hidden">
+                <CardHeader className="text-center pb-6 border-b border-gray-100 dark:border-gray-800 px-6 sm:px-8 pt-8">
+                  <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                    ¿Por qué confiar en KlamAI?
+                  </CardTitle>
+                  <CardDescription className="text-lg text-gray-600 dark:text-gray-400">
+                    Miles de clientes han confiado en nosotros para resolver sus casos legales
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-8 px-6 sm:px-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Users className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">2,500+</h3>
+                      <p className="text-gray-600 dark:text-gray-400">Casos Resueltos</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Star className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">4.9/5</h3>
+                      <p className="text-gray-600 dark:text-gray-400">Valoración Media</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Zap className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">24h</h3>
+                      <p className="text-gray-600 dark:text-gray-400">Respuesta Garantizada</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* FAQ Section */}
+              <Card className="bg-gradient-to-br from-gray-50 via-white to-slate-50 dark:from-gray-900/90 dark:via-gray-800/90 dark:to-slate-900/90 backdrop-blur-sm border-2 border-gray-200 dark:border-gray-700 shadow-2xl dark:shadow-gray-900/50 overflow-hidden">
+                <CardHeader className="text-center pb-6 border-b border-gray-100 dark:border-gray-800 px-6 sm:px-8 pt-8">
+                  <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                    Preguntas Frecuentes
+                  </CardTitle>
+                  <CardDescription className="text-lg text-gray-600 dark:text-gray-400">
+                    Resolvemos las dudas más comunes sobre nuestro servicio
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-8 px-6 sm:px-8">
+                  <div className="space-y-6">
+                    <div className="border-l-4 border-blue-500 pl-4">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                        ¿Qué incluye la visita estratégica?
+                      </h4>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        30 minutos de visita personalizada con un abogado especialista, revisión de documentos, 
+                        recomendación de estrategia y plan de acción personalizado.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-green-500 pl-4">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                        ¿Cómo funciona el pago?
+                      </h4>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        El pago es 100% seguro a través de Stripe. Solo pagas si estás satisfecho con el servicio. 
+                        Ofrecemos garantía de devolución en caso de no estar conforme.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-purple-500 pl-4">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                        ¿Cuándo tendré mi visita?
+                      </h4>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Una vez realizado el pago, te contactaremos en menos de 24 horas para coordinar 
+                        la visita en el horario que mejor te convenga.
+                      </p>
+                    </div>
+                    <div className="border-l-4 border-orange-500 pl-4">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                        ¿Qué pasa si no estoy conforme?
+                      </h4>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Ofrecemos garantía de satisfacción. Si no estás conforme con el servicio, 
+                        te devolvemos el dinero sin preguntas.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Plan de Consulta */}
               <PricingCard
-                title="Consulta Estratégica con Abogado"
-                description="Primera consulta bonificada"
+                title="Visita Estratégica con Abogado"
+                description="Primera visita bonificada"
                 price={37.50}
                 originalPrice={127.00}
                 features={[
@@ -419,27 +670,48 @@ const PublicProposal = () => {
                     ]
                   }
                 ]}
-                buttonText="Pagar Consulta"
+                buttonText="Pagar Visita"
                 onButtonClick={handleCheckout}
                 disabled={!casoId}
                 loading={creatingCheckout}
-                urgentMessage="🔥 ¡OFERTA ESPECIAL! Este descuento es válido SOLO POR HOY."
+                urgentMessage="🔥 ¡OFERTA LIMITADA! 70% de descuento válido solo por 24 horas. ¡No pierdas esta oportunidad!"
               />
             </div>
           )}
         </div>
       </main>
 
-      {/* Modal de autenticación para continuar con el pago */}
-      <AuthModal
-        isOpen={showAuth}
-        onClose={() => setShowAuth(false)}
-        onSuccess={() => setShowAuth(false)}
-        initialMode="signup"
-        planId="consulta-estrategica"
-        casoId={casoId ?? undefined}
-        redirectToUrl={`${window.location.origin}/auth-callback?intent=pay&token=${encodeURIComponent(token || '')}&planId=consulta-estrategica&casoId=${encodeURIComponent(casoId || '')}`}
-      />
+
+
+      {/* Botón Flotante de Pago - Solo visible después de aceptar */}
+      {accepted && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="relative">
+            {/* Efecto de pulso sutil y lento */}
+            <div className="absolute inset-0 bg-blue-500 rounded-full opacity-20" style={{
+              animation: 'pulse-slow 4s ease-in-out infinite'
+            }}></div>
+            <Button
+              onClick={handleCheckout}
+              disabled={!casoId || creatingCheckout}
+              size="lg"
+              className="relative bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-600 hover:from-blue-700 hover:via-blue-600 hover:to-cyan-700 text-white px-6 py-3 rounded-full text-base font-semibold shadow-2xl transition-all duration-300 transform hover:scale-110 hover:shadow-blue-500/30"
+            >
+            {creatingCheckout ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Procesando...
+              </>
+            ) : (
+              <>
+                <Gavel className="w-4 h-4 mr-2" />
+                Pagar Visita - €37.50
+              </>
+            )}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <FooterSection />
