@@ -16,6 +16,12 @@ import {
   sanitizeDocumentDescription,
   isValidDocumentType
 } from '@/utils/security';
+import { 
+  ALLOWED_FILE_TYPES_STRING,
+  ALLOWED_FILE_TYPES_DISPLAY,
+  MAX_FILE_SIZE_MB,
+  MAX_FILES_PER_UPLOAD
+} from '@/config/constants';
 
 interface ClientDocumentUploadModalProps {
   isOpen: boolean;
@@ -30,8 +36,8 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
   casoId,
   onUploadSuccess
 }) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [tipoDocumento, setTipoDocumento] = useState('evidencia');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [tipoDocumento, setTipoDocumento] = useState('prueba');
   const [descripcion, setDescripcion] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -40,56 +46,70 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
   const { checkUploadRateLimit, recordUploadAttempt } = useDocumentUploadRateLimit();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Validar tipo de archivo
-      if (!isValidFileType(file)) {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      const totalFiles = selectedFiles.length + newFiles.length;
+
+      if (totalFiles > MAX_FILES_PER_UPLOAD) {
         toast({
-          title: "Error",
-          description: "Tipo de archivo no permitido. Solo se aceptan PDF, imágenes y documentos de Word",
+          title: "Límite de archivos excedido",
+          description: `Puedes seleccionar un máximo de ${MAX_FILES_PER_UPLOAD} archivos a la vez.`,
           variant: "destructive",
         });
         return;
       }
 
-      // Validar tamaño de archivo
-      if (!isValidFileSize(file)) {
-        toast({
-          title: "Error",
-          description: "El archivo no puede ser mayor a 10MB",
-          variant: "destructive",
-        });
-        return;
-      }
+      const validatedFiles = newFiles.filter(file => {
+        if (!isValidFileType(file)) {
+          toast({
+            title: `Tipo de archivo no permitido: ${file.name}`,
+            description: `Solo se permiten: ${ALLOWED_FILE_TYPES_DISPLAY}`,
+            variant: "destructive",
+          });
+          return false;
+        }
+        if (!isValidFileSize(file)) {
+          toast({
+            title: `Archivo demasiado grande: ${file.name}`,
+            description: `El tamaño máximo es de ${MAX_FILE_SIZE_MB}MB.`,
+            variant: "destructive",
+          });
+          return false;
+        }
+        return true;
+      });
 
-      setSelectedFile(file);
+      setSelectedFiles(prevFiles => [...prevFiles, ...validatedFiles]);
     }
   };
 
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+  };
+
   const handleUpload = async () => {
-    if (!selectedFile || !user) {
+    if (selectedFiles.length === 0 || !user) {
       toast({
-        title: "Error",
-        description: "Por favor selecciona un archivo",
+        title: "No hay archivos para subir",
+        description: "Por favor, selecciona al menos un archivo.",
         variant: "destructive",
       });
       return;
     }
 
-    // Verificar rate limiting
     const rateLimitCheck = await checkUploadRateLimit(user.id);
-    
     if (!rateLimitCheck.allowed) {
       toast({
-        title: "Error",
-        description: rateLimitCheck.error || "Demasiadas subidas. Espera un momento antes de intentar de nuevo",
+        title: "Límite de subidas alcanzado",
+        description: rateLimitCheck.error || "Has subido demasiados archivos. Inténtalo de nuevo más tarde.",
         variant: "destructive",
       });
       return;
     }
 
     // Validar tipo de documento
-    if (!isValidDocumentType(tipoDocumento)) {
+    if (!isValidDocumentType(tipoDocumento, 'cliente')) {
       toast({
         title: "Error",
         description: "Tipo de documento no válido",
@@ -98,53 +118,52 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
       return;
     }
 
-    // Sanitizar descripción
+    setIsUploading(true);
+    let successCount = 0;
+    let errorCount = 0;
     const sanitizedDescription = sanitizeDocumentDescription(descripcion);
 
-    setIsUploading(true);
+    const uploadPromises = selectedFiles.map(file => 
+      recordUploadAttempt(user.id)
+        .then(() => uploadDocument(file, tipoDocumento, sanitizedDescription))
+        .then(result => {
+          if (result.success) {
+            successCount++;
+          } else {
+            errorCount++;
+            toast({
+              title: `Error al subir ${file.name}`,
+              description: result.error || "Ocurrió un error inesperado.",
+              variant: "destructive",
+            });
+          }
+        })
+    );
 
-    try {
-      // Registrar intento de subida
-      await recordUploadAttempt(user.id);
-      
-      const result = await uploadDocument(
-        selectedFile,
-        tipoDocumento,
-        sanitizedDescription
-      );
+    await Promise.allSettled(uploadPromises);
 
-      if (!result.success) {
-        throw new Error(result.error || 'Error al subir el documento');
-      }
+    setIsUploading(false);
 
+    if (successCount > 0) {
       toast({
-        title: "Éxito",
-        description: "Documento subido correctamente",
+        title: "Subida completada",
+        description: `${successCount} de ${selectedFiles.length} archivos se subieron correctamente.`,
       });
-
-      // Limpiar formulario
-      setSelectedFile(null);
-      setTipoDocumento('evidencia');
-      setDescripcion('');
-      
       onUploadSuccess();
-      onClose();
-    } catch (error: any) {
-      console.error('Error uploading document:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Error al subir el documento",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
+    }
+
+    if (errorCount === 0) {
+      handleClose();
+    } else {
+      // Opcional: podrías querer limpiar los archivos que sí se subieron de la lista
+      // Por ahora, se mantendrán para que el usuario vea cuáles fallaron.
     }
   };
 
   const handleClose = () => {
     if (!isUploading) {
-      setSelectedFile(null);
-      setTipoDocumento('evidencia');
+      setSelectedFiles([]);
+      setTipoDocumento('prueba');
       setDescripcion('');
       onClose();
     }
@@ -178,30 +197,59 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
               <input
                 id="file-upload"
                 type="file"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                accept={ALLOWED_FILE_TYPES_STRING}
                 onChange={handleFileSelect}
                 className="hidden"
+                multiple
               />
               <label htmlFor="file-upload" className="cursor-pointer">
                 <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
                 <p className="text-sm text-gray-600">
-                  Haz clic para seleccionar un archivo
+                  {selectedFiles.length > 0 ? `${selectedFiles.length} archivos seleccionados` : 'Haz clic para seleccionar archivos'}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  PDF, Word, imágenes o texto (máx. 10MB)
+                  {ALLOWED_FILE_TYPES_DISPLAY} (máx. {MAX_FILE_SIZE_MB}MB)
                 </p>
               </label>
             </div>
             
-            {selectedFile && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm font-medium">{selectedFile.name}</span>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {formatFileSize(selectedFile.size)}
-                </p>
+            {selectedFiles.length > 0 && (
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                {selectedFiles.map((file, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <FileText className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className="text-sm font-medium text-gray-800 dark:text-gray-100 break-all"
+                            title={file.name}
+                          >
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {formatFileSize(file.size)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground flex-shrink-0"
+                        onClick={() => handleRemoveFile(index)}
+                        disabled={isUploading}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             )}
           </div>
@@ -217,10 +265,13 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
               onChange={(e) => setTipoDocumento(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="evidencia">Evidencia</option>
-              <option value="contrato">Contrato</option>
-              <option value="factura">Factura</option>
-              <option value="correspondencia">Correspondencia</option>
+              <option value="prueba">Prueba (fotos, capturas, etc.)</option>
+              <option value="contrato">Contrato o Acuerdo</option>
+              <option value="comunicacion">Comunicación (emails, burofax)</option>
+              <option value="factura">Factura o Justificante de Pago</option>
+              <option value="notificacion">Notificación Judicial o Administrativa</option>
+              <option value="identificacion">Documento de Identificación</option>
+              <option value="poder_notarial">Poder Notarial</option>
               <option value="otro">Otro</option>
             </select>
           </div>
@@ -256,7 +307,7 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
             </Button>
             <Button
               onClick={handleUpload}
-              disabled={!selectedFile || isUploading}
+              disabled={selectedFiles.length === 0 || isUploading}
               className="flex-1"
             >
               {isUploading ? (
@@ -264,16 +315,15 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="mr-2"
+                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"
                   >
-                    ⏳
                   </motion.div>
-                  Subiendo...
+                  Subiendo {selectedFiles.length} archivos...
                 </>
               ) : (
                 <>
                   <Upload className="mr-2 h-4 w-4" />
-                  Subir
+                  Subir {selectedFiles.length} archivo(s)
                 </>
               )}
             </Button>
@@ -286,9 +336,9 @@ const ClientDocumentUploadModal: React.FC<ClientDocumentUploadModalProps> = ({
               <div className="text-xs text-blue-700">
                 <p className="font-medium mb-1">Información de Seguridad:</p>
                 <ul className="space-y-1">
-                  <li>• Solo archivos seguros permitidos (PDF, Word, imágenes)</li>
-                  <li>• Tamaño máximo: 10MB por archivo</li>
-                  <li>• Máximo 10 subidas por minuto</li>
+                  <li>• Solo archivos seguros permitidos ({ALLOWED_FILE_TYPES_DISPLAY})</li>
+                  <li>• Tamaño máximo: {MAX_FILE_SIZE_MB}MB por archivo</li>
+                  <li>• Máximo {MAX_FILES_PER_UPLOAD} subidas por minuto</li>
                   <li>• Descripción limitada a 500 caracteres</li>
                 </ul>
               </div>

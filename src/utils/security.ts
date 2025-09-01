@@ -2,6 +2,8 @@
  * Utilidades de seguridad para el lado del cliente
  */
 
+import { MAX_FILE_SIZE_BYTES, ALLOWED_FILE_TYPES } from '@/config/constants';
+
 // Sanitizar texto para prevenir XSS
 export const sanitizeText = (text: string): string => {
   if (!text) return '';
@@ -32,26 +34,62 @@ export const isValidFileName = (fileName: string): boolean => {
   return safeFileNameRegex.test(fileName) && fileName.length <= 255;
 };
 
-// Validar tipo de archivo
-export const isValidFileType = (file: File): boolean => {
-  const allowedTypes = [
-    'application/pdf',
-    'image/jpeg',
-    'image/png',
-    'image/jpg',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'text/plain',
-    'text/markdown'
-  ];
-  
-  return allowedTypes.includes(file.type);
+// Lista de tipos de documentos permitidos para Clientes
+const VALID_CLIENT_DOCUMENT_TYPES = [
+  'prueba',
+  'contrato',
+  'comunicacion',
+  'factura',
+  'notificacion',
+  'identificacion',
+  'poder_notarial',
+  'otro'
+];
+
+// Lista de tipos de documentos permitidos para Abogados
+const VALID_LAWYER_DOCUMENT_TYPES = [
+  'escrito_judicial',
+  'dictamen_informe',
+  'propuesta_honorarios',
+  'notificacion_requerimiento',
+  'borrador',
+  'sentencia_resolucion',
+  'otros'
+];
+
+
+/**
+ * Valida que el tipo de documento sea uno de los permitidos para el rol correspondiente.
+ * @param tipo - El tipo de documento a validar.
+ * @param role - El rol del usuario ('cliente' o 'abogado').
+ * @returns true si el tipo es válido, false en caso contrario.
+ */
+export const isValidDocumentType = (tipo: string, role: 'cliente' | 'abogado'): boolean => {
+  if (role === 'cliente') {
+    return VALID_CLIENT_DOCUMENT_TYPES.includes(tipo);
+  }
+  if (role === 'abogado') {
+    return VALID_LAWYER_DOCUMENT_TYPES.includes(tipo);
+  }
+  return false;
 };
 
-// Validar tamaño de archivo (máximo 10MB)
-export const isValidFileSize = (file: File, maxSizeMB: number = 10): boolean => {
-  const maxSizeBytes = maxSizeMB * 1024 * 1024;
-  return file.size <= maxSizeBytes;
+/**
+ * Valida el tipo de archivo (MIME type) contra una lista blanca.
+ * @param file - El objeto File a validar.
+ * @returns true si el tipo de archivo está permitido, false en caso contrario.
+ */
+export const isValidFileType = (file: File): boolean => {
+  return ALLOWED_FILE_TYPES.includes(file.type);
+};
+
+/**
+ * Valida que el tamaño del archivo no exceda el máximo permitido.
+ * @param file - El objeto File a validar.
+ * @returns true si el tamaño es válido, false en caso contrario.
+ */
+export const isValidFileSize = (file: File): boolean => {
+  return file.size <= MAX_FILE_SIZE_BYTES;
 };
 
 // Sanitizar descripción de documento
@@ -119,17 +157,4 @@ export const isValidCaseStatus = (status: string): boolean => {
   ];
   
   return validStatuses.includes(status);
-};
-
-// Validar tipo de documento
-export const isValidDocumentType = (type: string): boolean => {
-  const validTypes = [
-    'evidencia',
-    'contrato',
-    'correspondencia',
-    'identificacion',
-    'otros'
-  ];
-  
-  return validTypes.includes(type);
 }; 
