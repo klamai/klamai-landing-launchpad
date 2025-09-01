@@ -1,21 +1,27 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { sanitizeFileName } from '@/lib/utils';
 
 interface DocumentoCliente {
   id: string;
   caso_id: string;
-  cliente_id: string;
-  tipo_documento: string;
+  cliente_id: string | null;
   nombre_archivo: string;
   ruta_archivo: string;
-  tamaño_archivo?: number;
-  descripcion?: string;
+  tipo_documento: string;
+  tamaño_archivo: number | null;
+  descripcion: string | null;
   fecha_subida: string;
   created_at: string;
+  subido_por_abogado_id: string | null;
+  profiles: { // Perfil del abogado que lo subió
+    nombre: string;
+    apellido: string;
+  } | null;
 }
 
-export const useClientDocumentManagement = (casoId?: string) => {
+export const useClientDocumentManagement = (casoId: string) => {
   const [documentosCliente, setDocumentosCliente] = useState<DocumentoCliente[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,9 +111,15 @@ export const useClientDocumentManagement = (casoId?: string) => {
     try {
       const { data, error } = await supabase
         .from('documentos_cliente')
-        .select('*')
+        .select(`
+            *,
+            profiles:subido_por_abogado_id (
+              nombre,
+              apellido
+            )
+          `)
         .eq('caso_id', casoId)
-        .order('created_at', { ascending: false });
+        .order('fecha_subida', { ascending: false });
 
       if (error) {
         console.error('Error fetching documentos cliente:', error);
@@ -144,7 +156,7 @@ export const useClientDocumentManagement = (casoId?: string) => {
     }
 
     try {
-      // Verificar el perfil del usuario
+      // Primero, obtenemos el perfil del usuario para saber su rol.
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role, tipo_abogado, id, email')
@@ -152,12 +164,12 @@ export const useClientDocumentManagement = (casoId?: string) => {
         .single();
 
       if (profileError) {
-        console.error('Error obteniendo perfil:', profileError);
-        return { success: false, error: 'No se pudo obtener el perfil del usuario' };
+        console.error('Error fetching user profile:', profileError);
+        return { success: false, error: 'No se pudo verificar el rol del usuario.' };
       }
 
       // Verificar acceso al caso
-      const { data: casoData, error: casoError } = await supabase
+      const { data: caso, error: casoError } = await supabase
         .from('casos')
         .select('id, cliente_id, estado')
         .eq('id', casoId)
@@ -171,7 +183,7 @@ export const useClientDocumentManagement = (casoId?: string) => {
       // Validar permisos de subida
       let canUpload = false;
       if (profile.role === 'cliente') {
-        canUpload = casoData.cliente_id === user.id;
+        canUpload = caso.cliente_id === user.id;
       } else if (profile.role === 'abogado') {
         if (profile.tipo_abogado === 'super_admin') {
           canUpload = true;
@@ -187,44 +199,43 @@ export const useClientDocumentManagement = (casoId?: string) => {
       if (!canUpload) {
         return { success: false, error: 'No tienes permisos para subir documentos a este caso' };
       }
-
-      // Generar nombre único para el archivo
-      const timestamp = new Date().getTime();
-      const fileExtension = file.name.split('.').pop() || '';
-      const fileName = `${timestamp}_${file.name}`;
+      
+      const timestamp = Date.now();
+      const sanitizedName = sanitizeFileName(file.name);
+      const fileName = `${timestamp}_${sanitizedName}`;
       const filePath = `casos/${casoId}/documentos_cliente/${fileName}`;
 
       // Subir archivo a storage
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('documentos_legales')
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Error uploading file:', uploadError);
-        return { success: false, error: 'Error al subir el archivo' };
+        console.error('Error in uploadDocument:', uploadError);
+        return { success: false, error: 'Error al subir el archivo al storage' };
       }
 
-      // Obtener URL pública
-      const { data: urlData } = supabase.storage
-        .from('documentos_legales')
-        .getPublicUrl(filePath);
-
       // Guardar registro en la base de datos
+      const sanitizedDescription = descripcion || null;
+      const isLawyer = profile.role === 'abogado';
+
+      const documentRecord: TablesInsert<"documentos_cliente"> = {
+        caso_id: casoId,
+        cliente_id: caso.cliente_id, // Siempre se asocia al cliente del caso
+        subido_por_abogado_id: isLawyer ? user.id : null,
+        nombre_archivo: file.name,
+        ruta_archivo: filePath,
+        tipo_documento: tipoDocumento,
+        tamaño_archivo: file.size,
+        descripcion: sanitizedDescription,
+      };
+
       const { error: dbError } = await supabase
         .from('documentos_cliente')
-        .insert({
-          caso_id: casoId,
-          cliente_id: casoData.cliente_id,
-          tipo_documento: tipoDocumento,
-          nombre_archivo: file.name,
-          ruta_archivo: filePath,
-          tamaño_archivo: file.size,
-          descripcion: descripcion || null,
-          fecha_subida: new Date().toISOString()
-        });
+        .insert(documentRecord);
 
       if (dbError) {
-        console.error('Error saving document record:', dbError);
+        console.error('Error inserting document record:', dbError);
         // Intentar eliminar el archivo subido si falla el registro
         await supabase.storage.from('documentos_legales').remove([filePath]);
         return { success: false, error: 'Error al guardar el registro del documento' };

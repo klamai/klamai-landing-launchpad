@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { SecureLogger } from '@/utils/secureLogging';
+import { es } from 'date-fns/locale';
+import { format, parseISO } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
+import { sanitizeFileName } from '@/lib/utils';
 
 interface DocumentoResolucion {
   id: string;
@@ -16,10 +21,9 @@ interface DocumentoResolucion {
   es_version_final?: boolean;
   fecha_subida: string;
   created_at: string;
-  profiles?: {
+  abogado?: {
     nombre: string;
     apellido: string;
-    email: string;
   };
 }
 
@@ -118,10 +122,9 @@ export const useDocumentManagement = (casoId?: string) => {
         .from('documentos_resolucion')
         .select(`
           *,
-          profiles:abogado_id (
+          abogado:abogado_id (
             nombre,
-            apellido,
-            email
+            apellido
           )
         `)
         .eq('caso_id', casoId)
@@ -193,8 +196,8 @@ export const useDocumentManagement = (casoId?: string) => {
 
       // Generar nombre único para el archivo usando la estructura correcta
       const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop() || '';
-      const fileName = `${timestamp}_${file.name}`;
+      const sanitizedName = sanitizeFileName(file.name);
+      const fileName = `${timestamp}_${sanitizedName}`;
       // Usar la estructura de paths que esperan las políticas RLS: casos/{caso_id}/documentos_resolucion/
       const filePath = `casos/${casoId}/documentos_resolucion/${fileName}`;
 

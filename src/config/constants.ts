@@ -45,3 +45,35 @@ export const isValidDocumensoUrl = (url: string): boolean => {
     return false;
   }
 }; 
+
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Configuración de subida de archivos
+export const MAX_FILE_SIZE_MB = 25;
+export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+export const MAX_FILES_PER_UPLOAD = 10;
+
+// Lista de tipos MIME permitidos para la subida de documentos
+export const ALLOWED_FILE_TYPES = [
+  'application/pdf', // .pdf
+  'application/msword', // .doc
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/vnd.ms-excel', // .xls
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-powerpoint', // .ppt
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+  'image/jpeg', // .jpeg, .jpg
+  'image/png', // .png
+  'image/gif', // .gif
+  'image/webp', // .webp
+  'text/plain', // .txt
+  'application/vnd.oasis.opendocument.text', // .odt
+  'application/vnd.oasis.opendocument.spreadsheet', // .ods
+];
+
+// String para el atributo 'accept' del input de archivo
+export const ALLOWED_FILE_TYPES_STRING = ALLOWED_FILE_TYPES.join(',');
+
+// String para mostrar al usuario los tipos de archivo permitidos
+export const ALLOWED_FILE_TYPES_DISPLAY = "PDF, Word, Excel, PowerPoint, Imágenes, y Texto"; 

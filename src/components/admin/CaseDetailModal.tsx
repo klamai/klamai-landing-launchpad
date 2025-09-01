@@ -69,6 +69,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import DocumentListItem from '@/components/shared/DocumentListItem';
 
 interface AdminCaseDetailModalProps {
   caso: {
@@ -969,49 +970,20 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                       <div className="space-y-2">
                         {loadingClientDocs ? (
                           <div className="text-center py-4 text-muted-foreground">
-                            <p className="text-sm">Cargando documentos...</p>
+                            <p className="text-sm">Cargando documents...</p>
                           </div>
                         ) : documentosCliente.length > 0 ? (
                           <div className="space-y-2">
                             {documentosCliente.map((doc) => (
-                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                                <FileText className="h-4 w-4 text-blue-600" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
-                                    {doc.nombre_archivo}
-                                  </p>
-                                  <p className="text-xs text-blue-700 dark:text-blue-300">
-                                    {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
-                                  </p>
-                                  {doc.descripcion && (
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 truncate">
-                                      {doc.descripcion}
-                                    </p>
-                                  )}
-                                </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => handleViewClientDocument(doc)}
-                                >
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => downloadClientDocument(doc)}
-                                >
-                                  <Download className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => handleDeleteClientDocument(doc.id)}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
+                              <DocumentListItem
+                                key={doc.id}
+                                doc={doc as any}
+                                variant="cliente"
+                                onView={handleViewClientDocument}
+                                onDownload={downloadClientDocument}
+                                onDelete={handleDeleteClientDocument}
+                                showDelete={true}
+                              />
                             ))}
                           </div>
                         ) : (
@@ -1027,7 +999,7 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
 
                   <Card>
                       <CardHeader className="space-y-2">
-                        <CardTitle className="text-base">Documentos de Resolución</CardTitle>
+                        <CardTitle className="text-base">Documentos de Abogado</CardTitle>
                         <div className="mt-3">
                         <Button
                             onClick={() => setIsUploadModalOpen(true)}
@@ -1049,50 +1021,21 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                         ) : documentosResolucion.length > 0 ? (
                           <div className="space-y-2">
                             {documentosResolucion.map((doc) => (
-                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                                <FileText className="h-4 w-4 text-green-600" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-green-900 dark:text-green-100 truncate">
-                                    {doc.nombre_archivo}
-                                  </p>
-                                  <p className="text-xs text-green-700 dark:text-green-300">
-                                    {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
-                                  </p>
-                                  {doc.descripcion && (
-                                    <p className="text-xs text-green-600 dark:text-green-400 truncate">
-                                      {doc.descripcion}
-                                    </p>
-                                  )}
-                                </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => handleViewResolutionDocument(doc)}
-                                >
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => downloadDocument(doc)}
-                                >
-                                  <Download className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => handleDeleteDocument(doc.id)}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
+                               <DocumentListItem
+                                key={doc.id}
+                                doc={doc as any}
+                                variant="abogado"
+                                onView={handleViewResolutionDocument}
+                                onDownload={downloadDocument}
+                                onDelete={handleDeleteDocument}
+                                showDelete={true}
+                              />
                             ))}
                           </div>
                         ) : (
                           <div className="text-center py-8 text-muted-foreground">
                             <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                            <p className="text-sm">No hay documentos de resolución</p>
+                            <p className="text-sm">No hay documentos de abogado</p>
                             <p className="text-xs">Puedes subir documentos usando el botón de arriba</p>
                           </div>
                         )}

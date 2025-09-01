@@ -56,6 +56,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CustomDocumensoEmbed from '@/components/shared/CustomDocumensoEmbed';
 import ClientDocumentUploadModal from './ClientDocumentUploadModal';
+import DocumentListItem from '@/components/shared/DocumentListItem';
 
 interface ClientCaseDetailModalProps {
   caso: {
@@ -606,36 +607,15 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
                         ) : documentosCliente.length > 0 ? (
                           <div className="space-y-2">
                             {documentosCliente.map((doc) => (
-                              <div key={doc.id} className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                                <FileText className="h-4 w-4 text-blue-600" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
-                                    {doc.nombre_archivo}
-                                  </p>
-                                  <p className="text-xs text-blue-700 dark:text-blue-300">
-                                    {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
-                                  </p>
-                                  {doc.descripcion && (
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 truncate">
-                                      {doc.descripcion}
-                                    </p>
-                                  )}
-                                </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => handleViewClientDocument(doc)}
-                                >
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => downloadClientDocument(doc)}
-                                >
-                                  <Download className="h-3 w-3" />
-                                </Button>
-                              </div>
+                              <DocumentListItem
+                                key={doc.id}
+                                doc={doc as any}
+                                variant="cliente"
+                                onView={handleViewClientDocument}
+                                onDownload={downloadClientDocument}
+                                onDelete={() => {}} // El cliente no puede borrar sus propios documentos desde aquí
+                                showDelete={false}
+                              />
                             ))}
                           </div>
                         ) : (
@@ -685,47 +665,15 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
                         ) : documentosAbogado.length > 0 ? (
                           <div className="space-y-3">
                             {documentosAbogado.map((doc) => (
-                              <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                                    <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                      {doc.nombre_archivo}
-                                    </p>
-                                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                                      {doc.tipo_documento} • {format(new Date(doc.fecha_subida), 'dd/MM/yyyy', { locale: es })}
-                                    </p>
-                                    {doc.profiles && (
-                                      <p className="text-xs text-purple-600 dark:text-purple-400">
-                                        Por: {doc.profiles.nombre} {doc.profiles.apellido}
-                                      </p>
-                                    )}
-                                    {doc.descripcion && (
-                                      <p className="text-xs text-blue-600 dark:text-blue-400 truncate">
-                                        {doc.descripcion}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => handleViewLawyerDocument(doc)}
-                                  >
-                                    <Eye className="h-3 w-3" />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => downloadLawyerDocument(doc)}
-                                  >
-                                    <Download className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </div>
+                              <DocumentListItem
+                                key={doc.id}
+                                doc={doc as any}
+                                variant="abogado"
+                                onView={handleViewLawyerDocument}
+                                onDownload={downloadLawyerDocument}
+                                onDelete={() => {}} // El cliente no puede borrar documentos del abogado
+                                showDelete={false}
+                              />
                             ))}
                           </div>
                         ) : (
