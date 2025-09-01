@@ -28,7 +28,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, name?: string) => Promise<{ data: { user: User | null, session: Session | null } | null, error: any }>;
+  signUp: (email: string, password: string, name?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -79,10 +79,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Funciones que mantienen la misma interfaz
   const signUp = async (email: string, password: string, name?: string) => {
     try {
-      const data = await signUpMutation.mutateAsync({ email, password, name });
-      return { data, error: null };
+      await signUpMutation.mutateAsync({ email, password, name });
+      return { error: null };
     } catch (error: any) {
-      return { data: null, error };
+      return { error };
     }
   };
 
