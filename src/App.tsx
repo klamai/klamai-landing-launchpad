@@ -29,6 +29,18 @@ import PublicProposal from "./pages/PublicProposal";
 import SolicitudAbogadoPage from '@/pages/abogados/Solicitud'; // Importar la nueva página
 import RegistroPage from "./pages/auth/Registro"; // Importar la nueva página de registro
 
+// --- Layouts ---
+import PublicLayout from '@/components/layout/PublicLayout';
+
+// --- SEO Landing Pages (Lazy Loaded) ---
+import React from "react";
+const AreasDePracticaPage = React.lazy(() => import('@/pages/seo/AreasDePracticaPage'));
+const MercantilHubPage = React.lazy(() => import('@/pages/seo/MercantilHubPage'));
+const MercantilHubPageOriginal = React.lazy(() => import('@/pages/seo/MercantilHubPageOriginal'));
+const LandingMercantilPage = React.lazy(() => import('@/pages/seo/LandingMercantilPage'));
+const ContactPage = React.lazy(() => import('@/pages/seo/ContactPage'));
+// --- Fin SEO Landing Pages ---
+
 // Importar las secciones directamente para las rutas anidadas
 import DashboardSection from "@/components/dashboard/DashboardSection";
 import NuevaConsultaSection from "@/components/dashboard/NuevaConsultaSection";
@@ -145,6 +157,29 @@ const App = () => (
         <Route path="/client-activation" element={<ClientActivation />} />
             <Route path="/p/:token" element={<PublicProposal />} />
             
+            {/* --- SEO Routes --- */}
+            <Route path="/areas-de-practica" element={
+              <React.Suspense fallback={<>Cargando...</>}>
+                <PublicLayout><AreasDePracticaPage /></PublicLayout>
+              </React.Suspense>
+            } />
+            <Route path="/mercantil" element={
+              <React.Suspense fallback={<>Cargando...</>}>
+                <PublicLayout><MercantilHubPageOriginal /></PublicLayout>
+              </React.Suspense>
+            } />
+            <Route path="/mercantil/:provincia/:ciudad" element={
+              <React.Suspense fallback={<>Cargando...</>}>
+                <PublicLayout><LandingMercantilPage /></PublicLayout>
+              </React.Suspense>
+            } />
+            <Route path="/contacto" element={
+              <React.Suspense fallback={<>Cargando...</>}>
+                <PublicLayout><ContactPage /></PublicLayout>
+              </React.Suspense>
+            } />
+            {/* --- End SEO Routes --- */}
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

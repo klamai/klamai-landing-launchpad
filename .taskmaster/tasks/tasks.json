@@ -444,5 +444,80 @@
       "updated": "2025-08-26T09:30:16.846Z",
       "description": "Tasks for master context"
     }
+  },
+  "feature-seo-mvp": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Instalar y configurar dependencias SEO",
+        "description": "Instalar las librerías necesarias (@dr.pogodin/react-helmet, react-router-dom) y configurar el HelmetProvider en el punto de entrada de la aplicación.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Crear fuente de datos MVP",
+        "description": "Crear un archivo JSON estático (mercantil-landings.json) que contenga los datos estructurados para cada landing page de ciudad (título, descripción, contenido, FAQs, etc.).",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Implementar rutas dinámicas",
+        "description": "Configurar React Router para manejar las nuevas rutas dinámicas, como '/derecho-mercantil/:ciudad', y las rutas estáticas para las páginas hub.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Construir componente dinámico LandingMercantilPage.jsx",
+        "description": "Crear el componente principal que leerá los datos del JSON según el parámetro de la URL y renderizará el contenido, los meta tags con Helmet y el JSON-LD.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Construir las páginas Hub",
+        "description": "Desarrollar las páginas de categoría, como '/derecho-mercantil', que servirán como índice y enlazarán a las landings de ciudad específicas.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Integrar componentes compartidos (Footer, Consentimiento)",
+        "description": "Asegurarse de que los componentes existentes, como el Footer y el banner de consentimiento de cookies, se incluyan en las nuevas plantillas de página.",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-09-02T13:50:40.037Z",
+      "updated": "2025-09-02T14:06:30.042Z",
+      "description": "Tag created on 2/9/2025"
+    }
   }
 }

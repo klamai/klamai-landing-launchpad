@@ -1,0 +1,137 @@
+[
+  {
+    "city": "valencia",
+    "province": "Valencia",
+    "title": "Abogados Derecho Mercantil Valencia - Asesoramiento Especializado",
+    "description": "Despacho de abogados en Valencia especializado en Derecho Mercantil. Ofrecemos asesoramiento en constitución de sociedades, contratos, concursal y más.",
+    "h1": "Abogados de Derecho Mercantil en Valencia",
+    "breadcrumbs": [
+      { "name": "Inicio", "url": "/" },
+      { "name": "Áreas de Práctica", "url": "/areas-de-practica" },
+      { "name": "Derecho Mercantil", "url": "/derecho-mercantil" },
+      { "name": "Valencia", "url": "/derecho-mercantil/valencia" }
+    ],
+    "intro": "En nuestro despacho en Valencia, contamos con un equipo de abogados expertos en Derecho Mercantil dedicados a ofrecer soluciones legales a empresas, autónomos y emprendedores. Entendemos la complejidad del entorno empresarial y proporcionamos un asesoramiento integral para proteger sus intereses y ayudarle a alcanzar sus objetivos comerciales.",
+    "services": [
+      "Constitución de Sociedades",
+      "Contratación Mercantil",
+      "Derecho Concursal",
+      "Propiedad Industrial e Intelectual",
+      "Competencia Desleal",
+      "Fusiones y Adquisiciones (M&A)"
+    ],
+    "whyUs": {
+      "title": "¿Por qué elegirnos como sus abogados mercantilistas en Valencia?",
+      "points": [
+        "<strong>Experiencia y Especialización:</strong> Amplia trayectoria en todos los ámbitos del derecho mercantil.",
+        "<strong>Trato Cercano y Personalizado:</strong> Cada cliente es único y nos implicamos al máximo en cada caso.",
+        "<strong>Enfoque en Resultados:</strong> Nuestro objetivo es conseguir los mejores resultados para su negocio.",
+        "<strong>Honorarios Competitivos:</strong> Ofrecemos una estructura de precios transparente y ajustada."
+      ]
+    },
+    "faqs": [
+      {
+        "question": "¿Qué servicios ofrecen en el área de Derecho Mercantil?",
+        "answer": "Ofrecemos un asesoramiento completo que incluye la constitución de sociedades, redacción y negociación de contratos mercantiles, procedimientos concursales, protección de marcas y patentes, y mucho más."
+      },
+      {
+        "question": "Tengo una idea de negocio, ¿pueden ayudarme a crear la empresa?",
+        "answer": "Por supuesto. Le asesoramos desde el primer momento, ayudándole a elegir la forma societaria más adecuada para su proyecto y realizando todos los trámites necesarios para la constitución de su empresa en Valencia."
+      },
+      {
+        "question": "¿Cómo puedo solicitar una consulta?",
+        "answer": "Puede contactarnos a través de nuestro formulario web, por teléfono o visitando nuestras oficinas en Valencia para programar una primera consulta y analizar su caso."
+      }
+    ]
+  },
+  {
+    "city": "alicante",
+    "province": "Alicante",
+    "title": "Abogados Derecho Mercantil Alicante - Soluciones para Empresas",
+    "description": "Expertos en Derecho Mercantil en Alicante. Asesoramos a empresas en contratos, derecho societario, concursal y propiedad industrial.",
+    "h1": "Abogados de Derecho Mercantil en Alicante",
+    "breadcrumbs": [
+      { "name": "Inicio", "url": "/" },
+      { "name": "Áreas de Práctica", "url": "/areas-de-practica" },
+      { "name": "Derecho Mercantil", "url": "/derecho-mercantil" },
+      { "name": "Alicante", "url": "/derecho-mercantil/alicante" }
+    ],
+    "intro": "Nuestro despacho en Alicante ofrece un servicio jurídico de alta calidad en Derecho Mercantil, dirigido a empresas que buscan seguridad y eficacia en sus operaciones comerciales. Proporcionamos un enfoque práctico y orientado a resultados para todos los asuntos legales de su compañía.",
+    "services": [
+      "Derecho Societario",
+      "Contratación Nacional e Internacional",
+      "Reestructuraciones e Insolvencias",
+      "Marcas y Patentes",
+      "Litigios Mercantiles",
+      "Secretaría de Consejo"
+    ],
+    "whyUs": {
+      "title": "¿Por qué confiar en nosotros para sus asuntos mercantiles en Alicante?",
+      "points": [
+        "<strong>Conocimiento del Mercado Local:</strong> Entendemos las particularidades del tejido empresarial de Alicante.",
+        "<strong>Equipo Multidisciplinar:</strong> Abogados con experiencia en diversas ramas del derecho de empresa.",
+        "<strong>Prevención de Conflictos:</strong> Nos anticipamos a los problemas para evitar litigios costosos.",
+        "<strong>Comunicación Fluida:</strong> Mantenemos un contacto constante y transparente con nuestros clientes."
+      ]
+    },
+    "faqs": [
+      {
+        "question": "¿Qué implica el servicio de Secretaría de Consejo?",
+        "answer": "Nos encargamos de la llevanza de los libros sociales, la redacción de actas de juntas y consejos, y el cumplimiento de las obligaciones formales de la sociedad, garantizando la seguridad jurídica de sus órganos de gobierno."
+      },
+      {
+        "question": "Mi empresa tiene problemas de liquidez, ¿qué puedo hacer?",
+        "answer": "Le asesoramos sobre las mejores vías de actuación, ya sea a través de una reestructuración de deuda, la negociación con acreedores o, si es necesario, la preparación y presentación de un concurso de acreedores para proteger sus intereses y los de la empresa."
+      },
+      {
+        "question": "Necesito registrar una marca. ¿Gestionan el proceso?",
+        "answer": "Sí, gestionamos el proceso completo de registro de marcas, nombres comerciales y patentes a nivel nacional, europeo e internacional, asegurando la protección de sus activos intangibles."
+      }
+    ]
+  },
+  {
+    "city": "castellon",
+    "province": "Castellón",
+    "title": "Abogados Derecho Mercantil Castellón - Asesoría Integral",
+    "description": "Despacho mercantilista en Castellón. Ofrecemos asesoramiento integral a empresas en materia de sociedades, contratos, y derecho concursal.",
+    "h1": "Abogados de Derecho Mercantil en Castellón",
+    "breadcrumbs": [
+      { "name": "Inicio", "url": "/" },
+      { "name": "Áreas de Práctica", "url": "/areas-de-practica" },
+      { "name": "Derecho Mercantil", "url": "/derecho-mercantil" },
+      { "name": "Castellón", "url": "/derecho-mercantil/castellon" }
+    ],
+    "intro": "Desde nuestra sede en Castellón, brindamos un asesoramiento mercantil integral a empresas de la provincia. Nuestro objetivo es ser un socio estratégico para nuestros clientes, ofreciendo soluciones legales que impulsen su crecimiento y minimicen los riesgos.",
+    "services": [
+      "Creación de Empresas y Startups",
+      "Pactos de Socios",
+      "Conflictos Societarios",
+      "Negociación de Contratos",
+      "Segunda Oportunidad para Autónomos",
+      "Protección de Datos (RGPD)"
+    ],
+    "whyUs": {
+      "title": "¿Por qué somos su mejor opción en Castellón?",
+      "points": [
+        "<strong>Visión Estratégica:</strong> Aportamos una perspectiva legal y de negocio a cada consulta.",
+        "<strong>Soporte a Emprendedores:</strong> Tenemos programas especiales para startups y nuevos empresarios.",
+        "<strong>Resolución de Conflictos:</strong> Buscamos soluciones eficientes, priorizando la negociación y el acuerdo.",
+        "<strong>Actualización Constante:</strong> Estamos al día de las últimas novedades legislativas que afectan a la empresa."
+      ]
+    },
+    "faqs": [
+      {
+        "question": "¿Qué son los pactos de socios y por qué son importantes?",
+        "answer": "Son acuerdos privados entre los socios que regulan aspectos clave del funcionamiento de la sociedad, como la toma de decisiones, la transmisión de participaciones o la resolución de bloqueos. Son fundamentales para evitar futuros conflictos."
+      },
+      {
+        "question": "Soy autónomo con deudas, ¿puedo acogerme a la Ley de Segunda Oportunidad?",
+        "answer": "Sí, la Ley de Segunda Oportunidad permite a autónomos y particulares cancelar sus deudas si cumplen ciertos requisitos. En nuestro despacho de Castellón estudiaremos su caso para ver si es viable y le guiaremos en todo el procedimiento."
+      },
+      {
+        "question": "¿Ofrecen servicios de cumplimiento de RGPD?",
+        "answer": "Sí, ayudamos a las empresas de Castellón a adaptarse a la normativa de Protección de Datos, realizando auditorías, redactando la documentación necesaria y ofreciendo formación para garantizar el cumplimiento."
+      }
+    ]
+  }
+]
