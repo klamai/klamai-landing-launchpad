@@ -59,17 +59,17 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <a href="/" className="block transition-colors hover:text-blue-200 text-blue-100">
                 Inicio
               </a>
+              <a href="/areas-de-practica" className="block transition-colors hover:text-blue-200 text-blue-100">
+                Áreas de Práctica
+              </a>
+              <a href="/mercantil" className="block transition-colors hover:text-blue-200 text-blue-100">
+                Derecho Mercantil
+              </a>
+              <a href="/contacto" className="block transition-colors hover:text-blue-200 text-blue-100">
+                Contacto
+              </a>
               <a href="/chat" className="block transition-colors hover:text-blue-200 text-blue-100">
                 Consultar con VitorIA
-              </a>
-              <a href="#features" className="block transition-colors hover:text-blue-200 text-blue-100">
-                Características
-              </a>
-              <a href="#testimonials" className="block transition-colors hover:text-blue-200 text-blue-100">
-                Testimonios
-              </a>
-              <a href="#contact" className="block transition-colors hover:text-blue-200 text-blue-100">
-                Contacto
               </a>
             </nav>
           </div>

@@ -43,3 +43,4 @@ USING (
     WHERE ((c.id = documentos_resolucion.caso_id) AND (c.cliente_id = auth.uid()) AND (p.estado = 'succeeded'::pago_estado_enum) AND ((p.metadata_pago ->> 'caso_id'::text) = (documentos_resolucion.caso_id)::text))
   ))
 );
+
