@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2, Shield, ArrowUp, Square, Briefcase, Gavel, Award, BookOpen } from "lucide-react";
+import { Moon, Sun, Scale, MapPin, ArrowRight, ChevronRight, Menu, X, MessageCircle, Zap, Phone, Mail, Sparkles, Clock, Users2, Shield, ArrowUp, Square, Briefcase, Gavel, Award, BookOpen, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Testimonial } from "@/components/ui/testimonial-card";
@@ -268,7 +268,7 @@ const Index = () => {
                       ) : (
                         <>
                           {/* Usuario NO autenticado - mostrar opciones de acceso */}
-                          <Link to="/abogados">
+                          <Link to="/auth">
                             <Button 
                               size="sm" 
                               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-0 font-medium group relative overflow-hidden"
@@ -276,21 +276,17 @@ const Index = () => {
                               {/* Shimmer effect */}
                               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                               
-                              <Scale className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
-                              Soy Abogado
+                              <User className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                              Acceso Clientes
                               
                               {/* Subtle glow */}
                               <div className="absolute inset-0 bg-blue-400/20 rounded-xl blur-sm group-hover:bg-blue-400/30 transition-all duration-300"></div>
                             </Button>
                           </Link>
-                          <Link to="/auth">
-                            <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-black-800 dark:hover:bg-black">
-                              Iniciar Sesión
-                            </Button>
-                          </Link>
-                          <Link to="/auth">
-                            <Button size="sm" className="bg-black text-white hover:bg-gray-100 hover:text-black border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
-                              Registrarse
+                          <Link to="/abogados">
+                            <Button variant="outline" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border-gray-300 hover:border-gray-400">
+                              <Scale className="w-4 h-4 mr-2" />
+                              Soy Abogado
                             </Button>
                           </Link>
                         </>
@@ -325,20 +321,25 @@ const Index = () => {
                         ) : (
                           <>
                             {/* Usuario NO autenticado - mostrar opciones de acceso */}
+                            <Link to="/auth">
+                              <Button 
+                                size="sm" 
+                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-0 font-medium group relative overflow-hidden w-full justify-center"
+                              >
+                                {/* Shimmer effect */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                                
+                                <User className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                                Acceso Clientes
+                                
+                                {/* Subtle glow */}
+                                <div className="absolute inset-0 bg-blue-400/20 rounded-xl blur-sm group-hover:bg-blue-400/30 transition-all duration-300"></div>
+                              </Button>
+                            </Link>
                             <Link to="/abogados">
-                              <Button variant="outline" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center border-blue-500 hover:border-blue-600">
+                              <Button variant="outline" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center border-gray-300 hover:border-gray-400">
                                 <Scale className="w-4 h-4 mr-2" />
                                 Soy Abogado
-                              </Button>
-                            </Link>
-                            <Link to="/auth">
-                              <Button variant="ghost" size="sm" className="text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-full justify-center">
-                                Iniciar Sesión
-                              </Button>
-                            </Link>
-                            <Link to="/auth">
-                              <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 border border-gray-300 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 w-full">
-                                Registrarse
                               </Button>
                             </Link>
                           </>

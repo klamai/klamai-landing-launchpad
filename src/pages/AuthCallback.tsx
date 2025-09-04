@@ -68,7 +68,7 @@ const AuthCallback = () => {
       case 'redirect-dashboard':
       default:
         setMessage('Redirigiendo a tu dashboard...');
-          navigate('/dashboard');
+        handleGoogleLoginRedirect();
         break;
     }
   }, [user, authLoading, callbackIntent, navigate]);
