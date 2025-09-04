@@ -50,6 +50,7 @@ const RegistroPage = () => {
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth`,
           data: {
             full_name: formData.fullName,
             role: 'cliente'

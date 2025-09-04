@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirma tu cuenta en KlamAI</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+        }
+        .header {
+            background-color: #f1f3f5;
+            padding: 24px;
+            text-align: center;
+        }
+        .header img {
+            max-width: 120px;
+        }
+        .content {
+            padding: 32px;
+        }
+        .content h1 {
+            color: #212529;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        .content p {
+            color: #495057;
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+        .button-container {
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            background-image: linear-gradient(to right, #3b82f6, #6366f1);
+            color: #ffffff !important;
+            padding: 14px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .fallback-link {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 16px;
+            word-break: break-all;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 24px;
+            text-align: center;
+            font-size: 12px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <!-- IMPORTANTE: Reemplaza esta URL con la URL pública de tu logo -->
+            <img src="https://klamai.com/logo.svg" alt="KlamAI Logo">
+        </div>
+        <div class="content">
+            <h1>Confirma tu cuenta</h1>
+            <p>¡Hola!</p>
+            <p>Gracias por registrarte en KlamAI. Para completar el proceso y activar tu cuenta, por favor, haz clic en el siguiente botón.</p>
+            <div class="button-container">
+                <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup" class="button">Activar mi cuenta</a>
+            </div>
+            <p class="fallback-link">
+                Si el botón no funciona, copia y pega el siguiente enlace en tu navegador:<br>
+                <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup" style="color: #3b82f6;">{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>Si no te has registrado en KlamAI, puedes ignorar este correo de forma segura.</p>
+            <p>&copy; 2025 KlamAI. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

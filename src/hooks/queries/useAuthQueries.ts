@@ -154,7 +154,7 @@ export const useSignUp = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/auth`,
           data: {
             nombre: name ? name.split(' ')[0] : '',
             apellido: name ? name.split(' ').slice(1).join(' ') : '',
