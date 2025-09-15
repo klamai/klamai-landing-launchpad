@@ -128,18 +128,11 @@ serve(async (req) => {
       });
     }
 
-    // Usar el email proporcionado por el usuario o el email del caso
-    const finalEmail = customer_email || caso.email_borrador;
-    
-    if (!finalEmail) {
-      logStep("ERROR - No se encontró email de contacto", { casoId: caso_id });
-      throw new Error("No se encontró un email de contacto para el caso");
-    }
-    
-    logStep("Email de pago determinado", {
+    // ✅ CORREGIDO: No pre-rellenar email, dejar que el usuario lo escriba en Stripe
+    logStep("Configurando sesión de checkout sin email pre-rellenado", {
       email_provided: customer_email ? maskEmail(customer_email) : "no proporcionado",
       email_caso: maskEmail(caso.email_borrador),
-      email_final: maskEmail(finalEmail)
+      strategy: "user_input_in_stripe"
     });
 
     // Inicializar Stripe
@@ -167,7 +160,8 @@ serve(async (req) => {
       }
     }
 
-    // Crear sesión de checkout sin pre-rellenar email
+    // ✅ CORREGIDO: Crear sesión de checkout SIN pre-rellenar email
+    // El usuario podrá escribir libremente su email en la página de Stripe
     const idempotencyKey = `${caso_id}:${Math.floor(Date.now()/60000)}`; // por minuto para evitar duplicaciones
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -178,16 +172,19 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
+      // ✅ NO pre-rellenar customer_email - dejar que el usuario lo escriba
       success_url: `${siteUrl}/pago-exitoso?caso_id=${caso_id}`,
       cancel_url: `${siteUrl}/chat?caso_id=${caso_id}&pago=cancelado`,
       metadata: {
         caso_id: caso_id,
         flujo_origen: 'chat_anonimo'
+        // ✅ NO incluir email_contacto en metadata - se obtendrá de Stripe después del pago
       },
       payment_intent_data: {
         metadata: {
           caso_id: caso_id,
           flujo_origen: 'chat_anonimo'
+          // ✅ NO incluir email_contacto en metadata - se obtendrá de Stripe después del pago
         }
       }
     }, {
@@ -214,9 +211,9 @@ serve(async (req) => {
       throw new Error(`Error actualizando caso: ${updateError.message}`);
     }
 
-    // No creamos ni vinculamos clientes aquí, eso se hará en el webhook después del pago
-    // Solo registramos el email para referencia futura
-    logStep("Email registrado para referencia futura", { email: maskEmail(finalEmail) });
+    // ✅ CORREGIDO: No registramos email aquí - se obtendrá del webhook de Stripe
+    // El usuario escribirá su email real en la página de Stripe
+    logStep("Sesión creada sin email pre-rellenado - usuario escribirá email en Stripe");
 
     logStep("Sesión de checkout anónima creada exitosamente", {
       sessionId: session.id,

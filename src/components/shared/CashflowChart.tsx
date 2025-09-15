@@ -5,24 +5,13 @@ import { Badge } from '@/components/ui/badge-2';
 import { Card, CardContent, CardHeader, CardTitle, CardToolbar } from '@/components/ui/card';
 import { ChartConfig, ChartContainer, ChartTooltip } from '@/components/ui/line-charts-2';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts';
 
-// Datos de cashflow para 12 meses (adaptado para casos legales)
-const cashflowData = [
-  { month: 'ENE', value: 2100 },
-  { month: 'FEB', value: 2300 },
-  { month: 'MAR', value: 1900 },
-  { month: 'ABR', value: 4800 },
-  { month: 'MAY', value: 5200 },
-  { month: 'JUN', value: 8900 },
-  { month: 'JUL', value: 6200 },
-  { month: 'AGO', value: 7100 },
-  { month: 'SEP', value: 9400 },
-  { month: 'OCT', value: 10200 },
-  { month: 'NOV', value: 11100 },
-  { month: 'DIC', value: 11800 },
-];
+interface CashflowChartProps {
+  data?: Array<{ mes: string; ingresos: number; gastos: number; beneficio: number }>;
+  title?: string;
+}
 
 // Configuración del chart con colores personalizados
 const chartConfig = {
@@ -33,22 +22,46 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 // Tooltip personalizado
+interface ChartDataPoint {
+  month: string;
+  value: number;
+  ingresos: number;
+  gastos: number;
+}
+
 interface TooltipProps {
   active?: boolean;
   payload?: Array<{
     dataKey: string;
     value: number;
     color: string;
+    payload?: ChartDataPoint;
   }>;
   label?: string;
 }
 
-const CustomTooltip = ({ active, payload }: TooltipProps) => {
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
+    const data = payload[0].payload;
     return (
-      <div className="rounded-lg bg-zinc-900 text-white p-3 shadow-lg">
-        <div className="text-xs font-medium mb-1">Total:</div>
-        <div className="text-sm font-semibold">€{payload[0].value.toLocaleString()}</div>
+      <div className="rounded-lg bg-zinc-900 text-white p-3 shadow-lg min-w-[200px]">
+        <div className="text-xs font-medium mb-2 text-center border-b border-gray-600 pb-1">
+          {label}
+        </div>
+        <div className="space-y-1">
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-green-400">Ingresos:</span>
+            <span className="text-xs font-medium">€{data.ingresos?.toLocaleString() || '0'}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-red-400">Gastos:</span>
+            <span className="text-xs font-medium">€{data.gastos?.toLocaleString() || '0'}</span>
+          </div>
+          <div className="flex justify-between items-center border-t border-gray-600 pt-1 mt-1">
+            <span className="text-xs text-blue-400 font-medium">Beneficio:</span>
+            <span className="text-sm font-bold text-blue-400">€{data.value?.toLocaleString() || '0'}</span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -76,29 +89,54 @@ const PERIODS = {
 
 type PeriodKey = keyof typeof PERIODS;
 
-export default function CashflowChart() {
+export default function CashflowChart({ data, title = "Cashflow" }: CashflowChartProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodKey>('12m');
+
+  // Datos por defecto si no se pasan datos
+  const defaultData = [
+    { mes: 'Ene', ingresos: 21000, gastos: 8000, beneficio: 13000 },
+    { mes: 'Feb', ingresos: 23000, gastos: 8500, beneficio: 14500 },
+    { mes: 'Mar', ingresos: 19000, gastos: 7800, beneficio: 11200 },
+    { mes: 'Abr', ingresos: 48000, gastos: 12000, beneficio: 36000 },
+    { mes: 'May', ingresos: 52000, gastos: 13000, beneficio: 39000 },
+    { mes: 'Jun', ingresos: 89000, gastos: 18000, beneficio: 71000 },
+  ];
+
+  const chartData = data || defaultData;
+
+  // Transformar datos para el gráfico (usar beneficio como valor principal)
+  const transformedData = chartData.map(item => ({
+    month: item.mes,
+    value: item.beneficio,
+    ingresos: item.ingresos,
+    gastos: item.gastos
+  }));
 
   // Filtrar datos según el período seleccionado
   const getFilteredData = () => {
     switch (selectedPeriod) {
       case '6m':
-        return cashflowData.slice(-6);
+        return transformedData.slice(-6);
       case '12m':
-        return cashflowData;
-      case '2y':
+        return transformedData;
+      case '2y': {
         // Simular datos de 2 años duplicando y modificando el año actual
-        const previousYear = cashflowData.map((item) => ({
+        const previousYear = transformedData.map((item) => ({
           month: `${item.month} '23`,
           value: Math.round(item.value * 0.85), // 15% menor para el año anterior
+          ingresos: Math.round(item.ingresos * 0.85),
+          gastos: Math.round(item.gastos * 0.85)
         }));
-        const currentYear = cashflowData.map((item) => ({
+        const currentYear = transformedData.map((item) => ({
           month: `${item.month} '24`,
           value: item.value,
+          ingresos: item.ingresos,
+          gastos: item.gastos
         }));
         return [...previousYear, ...currentYear];
+      }
       default:
-        return cashflowData;
+        return transformedData;
     }
   };
 
@@ -116,7 +154,7 @@ export default function CashflowChart() {
   return (
     <Card className="w-full">
       <CardHeader className="border-0 min-h-auto pt-6 pb-4">
-        <CardTitle className="text-lg font-semibold">Cashflow</CardTitle>
+        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         <CardToolbar>
           <Select value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as PeriodKey)}>
             <SelectTrigger>{currentPeriod.label}</SelectTrigger>

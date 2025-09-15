@@ -1,26 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { SidebarDashboard, SidebarBody, SidebarLink, Logo, LogoIcon } from "@/components/ui/sidebar-dashboard";
-import { 
-  LayoutDashboard, 
-  Scale, 
-  Users, 
-  FileText, 
-  Settings, 
-  Bell, 
-  LogOut, 
-  Moon, 
+import {
+  LayoutDashboard,
+  Scale,
+  Users,
+  FileText,
+  Settings,
+  Bell,
+  LogOut,
+  Moon,
   Sun,
   UserCheck,
   Briefcase,
   Bot,
-  UserPlus
+  UserPlus,
+  Target,
+  Clock,
+  DollarSign
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useSuperAdminStats } from "@/hooks/admin/useSuperAdminStats";
+import { useSuperAdminStats } from "@/hooks/queries/useSuperAdminStats";
 import SuperAdminMetrics from "@/components/admin/SuperAdminMetrics";
 import CashflowChart from "@/components/shared/CashflowChart";
 import CasesManagement from "@/components/admin/CasesManagement";
@@ -98,7 +101,7 @@ const SuperAdminDashboard = () => {
         description: "Has cerrado sesión exitosamente",
       });
       navigate('/');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "Error al cerrar sesión",
@@ -306,6 +309,52 @@ const SuperAdminDashboard = () => {
 };
 
 export const SuperAdminDashboardSection = () => {
+  const { data: dashboardData, isLoading, error } = useSuperAdminStats();
+
+  if (isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6"
+      >
+        <div className="mb-4">
+          <h1 className="text-lg font-semibold text-foreground mb-2">
+            Panel de Administración - KlamAI
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Dashboard para la gestión completa de casos y abogados del bufete.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse"></div>
+          <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse"></div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (error) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6"
+      >
+        <div className="mb-4">
+          <h1 className="text-lg font-semibold text-foreground mb-2">
+            Panel de Administración - KlamAI
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Error al cargar los datos del dashboard.
+          </p>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -322,14 +371,80 @@ export const SuperAdminDashboardSection = () => {
         </p>
       </div>
 
+      {/* KPIs principales */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Tasa de Conversión</p>
+              <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{dashboardData?.kpis.tasaConversion}%</p>
+            </div>
+            <Target className="h-8 w-8 text-blue-500" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg border border-green-200 dark:border-green-800 p-4"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-600 dark:text-green-400">Tiempo Promedio</p>
+              <p className="text-2xl font-bold text-green-700 dark:text-green-300">{dashboardData?.kpis.tiempoPromedioResolucion}d</p>
+            </div>
+            <Clock className="h-8 w-8 text-green-500" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg border border-purple-200 dark:border-purple-800 p-4"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Ingreso/Caso</p>
+              <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">€{dashboardData?.kpis.ingresosPromedioCaso.toLocaleString()}</p>
+            </div>
+            <DollarSign className="h-8 w-8 text-purple-500" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg border border-orange-200 dark:border-orange-800 p-4"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Satisfacción</p>
+              <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{dashboardData?.kpis.satisfaccionCliente}%</p>
+            </div>
+            <UserCheck className="h-8 w-8 text-orange-500" />
+          </div>
+        </motion.div>
+      </div>
+
       {/* Componente de métricas moderno */}
       <div className="w-full">
         <SuperAdminMetrics />
       </div>
 
-      {/* Gráfico de Cashflow */}
+      {/* Gráfico de Cashflow con datos reales */}
       <div className="w-full">
-        <CashflowChart />
+        <CashflowChart
+          data={dashboardData?.ingresosGastos}
+          title="Análisis Financiero - Ingresos vs Gastos"
+        />
       </div>
 
       {/* Sección de estadísticas adicionales */}
@@ -342,18 +457,26 @@ export const SuperAdminDashboardSection = () => {
         >
           <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
             <Briefcase className="h-5 w-5 mr-2 text-indigo-600" />
-            Casos Recientes
+            Tendencias de Casos
           </h3>
           <div className="space-y-3">
             <div className="text-sm text-muted-foreground">
-              Últimos casos ingresados al sistema
+              Evolución mensual de casos nuevos vs resueltos
             </div>
-            <div className="h-32 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-              <p className="text-sm text-muted-foreground">Cargando casos recientes...</p>
+            <div className="space-y-2">
+              {dashboardData?.tendenciasTemporales.slice(-3).map((item, index) => (
+                <div key={index} className="flex justify-between items-center p-2 bg-white dark:bg-gray-700 rounded">
+                  <span className="text-sm font-medium">{item.mes}</span>
+                  <div className="flex gap-4 text-xs">
+                    <span className="text-green-600">+{item.casosNuevos}</span>
+                    <span className="text-blue-600">✓{item.casosResueltos}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </motion.div>
-        
+
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -362,14 +485,27 @@ export const SuperAdminDashboardSection = () => {
         >
           <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
             <UserCheck className="h-5 w-5 mr-2 text-green-600" />
-            Actividad de Abogados
+            Rendimiento de Abogados
           </h3>
           <div className="space-y-3">
             <div className="text-sm text-muted-foreground">
-              Rendimiento y asignaciones activas
+              Top 5 abogados por eficiencia
             </div>
-            <div className="h-32 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-              <p className="text-sm text-muted-foreground">Cargando actividad...</p>
+            <div className="space-y-2">
+              {dashboardData?.rendimientoAbogados.slice(0, 5).map((abogado, index) => (
+                <div key={index} className="flex justify-between items-center p-2 bg-white dark:bg-gray-700 rounded">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-xs font-medium text-blue-600 dark:text-blue-400">
+                      {index + 1}
+                    </div>
+                    <span className="text-sm font-medium truncate max-w-32">{abogado.nombre}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{abogado.casosAsignados} casos</span>
+                    <span className="text-xs font-medium text-green-600">{abogado.eficiencia}%</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </motion.div>

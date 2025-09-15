@@ -12,39 +12,39 @@ import {
 export function FeaturesSectionWithHoverEffects() {
   const features = [
     {
-      title: "Tecnología IA Avanzada",
+      title: "VitorIA: Asistente Legal IA",
       description:
-        "Utilizamos las últimas herramientas de inteligencia artificial para brindarte el mejor asesoramiento legal.",
+        "Nuestro asistente de IA estructura tu caso, proporciona un resumen detallado y prepara la documentación necesaria antes de la consulta con el abogado.",
       icon: <Zap className="h-8 w-8" />,
     },
     {
-      title: "Seguridad Garantizada",
+      title: "Cumplimiento RGPD",
       description:
-        "Tus datos y consultas están protegidos con los más altos estándares de seguridad y confidencialidad.",
+        "Garantizamos la protección de tus datos según el Reglamento General de Protección de Datos, asegurando máxima confidencialidad en todas tus consultas.",
       icon: <Shield className="h-8 w-8" />,
     },
     {
-      title: "Especialistas Expertos",
+      title: "Abogados Especialistas",
       description:
-        "Nuestro equipo de abogados especialistas está disponible para resolver tus consultas más complejas.",
+        "Nuestro equipo de abogados expertos recibe tu caso ya estructurado por VitorIA, permitiendo resolver tus problemas legales con mayor eficiencia.",
       icon: <Users className="h-8 w-8" />,
     },
     {
-      title: "Asesoramiento Legal",
-      description: 
-        "Consultas jurídicas precisas y actualizadas según la legislación española vigente.",
+      title: "Herramientas Propias de IA",
+      description:
+        "Desarrollamos tecnología propia para análisis de casos, investigación jurídica y generación de documentación legal personalizada.",
       icon: <Scale className="h-8 w-8" />,
     },
     {
-      title: "Respuesta Inmediata",
-      description: 
-        "VitorIA te responde al instante, disponible 24/7 para todas tus consultas legales.",
+      title: "Resolución Rápida de Casos",
+      description:
+        "Gracias a nuestra tecnología, resolvemos los casos de manera más rápida y efectiva, optimizando el tiempo tanto para clientes como para abogados.",
       icon: <MessageCircle className="h-8 w-8" />,
     },
     {
-      title: "Soporte Personalizado",
+      title: "Gestión Integral",
       description:
-        "Atención directa con nuestro equipo en Valencia para casos que requieren intervención humana.",
+        "Desde la primera consulta con VitorIA hasta la resolución final del caso, ofrecemos un servicio completo que revoluciona el asesoramiento legal.",
       icon: <Phone className="h-8 w-8" />,
     },
   ];
