@@ -85,51 +85,66 @@ const LawyerCasesView: React.FC<LawyerCasesViewProps> = ({
 
   if (!cases || cases.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Briefcase className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex items-center justify-center py-16"
+      >
+        <div className="text-center max-w-md">
+          <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 mb-6 shadow-lg">
+            <Briefcase className="h-20 w-20 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
             No hay casos asignados
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-gray-600 dark:text-gray-400 mb-4 text-lg leading-relaxed">
             {lawyerName} no tiene casos asignados actualmente
           </p>
-          <div className="text-sm text-gray-500 dark:text-gray-500">
-            Los casos aparecerán aquí cuando sean asignados al abogado
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+            <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+              Los casos aparecerán aquí cuando sean asignados al abogado
+            </p>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Header mejorado con estadísticas */}
-      <div className="bg-gradient-to-r from-green-600 via-green-700 to-emerald-600 rounded-xl p-6 text-white">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 rounded-2xl p-8 text-white shadow-2xl relative overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div>
-            <h3 className="text-2xl font-bold flex items-center gap-3">
-              <Briefcase className="w-8 h-8" />
+            <h3 className="text-3xl font-bold flex items-center gap-4 mb-2">
+              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                <Briefcase className="w-8 h-8" />
+              </div>
               Casos de {lawyerName}
             </h3>
-            <p className="text-green-100 text-lg mt-1">
-              Lista completa de casos asignados y su estado
+            <p className="text-green-100 text-lg leading-relaxed">
+              Lista completa de casos asignados y su estado actual
             </p>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="text-center">
-              <div className="text-sm text-green-200">Total Casos</div>
-              <div className="text-3xl font-bold">{cases.length}</div>
+          <div className="flex items-center gap-8">
+            <div className="text-center bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/20">
+              <div className="text-sm text-green-200 font-medium mb-1">Total Casos</div>
+              <div className="text-4xl font-bold">{cases.length}</div>
             </div>
-            <div className="text-center">
-              <div className="text-sm text-green-200">Activos</div>
-              <div className="text-3xl font-bold">
+            <div className="text-center bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/20">
+              <div className="text-sm text-green-200 font-medium mb-1">Activos</div>
+              <div className="text-4xl font-bold">
                 {cases.filter(c => c.estado_asignacion === 'activa').length}
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Grid responsive de casos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Search, 
-  Filter, 
-  UserPlus, 
-  Calendar, 
-  Clock, 
+import {
+  Search,
+  Filter,
+  UserPlus,
+  Calendar,
+  Clock,
   AlertCircle,
   CheckCircle,
   Eye,
@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Bot,
   Send,
+  XCircle,
 } from 'lucide-react';
 import { useAdminCases, useSuperAdminAccess } from '@/hooks/queries/useAdminCases';
 import { useAuth } from '@/hooks/useAuth';
@@ -469,137 +470,144 @@ const AdminCasesManagement = () => {
     <div className="space-y-6">
       {/* Indicador de casos en procesamiento MEJORADO */}
       {processingCases.size > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-5 shadow-lg"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             <div className="flex-1">
-              <h4 className="font-medium text-blue-900 dark:text-blue-100">
+              <h4 className="font-bold text-blue-900 dark:text-blue-100 text-lg">
                 Procesando {processingCases.size} caso{processingCases.size > 1 ? 's' : ''} con IA
               </h4>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                 La IA está analizando y generando resúmenes. Te notificaremos cuando estén listos.
               </p>
             </div>
-            <div className="text-xs text-blue-600 dark:text-blue-400 font-mono">
+            <div className="text-xs text-blue-600 dark:text-blue-400 font-mono bg-blue-100 dark:bg-blue-800/40 px-3 py-1 rounded-full">
               {Array.from(processingCases).slice(0, 3).join(', ')}
               {processingCases.size > 3 && ` +${processingCases.size - 3} más`}
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-4 mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Filter className="h-4 w-4 text-blue-500" />
-          <h3 className="font-semibold text-md text-gray-800 dark:text-gray-200">Filtros</h3>
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/60 dark:to-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 mb-8 shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
+            <Filter className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200">Filtros y Búsqueda</h3>
         </div>
         
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <div className="relative mb-4">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 h-5 w-5" />
           <Input
             placeholder="Buscar por cliente, motivo, email o ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-9 text-sm rounded-md"
+            className="pl-12 h-12 text-base rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 transition-all duration-300 shadow-sm"
           />
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className={`h-9 text-xs rounded-md ${statusFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
-              <SelectValue placeholder="Filtrar por estado" />
+            <SelectTrigger className={`h-11 text-sm rounded-xl border-2 ${statusFilter !== 'all' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100' : 'border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60'} shadow-sm hover:shadow-md transition-all duration-300`}>
+              <SelectValue placeholder="Estado" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl border-2 border-gray-200 dark:border-gray-700">
               {statusOptions.map(opt => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                <SelectItem key={opt.value} value={opt.value} className="rounded-lg">{opt.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
           <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-            <SelectTrigger className={`h-9 text-xs rounded-md ${specialtyFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
+            <SelectTrigger className={`h-11 text-sm rounded-xl border-2 ${specialtyFilter !== 'all' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100' : 'border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60'} shadow-sm hover:shadow-md transition-all duration-300`}>
               <SelectValue placeholder="Rama" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las ramas</SelectItem>
+            <SelectContent className="rounded-xl border-2 border-gray-200 dark:border-gray-700">
+              <SelectItem value="all" className="rounded-lg">Todas las ramas</SelectItem>
               {especialidades.map(specialty => (
-                <SelectItem key={specialty.id} value={specialty.nombre}>{specialty.nombre}</SelectItem>
+                <SelectItem key={specialty.id} value={specialty.nombre} className="rounded-lg">{specialty.nombre}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className={`h-9 text-xs rounded-md ${typeFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
+            <SelectTrigger className={`h-11 text-sm rounded-xl border-2 ${typeFilter !== 'all' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100' : 'border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60'} shadow-sm hover:shadow-md transition-all duration-300`}>
               <SelectValue placeholder="Tipo" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los tipos</SelectItem>
+            <SelectContent className="rounded-xl border-2 border-gray-200 dark:border-gray-700">
+              <SelectItem value="all" className="rounded-lg">Todos los tipos</SelectItem>
               {leadTypes.map(type => (
-                <SelectItem key={type} value={type}>{type}</SelectItem>
+                <SelectItem key={type} value={type} className="rounded-lg">{type}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
           <Select value={cityFilter} onValueChange={setCityFilter}>
-            <SelectTrigger className={`h-9 text-xs rounded-md ${cityFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
+            <SelectTrigger className={`h-11 text-sm rounded-xl border-2 ${cityFilter !== 'all' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100' : 'border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60'} shadow-sm hover:shadow-md transition-all duration-300`}>
               <SelectValue placeholder="Ciudad" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las ciudades</SelectItem>
+            <SelectContent className="rounded-xl border-2 border-gray-200 dark:border-gray-700">
+              <SelectItem value="all" className="rounded-lg">Todas las ciudades</SelectItem>
               {cities.map(city => (
-                <SelectItem key={city} value={city}>{city}</SelectItem>
+                <SelectItem key={city} value={city} className="rounded-lg">{city}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
           <Select value={profileTypeFilter} onValueChange={setProfileTypeFilter}>
-            <SelectTrigger className={`h-9 text-xs rounded-md ${profileTypeFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
+            <SelectTrigger className={`h-11 text-sm rounded-xl border-2 ${profileTypeFilter !== 'all' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100' : 'border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60'} shadow-sm hover:shadow-md transition-all duration-300`}>
               <SelectValue placeholder="Tipo de perfil" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los perfiles</SelectItem>
+            <SelectContent className="rounded-xl border-2 border-gray-200 dark:border-gray-700">
+              <SelectItem value="all" className="rounded-lg">Todos los perfiles</SelectItem>
               {profileTypes.map(type => (
-                <SelectItem key={type} value={type}>{type}</SelectItem>
+                <SelectItem key={type} value={type} className="rounded-lg">{type}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
           <Select value={paidFilter} onValueChange={(v) => setPaidFilter(v as any)}>
-            <SelectTrigger className={`h-9 text-xs rounded-md ${paidFilter !== 'all' ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : ''}`}>
+            <SelectTrigger className={`h-11 text-sm rounded-xl border-2 ${paidFilter !== 'all' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100' : 'border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60'} shadow-sm hover:shadow-md transition-all duration-300`}>
               <SelectValue placeholder="Pago consulta" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Pago: Todos</SelectItem>
-              <SelectItem value="pagados">Pagados</SelectItem>
-              <SelectItem value="no_pagados">No pagados</SelectItem>
+            <SelectContent className="rounded-xl border-2 border-gray-200 dark:border-gray-700">
+              <SelectItem value="all" className="rounded-lg">Pago: Todos</SelectItem>
+              <SelectItem value="pagados" className="rounded-lg">Pagados</SelectItem>
+              <SelectItem value="no_pagados" className="rounded-lg">No pagados</SelectItem>
             </SelectContent>
           </Select>
 
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <Button
               variant={viewMode === 'grid' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('grid')}
-              className="h-9 px-2 text-xs flex-1 rounded-md"
+              className={`h-11 px-4 text-sm flex-1 rounded-xl border-2 transition-all duration-300 ${viewMode === 'grid' ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' : 'border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 hover:bg-gray-50 dark:hover:bg-gray-700/80'}`}
             >
-              <Grid3X3 className="h-4 w-4" />
+              <Grid3X3 className="h-5 w-5" />
             </Button>
             <Button
               variant={viewMode === 'list' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('list')}
-              className="h-9 px-2 text-xs flex-1 rounded-md"
+              className={`h-11 px-4 text-sm flex-1 rounded-xl border-2 transition-all duration-300 ${viewMode === 'list' ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' : 'border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 hover:bg-gray-50 dark:hover:bg-gray-700/80'}`}
             >
-              <List className="h-4 w-4" />
+              <List className="h-5 w-5" />
             </Button>
           </div>
           {hasActiveFilters && (
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={clearFilters}
-              className="h-9 px-3 text-xs flex-1 rounded-md text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+              className="h-11 px-6 text-sm flex-1 rounded-xl border-2 border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 hover:border-red-400 dark:hover:border-red-500 transition-all duration-300 shadow-sm hover:shadow-md"
             >
+              <XCircle className="h-4 w-4 mr-2" />
               Limpiar filtros
             </Button>
           )}
@@ -607,25 +615,29 @@ const AdminCasesManagement = () => {
       </div>
 
       <div>
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-1">
-              {sectionIcon}
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {sectionTitle}
-              </h2>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl shadow-lg">
+                {sectionIcon}
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {sectionTitle}
+                </h2>
+                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mt-1">
+                  {sectionDescription}
+                </p>
+              </div>
             </div>
-            <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
-              {sectionDescription}
-            </p>
           </div>
           <div className="flex-shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 font-medium shadow-sm transition-all duration-200 hover:shadow-md rounded-lg">
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] rounded-xl border-0">
+                  <Plus className="h-5 w-5 mr-2" />
                   Añadir Caso
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                  <ChevronDown className="h-5 w-5 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60 p-1 rounded-xl border border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 shadow-lg">

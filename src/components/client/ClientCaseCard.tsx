@@ -125,30 +125,30 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
     const statusConfig = {
       'disponible': {
         label: 'En Revisión',
-        className: 'bg-gradient-to-r from-blue-500/80 to-blue-600/80 text-white border-blue-400 dark:border-blue-700'
+        className: 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 shadow-blue-100/50 dark:shadow-blue-900/20'
       },
       'asignado': {
         label: 'En Proceso',
-        className: 'bg-gradient-to-r from-indigo-500/80 to-indigo-600/80 text-white border-indigo-400 dark:border-indigo-700'
+        className: 'bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700 shadow-indigo-100/50 dark:shadow-indigo-900/20'
       },
       'esperando_pago': {
         label: 'Por Pagar',
-        className: 'bg-gradient-to-r from-amber-500/80 to-amber-600/80 text-white border-amber-400 dark:border-amber-700'
+        className: 'bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700 shadow-amber-100/50 dark:shadow-amber-900/20'
       },
       'cerrado': {
         label: 'Finalizado',
-        className: 'bg-gradient-to-r from-gray-500/80 to-gray-600/80 text-white border-gray-400 dark:border-gray-700'
+        className: 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900/30 dark:to-gray-800/40 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 shadow-gray-100/50 dark:shadow-gray-900/20'
       },
       'listo_para_propuesta': {
         label: 'En Preparación',
-        className: 'bg-gradient-to-r from-purple-500/80 to-purple-600/80 text-white border-purple-400 dark:border-purple-700'
+        className: 'bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700 shadow-purple-100/50 dark:shadow-purple-900/20'
       }
     };
-    
+
     const config = statusConfig[estado as keyof typeof statusConfig] || statusConfig.disponible;
     return (
-      <Badge 
-        className={`${config.className} text-xs font-medium px-3 py-1 shadow-sm border`}
+      <Badge
+        className={`${config.className} text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm border backdrop-blur-sm`}
       >
         {config.label}
       </Badge>
@@ -269,10 +269,11 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="group"
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      whileHover={{ scale: 1.02, y: -3 }}
+      className="group h-full"
     >
-      <Card className="relative transition-all duration-300 hover:shadow-lg border border-gray-200 dark:border-gray-700 h-full flex flex-col bg-white/80 dark:bg-[#181f2a]/90 backdrop-blur-sm rounded-2xl shadow-sm dark:shadow-blue-900/10 hover:border-blue-400">
+      <Card className="relative overflow-hidden transition-all duration-300 h-full flex flex-col rounded-2xl bg-white/95 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg shadow-gray-200/60 dark:shadow-black/30 hover:shadow-xl hover:shadow-blue-100/40 dark:hover:shadow-blue-900/20 ring-2 ring-gray-300/80 dark:ring-gray-700/60 hover:ring-blue-400/40 dark:hover:ring-blue-600/40">
         {/* Header con estado y fecha */}
         <CardContent className="p-6 flex-1 flex flex-col">
           <div className="flex items-start justify-between mb-4">
@@ -363,38 +364,38 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
           )}
 
           {/* Botones de acción - estilo moderno */}
-          <div className="flex items-center gap-2 mt-4">
+          <div className="flex items-center gap-3 mt-4">
             <Button
               onClick={() => onViewDetails(caso.id)}
               variant="default"
               size="sm"
-              className="flex items-center gap-2 flex-1 rounded-xl bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md hover:shadow-blue-500/20 dark:shadow-blue-900/20 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1 dark:focus:ring-blue-600/40"
+              className="flex items-center justify-center gap-2 flex-1 h-10 text-sm font-semibold rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl hover:shadow-blue-500/30 dark:shadow-blue-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 dark:focus:ring-blue-600/50"
             >
               <Eye className="h-4 w-4" />
-              Ver Detalles
+              <span>Ver Detalles</span>
             </Button>
-            
+
             {/* Botón de pago en estados permitidos */}
-              {shouldShowPaymentButton(caso.estado) && (
+            {shouldShowPaymentButton(caso.estado) && (
               <Button
                 onClick={handlePayment}
                 variant="default"
                 size="sm"
-                  className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-emerald-500/20 dark:shadow-emerald-900/20 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-1 dark:focus:ring-emerald-600/40"
+                className="flex items-center justify-center gap-2 flex-1 h-10 text-sm font-semibold rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg hover:shadow-xl hover:shadow-emerald-500/30 dark:shadow-emerald-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 dark:focus:ring-emerald-600/50"
               >
                 <CreditCard className="h-4 w-4" />
-                {getPaymentButtonText(caso.estado)}
+                <span>{getPaymentButtonText(caso.estado)}</span>
               </Button>
             )}
-            
+
             <Button
               onClick={() => setIsUploadModalOpen(true)}
               variant="outline"
               size="sm"
-              className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-900/20 dark:hover:text-purple-300 transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-purple-500/10 dark:shadow-purple-900/10 transform hover:scale-[1.02] focus:ring-2 focus:ring-purple-500/40 focus:ring-offset-1 dark:focus:ring-purple-600/40"
+              className="flex items-center justify-center gap-2 h-10 text-sm font-semibold rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:border-purple-400 dark:hover:border-purple-500 hover:text-purple-700 dark:hover:text-purple-300 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 dark:focus:ring-purple-500/50"
             >
               <Upload className="h-4 w-4" />
-              Subir
+              <span>Subir</span>
             </Button>
           </div>
         </CardContent>

@@ -150,38 +150,38 @@ const CaseCard: React.FC<CaseCardProps> = ({
     const statusConfig = {
       'disponible': {
         label: 'Disponible',
-        className: 'bg-blue-100 dark:bg-blue-800/50 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700'
+        className: 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 shadow-blue-100/50 dark:shadow-blue-900/20'
       },
       'asignado': {
         label: 'Asignado',
-        className: 'bg-stone-100 dark:bg-stone-800/50 text-stone-800 dark:text-stone-200 border-stone-200 dark:border-stone-700'
+        className: 'bg-gradient-to-r from-stone-50 to-stone-100 dark:from-stone-900/30 dark:to-stone-800/40 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 shadow-stone-100/50 dark:shadow-stone-900/20'
       },
       'agotado': {
         label: 'Agotado',
-        className: 'bg-rose-100 dark:bg-rose-800/50 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-700'
+        className: 'bg-gradient-to-r from-rose-50 to-rose-100 dark:from-rose-900/30 dark:to-rose-800/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-700 shadow-rose-100/50 dark:shadow-rose-900/20'
       },
       'cerrado': {
         label: 'Cerrado',
-        className: 'bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
+        className: 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900/30 dark:to-gray-800/40 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 shadow-gray-100/50 dark:shadow-gray-900/20'
       },
       'esperando_pago': {
         label: 'Esperando Pago',
-        className: 'bg-amber-100 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-700'
+        className: 'bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700 shadow-amber-100/50 dark:shadow-amber-900/20'
       },
       'listo_para_propuesta': {
         label: 'Listo para Propuesta',
-        className: 'bg-indigo-100 dark:bg-indigo-800/50 text-indigo-800 dark:text-indigo-200 border-indigo-200 dark:border-indigo-700'
+        className: 'bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700 shadow-indigo-100/50 dark:shadow-indigo-900/20'
       },
       'propuesta_enviada': {
         label: 'Propuesta Enviada',
-        className: 'bg-teal-100 dark:bg-teal-800/50 text-teal-800 dark:text-teal-200 border-teal-200 dark:border-teal-700'
+        className: 'bg-gradient-to-r from-teal-50 to-teal-100 dark:from-teal-900/30 dark:to-teal-800/40 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-700 shadow-teal-100/50 dark:shadow-teal-900/20'
       }
     };
-    
+
     const config = statusConfig[estado as keyof typeof statusConfig] || statusConfig.disponible;
     return (
-      <Badge variant="outline" className={`text-xs font-semibold px-2 py-1 rounded-md shadow-sm ${config.className}`}>
-        {estado === 'propuesta_enviada' && <Send className="h-3 w-3 mr-1 inline" />} {config.label}
+      <Badge variant="outline" className={`text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm border backdrop-blur-sm ${config.className}`}>
+        {estado === 'propuesta_enviada' && <Send className="h-3 w-3 mr-1.5 inline" />} {config.label}
       </Badge>
     );
   };
@@ -240,18 +240,18 @@ const CaseCard: React.FC<CaseCardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      whileHover={{ scale: 1.03, y: -5 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      whileHover={{ scale: 1.02, y: -3 }}
       className="group h-full"
     >
       <Card
-        className={`relative overflow-hidden transition-all duration-300 h-full flex flex-col rounded-xl bg-white dark:bg-gray-800/70 backdrop-blur-sm
-          ${caso.estado === 'cerrado' ? 'opacity-75 grayscale' : ''}
-          ${hideAssignmentStyling ? 'border-gray-200 dark:border-gray-700' : ''}
-          ${(caso as any)?.fecha_pago ? 'border-2 border-green-300 dark:border-green-600' : ''}
-          ${caso.estado === 'asignado' && !hideAssignmentStyling 
-            ? 'shadow-lg dark:shadow-stone-900/20 ring-2 ring-stone-500 dark:ring-stone-600' 
-            : `shadow-md dark:shadow-black/20 hover:shadow-lg dark:hover:shadow-black/30 ring-1 ring-gray-200 dark:ring-gray-700 hover:ring-blue-500 dark:hover:ring-blue-600`}
+        className={`relative overflow-hidden transition-all duration-300 h-full flex flex-col rounded-2xl bg-white/95 dark:bg-gray-800/90 backdrop-blur-sm border-0
+          ${caso.estado === 'cerrado' ? 'opacity-80 grayscale' : ''}
+          ${hideAssignmentStyling ? 'shadow-sm' : ''}
+          ${(caso as any)?.fecha_pago ? 'ring-2 ring-green-400/50 shadow-green-100 dark:shadow-green-900/20' : ''}
+          ${caso.estado === 'asignado' && !hideAssignmentStyling
+            ? 'shadow-xl shadow-stone-200/50 dark:shadow-stone-900/30 ring-2 ring-stone-400/30'
+            : `shadow-lg shadow-gray-200/60 dark:shadow-black/30 hover:shadow-xl hover:shadow-blue-100/40 dark:hover:shadow-blue-900/20 ring-2 ring-gray-300/80 dark:ring-gray-700/60 hover:ring-blue-400/40 dark:hover:ring-blue-600/40`}
         `}
       >
         {/* Sello visual de cerrado */}
@@ -294,51 +294,55 @@ const CaseCard: React.FC<CaseCardProps> = ({
             </div>
           </div>
         )}
-        <CardContent className="p-5 flex-1 flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-2">
+        <CardContent className="p-6 flex-1 flex flex-col gap-4">
+          <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-50 truncate leading-tight">{clientData.nombre} {clientData.apellido}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{clientData.email}</p>
+              <h3 className="font-bold text-xl text-gray-900 dark:text-white truncate leading-tight mb-1">{clientData.nombre} {clientData.apellido}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 truncate font-medium">{clientData.email}</p>
             </div>
-            <div className="ml-1 flex items-center gap-1">
+            <div className="flex-shrink-0">
               {/* Mostrar badge de estado solo si NO está cerrado y NO está asignado, o si está asignado pero hideAssignmentStyling es true */}
-              {caso.estado !== 'cerrado' && 
-               (caso.estado !== 'asignado' || hideAssignmentStyling) && 
+              {caso.estado !== 'cerrado' &&
+               (caso.estado !== 'asignado' || hideAssignmentStyling) &&
                getStatusBadge(caso.estado === 'asignado' && hideAssignmentStyling ? 'disponible' : caso.estado)}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 mt-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 mt-3">
             {caso.tipo_lead && getLeadTypeBadge(caso.tipo_lead)}
             {getProfileTypeBadge(clientData.tipo_perfil)}
             {caso.canal_atencion && getOriginBadge(caso.canal_atencion)}
-             <Badge variant="outline" className="px-2 py-1 rounded-md bg-gray-200/80 dark:bg-gray-700/60 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm">
-                <Scale className="h-3 w-3 mr-1.5" />
-                {caso.especialidades?.nombre || 'Sin especialidad'}
+            <Badge variant="outline" className="px-3 py-1.5 rounded-full bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/60 dark:to-gray-700/70 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm font-medium">
+              <Scale className="h-3.5 w-3.5 mr-2" />
+              {caso.especialidades?.nombre || 'Sin especialidad'}
+            </Badge>
+            {clientData.ciudad && (
+              <Badge variant="outline" className="px-3 py-1.5 rounded-full bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/60 dark:to-gray-700/70 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm font-medium">
+                <MapPin className="h-3.5 w-3.5 mr-2" />
+                {clientData.ciudad}
               </Badge>
-              {clientData.ciudad && (
-                <Badge variant="outline" className="px-2 py-1 rounded-md bg-gray-200/80 dark:bg-gray-700/60 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm">
-                  <MapPin className="h-3 w-3 mr-1.5" />
-                  {clientData.ciudad}
-                </Badge>
-              )}
+            )}
           </div>
-          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-3">
-            <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-gray-900/50 px-2 py-1 rounded-full">
-              <Calendar className="h-3 w-3 text-blue-500 dark:text-blue-400" />
-              <span>{format(casoDate, 'dd/MM/yy HH:mm', { locale: es })}</span>
+          <div className="flex items-center justify-between text-xs mt-4 p-3 bg-gray-50/60 dark:bg-gray-800/40 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 bg-white/80 dark:bg-gray-700/60 px-3 py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
+                <Calendar className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span className="font-medium text-gray-700 dark:text-gray-300">{format(casoDate, 'dd/MM/yy HH:mm', { locale: es })}</span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-white/80 dark:bg-gray-700/60 px-3 py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
+                <span className="font-mono font-semibold text-gray-700 dark:text-gray-300">#{caso.id.substring(0,8)}</span>
+              </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-gray-900/50 px-2 py-1 rounded-full">
-                <span className="font-mono tracking-tight">#{caso.id.substring(0,8)}</span>
-              </div>
-              <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-gray-900/50 px-2 py-1 rounded-full">
-                <Clock className="h-3 w-3 text-amber-500 dark:text-amber-400" />
-                <span>Hace {formatDistanceToNow(casoDate, { locale: es, addSuffix: false }).replace('hace ', '').replace('alrededor de ', '')}</span>
+              <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-700">
+                <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                <span className="font-medium text-amber-700 dark:text-amber-300">
+                  {formatDistanceToNow(casoDate, { locale: es, addSuffix: false }).replace('hace ', '').replace('alrededor de ', '')}
+                </span>
               </div>
               {caso.fecha_pago && (
-                <div className="flex items-center gap-1 bg-green-100/80 dark:bg-green-800/40 px-2 py-1 rounded-full text-green-700 dark:text-green-200 border border-green-200 dark:border-green-700">
-                  <CheckCircle className="h-3 w-3" />
-                  <span>Pagado</span>
+                <div className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/30 px-3 py-1.5 rounded-full border border-green-200 dark:border-green-700">
+                  <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                  <span className="font-semibold text-green-700 dark:text-green-300">Pagado</span>
                 </div>
               )}
             </div>
@@ -365,99 +369,99 @@ const CaseCard: React.FC<CaseCardProps> = ({
               {clientData.razon_social}
             </div>
           )}
-          <div className="bg-gray-50/90 dark:bg-gray-900/70 p-3 rounded-lg shadow-inner mt-2">
-            <p className="text-xs font-semibold text-gray-800 dark:text-white mb-1">Motivo:</p>
-            <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 leading-relaxed">{caso.motivo_consulta}</p>
+          <div className="bg-gradient-to-r from-gray-50/90 to-gray-100/60 dark:from-gray-800/70 dark:to-gray-700/50 p-4 rounded-xl shadow-inner mt-3 border border-gray-200/50 dark:border-gray-600/50">
+            <p className="text-xs font-bold text-gray-800 dark:text-white mb-2 uppercase tracking-wide">Motivo de Consulta</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 leading-relaxed font-medium">{caso.motivo_consulta}</p>
           </div>
           <div className="flex-grow" />
-          <div className="flex items-center justify-between mt-3">
+          <div className="flex items-center justify-between mt-4">
             {caso.valor_estimado && (
-              <div className="flex items-center gap-1 text-xs bg-green-100 dark:bg-green-900/40 px-2 py-1 rounded-full font-semibold border border-green-200 dark:border-green-600">
-                <Euro className="h-3 w-3 text-green-600 dark:text-green-300" />
+              <div className="flex items-center gap-2 text-sm bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/40 dark:to-green-800/50 px-3 py-2 rounded-full font-bold border border-green-200 dark:border-green-600 shadow-sm">
+                <Euro className="h-4 w-4 text-green-600 dark:text-green-300" />
                 <span className="text-green-800 dark:text-green-200">{caso.valor_estimado}</span>
               </div>
             )}
             {!caso.asignaciones_casos || caso.asignaciones_casos.length === 0 ? (
-              <div className="text-xs bg-gray-100 dark:bg-gray-700/50 px-2 py-1 rounded-full text-gray-600 dark:text-gray-300 flex items-center gap-1 font-semibold">
-                <Clock className="h-3 w-3 text-orange-500 dark:text-orange-400" />
+              <div className="text-sm bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/40 dark:to-orange-800/50 px-3 py-2 rounded-full text-orange-700 dark:text-orange-300 flex items-center gap-2 font-semibold border border-orange-200 dark:border-orange-600 shadow-sm">
+                <Clock className="h-4 w-4" />
                 <span>Sin asignar</span>
               </div>
             ) : null}
           </div>
         </CardContent>
-        <div className="p-3 pt-0">
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => onViewDetails(caso.id)}
-              className="flex items-center gap-2 flex-1 min-w-0 h-9 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all duration-200"
-            >
-              <Eye className="h-4 w-4 mr-1 flex-shrink-0" />
-              <span className="truncate">Ver</span>
-            </Button>
+        <div className="p-4 pt-0">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex gap-2 flex-1">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => onViewDetails(caso.id)}
+                className="flex items-center justify-center gap-2 flex-1 h-10 text-sm font-semibold rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl hover:shadow-blue-500/30 dark:shadow-blue-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 dark:focus:ring-blue-600/50"
+              >
+                <Eye className="h-4 w-4" />
+                <span>Ver Detalles</span>
+              </Button>
+              {caso.estado !== 'cerrado' && !hideAssignButton && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onAssignLawyer(caso.id)}
+                  className="flex items-center justify-center gap-2 flex-1 h-10 text-sm font-semibold rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg hover:shadow-xl hover:shadow-emerald-500/30 dark:shadow-emerald-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 dark:focus:ring-emerald-600/50"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>Asignar</span>
+                </Button>
+              )}
+            </div>
             {caso.estado !== 'cerrado' && (
-              <>
-                {!hideAssignButton && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
-                    variant="default"
+                    variant="outline"
                     size="sm"
-                    onClick={() => onAssignLawyer(caso.id)}
-                    className="flex items-center gap-2 flex-1 min-w-0 h-9 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="flex items-center justify-center gap-2 h-10 text-sm font-semibold rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-gray-400/50 focus:ring-offset-2 dark:focus:ring-gray-500/50"
                   >
-                    <UserPlus className="h-4 w-4 mr-1 flex-shrink-0" />
-                    <span className="truncate">Asignar</span>
+                    <Bot className="h-4 w-4" />
+                    <span>IA</span>
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 min-w-0 h-9 text-xs font-semibold rounded-lg bg-transparent dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700/70 hover:text-gray-900 dark:hover:text-white"
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg">
+                  {caso.estado === 'listo_para_propuesta' && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (onOpenSendProposal) onOpenSendProposal(caso.id);
+                        else onViewDetails(caso.id);
+                      }}
+                      className="flex items-center px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 focus:bg-blue-50 dark:focus:bg-blue-900/30 focus:text-blue-700 dark:focus:text-blue-300 cursor-pointer"
                     >
-                      <Bot className="h-4 w-4 mr-1 flex-shrink-0" />
-                      <span className="truncate">IA</span>
-                      <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg">
-                    {caso.estado === 'listo_para_propuesta' && (
-                      <DropdownMenuItem
-                        onClick={() => {
-                          if (onOpenSendProposal) onOpenSendProposal(caso.id);
-                          else onViewDetails(caso.id);
-                        }}
-                        className="flex items-center px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 focus:bg-blue-50 dark:focus:bg-blue-900/30 focus:text-blue-700 dark:focus:text-blue-300 cursor-pointer"
-                      >
-                        <Mail className="h-4 w-4 mr-2 text-indigo-600" />
-                        Enviar propuesta
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'resolucion')} className="flex items-center px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 focus:bg-blue-50 dark:focus:bg-blue-900/30 focus:text-blue-700 dark:focus:text-blue-300 cursor-pointer">
-                      <Target className="h-4 w-4 mr-2 text-blue-600" />
-                      Generar Resolución
-                      <Badge className="ml-auto bg-blue-100 text-blue-800 text-xs">Básico</Badge>
+                      <Mail className="h-4 w-4 mr-2 text-indigo-600" />
+                      Enviar propuesta
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'estrategia')} className="flex items-center px-3 py-2 text-sm hover:bg-purple-50 dark:hover:bg-purple-900/30 text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 focus:bg-purple-50 dark:focus:bg-purple-900/30 focus:text-purple-700 dark:focus:text-purple-300 cursor-pointer">
-                      <Brain className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
-                      Estrategia Legal
-                      <Badge className="ml-auto bg-purple-100 text-purple-800 text-xs">Premium</Badge>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator className="my-1 border-gray-200 dark:border-gray-700" />
-                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'documentos')} className="flex items-center px-3 py-2 text-sm hover:bg-green-50 dark:hover:bg-green-900/30 text-gray-700 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-300 focus:bg-green-50 dark:focus:bg-green-900/30 focus:text-green-700 dark:focus:text-green-300 cursor-pointer">
-                      <Zap className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
-                      Generar Documentos
-                      <Badge className="ml-auto bg-green-100 text-green-800 text-xs">Pro</Badge>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'analisis')} className="flex items-center px-3 py-2 text-sm hover:bg-orange-50 dark:hover:bg-orange-900/30 text-gray-700 dark:text-gray-300 hover:text-orange-700 dark:hover:text-orange-300 focus:bg-orange-50 dark:focus:bg-orange-900/30 focus:text-orange-700 dark:focus:text-orange-300 cursor-pointer">
-                      <Sparkles className="h-4 w-4 mr-2 text-orange-600 dark:text-orange-400" />
-                      Análisis Completo
-                      <Badge className="ml-auto bg-orange-100 text-orange-800 text-xs">Expert</Badge>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
+                  )}
+                  <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'resolucion')} className="flex items-center px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 focus:bg-blue-50 dark:focus:bg-blue-900/30 focus:text-blue-700 dark:focus:text-blue-300 cursor-pointer">
+                    <Target className="h-4 w-4 mr-2 text-blue-600" />
+                    Generar Resolución
+                    <Badge className="ml-auto bg-blue-100 text-blue-800 text-xs">Básico</Badge>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'estrategia')} className="flex items-center px-3 py-2 text-sm hover:bg-purple-50 dark:hover:bg-purple-900/30 text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 focus:bg-purple-50 dark:focus:bg-purple-900/30 focus:text-purple-700 dark:focus:text-purple-300 cursor-pointer">
+                    <Brain className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
+                    Estrategia Legal
+                    <Badge className="ml-auto bg-purple-100 text-purple-800 text-xs">Premium</Badge>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="my-1 border-gray-200 dark:border-gray-700" />
+                  <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'documentos')} className="flex items-center px-3 py-2 text-sm hover:bg-green-50 dark:hover:bg-green-900/30 text-gray-700 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-300 focus:bg-green-50 dark:focus:bg-green-900/30 focus:text-green-700 dark:focus:text-green-300 cursor-pointer">
+                    <Zap className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+                    Generar Documentos
+                    <Badge className="ml-auto bg-green-100 text-green-800 text-xs">Pro</Badge>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onGenerateResolutionWithAgent(caso.id, 'analisis')} className="flex items-center px-3 py-2 text-sm hover:bg-orange-50 dark:hover:bg-orange-900/30 text-gray-700 dark:text-gray-300 hover:text-orange-700 dark:hover:text-orange-300 focus:bg-orange-50 dark:focus:bg-orange-900/30 focus:text-orange-700 dark:focus:text-orange-300 cursor-pointer">
+                    <Sparkles className="h-4 w-4 mr-2 text-orange-600 dark:text-orange-400" />
+                    Análisis Completo
+                    <Badge className="ml-auto bg-orange-100 text-orange-800 text-xs">Expert</Badge>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>

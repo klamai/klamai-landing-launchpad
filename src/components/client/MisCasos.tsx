@@ -158,44 +158,51 @@ const ClientMisCasos: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8"
+      >
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{displayData.title}</h1>
-          <p className="text-muted-foreground">{displayData.description}</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">{displayData.title}</h1>
+          <p className="text-lg text-muted-foreground leading-relaxed">{displayData.description}</p>
         </div>
-        <Button onClick={handleNewCase} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
+        <Button
+          onClick={handleNewCase}
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] rounded-xl"
+        >
+          <Plus className="h-5 w-5 mr-2" />
           Nueva Consulta
         </Button>
-      </div>
+      </motion.div>
 
       {/* Filtros */}
-      <Card>
+      <Card className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/60 dark:to-gray-700/60 border-0 shadow-lg">
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-6">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 h-5 w-5" />
                 <Input
                   placeholder="Buscar por motivo, nombre, ciudad..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-12 h-12 text-base rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 transition-all duration-300 shadow-sm"
                 />
               </div>
             </div>
-            <div className="w-full sm:w-48">
+            <div className="w-full sm:w-64">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="h-12 text-base rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 shadow-sm hover:shadow-md transition-all duration-300">
                   <SelectValue placeholder="Filtrar por estado" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="disponible">En Revisión</SelectItem>
-                  <SelectItem value="asignado">En Proceso</SelectItem>
-                  <SelectItem value="esperando_pago">Por Pagar</SelectItem>
-                  <SelectItem value="listo_para_propuesta">Propuesta Lista</SelectItem>
-                  <SelectItem value="cerrado">Finalizados</SelectItem>
+                <SelectContent className="rounded-xl border-2 border-gray-200 dark:border-gray-700">
+                  <SelectItem value="all" className="rounded-lg">Todos los estados</SelectItem>
+                  <SelectItem value="disponible" className="rounded-lg">En Revisión</SelectItem>
+                  <SelectItem value="asignado" className="rounded-lg">En Proceso</SelectItem>
+                  <SelectItem value="esperando_pago" className="rounded-lg">Por Pagar</SelectItem>
+                  <SelectItem value="listo_para_propuesta" className="rounded-lg">Propuesta Lista</SelectItem>
+                  <SelectItem value="cerrado" className="rounded-lg">Finalizados</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -224,28 +231,38 @@ const ClientMisCasos: React.FC = () => {
           ))}
         </div>
       ) : filteredCasos.length === 0 ? (
-        <Card>
-          <CardContent className="p-12">
-            <div className="text-center">
-              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {searchTerm || statusFilter !== 'all' ? 'No se encontraron casos' : 'No tienes casos aún'}
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'Intenta ajustar los filtros de búsqueda'
-                  : 'Comienza creando tu primera consulta legal'
-                }
-              </p>
-              {!searchTerm && statusFilter === 'all' && (
-                <Button onClick={handleNewCase} className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Crear Primera Consulta
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700">
+            <CardContent className="p-16">
+              <div className="text-center">
+                <div className="bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-2xl p-8 mb-8 inline-block">
+                  <FileText className="h-20 w-20 text-blue-600 dark:text-blue-400 mx-auto" />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground mb-4">
+                  {searchTerm || statusFilter !== 'all' ? 'No se encontraron casos' : 'No tienes casos aún'}
+                </h3>
+                <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                  {searchTerm || statusFilter !== 'all'
+                    ? 'Intenta ajustar los filtros de búsqueda para encontrar lo que buscas'
+                    : 'Comienza creando tu primera consulta legal y un abogado especializado se pondrá en contacto contigo'
+                  }
+                </p>
+                {!searchTerm && statusFilter === 'all' && (
+                  <Button
+                    onClick={handleNewCase}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] rounded-xl"
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    Crear Primera Consulta
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCasos.map((caso) => (
