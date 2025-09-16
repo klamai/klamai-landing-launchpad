@@ -25,7 +25,15 @@ import {
   Filter,
   ChevronDown,
   ChevronUp,
-  X
+  X,
+  UserCheck,
+  AlertTriangle,
+  TrendingUp,
+  Users,
+  Award,
+  Briefcase,
+  Star,
+  Zap
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -37,7 +45,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { motion } from 'framer-motion';
 
 // Tipo que coincide exactamente con lo que devuelve Supabase
 interface SolicitudAbogadoFromDB {
@@ -308,31 +318,98 @@ const AdminLawyerApplicationsManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gestión de Solicitudes de Abogados</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Revisa y gestiona las solicitudes de nuevos abogados
-          </p>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Buscar por nombre, apellido, email, colegio..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+    <div className="space-y-8">
+      {/* Header Mejorado */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 p-6 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-2xl border border-blue-100 dark:border-blue-900/20"
+      >
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
+              <Users className="w-8 h-8 text-white" />
             </div>
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Solicitudes de Abogados
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 text-sm lg:text-base">
+                Gestiona las solicitudes de nuevos profesionales
+              </p>
+            </div>
+          </div>
+
+          {/* Estadísticas rápidas */}
+          <div className="flex flex-wrap gap-4 mt-4">
+            <div className="flex items-center gap-2 px-3 py-2 bg-white/60 dark:bg-gray-800/60 rounded-lg border border-blue-200 dark:border-blue-800">
+              <Clock className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Pendientes: {filteredApplications.filter(app => app.estado === 'pendiente').length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 bg-white/60 dark:bg-gray-800/60 rounded-lg border border-blue-200 dark:border-blue-800">
+              <Eye className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                En Revisión: {filteredApplications.filter(app => app.estado === 'en_revision').length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 bg-white/60 dark:bg-gray-800/60 rounded-lg border border-green-200 dark:border-green-800">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Aprobadas: {filteredApplications.filter(app => app.estado === 'aprobada').length}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Botón de acción principal */}
+        <div className="flex-shrink-0">
+          <Button
+            onClick={() => refetchApplications()}
+            disabled={loading}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4 mr-2" />
+            )}
+            Actualizar
+          </Button>
+        </div>
+      </motion.div>
+
+      {/* Search and Filters Mejorados */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50">
+          <CardContent className="p-6">
+            <div className="space-y-6">
+              {/* Search Bar Mejorada */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-blue-500" />
+                </div>
+                <Input
+                  placeholder="Buscar por nombre, apellido, email, colegio..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-12 pr-4 py-3 text-base border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 bg-white dark:bg-gray-800"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
 
             {/* Advanced Filters */}
             <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -432,15 +509,15 @@ const AdminLawyerApplicationsManagement = () => {
                     </Select>
                   </div>
 
-                  {/* Botón Limpiar Filtros */}
+                  {/* Botón Limpiar Filtros Mejorado */}
                   <div className="flex items-end">
                     <Button
                       variant="outline"
                       onClick={clearFilters}
-                      className="w-full"
+                      className="w-full border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/20 transition-all duration-200"
                     >
                       <X className="w-4 h-4 mr-2" />
-                      Limpiar Filtros
+                      <span className="font-medium">Limpiar Filtros</span>
                     </Button>
                   </div>
                 </div>
@@ -449,6 +526,7 @@ const AdminLawyerApplicationsManagement = () => {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Results Summary */}
       {(searchTerm || Object.values(filters).some(v => v !== '' && v !== 0 && v !== 50)) && (
@@ -459,87 +537,108 @@ const AdminLawyerApplicationsManagement = () => {
               Mostrando {filteredApplications.length} de {applications?.length || 0} solicitudes
             </span>
           </div>
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-900/20 transition-all duration-200"
+          >
             <X className="w-4 h-4 mr-1" />
             Limpiar filtros
           </Button>
         </div>
       )}
 
-      {/* Applications List */}
-      <div className="grid gap-4">
-        {filteredApplications.map((app) => (
-          <Card key={app.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {app.nombre} {app.apellido}
-                      </h3>
-                      {getStatusBadge(app.estado)}
-                    </div>
+      {/* Applications List Mejorada */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="grid gap-6"
+      >
+        {filteredApplications.map((app, index) => (
+          <motion.div
+            key={app.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
+          >
+            <Card className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 hover:border-l-blue-600 bg-gradient-to-r from-white to-blue-50/30 dark:from-gray-800 dark:to-blue-950/20">
+              <CardContent className="p-4 sm:p-6">
+                {/* Header con nombre y estado */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {app.nombre} {app.apellido}
+                    </h3>
+                    {getStatusBadge(app.estado)}
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Mail className="w-4 h-4" />
-                      {app.email}
-                    </div>
-                    {app.telefono && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <Phone className="w-4 h-4" />
-                        {app.telefono}
-                      </div>
-                    )}
-                    {app.colegio_profesional && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <GraduationCap className="w-4 h-4" />
-                        {app.colegio_profesional}
-                      </div>
-                    )}
-                    {app.experiencia_anos && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <Calendar className="w-4 h-4" />
-                        {app.experiencia_anos} años de experiencia
-                      </div>
-                    )}
-                  </div>
-
-                  {app.especialidades && app.especialidades.length > 0 && (
-                    <div className="mb-4">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Especialidades:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {app.especialidades.map((espId) => (
-                          <Badge key={espId} variant="secondary" className="text-xs">
-                            {especialidades?.[espId] || `ID: ${espId}`}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {app.carta_motivacion && (
-                    <div className="mb-4">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Carta de Motivación:</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                        {app.carta_motivacion}
-                      </p>
-                    </div>
-                  )}
-
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Solicitud enviada el {new Date(app.created_at).toLocaleDateString('es-ES')}
+                    {new Date(app.created_at).toLocaleDateString('es-ES')}
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 ml-4">
+                {/* Información de contacto */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <Mail className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{app.email}</span>
+                  </div>
+                  {app.telefono && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Phone className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{app.telefono}</span>
+                    </div>
+                  )}
+                  {app.colegio_profesional && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <GraduationCap className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{app.colegio_profesional}</span>
+                    </div>
+                  )}
+                  {app.experiencia_anos && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Calendar className="w-4 h-4 flex-shrink-0" />
+                      <span>{app.experiencia_anos} años exp.</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Especialidades */}
+                {app.especialidades && app.especialidades.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Especialidades:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {app.especialidades.map((espId) => (
+                        <Badge key={espId} variant="secondary" className="text-xs">
+                          {especialidades?.[espId] || `ID: ${espId}`}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Presentación */}
+                {app.carta_motivacion && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Presentación:</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                      {app.carta_motivacion}
+                    </p>
+                  </div>
+                )}
+
+                {/* Botones de acción - Responsive */}
+                <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 sm:flex-none border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-all duration-200"
+                      >
                         <Eye className="w-4 h-4 mr-2" />
-                        Ver Detalles
+                        <span className="font-medium">Ver Detalles</span>
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -549,7 +648,7 @@ const AdminLawyerApplicationsManagement = () => {
                       <div className="space-y-4">
                         <div>
                           <h3 className="font-semibold mb-2">Información Personal</h3>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                             <div><strong>Nombre:</strong> {app.nombre} {app.apellido}</div>
                             <div><strong>Email:</strong> {app.email}</div>
                             {app.telefono && <div><strong>Teléfono:</strong> {app.telefono}</div>}
@@ -574,7 +673,7 @@ const AdminLawyerApplicationsManagement = () => {
 
                         {app.carta_motivacion && (
                           <div>
-                            <h3 className="font-semibold mb-2">Carta de Motivación</h3>
+                            <h3 className="font-semibold mb-2">Presentación</h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                               {app.carta_motivacion}
                             </p>
@@ -611,11 +710,11 @@ const AdminLawyerApplicationsManagement = () => {
                   </Dialog>
 
                   {app.estado === 'pendiente' && (
-                    <>
+                    <div className="flex flex-col sm:flex-row gap-2 flex-1">
                       <Button
                         onClick={() => handleApproveAutomated(app.id)}
                         disabled={approveMutation.isPending}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all duration-200 border-0"
                         size="sm"
                       >
                         {approveMutation.isPending ? (
@@ -623,18 +722,19 @@ const AdminLawyerApplicationsManagement = () => {
                         ) : (
                           <CheckCircle2 className="w-4 h-4 mr-2" />
                         )}
-                        Aprobar
+                        <span className="font-medium">Aprobar</span>
                       </Button>
 
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
-                            variant="destructive"
+                            variant="outline"
                             size="sm"
                             disabled={rejectMutation.isPending}
+                            className="flex-1 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200"
                           >
                             <XCircle className="w-4 h-4 mr-2" />
-                            Rechazar
+                            <span className="font-medium">Rechazar</span>
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
@@ -660,31 +760,36 @@ const AdminLawyerApplicationsManagement = () => {
                                 className="mt-1"
                               />
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-3 pt-4">
                               <Button
                                 onClick={() => handleReject(app.id)}
                                 disabled={!rejectionReason.trim() || rejectMutation.isPending}
-                                variant="destructive"
-                                className="flex-1"
+                                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 border-0"
                               >
                                 {rejectMutation.isPending ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Procesando...
+                                  </>
                                 ) : (
-                                  "Confirmar Rechazo"
+                                  <>
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    Confirmar Rechazo
+                                  </>
                                 )}
                               </Button>
                             </div>
                           </div>
                         </DialogContent>
                       </Dialog>
-                    </>
+                    </div>
                   )}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {filteredApplications.length === 0 && (
         <Card>
@@ -702,9 +807,13 @@ const AdminLawyerApplicationsManagement = () => {
               }
             </p>
             {(searchTerm || Object.values(filters).some(v => v !== '' && v !== 0 && v !== 50)) && (
-              <Button variant="outline" onClick={clearFilters} className="mt-4">
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className="mt-4 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/20 transition-all duration-200"
+              >
                 <X className="w-4 h-4 mr-2" />
-                Limpiar filtros
+                <span className="font-medium">Limpiar filtros</span>
               </Button>
             )}
           </CardContent>

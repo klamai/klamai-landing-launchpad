@@ -27,7 +27,11 @@ import {
   X,
   Clock,
   CheckCircle2,
-  XCircle
+  XCircle,
+  CreditCard,
+  DollarSign,
+  Receipt,
+  PiggyBank
 } from 'lucide-react';
 import { LawyerProfileModal } from './LawyerProfileModal';
 import LawyerApplicationsManagement from './LawyerApplicationsManagement';
@@ -702,7 +706,7 @@ const AdminLawyersManagement = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="abogados" className="w-full">
-        <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-2 sm:grid-cols-4 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
           <TabsTrigger
             value="abogados"
             className="text-xs sm:text-sm px-2 sm:px-4 py-2.5 rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
@@ -715,7 +719,7 @@ const AdminLawyersManagement = () => {
             className="text-xs sm:text-sm px-2 sm:px-4 py-2.5 rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
           >
             <Briefcase className="w-4 h-4 mr-1 sm:mr-2" />
-            <span className="font-medium">Casos Abogados</span>
+            <span className="font-medium">Casos</span>
           </TabsTrigger>
           <TabsTrigger
             value="solicitudes"
@@ -723,6 +727,13 @@ const AdminLawyersManagement = () => {
           >
             <Clock className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="font-medium">Solicitudes</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="pagos"
+            className="text-xs sm:text-sm px-2 sm:px-4 py-2.5 rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-green-600 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-green-400"
+          >
+            <CreditCard className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="font-medium">Pagos</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1616,6 +1627,232 @@ const AdminLawyersManagement = () => {
 
         <TabsContent value="solicitudes" className="space-y-6">
           <LawyerApplicationsManagement />
+        </TabsContent>
+
+        <TabsContent value="pagos" className="space-y-6">
+          {/* Header de Pagos */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 p-6 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/20 dark:via-emerald-950/20 dark:to-teal-950/20 rounded-2xl border border-green-100 dark:border-green-900/20"
+          >
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
+                  <CreditCard className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                    Gestión de Pagos
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm lg:text-base">
+                    Sistema de comisiones y pagos a abogados
+                  </p>
+                </div>
+              </div>
+
+              {/* Información del sistema de pagos */}
+              <div className="flex flex-wrap gap-4 mt-4">
+                <div className="flex items-center gap-2 px-3 py-2 bg-white/60 dark:bg-gray-800/60 rounded-lg border border-green-200 dark:border-green-800">
+                  <PiggyBank className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Comisión: 15%
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 bg-white/60 dark:bg-gray-800/60 rounded-lg border border-green-200 dark:border-green-800">
+                  <DollarSign className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Pago: Automático
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 bg-white/60 dark:bg-gray-800/60 rounded-lg border border-green-200 dark:border-green-800">
+                  <Receipt className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Transferencias: Diarias
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Botón de acción principal */}
+            <div className="flex-shrink-0">
+              <Button
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                <Receipt className="w-4 h-4 mr-2" />
+                Ver Reportes
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Estadísticas de Pagos */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+          >
+            <Card className="group hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500 hover:border-l-green-600">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="p-3 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                    <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Total Pagado (Mes)</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">€0.00</p>
+                    <p className="text-xs text-gray-500 truncate">Sin datos disponibles</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 hover:border-l-blue-600">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="p-3 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                    <PiggyBank className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Comisiones Retenidas</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">€0.00</p>
+                    <p className="text-xs text-gray-500 truncate">15% de cada pago</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-lg transition-all duration-300 border-l-4 border-l-purple-500 hover:border-l-purple-600">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="p-3 bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                    <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Pagos Pendientes</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">0</p>
+                    <p className="text-xs text-gray-500 truncate">Por procesar</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-lg transition-all duration-300 border-l-4 border-l-orange-500 hover:border-l-orange-600">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="p-3 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30 rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                    <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Promedio por Abogado</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">€0.00</p>
+                    <p className="text-xs text-gray-500 truncate">Este mes</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Contenido Principal de Pagos */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50">
+              <CardHeader className="text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CreditCard className="w-10 h-10 text-green-600 dark:text-green-400" />
+                </div>
+                <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  Sistema de Pagos - Próximamente
+                </CardTitle>
+                <CardDescription className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                  Esta sección está preparada para implementar el sistema completo de gestión de pagos y comisiones.
+                  Incluye estadísticas, reportes y procesamiento automático de pagos a abogados.
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="space-y-8">
+                {/* Funcionalidades Planificadas */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-6 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-blue-500 rounded-lg">
+                        <DollarSign className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Cálculo de Comisiones</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Sistema automático para calcular y retener comisiones del 15% en cada pago realizado por clientes.
+                    </p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-6 rounded-xl border border-green-200 dark:border-green-800">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-green-500 rounded-lg">
+                        <CreditCard className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Pagos Automáticos</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Transferencias automáticas a abogados una vez descontadas las comisiones correspondientes.
+                    </p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-6 rounded-xl border border-purple-200 dark:border-purple-800">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-purple-500 rounded-lg">
+                        <Receipt className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Reportes Detallados</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Generación de reportes mensuales con detalle de pagos, comisiones y transferencias realizadas.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Información Técnica */}
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 p-6 rounded-xl border border-gray-200 dark:border-gray-600">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-blue-600" />
+                    Información Técnica del Sistema
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <strong className="text-gray-700 dark:text-gray-300">Comisión por defecto:</strong>
+                      <span className="ml-2 text-gray-600 dark:text-gray-400">15%</span>
+                    </div>
+                    <div>
+                      <strong className="text-gray-700 dark:text-gray-300">Frecuencia de pagos:</strong>
+                      <span className="ml-2 text-gray-600 dark:text-gray-400">Diaria</span>
+                    </div>
+                    <div>
+                      <strong className="text-gray-700 dark:text-gray-300">Método de pago:</strong>
+                      <span className="ml-2 text-gray-600 dark:text-gray-400">Transferencia bancaria</span>
+                    </div>
+                    <div>
+                      <strong className="text-gray-700 dark:text-gray-300">Moneda:</strong>
+                      <span className="ml-2 text-gray-600 dark:text-gray-400">EUR (€)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Estado del Sistema */}
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <Clock className="w-4 h-4" />
+                    <span className="font-medium">Sistema en preparación</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    La implementación completa del sistema de pagos estará disponible próximamente.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </TabsContent>
       </Tabs>
 
