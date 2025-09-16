@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound";
 import PublicProposal from "./pages/PublicProposal";
 import SolicitudAbogadoPage from '@/pages/abogados/Solicitud'; // Importar la nueva página
 import RegistroPage from "./pages/auth/Registro"; // Importar la nueva página de registro
+import CompleteSetup from "./pages/CompleteSetup"; // Importar la página de configuración
 
 // --- Layouts ---
 import PublicLayout from '@/components/layout/PublicLayout';
@@ -98,6 +99,7 @@ const App = () => (
             <Route path="/abogados" element={<Navigate to="/abogados/auth" replace />} />
             
             <Route path="/abogados/activate" element={<LawyerActivation />} />
+            <Route path="/auth/complete-setup" element={<CompleteSetup />} />
             <Route path="/auth-callback" element={<AuthCallback />} />
             <Route path="/chat" element={<Chat />} />
             

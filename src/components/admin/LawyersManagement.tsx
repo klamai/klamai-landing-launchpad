@@ -44,6 +44,7 @@ import {
 import { useAdminLawyers, useSuperAdminAccess } from '@/hooks/queries/useAdminLawyers';
 import { useAdminLawyerApplications } from '@/hooks/queries/useAdminLawyerApplications';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -63,6 +64,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 // Componente de acceso no autorizado
 const UnauthorizedAccess = () => (
@@ -96,6 +108,25 @@ const AdminLawyersManagement = () => {
 
   // Estado para el abogado seleccionado para ver sus casos
   const [selectedLawyerForCases, setSelectedLawyerForCases] = useState<any>(null);
+
+  // Estado para el modal de especialidades
+  const [specialtiesModalOpen, setSpecialtiesModalOpen] = useState(false);
+  const [selectedLawyerSpecialties, setSelectedLawyerSpecialties] = useState<any>(null);
+
+  // Estado para el modal de agregar abogado
+  const [addLawyerModalOpen, setAddLawyerModalOpen] = useState(false);
+  const [isAddingLawyer, setIsAddingLawyer] = useState(false);
+  const [newLawyerData, setNewLawyerData] = useState({
+    nombre: '',
+    apellido: '',
+    email: '',
+    telefono: '',
+    colegio_profesional: '',
+    numero_colegiado: '',
+    experiencia_anos: '',
+    ciudad: '',
+    especialidades: [] as number[]
+  });
 
   // Estado para filtros y búsqueda
   const [searchTerm, setSearchTerm] = useState('');
@@ -418,6 +449,115 @@ const AdminLawyersManagement = () => {
     }
   };
 
+  // Función para abrir modal de especialidades
+  const handleViewAllSpecialties = (abogado: any) => {
+    setSelectedLawyerSpecialties(abogado);
+    setSpecialtiesModalOpen(true);
+  };
+
+  // Función para cerrar modal de especialidades
+  const handleCloseSpecialtiesModal = () => {
+    setSpecialtiesModalOpen(false);
+    setSelectedLawyerSpecialties(null);
+  };
+
+  // Función para abrir modal de agregar abogado
+  const handleAddLawyer = () => {
+    setNewLawyerData({
+      nombre: '',
+      apellido: '',
+      email: '',
+      telefono: '',
+      colegio_profesional: '',
+      numero_colegiado: '',
+      experiencia_anos: '',
+      ciudad: '',
+      especialidades: []
+    });
+    setAddLawyerModalOpen(true);
+  };
+
+  // Función para cerrar modal de agregar abogado
+  const handleCloseAddLawyerModal = () => {
+    setAddLawyerModalOpen(false);
+    setNewLawyerData({
+      nombre: '',
+      apellido: '',
+      email: '',
+      telefono: '',
+      colegio_profesional: '',
+      numero_colegiado: '',
+      experiencia_anos: '',
+      ciudad: '',
+      especialidades: []
+    });
+  };
+
+  // Función para actualizar datos del nuevo abogado
+  const updateNewLawyerData = (field: string, value: any) => {
+    setNewLawyerData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Función para agregar abogado
+  const handleCreateLawyer = async () => {
+    if (!newLawyerData.nombre || !newLawyerData.apellido || !newLawyerData.email) {
+      alert('Por favor complete los campos obligatorios: nombre, apellido y email');
+      return;
+    }
+
+    setIsAddingLawyer(true);
+    try {
+      // Llamar a la Edge Function para crear el abogado
+      const { data, error } = await supabase.functions.invoke('create-lawyer-manually', {
+        body: {
+          nombre: newLawyerData.nombre,
+          apellido: newLawyerData.apellido,
+          email: newLawyerData.email,
+          telefono: newLawyerData.telefono,
+          colegio_profesional: newLawyerData.colegio_profesional,
+          numero_colegiado: newLawyerData.numero_colegiado,
+          experiencia_anos: newLawyerData.experiencia_anos,
+          ciudad: newLawyerData.ciudad,
+          especialidades: newLawyerData.especialidades
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Error en la función de creación');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Error desconocido al crear abogado');
+      }
+
+      // Refrescar la lista de abogados
+      refetchAbogados();
+
+      // Cerrar modal y mostrar mensaje de éxito
+      setAddLawyerModalOpen(false);
+      alert(`Abogado ${data.nombre} ${data.apellido} creado exitosamente. Se ha enviado un email con las credenciales de acceso.`);
+
+      // Limpiar el formulario
+      setNewLawyerData({
+        nombre: '',
+        apellido: '',
+        email: '',
+        telefono: '',
+        colegio_profesional: '',
+        numero_colegiado: '',
+        experiencia_anos: '',
+        ciudad: '',
+        especialidades: []
+      });
+
+    } catch (error: any) {
+      console.error('Error creating lawyer:', error);
+      alert('Error al crear abogado: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setIsAddingLawyer(false);
+    }
+  };
+
   // Función para abrir detalles del caso
   const handleViewCaseDetails = (caseId: string) => {
     // Aquí puedes implementar la navegación al detalle del caso
@@ -450,7 +590,7 @@ const AdminLawyersManagement = () => {
   };
 
   // Las especialidades deben venir ya como nombres desde el backend/hook
-  const renderSpecialties = (especialidades: { id: number, nombre: string }[] | number[] | null) => {
+  const renderSpecialties = (especialidades: { id: number, nombre: string }[] | number[] | null, abogado?: any) => {
     if (!especialidades || especialidades.length === 0) {
       return <span className="italic text-gray-500 text-xs">Sin especialidades</span>;
     }
@@ -458,7 +598,7 @@ const AdminLawyersManagement = () => {
     // Si es un array de objetos con nombre, renderiza normalmente
     if (typeof especialidades[0] === 'object' && 'nombre' in (especialidades[0] as any)) {
       const specialties = especialidades as {id:number, nombre:string}[];
-      if (specialties.length <= 2) {
+      if (specialties.length <= 3) {
         // Mostrar todas las especialidades si son pocas
         return (
           <div className="flex flex-wrap gap-1">
@@ -470,17 +610,26 @@ const AdminLawyersManagement = () => {
           </div>
         );
       } else {
-        // Mostrar las primeras 2 y un indicador de más
+        // Mostrar las primeras 3 y un botón para ver todas
         return (
           <div className="flex flex-wrap gap-1 items-center">
-            {specialties.slice(0, 2).map((esp) => (
+            {specialties.slice(0, 3).map((esp) => (
               <Badge key={esp.id} variant="secondary" className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
                 {esp.nombre}
               </Badge>
             ))}
-            <Badge variant="outline" className="text-xs px-2 py-0.5 text-gray-500 border-gray-300">
-              +{specialties.length - 2} más
-            </Badge>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-5 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (abogado) handleViewAllSpecialties(abogado);
+              }}
+            >
+              +{specialties.length - 3} más
+            </Button>
           </div>
         );
       }
@@ -489,7 +638,7 @@ const AdminLawyersManagement = () => {
     // Si es un array de números (ids), mapear a nombres
     const specialtyIds = especialidades as number[];
     const specialtyNames = specialtyIds.map(id => getSpecialtyName(id));
-    if (specialtyNames.length <= 2) {
+    if (specialtyNames.length <= 3) {
       return (
         <div className="flex flex-wrap gap-1">
           {specialtyNames.map((name, index) => (
@@ -502,14 +651,23 @@ const AdminLawyersManagement = () => {
     } else {
       return (
         <div className="flex flex-wrap gap-1 items-center">
-          {specialtyNames.slice(0, 2).map((name, index) => (
+          {specialtyNames.slice(0, 3).map((name, index) => (
             <Badge key={specialtyIds[index]} variant="secondary" className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
               {name}
             </Badge>
           ))}
-          <Badge variant="outline" className="text-xs px-2 py-0.5 text-gray-500 border-gray-300">
-            +{specialtyNames.length - 2} más
-          </Badge>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-5 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (abogado) handleViewAllSpecialties(abogado);
+            }}
+          >
+            +{specialtyNames.length - 3} más
+          </Button>
         </div>
       );
     }
@@ -532,7 +690,10 @@ const AdminLawyersManagement = () => {
             Administra solicitudes y supervisa el equipo de abogados
           </p>
         </div>
-        <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 w-full sm:w-auto">
+        <Button
+          onClick={handleAddLawyer}
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 w-full sm:w-auto"
+        >
           <PlusCircle className="w-4 h-4 mr-2" />
           <span className="hidden sm:inline">Agregar Abogado</span>
           <span className="sm:hidden">Agregar</span>
@@ -956,7 +1117,7 @@ const AdminLawyersManagement = () => {
                       </div>
                     </TableCell>
                     <TableCell className="py-4">
-                      {renderSpecialties(abogado.especialidades)}
+                      {renderSpecialties(abogado.especialidades, abogado)}
                     </TableCell>
                     <TableCell className="py-4">
                       <div className="flex items-center space-x-2">
@@ -1159,7 +1320,7 @@ const AdminLawyersManagement = () => {
                       <Award className="w-4 h-4 text-blue-600" />
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Especialidades</span>
                     </div>
-                    {renderSpecialties(abogado.especialidades)}
+                    {renderSpecialties(abogado.especialidades, abogado)}
                   </div>
 
                   {/* Información adicional en grid */}
@@ -1457,6 +1618,246 @@ const AdminLawyersManagement = () => {
           <LawyerApplicationsManagement />
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Agregar Abogado */}
+      <Dialog open={addLawyerModalOpen} onOpenChange={setAddLawyerModalOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PlusCircle className="w-5 h-5 text-blue-600" />
+              Agregar Nuevo Abogado
+            </DialogTitle>
+            <DialogDescription>
+              Complete la información del nuevo abogado. Los campos marcados con * son obligatorios.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Información Personal */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white border-b pb-2">
+                Información Personal
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nombre">Nombre *</Label>
+                  <Input
+                    id="nombre"
+                    value={newLawyerData.nombre}
+                    onChange={(e) => updateNewLawyerData('nombre', e.target.value)}
+                    placeholder="Ingrese el nombre"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="apellido">Apellido *</Label>
+                  <Input
+                    id="apellido"
+                    value={newLawyerData.apellido}
+                    onChange={(e) => updateNewLawyerData('apellido', e.target.value)}
+                    placeholder="Ingrese el apellido"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newLawyerData.email}
+                    onChange={(e) => updateNewLawyerData('email', e.target.value)}
+                    placeholder="correo@ejemplo.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="telefono">Teléfono</Label>
+                  <Input
+                    id="telefono"
+                    value={newLawyerData.telefono}
+                    onChange={(e) => updateNewLawyerData('telefono', e.target.value)}
+                    placeholder="+34 600 000 000"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Información Profesional */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white border-b pb-2">
+                Información Profesional
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="colegio_profesional">Colegio Profesional</Label>
+                  <Input
+                    id="colegio_profesional"
+                    value={newLawyerData.colegio_profesional}
+                    onChange={(e) => updateNewLawyerData('colegio_profesional', e.target.value)}
+                    placeholder="Colegio de Abogados"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="numero_colegiado">Número de Colegiado</Label>
+                  <Input
+                    id="numero_colegiado"
+                    value={newLawyerData.numero_colegiado}
+                    onChange={(e) => updateNewLawyerData('numero_colegiado', e.target.value)}
+                    placeholder="Número de colegiado"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="experiencia_anos">Años de Experiencia</Label>
+                  <Input
+                    id="experiencia_anos"
+                    type="number"
+                    min="0"
+                    max="50"
+                    value={newLawyerData.experiencia_anos}
+                    onChange={(e) => updateNewLawyerData('experiencia_anos', e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ciudad">Ciudad</Label>
+                  <Input
+                    id="ciudad"
+                    value={newLawyerData.ciudad}
+                    onChange={(e) => updateNewLawyerData('ciudad', e.target.value)}
+                    placeholder="Ciudad de residencia"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Especialidades */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white border-b pb-2">
+                Especialidades
+              </h4>
+              <div className="space-y-3">
+                <Label>Seleccione las especialidades del abogado:</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {[
+                    { id: 1, nombre: 'Derecho Civil' },
+                    { id: 2, nombre: 'Derecho Penal' },
+                    { id: 3, nombre: 'Derecho Laboral' },
+                    { id: 4, nombre: 'Derecho Mercantil' },
+                    { id: 5, nombre: 'Derecho Administrativo' },
+                    { id: 6, nombre: 'Derecho Fiscal' },
+                    { id: 7, nombre: 'Derecho Familiar' },
+                    { id: 8, nombre: 'Derecho Inmobiliario' },
+                    { id: 9, nombre: 'Derecho de Extranjería' },
+                    { id: 10, nombre: 'Derecho de la Seguridad Social' },
+                    { id: 11, nombre: 'Derecho Sanitario' },
+                    { id: 12, nombre: 'Derecho de Seguros' },
+                    { id: 13, nombre: 'Derecho Concursal' },
+                    { id: 14, nombre: 'Derecho de Propiedad Intelectual' },
+                    { id: 15, nombre: 'Derecho Ambiental' },
+                    { id: 16, nombre: 'Consulta General' }
+                  ].map((especialidad) => (
+                    <div key={especialidad.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`especialidad-${especialidad.id}`}
+                        checked={newLawyerData.especialidades.includes(especialidad.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            updateNewLawyerData('especialidades', [...newLawyerData.especialidades, especialidad.id]);
+                          } else {
+                            updateNewLawyerData('especialidades', newLawyerData.especialidades.filter(id => id !== especialidad.id));
+                          }
+                        }}
+                      />
+                      <Label
+                        htmlFor={`especialidad-${especialidad.id}`}
+                        className="text-sm cursor-pointer"
+                      >
+                        {especialidad.nombre}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="border-t pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseAddLawyerModal}
+              disabled={isAddingLawyer}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateLawyer}
+              disabled={isAddingLawyer || !newLawyerData.nombre || !newLawyerData.apellido || !newLawyerData.email}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isAddingLawyer ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creando...
+                </>
+              ) : (
+                <>
+                  <PlusCircle className="w-4 h-4 mr-2" />
+                  Crear Abogado
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Especialidades */}
+      <Dialog open={specialtiesModalOpen} onOpenChange={setSpecialtiesModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Award className="w-5 h-5 text-blue-600" />
+              Especialidades de {selectedLawyerSpecialties?.nombre} {selectedLawyerSpecialties?.apellido}
+            </DialogTitle>
+            <DialogDescription>
+              Lista completa de especialidades del abogado
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {selectedLawyerSpecialties?.especialidades && (
+              <div className="flex flex-wrap gap-2">
+                {Array.isArray(selectedLawyerSpecialties.especialidades) &&
+                typeof selectedLawyerSpecialties.especialidades[0] === 'object' &&
+                'nombre' in selectedLawyerSpecialties.especialidades[0] ? (
+                  (selectedLawyerSpecialties.especialidades as {id:number, nombre:string}[]).map((esp) => (
+                    <Badge
+                      key={esp.id}
+                      variant="secondary"
+                      className="px-3 py-1 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800"
+                    >
+                      {esp.nombre}
+                    </Badge>
+                  ))
+                ) : (
+                  (selectedLawyerSpecialties.especialidades as number[]).map((id) => (
+                    <Badge
+                      key={id}
+                      variant="secondary"
+                      className="px-3 py-1 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800"
+                    >
+                      {getSpecialtyName(id)}
+                    </Badge>
+                  ))
+                )}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-4 border-t">
+              <Button type="button" onClick={handleCloseSpecialtiesModal}>
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de Perfil de Abogado */}
       {selectedLawyer && (

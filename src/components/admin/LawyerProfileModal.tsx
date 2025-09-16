@@ -54,12 +54,59 @@ interface LawyerProfileModalProps {
   onSave?: (updatedProfile: Partial<LawyerProfile>) => void;
 }
 
+function ProfileAvatar({
+  currentImage,
+  onThumbnailClick,
+  onRemove,
+  readOnly
+}: {
+  currentImage?: string;
+  onThumbnailClick: () => void;
+  onRemove: () => void;
+  readOnly: boolean;
+}) {
+  return (
+    <div className="flex justify-center">
+      <div className="relative flex size-24 items-center justify-center overflow-hidden rounded-full border-4 border-background bg-muted shadow-sm shadow-black/10">
+        {currentImage && (
+          <img
+            src={currentImage}
+            className="h-full w-full object-cover"
+            alt="Foto de perfil"
+          />
+        )}
+        {!readOnly && (
+          <button
+            type="button"
+            className="absolute flex size-8 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white outline-offset-2 transition-colors hover:bg-black/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
+            onClick={onThumbnailClick}
+            aria-label="Cambiar foto de perfil"
+          >
+            <ImagePlus size={16} strokeWidth={2} />
+          </button>
+        )}
+        {currentImage && !readOnly && (
+          <button
+            type="button"
+            className="absolute -top-2 -right-2 flex size-6 cursor-pointer items-center justify-center rounded-full bg-red-500 text-white outline-offset-2 transition-colors hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
+            onClick={onRemove}
+            aria-label="Eliminar foto"
+          >
+            <X size={12} strokeWidth={2} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function LawyerProfileModal({ lawyer, mode: initialMode, open, onOpenChange, trigger, onSave }: LawyerProfileModalProps) {
   const id = useId();
   const { toast } = useToast();
   const [mode, setMode] = useState<'view' | 'edit'>(initialMode);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<Partial<LawyerProfile>>({});
+  const [specialtiesModalOpen, setSpecialtiesModalOpen] = useState(false);
 
   const maxLength = 500;
   const {
@@ -215,7 +262,7 @@ function LawyerProfileModal({ lawyer, mode: initialMode, open, onOpenChange, tri
         </div>
       );
     } else {
-      // Mostrar las primeras 3 y un indicador de más
+      // Mostrar las primeras 3 y un botón para ver todas
       return (
         <div className="flex flex-wrap gap-2 items-center">
           {especialidades.slice(0, 3).map((id) => (
@@ -223,35 +270,79 @@ function LawyerProfileModal({ lawyer, mode: initialMode, open, onOpenChange, tri
               {getSpecialtyName(id)}
             </Badge>
           ))}
-          <Badge variant="outline" className="text-xs px-3 py-1 text-gray-500 border-gray-300">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20"
+            onClick={() => setSpecialtiesModalOpen(true)}
+          >
             +{especialidades.length - 3} más
-          </Badge>
+          </Button>
         </div>
       );
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-2xl max-h-[90vh]">
-        <DialogHeader className="contents space-y-0 text-left">
-          <DialogTitle className="border-b border-border px-6 py-4 text-base flex items-center justify-between">
-            <span>{mode === 'view' ? 'Ver Perfil' : 'Editar Perfil'}</span>
-            {mode === 'view' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setMode('edit')}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Editar
-              </Button>
+    <>
+      {/* Modal de Especialidades */}
+      <Dialog open={specialtiesModalOpen} onOpenChange={setSpecialtiesModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Award className="w-5 h-5 text-blue-600" />
+              Especialidades de {lawyer.nombre} {lawyer.apellido}
+            </DialogTitle>
+            <DialogDescription>
+              Lista completa de especialidades del abogado
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {formData.especialidades && formData.especialidades.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.especialidades.map((id) => (
+                  <Badge
+                    key={id}
+                    variant="secondary"
+                    className="px-3 py-1 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800"
+                  >
+                    {getSpecialtyName(id)}
+                  </Badge>
+                ))}
+              </div>
             )}
-          </DialogTitle>
-        </DialogHeader>
-        <DialogDescription className="sr-only">
-          {mode === 'view' ? 'Ver detalles del perfil del abogado' : 'Editar información del perfil del abogado'}
-        </DialogDescription>
+
+            <div className="flex justify-end pt-4 border-t">
+              <Button type="button" onClick={() => setSpecialtiesModalOpen(false)}>
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-2xl max-h-[90vh]">
+          <DialogHeader className="contents space-y-0 text-left">
+            <DialogTitle className="border-b border-border px-6 py-4 text-base flex items-center justify-between">
+              <span>{mode === 'view' ? 'Ver Perfil' : 'Editar Perfil'}</span>
+              {mode === 'view' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMode('edit')}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <DialogDescription className="sr-only">
+            {mode === 'view' ? 'Ver detalles del perfil del abogado' : 'Editar información del perfil del abogado'}
+          </DialogDescription>
         <div className="overflow-y-auto flex-1">
           {/* Avatar Section */}
           <div className="px-6 pt-4">
@@ -562,52 +653,7 @@ function LawyerProfileModal({ lawyer, mode: initialMode, open, onOpenChange, tri
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function ProfileAvatar({
-  currentImage,
-  onThumbnailClick,
-  onRemove,
-  readOnly
-}: {
-  currentImage?: string;
-  onThumbnailClick: () => void;
-  onRemove: () => void;
-  readOnly: boolean;
-}) {
-  return (
-    <div className="flex justify-center">
-      <div className="relative flex size-24 items-center justify-center overflow-hidden rounded-full border-4 border-background bg-muted shadow-sm shadow-black/10">
-        {currentImage && (
-          <img
-            src={currentImage}
-            className="h-full w-full object-cover"
-            alt="Foto de perfil"
-          />
-        )}
-        {!readOnly && (
-          <button
-            type="button"
-            className="absolute flex size-8 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white outline-offset-2 transition-colors hover:bg-black/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
-            onClick={onThumbnailClick}
-            aria-label="Cambiar foto de perfil"
-          >
-            <ImagePlus size={16} strokeWidth={2} />
-          </button>
-        )}
-        {currentImage && !readOnly && (
-          <button
-            type="button"
-            className="absolute -top-2 -right-2 flex size-6 cursor-pointer items-center justify-center rounded-full bg-red-500 text-white outline-offset-2 transition-colors hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
-            onClick={onRemove}
-            aria-label="Eliminar foto"
-          >
-            <X size={12} strokeWidth={2} />
-          </button>
-        )}
-      </div>
-    </div>
+    </>
   );
 }
 
