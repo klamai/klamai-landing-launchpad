@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -7,12 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminLawyerApplications, useSuperAdminAccess, useEspecialidades, useApproveLawyerAutomated, useRejectLawyerApplication } from '@/hooks/queries/useAdminLawyerApplications';
-import { 
-  Search, 
-  FileText, 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
+import {
+  Search,
+  FileText,
+  CheckCircle2,
+  XCircle,
+  Clock,
   Eye,
   Mail,
   Phone,
@@ -21,8 +21,16 @@ import {
   Loader2,
   Shield,
   Ban,
-  RefreshCw
+  RefreshCw,
+  Filter,
+  ChevronDown,
+  ChevronUp,
+  X
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Slider } from '@/components/ui/slider';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Dialog,
   DialogContent,
@@ -95,6 +103,16 @@ const AdminLawyerApplicationsManagement = () => {
   const [selectedApp, setSelectedApp] = useState<SolicitudAbogadoFromDB | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    especialidad: '',
+    experienciaMin: 0,
+    experienciaMax: 50,
+    fechaRegistroDesde: '',
+    fechaRegistroHasta: '',
+    colegioProfesional: '',
+    estado: ''
+  });
   const { toast } = useToast();
 
   // Hooks optimizados con React Query
@@ -104,19 +122,59 @@ const AdminLawyerApplicationsManagement = () => {
   const approveMutation = useApproveLawyerAutomated();
   const rejectMutation = useRejectLawyerApplication();
 
-  // Filtrar solicitudes por búsqueda
-  const filteredApplications = React.useMemo(() => {
+  // Función para actualizar filtros
+  const updateFilter = (key: string, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  // Función para limpiar filtros
+  const clearFilters = () => {
+    setFilters({
+      especialidad: '',
+      experienciaMin: 0,
+      experienciaMax: 50,
+      fechaRegistroDesde: '',
+      fechaRegistroHasta: '',
+      colegioProfesional: '',
+      estado: ''
+    });
+    setSearchTerm('');
+  };
+
+  // Filtrar solicitudes por búsqueda y filtros avanzados
+  const filteredApplications = useMemo(() => {
     if (!applications) return [];
-    if (searchTerm.trim() === "") return applications;
-    
-    return applications.filter(app => 
-      app.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.colegio_profesional?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.numero_colegiado?.includes(searchTerm)
-    );
-  }, [searchTerm, applications]);
+
+    return applications.filter(app => {
+      // Búsqueda por texto
+      const searchMatch = !searchTerm ||
+        app.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.colegio_profesional?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.numero_colegiado?.includes(searchTerm);
+
+      // Filtros avanzados
+      const especialidadMatch = !filters.especialidad ||
+        (app.especialidades && app.especialidades.includes(parseInt(filters.especialidad)));
+
+      const experienciaMatch = (!app.experiencia_anos && filters.experienciaMin === 0) ||
+        (app.experiencia_anos && app.experiencia_anos >= filters.experienciaMin &&
+         app.experiencia_anos <= filters.experienciaMax);
+
+      const fechaMatch = (!filters.fechaRegistroDesde || new Date(app.created_at) >= new Date(filters.fechaRegistroDesde)) &&
+                        (!filters.fechaRegistroHasta || new Date(app.created_at) <= new Date(filters.fechaRegistroHasta));
+
+      const colegioMatch = !filters.colegioProfesional ||
+        app.colegio_profesional?.toLowerCase().includes(filters.colegioProfesional.toLowerCase());
+
+      const estadoMatch = !filters.estado ||
+        app.estado === filters.estado;
+
+      return searchMatch && especialidadMatch && experienciaMatch && fechaMatch &&
+             colegioMatch && estadoMatch;
+    });
+  }, [searchTerm, filters, applications]);
 
   // Loading state
   if (accessLoading || loading) {
@@ -261,16 +319,152 @@ const AdminLawyerApplicationsManagement = () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-        <Input
-          placeholder="Buscar por nombre, email o estado..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar por nombre, apellido, email, colegio..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Advanced Filters */}
+            <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    Filtros Avanzados
+                  </div>
+                  {filtersOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Especialidad */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Especialidad</label>
+                    <Select value={filters.especialidad} onValueChange={(value) => updateFilter('especialidad', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas las especialidades" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Todas las especialidades</SelectItem>
+                        <SelectItem value="1">Derecho Civil</SelectItem>
+                        <SelectItem value="2">Derecho Penal</SelectItem>
+                        <SelectItem value="3">Derecho Laboral</SelectItem>
+                        <SelectItem value="4">Derecho Mercantil</SelectItem>
+                        <SelectItem value="5">Derecho Administrativo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Experiencia */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Años de Experiencia: {filters.experienciaMin} - {filters.experienciaMax}</label>
+                    <Slider
+                      value={[filters.experienciaMin, filters.experienciaMax]}
+                      onValueChange={([min, max]) => {
+                        updateFilter('experienciaMin', min);
+                        updateFilter('experienciaMax', max);
+                      }}
+                      max={50}
+                      min={0}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Fecha Registro Desde */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Fecha Registro Desde</label>
+                    <input
+                      type="date"
+                      value={filters.fechaRegistroDesde}
+                      onChange={(e) => updateFilter('fechaRegistroDesde', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Fecha Registro Hasta */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Fecha Registro Hasta</label>
+                    <input
+                      type="date"
+                      value={filters.fechaRegistroHasta}
+                      onChange={(e) => updateFilter('fechaRegistroHasta', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Colegio Profesional */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Colegio Profesional</label>
+                    <input
+                      type="text"
+                      placeholder="Buscar colegio..."
+                      value={filters.colegioProfesional}
+                      onChange={(e) => updateFilter('colegioProfesional', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Estado */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Estado</label>
+                    <Select value={filters.estado} onValueChange={(value) => updateFilter('estado', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todos los estados" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Todos los estados</SelectItem>
+                        <SelectItem value="pendiente">Pendiente</SelectItem>
+                        <SelectItem value="en_revision">En Revisión</SelectItem>
+                        <SelectItem value="aprobada">Aprobada</SelectItem>
+                        <SelectItem value="rechazada">Rechazada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Botón Limpiar Filtros */}
+                  <div className="flex items-end">
+                    <Button
+                      variant="outline"
+                      onClick={clearFilters}
+                      className="w-full"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Limpiar Filtros
+                    </Button>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Results Summary */}
+      {(searchTerm || Object.values(filters).some(v => v !== '' && v !== 0 && v !== 50)) && (
+        <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-blue-600" />
+            <span className="text-sm text-blue-700 dark:text-blue-300">
+              Mostrando {filteredApplications.length} de {applications?.length || 0} solicitudes
+            </span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            <X className="w-4 h-4 mr-1" />
+            Limpiar filtros
+          </Button>
+        </div>
+      )}
 
       {/* Applications List */}
       <div className="grid gap-4">
@@ -420,11 +614,11 @@ const AdminLawyerApplicationsManagement = () => {
                     <>
                       <Button
                         onClick={() => handleApproveAutomated(app.id)}
-                        disabled={approveMutation.isLoading}
+                        disabled={approveMutation.isPending}
                         className="bg-green-600 hover:bg-green-700 text-white"
                         size="sm"
                       >
-                        {approveMutation.isLoading ? (
+                        {approveMutation.isPending ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -437,7 +631,7 @@ const AdminLawyerApplicationsManagement = () => {
                           <Button
                             variant="destructive"
                             size="sm"
-                            disabled={rejectMutation.isLoading}
+                            disabled={rejectMutation.isPending}
                           >
                             <XCircle className="w-4 h-4 mr-2" />
                             Rechazar
@@ -469,11 +663,11 @@ const AdminLawyerApplicationsManagement = () => {
                             <div className="flex gap-2">
                               <Button
                                 onClick={() => handleReject(app.id)}
-                                disabled={!rejectionReason.trim() || rejectMutation.isLoading}
+                                disabled={!rejectionReason.trim() || rejectMutation.isPending}
                                 variant="destructive"
                                 className="flex-1"
                               >
-                                {rejectMutation.isLoading ? (
+                                {rejectMutation.isPending ? (
                                   <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
                                   "Confirmar Rechazo"
@@ -497,11 +691,22 @@ const AdminLawyerApplicationsManagement = () => {
           <CardContent className="p-8 text-center">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No hay solicitudes
+              {applications?.length === 0 ? "No hay solicitudes" : "No hay solicitudes que coincidan con los filtros"}
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              {searchTerm ? "No se encontraron solicitudes que coincidan con tu búsqueda." : "No hay solicitudes de abogados pendientes."}
+              {applications?.length === 0
+                ? "No hay solicitudes de abogados pendientes."
+                : searchTerm || Object.values(filters).some(v => v !== '' && v !== 0 && v !== 50)
+                  ? "No se encontraron solicitudes que coincidan con tu búsqueda y filtros aplicados."
+                  : "No hay solicitudes que cumplan con los criterios de filtrado."
+              }
             </p>
+            {(searchTerm || Object.values(filters).some(v => v !== '' && v !== 0 && v !== 50)) && (
+              <Button variant="outline" onClick={clearFilters} className="mt-4">
+                <X className="w-4 h-4 mr-2" />
+                Limpiar filtros
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

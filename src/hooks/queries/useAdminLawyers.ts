@@ -7,12 +7,25 @@ interface AbogadoInfo {
   nombre: string;
   apellido: string;
   email: string;
+  telefono?: string;
   especialidades: { id: number, nombre: string }[] | number[];
   creditos_disponibles: number;
   created_at: string;
   casos_asignados: number;
   casos_activos: number;
   tipo_abogado?: string;
+  colegio_profesional?: string;
+  numero_colegiado?: string;
+  experiencia_anos?: number;
+  cv_url?: string;
+  carta_motivacion?: string;
+  documentos_verificacion?: Record<string, unknown>[];
+  ciudad?: string;
+  direccion_fiscal?: string;
+  nombre_gerente?: string;
+  razon_social?: string;
+  nif_cif?: string;
+  tipo_perfil?: string;
   user_metadata?: {
     avatar_url?: string;
     full_name?: string;
@@ -58,10 +71,24 @@ const fetchAdminLawyers = async (): Promise<AbogadoInfo[]> => {
         nombre,
         apellido,
         email,
+        telefono,
         especialidades,
         creditos_disponibles,
         created_at,
-        tipo_abogado
+        tipo_abogado,
+        colegio_profesional,
+        numero_colegiado,
+        experiencia_anos,
+        cv_url,
+        carta_motivacion,
+        documentos_verificacion,
+        ciudad,
+        direccion_fiscal,
+        nombre_gerente,
+        razon_social,
+        nif_cif,
+        tipo_perfil,
+        avatar_url
       `)
       .eq('role', 'abogado')
       .order('created_at', { ascending: false });
@@ -101,18 +128,42 @@ const fetchAdminLawyers = async (): Promise<AbogadoInfo[]> => {
     // Procesar abogados con estadísticas
     const processedAbogados: AbogadoInfo[] = (abogadosData || []).map(abogado => {
       const estadisticas = casosPorAbogadoMap.get(abogado.id) || { total: 0, activos: 0 };
-      
+
+      // Debug: Log del abogado procesado
+      console.log('🔍 Procesando abogado:', {
+        id: abogado.id,
+        nombre: abogado.nombre,
+        telefono: abogado.telefono,
+        colegio_profesional: abogado.colegio_profesional,
+        experiencia_anos: abogado.experiencia_anos,
+        carta_motivacion: abogado.carta_motivacion?.substring(0, 50) + '...'
+      });
+
       return {
         id: abogado.id,
         nombre: abogado.nombre,
         apellido: abogado.apellido,
         email: abogado.email,
+        telefono: abogado.telefono,
         especialidades: abogado.especialidades || [],
         creditos_disponibles: abogado.creditos_disponibles || 0,
         created_at: abogado.created_at,
         casos_asignados: estadisticas.total,
         casos_activos: estadisticas.activos,
         tipo_abogado: abogado.tipo_abogado,
+        colegio_profesional: abogado.colegio_profesional,
+        numero_colegiado: abogado.numero_colegiado,
+        experiencia_anos: abogado.experiencia_anos,
+        cv_url: abogado.cv_url,
+        carta_motivacion: abogado.carta_motivacion,
+        documentos_verificacion: abogado.documentos_verificacion,
+        ciudad: abogado.ciudad,
+        direccion_fiscal: abogado.direccion_fiscal,
+        nombre_gerente: abogado.nombre_gerente,
+        razon_social: abogado.razon_social,
+        nif_cif: abogado.nif_cif,
+        tipo_perfil: abogado.tipo_perfil,
+        avatar_url: abogado.avatar_url,
         user_metadata: {} // Datos de auth no disponibles desde el cliente
       };
     });

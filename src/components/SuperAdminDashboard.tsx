@@ -153,13 +153,13 @@ const SuperAdminDashboard = () => {
         <Users className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
-    {
-      label: "Solicitudes de Abogado",
-      href: "/admin/dashboard/solicitudes-abogado",
-      icon: (
-        <UserPlus className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
+    // {
+    //   label: "Solicitudes de Abogado",
+    //   href: "/admin/dashboard/solicitudes-abogado",
+    //   icon: (
+    //     <UserPlus className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+    //   ),
+    // },
     {
       label: "Reportes",
       href: "/admin/dashboard/reportes",
