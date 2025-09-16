@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { LawyerProfileModal } from './LawyerProfileModal';
 import LawyerApplicationsManagement from './LawyerApplicationsManagement';
+import LawyerCasesView from './LawyerCasesView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
@@ -93,6 +94,9 @@ const AdminLawyersManagement = () => {
   const [profileModalMode, setProfileModalMode] = useState<'view' | 'edit'>('view');
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
+  // Estado para el abogado seleccionado para ver sus casos
+  const [selectedLawyerForCases, setSelectedLawyerForCases] = useState<any>(null);
+
   // Estado para filtros y búsqueda
   const [searchTerm, setSearchTerm] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -110,6 +114,9 @@ const AdminLawyersManagement = () => {
     ciudad: ''
   });
 
+  // Estado para búsqueda de abogados en casos
+  const [lawyerSearchTerm, setLawyerSearchTerm] = useState('');
+
   // Hooks optimizados con React Query
   const { data: hasSuperAdminAccess, isLoading: accessLoading } = useSuperAdminAccess();
   const { data: abogados, isLoading: loadingAbogados, error: abogadosError, refetch: refetchAbogados } = useAdminLawyers();
@@ -119,6 +126,22 @@ const AdminLawyersManagement = () => {
   const updateFilter = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
+
+  // Filtrar abogados para el selector de casos
+  const filteredLawyersForCases = useMemo(() => {
+    if (!abogados) return [];
+
+    if (!lawyerSearchTerm.trim()) return abogados;
+
+    const searchLower = lawyerSearchTerm.toLowerCase();
+    return abogados.filter(abogado =>
+      abogado.nombre?.toLowerCase().includes(searchLower) ||
+      abogado.apellido?.toLowerCase().includes(searchLower) ||
+      abogado.email?.toLowerCase().includes(searchLower) ||
+      abogado.telefono?.includes(searchLower) ||
+      `${abogado.nombre} ${abogado.apellido}`.toLowerCase().includes(searchLower)
+    );
+  }, [abogados, lawyerSearchTerm]);
 
   // Función para limpiar filtros
   const clearFilters = () => {
@@ -385,6 +408,24 @@ const AdminLawyersManagement = () => {
     setProfileModalMode('view'); // Resetear siempre a modo vista
   };
 
+  // Función para seleccionar abogado y ver sus casos
+  const handleViewLawyerCases = (abogado: any) => {
+    setSelectedLawyerForCases(abogado);
+    // Cambiar automáticamente al tab de casos
+    const tabsElement = document.querySelector('[value="casos"]') as HTMLElement;
+    if (tabsElement) {
+      tabsElement.click();
+    }
+  };
+
+  // Función para abrir detalles del caso
+  const handleViewCaseDetails = (caseId: string) => {
+    // Aquí puedes implementar la navegación al detalle del caso
+    // Por ahora, solo mostraremos un mensaje
+    console.log('Ver detalles del caso:', caseId);
+    // En el futuro podrías abrir un modal de detalles del caso
+  };
+
   // Función para mapear IDs de especialidades a nombres
   const getSpecialtyName = (id: number): string => {
     const specialtyMap: Record<number, string> = {
@@ -500,19 +541,26 @@ const AdminLawyersManagement = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="abogados" className="w-full">
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
           <TabsTrigger
             value="abogados"
-            className="text-xs sm:text-sm px-3 sm:px-6 py-2.5 rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
+            className="text-xs sm:text-sm px-2 sm:px-4 py-2.5 rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
           >
-            <Users className="w-4 h-4 mr-2" />
+            <Users className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="font-medium">Abogados</span>
           </TabsTrigger>
           <TabsTrigger
-            value="solicitudes"
-            className="text-xs sm:text-sm px-3 sm:px-6 py-2.5 rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
+            value="casos"
+            className="text-xs sm:text-sm px-2 sm:px-4 py-2.5 rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
           >
-            <Clock className="w-4 h-4 mr-2" />
+            <Briefcase className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="font-medium">Casos Abogados</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="solicitudes"
+            className="text-xs sm:text-sm px-2 sm:px-4 py-2.5 rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
+          >
+            <Clock className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="font-medium">Solicitudes</span>
           </TabsTrigger>
         </TabsList>
@@ -1000,7 +1048,10 @@ const AdminLawyersManagement = () => {
                             Enviar Email
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900 dark:focus:bg-blue-900/20 dark:focus:text-blue-300 text-sm">
+                          <DropdownMenuItem
+                            className="focus:bg-blue-50 focus:text-blue-900 dark:focus:bg-blue-900/20 dark:focus:text-blue-300 text-sm"
+                            onClick={() => handleViewLawyerCases(abogado)}
+                          >
                             <Layers className="w-4 h-4 mr-2" />
                             Ver Casos
                           </DropdownMenuItem>
@@ -1077,7 +1128,10 @@ const AdminLawyersManagement = () => {
                             Enviar Email
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="focus:bg-blue-50 focus:text-blue-900 dark:focus:bg-blue-900/20 dark:focus:text-blue-300 text-sm">
+                          <DropdownMenuItem
+                            className="focus:bg-blue-50 focus:text-blue-900 dark:focus:bg-blue-900/20 dark:focus:text-blue-300 text-sm"
+                            onClick={() => handleViewLawyerCases(abogado)}
+                          >
                             <Layers className="w-4 h-4 mr-2" />
                             Ver Casos
                           </DropdownMenuItem>
@@ -1183,6 +1237,220 @@ const AdminLawyersManagement = () => {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="casos" className="space-y-6">
+          {/* Header con búsqueda integrada */}
+          <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 rounded-xl p-6 text-white">
+            <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center">
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold mb-2 flex items-center gap-3">
+                  <Briefcase className="w-8 h-8" />
+                  Gestión de Casos por Abogado
+                </h3>
+                <p className="text-blue-100 text-lg">
+                  Busca y selecciona abogados para ver todos sus casos asignados
+                </p>
+              </div>
+
+              {/* Campo de búsqueda integrado */}
+              <div className="w-full lg:w-96">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-300 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre, email o teléfono..."
+                    value={lawyerSearchTerm}
+                    onChange={(e) => setLawyerSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all duration-200"
+                  />
+                  {lawyerSearchTerm && (
+                    <button
+                      onClick={() => setLawyerSearchTerm('')}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-white transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Selector de Abogado Mejorado */}
+          <Card className="shadow-xl border-0 bg-white dark:bg-gray-800 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl text-gray-900 dark:text-white flex items-center gap-2">
+                    <Users className="w-6 h-6 text-blue-600" />
+                    Seleccionar Abogado
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {filteredLawyersForCases.length} abogado{filteredLawyersForCases.length !== 1 ? 's' : ''} encontrado{filteredLawyersForCases.length !== 1 ? 's' : ''}
+                    {lawyerSearchTerm && ` para "${lawyerSearchTerm}"`}
+                  </p>
+                </div>
+                {selectedLawyerForCases && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedLawyerForCases(null)}
+                    className="hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Limpiar selección
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-6">
+              {!lawyerSearchTerm && filteredLawyersForCases.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    No hay abogados disponibles
+                  </h4>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    No se encontraron abogados en el sistema
+                  </p>
+                </div>
+              ) : lawyerSearchTerm && filteredLawyersForCases.length === 0 ? (
+                <div className="text-center py-12">
+                  <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    No se encontraron resultados
+                  </h4>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    No hay abogados que coincidan con "{lawyerSearchTerm}"
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setLawyerSearchTerm('')}
+                    className="hover:bg-blue-50 hover:border-blue-200"
+                  >
+                    Limpiar búsqueda
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredLawyersForCases.map((abogado) => (
+                    <Card
+                      key={abogado.id}
+                      className={`cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
+                        selectedLawyerForCases?.id === abogado.id
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
+                      }`}
+                      onClick={() => setSelectedLawyerForCases(abogado)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-lg font-medium">
+                            {abogado.nombre.charAt(0)}{abogado.apellido.charAt(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-900 dark:text-white truncate">
+                              {abogado.nombre} {abogado.apellido}
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                              {abogado.email}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Casos activos:</span>
+                            <span className="font-semibold text-blue-600">{abogado.casos_activos}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Créditos:</span>
+                            <span className="font-semibold text-green-600">{abogado.creditos_disponibles}</span>
+                          </div>
+                          {abogado.telefono && (
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-600 dark:text-gray-400">Teléfono:</span>
+                              <span className="font-medium text-gray-900 dark:text-white">{abogado.telefono}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {selectedLawyerForCases?.id === abogado.id && (
+                          <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+                            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span className="text-sm font-medium">Seleccionado</span>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Información del Abogado Seleccionado */}
+          {selectedLawyerForCases && (
+            <Card className="border-l-4 border-l-blue-500 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-xl font-medium flex-shrink-0">
+                    {selectedLawyerForCases.nombre.charAt(0)}{selectedLawyerForCases.apellido.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xl font-bold text-gray-900 dark:text-white">
+                      {selectedLawyerForCases.nombre} {selectedLawyerForCases.apellido}
+                    </h4>
+                    <p className="text-gray-600 dark:text-gray-400 mb-2">
+                      {selectedLawyerForCases.email}
+                    </p>
+                    {selectedLawyerForCases.telefono && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        📞 {selectedLawyerForCases.telefono}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-6">
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Casos Activos</div>
+                      <div className="text-2xl font-bold text-blue-600">{selectedLawyerForCases.casos_activos}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Créditos</div>
+                      <div className="text-2xl font-bold text-green-600">{selectedLawyerForCases.creditos_disponibles}</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Vista de Casos */}
+          {selectedLawyerForCases ? (
+            <LawyerCasesView
+              lawyerId={selectedLawyerForCases.id}
+              lawyerName={`${selectedLawyerForCases.nombre} ${selectedLawyerForCases.apellido}`}
+              onViewCaseDetails={handleViewCaseDetails}
+            />
+          ) : (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center max-w-md">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Briefcase className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                  Selecciona un abogado
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
+                  Usa el campo de búsqueda arriba para encontrar abogados por nombre, email o teléfono, luego selecciona uno para ver todos sus casos asignados
+                </p>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="solicitudes" className="space-y-6">
