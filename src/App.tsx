@@ -10,6 +10,7 @@ import RoleBasedRoute from "@/components/RoleBasedRoute";
 import DashboardRedirect from "@/components/DashboardRedirect";
 import LawyerDashboardRouter from "@/components/LawyerDashboardRouter";
 import Index from "./pages/Index";
+import NewLanding from "./pages/NewLanding"; // 🚀 NUEVA LANDING - Ruta: /new-landing (desactivada temporalmente)
 import Chat from "./pages/Chat";
 import UnifiedAuth from "./pages/UnifiedAuth";
 import AdminAuthCallback from "./pages/AdminAuthCallback";
@@ -88,6 +89,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            {/* 🚀 NUEVA LANDING - Para activar: cambiar arriba <Index /> por <NewLanding /> */}
+            {/* Ruta alternativa: /new-landing (descomentada abajo) */}
+            {/* <Route path="/new-landing" element={<NewLanding />} /> */}
             <Route path="/auth" element={<UnifiedAuth />} />
             <Route path="/auth/registro" element={<RegistroPage />} />
             <Route path="/abogados/auth" element={<UnifiedAuth />} />
@@ -159,6 +163,10 @@ const App = () => (
         <Route path="/client-activation" element={<ClientActivation />} />
             <Route path="/p/:token" element={<PublicProposal />} />
             
+            {/* 🚀 RUTA PARA NUEVA LANDING (comentada para fácil activación) */}
+            {/* Para activar la nueva landing: descomentar la línea siguiente */}
+            {/* <Route path="/new-landing" element={<NewLanding />} /> */}
+
             {/* --- SEO Routes --- */}
             <Route path="/areas-de-practica" element={
               <React.Suspense fallback={<>Cargando...</>}>

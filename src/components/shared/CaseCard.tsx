@@ -294,11 +294,11 @@ const CaseCard: React.FC<CaseCardProps> = ({
             </div>
           </div>
         )}
-        <CardContent className="p-6 flex-1 flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-3">
+        <CardContent className="p-4 sm:p-5 flex-1 flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-xl text-gray-900 dark:text-white truncate leading-tight mb-1">{clientData.nombre} {clientData.apellido}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 truncate font-medium">{clientData.email}</p>
+              <h3 className="font-bold text-lg sm:text-xl text-gray-900 dark:text-white truncate leading-tight mb-1">{clientData.nombre} {clientData.apellido}</h3>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate font-medium">{clientData.email}</p>
             </div>
             <div className="flex-shrink-0">
               {/* Mostrar badge de estado solo si NO está cerrado y NO está asignado, o si está asignado pero hideAssignmentStyling es true */}
@@ -307,53 +307,55 @@ const CaseCard: React.FC<CaseCardProps> = ({
                getStatusBadge(caso.estado === 'asignado' && hideAssignmentStyling ? 'disponible' : caso.estado)}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 mt-3">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
             {caso.tipo_lead && getLeadTypeBadge(caso.tipo_lead)}
             {getProfileTypeBadge(clientData.tipo_perfil)}
             {caso.canal_atencion && getOriginBadge(caso.canal_atencion)}
-            <Badge variant="outline" className="px-3 py-1.5 rounded-full bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/60 dark:to-gray-700/70 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm font-medium">
-              <Scale className="h-3.5 w-3.5 mr-2" />
-              {caso.especialidades?.nombre || 'Sin especialidad'}
+            <Badge variant="outline" className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/60 dark:to-gray-700/70 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm font-medium text-xs">
+              <Scale className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1.5 sm:mr-2" />
+              <span className="hidden sm:inline">{caso.especialidades?.nombre || 'Sin especialidad'}</span>
+              <span className="sm:hidden">{(caso.especialidades?.nombre || 'Sin especialidad').substring(0, 8)}...</span>
             </Badge>
             {clientData.ciudad && (
-              <Badge variant="outline" className="px-3 py-1.5 rounded-full bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/60 dark:to-gray-700/70 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm font-medium">
-                <MapPin className="h-3.5 w-3.5 mr-2" />
-                {clientData.ciudad}
+              <Badge variant="outline" className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/60 dark:to-gray-700/70 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm font-medium text-xs">
+                <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1.5 sm:mr-2" />
+                <span className="hidden sm:inline">{clientData.ciudad}</span>
+                <span className="sm:hidden">{clientData.ciudad.substring(0, 6)}...</span>
               </Badge>
             )}
           </div>
-          <div className="flex items-center justify-between text-xs mt-4 p-3 bg-gray-50/60 dark:bg-gray-800/40 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-white/80 dark:bg-gray-700/60 px-3 py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
-                <Calendar className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                <span className="font-medium text-gray-700 dark:text-gray-300">{format(casoDate, 'dd/MM/yy HH:mm', { locale: es })}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs mt-3 p-2 sm:p-3 bg-gray-50/60 dark:bg-gray-800/40 rounded-lg sm:rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-1 sm:gap-1.5 bg-white/80 dark:bg-gray-700/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
+                <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-blue-600 dark:text-blue-400" />
+                <span className="font-medium text-gray-700 dark:text-gray-300 text-xs">{format(casoDate, 'dd/MM/yy', { locale: es })}</span>
               </div>
-              <div className="flex items-center gap-1.5 bg-white/80 dark:bg-gray-700/60 px-3 py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
-                <span className="font-mono font-semibold text-gray-700 dark:text-gray-300">#{caso.id.substring(0,8)}</span>
+              <div className="flex items-center gap-1 sm:gap-1.5 bg-white/80 dark:bg-gray-700/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
+                <span className="font-mono font-semibold text-gray-700 dark:text-gray-300 text-xs">#{caso.id.substring(0,6)}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-700">
-                <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                <span className="font-medium text-amber-700 dark:text-amber-300">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-1 sm:gap-1.5 bg-amber-50 dark:bg-amber-900/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-amber-200 dark:border-amber-700">
+                <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-600 dark:text-amber-400" />
+                <span className="font-medium text-amber-700 dark:text-amber-300 text-xs">
                   {formatDistanceToNow(casoDate, { locale: es, addSuffix: false }).replace('hace ', '').replace('alrededor de ', '')}
                 </span>
               </div>
               {caso.fecha_pago && (
-                <div className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/30 px-3 py-1.5 rounded-full border border-green-200 dark:border-green-700">
-                  <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-                  <span className="font-semibold text-green-700 dark:text-green-300">Pagado</span>
+                <div className="flex items-center gap-1 sm:gap-1.5 bg-green-50 dark:bg-green-900/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-green-200 dark:border-green-700">
+                  <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-green-600 dark:text-green-400" />
+                  <span className="font-semibold text-green-700 dark:text-green-300 text-xs">Pagado</span>
                 </div>
               )}
             </div>
           </div>
           
           {/* Notas de Asignación - Posición prominente (solo para abogados regulares) */}
-          {showProminentNotes && caso.asignaciones_casos && caso.asignaciones_casos.length > 0 && 
+          {showProminentNotes && caso.asignaciones_casos && caso.asignaciones_casos.length > 0 &&
            caso.asignaciones_casos[0].notas_asignacion && (
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-2.5 rounded-lg mt-3 border border-blue-200 dark:border-blue-800">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-2 rounded-lg mt-2 border border-blue-200 dark:border-blue-800">
               <div className="flex items-start gap-2">
-                <StickyNote className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <StickyNote className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-blue-800 dark:text-blue-200 mb-1">📋 Notas de Asignación</p>
                   <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed line-clamp-2">
@@ -363,52 +365,53 @@ const CaseCard: React.FC<CaseCardProps> = ({
               </div>
             </div>
           )}
-          
+
           {clientData.tipo_perfil === 'empresa' && clientData.razon_social && (
             <div className="bg-blue-50 dark:bg-blue-950/30 p-2 rounded text-xs font-semibold text-blue-900 dark:text-blue-100 mt-2">
               {clientData.razon_social}
             </div>
           )}
-          <div className="bg-gradient-to-r from-gray-50/90 to-gray-100/60 dark:from-gray-800/70 dark:to-gray-700/50 p-4 rounded-xl shadow-inner mt-3 border border-gray-200/50 dark:border-gray-600/50">
-            <p className="text-xs font-bold text-gray-800 dark:text-white mb-2 uppercase tracking-wide">Motivo de Consulta</p>
-            <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 leading-relaxed font-medium">{caso.motivo_consulta}</p>
+          <div className="bg-gradient-to-r from-gray-50/90 to-gray-100/60 dark:from-gray-800/70 dark:to-gray-700/50 p-3 rounded-lg sm:rounded-xl shadow-inner mt-2 border border-gray-200/50 dark:border-gray-600/50">
+            <p className="text-xs font-bold text-gray-800 dark:text-white mb-1 uppercase tracking-wide">Motivo de Consulta</p>
+            <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 line-clamp-2 sm:line-clamp-3 leading-relaxed font-medium">{caso.motivo_consulta}</p>
           </div>
           <div className="flex-grow" />
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-3">
             {caso.valor_estimado && (
-              <div className="flex items-center gap-2 text-sm bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/40 dark:to-green-800/50 px-3 py-2 rounded-full font-bold border border-green-200 dark:border-green-600 shadow-sm">
-                <Euro className="h-4 w-4 text-green-600 dark:text-green-300" />
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/40 dark:to-green-800/50 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-bold border border-green-200 dark:border-green-600 shadow-sm">
+                <Euro className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-300" />
                 <span className="text-green-800 dark:text-green-200">{caso.valor_estimado}</span>
               </div>
             )}
             {!caso.asignaciones_casos || caso.asignaciones_casos.length === 0 ? (
-              <div className="text-sm bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/40 dark:to-orange-800/50 px-3 py-2 rounded-full text-orange-700 dark:text-orange-300 flex items-center gap-2 font-semibold border border-orange-200 dark:border-orange-600 shadow-sm">
-                <Clock className="h-4 w-4" />
+              <div className="text-xs sm:text-sm bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/40 dark:to-orange-800/50 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full text-orange-700 dark:text-orange-300 flex items-center gap-1.5 sm:gap-2 font-semibold border border-orange-200 dark:border-orange-600 shadow-sm">
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Sin asignar</span>
               </div>
             ) : null}
           </div>
         </CardContent>
-        <div className="p-4 pt-0">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex gap-2 flex-1">
+        <div className="p-3 sm:p-4 pt-0">
+          <div className="flex flex-col gap-2 sm:gap-3">
+            <div className="flex gap-1.5 sm:gap-2">
               <Button
                 variant="default"
                 size="sm"
                 onClick={() => onViewDetails(caso.id)}
-                className="flex items-center justify-center gap-2 flex-1 h-10 text-sm font-semibold rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl hover:shadow-blue-500/30 dark:shadow-blue-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 dark:focus:ring-blue-600/50"
+                className="flex items-center justify-center gap-1.5 sm:gap-2 flex-1 h-9 sm:h-10 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl hover:shadow-blue-500/30 dark:shadow-blue-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 dark:focus:ring-blue-600/50"
               >
-                <Eye className="h-4 w-4" />
-                <span>Ver Detalles</span>
+                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Ver Detalles</span>
+                <span className="xs:hidden">Ver</span>
               </Button>
               {caso.estado !== 'cerrado' && !hideAssignButton && (
                 <Button
                   variant="default"
                   size="sm"
                   onClick={() => onAssignLawyer(caso.id)}
-                  className="flex items-center justify-center gap-2 flex-1 h-10 text-sm font-semibold rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg hover:shadow-xl hover:shadow-emerald-500/30 dark:shadow-emerald-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 dark:focus:ring-emerald-600/50"
+                  className="flex items-center justify-center gap-1.5 sm:gap-2 flex-1 h-9 sm:h-10 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg hover:shadow-xl hover:shadow-emerald-500/30 dark:shadow-emerald-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 dark:focus:ring-emerald-600/50"
                 >
-                  <UserPlus className="h-4 w-4" />
+                  <UserPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span>Asignar</span>
                 </Button>
               )}
@@ -419,11 +422,11 @@ const CaseCard: React.FC<CaseCardProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex items-center justify-center gap-2 h-10 text-sm font-semibold rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-gray-400/50 focus:ring-offset-2 dark:focus:ring-gray-500/50"
+                    className="flex items-center justify-center gap-1.5 sm:gap-2 w-full h-9 sm:h-10 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-gray-400/50 focus:ring-offset-2 dark:focus:ring-gray-500/50"
                   >
-                    <Bot className="h-4 w-4" />
+                    <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span>IA</span>
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg">

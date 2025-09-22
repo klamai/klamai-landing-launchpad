@@ -275,22 +275,24 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
     >
       <Card className="relative overflow-hidden transition-all duration-300 h-full flex flex-col rounded-2xl bg-white/95 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg shadow-gray-200/60 dark:shadow-black/30 hover:shadow-xl hover:shadow-blue-100/40 dark:hover:shadow-blue-900/20 ring-2 ring-gray-300/80 dark:ring-gray-700/60 hover:ring-blue-400/40 dark:hover:ring-blue-600/40">
         {/* Header con estado y fecha */}
-        <CardContent className="p-6 flex-1 flex flex-col">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-2 flex-wrap">
+        <CardContent className="p-4 sm:p-5 flex-1 flex flex-col">
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               {getClientStatusBadge(caso.estado)}
               {getProfileTypeBadge(caso.tipo_perfil_borrador)}
               {caso.fecha_pago && (
                 <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-800">
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  Pagado
+                  <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  <span className="hidden sm:inline">Pagado</span>
+                  <span className="sm:hidden">✓</span>
                 </span>
               )}
             </div>
             <div className="text-right">
               <div className="text-xs text-muted-foreground flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {formattedDate}
+                <span className="hidden sm:inline">{formattedDate}</span>
+                <span className="sm:hidden">{formattedDate.split('/')[0]}/{formattedDate.split('/')[1]}</span>
               </div>
               <div className="text-xs text-muted-foreground">
                 {timeAgo}
@@ -299,51 +301,51 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
           </div>
 
           {/* Título del caso */}
-          <div className="mb-4">
-            <h3 className="font-semibold text-foreground text-lg mb-2 line-clamp-2">
+          <div className="mb-3">
+            <h3 className="font-semibold text-foreground text-base sm:text-lg mb-1.5 line-clamp-2">
               {caso.motivo_consulta}
             </h3>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Scale className="h-4 w-4" />
-              <span>{caso.especialidades?.nombre || 'Derecho'}</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+              <Scale className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="truncate">{caso.especialidades?.nombre || 'Derecho'}</span>
             </div>
           </div>
 
           {/* Información de progreso */}
-          <div className="mb-4 p-4 rounded-xl border backdrop-blur-sm bg-blue-50/70 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/50 shadow-sm">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="mb-3 p-3 rounded-lg sm:rounded-xl border backdrop-blur-sm bg-blue-50/70 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/50 shadow-sm">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
               {progressInfo.icon}
-              <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+              <span className="text-xs sm:text-sm font-medium text-blue-800 dark:text-blue-200">
                 Estado Actual
               </span>
             </div>
-            <p className="text-sm text-blue-700 dark:text-blue-300">
+            <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 line-clamp-2">
               {progressInfo.text}
             </p>
           </div>
 
           {/* Información del cliente */}
-          <div className="mb-4 space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <User className="h-4 w-4" />
-              <span>
+          <div className="mb-3 space-y-1.5">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="truncate">
                 {caso.nombre_borrador} {caso.apellido_borrador}
               </span>
             </div>
             {caso.ciudad_borrador && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Shield className="h-4 w-4" />
-                <span>{caso.ciudad_borrador}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="truncate">{caso.ciudad_borrador}</span>
               </div>
             )}
           </div>
 
           {/* Indicadores de actividad */}
           {renderActivityIndicators() && (
-            <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800/20 rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div className="mb-3 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800/20 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600 dark:text-gray-400" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
                   Actividad del Caso
                 </span>
               </div>
@@ -353,8 +355,8 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
 
           {/* Última actividad */}
           {caseDetails?.ultimaActividad && (
-            <div className="mb-4 p-2 bg-gray-50 dark:bg-gray-800/10 rounded-lg">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="mb-3 p-2 bg-gray-50 dark:bg-gray-800/10 rounded-lg">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
                 <span className="truncate">
                   {caseDetails.ultimaActividad.descripcion}
@@ -364,38 +366,42 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
           )}
 
           {/* Botones de acción - estilo moderno */}
-          <div className="flex items-center gap-3 mt-4">
-            <Button
-              onClick={() => onViewDetails(caso.id)}
-              variant="default"
-              size="sm"
-              className="flex items-center justify-center gap-2 flex-1 h-10 text-sm font-semibold rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl hover:shadow-blue-500/30 dark:shadow-blue-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 dark:focus:ring-blue-600/50"
-            >
-              <Eye className="h-4 w-4" />
-              <span>Ver Detalles</span>
-            </Button>
-
-            {/* Botón de pago en estados permitidos */}
-            {shouldShowPaymentButton(caso.estado) && (
+          <div className="flex flex-col gap-2 mt-3">
+            <div className="flex gap-1.5 sm:gap-3">
               <Button
-                onClick={handlePayment}
+                onClick={() => onViewDetails(caso.id)}
                 variant="default"
                 size="sm"
-                className="flex items-center justify-center gap-2 flex-1 h-10 text-sm font-semibold rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg hover:shadow-xl hover:shadow-emerald-500/30 dark:shadow-emerald-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 dark:focus:ring-emerald-600/50"
+                className="flex items-center justify-center gap-1.5 sm:gap-2 flex-1 h-9 sm:h-10 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl hover:shadow-blue-500/30 dark:shadow-blue-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 dark:focus:ring-blue-600/50"
               >
-                <CreditCard className="h-4 w-4" />
-                <span>{getPaymentButtonText(caso.estado)}</span>
+                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Ver Detalles</span>
+                <span className="xs:hidden">Ver</span>
               </Button>
-            )}
+
+              {/* Botón de pago en estados permitidos */}
+              {shouldShowPaymentButton(caso.estado) && (
+                <Button
+                  onClick={handlePayment}
+                  variant="default"
+                  size="sm"
+                  className="flex items-center justify-center gap-1.5 sm:gap-2 flex-1 h-9 sm:h-10 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg hover:shadow-xl hover:shadow-emerald-500/30 dark:shadow-emerald-900/30 transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 dark:focus:ring-emerald-600/50"
+                >
+                  <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden xs:inline">{getPaymentButtonText(caso.estado)}</span>
+                  <span className="xs:hidden">Pagar</span>
+                </Button>
+              )}
+            </div>
 
             <Button
               onClick={() => setIsUploadModalOpen(true)}
               variant="outline"
               size="sm"
-              className="flex items-center justify-center gap-2 h-10 text-sm font-semibold rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:border-purple-400 dark:hover:border-purple-500 hover:text-purple-700 dark:hover:text-purple-300 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 dark:focus:ring-purple-500/50"
+              className="flex items-center justify-center gap-1.5 sm:gap-2 w-full h-9 sm:h-10 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:border-purple-400 dark:hover:border-purple-500 hover:text-purple-700 dark:hover:text-purple-300 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 dark:focus:ring-purple-500/50"
             >
-              <Upload className="h-4 w-4" />
-              <span>Subir</span>
+              <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span>Subir Documento</span>
             </Button>
           </div>
         </CardContent>

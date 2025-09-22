@@ -46,9 +46,12 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CaseCard from '@/components/shared/CaseCard';
 import CaseDetailModal from '@/components/admin/CaseDetailModal';
 import CaseAssignmentModal from '@/components/admin/CaseAssignmentModal';
+import CaseAssignmentBoard from '@/components/admin/CaseAssignmentBoard';
+import BulkAssignmentModal from '@/components/admin/BulkAssignmentModal';
 import AddManualCaseModal from '@/components/admin/AddManualCaseModal';
 import AddAICaseModal from '@/components/admin/AddAICaseModal';
 import { supabase } from '@/integrations/supabase/client';
@@ -103,6 +106,9 @@ const AdminCasesManagement = () => {
   const [proposalPhone, setProposalPhone] = useState('');
   const [includeCheckoutLink, setIncludeCheckoutLink] = useState(false);
   const [sendingProposal, setSendingProposal] = useState(false);
+  const [bulkAssignmentOpen, setBulkAssignmentOpen] = useState(false);
+  const [selectedCasesForBulk, setSelectedCasesForBulk] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState('inteligente');
 
   // Cargar especialidades al montar el componente
   useEffect(() => {
@@ -468,8 +474,22 @@ const AdminCasesManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Indicador de casos en procesamiento MEJORADO */}
-      {processingCases.size > 0 && (
+      {/* Tabs Navigation */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="gestion" className="flex items-center gap-2">
+            <Grid3X3 className="w-4 h-4" />
+            Gestión Tradicional
+          </TabsTrigger>
+          <TabsTrigger value="inteligente" className="flex items-center gap-2">
+            <Bot className="w-4 h-4" />
+            Asignación Inteligente
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="gestion" className="space-y-6">
+          {/* Indicador de casos en procesamiento MEJORADO */}
+          {processingCases.size > 0 && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -893,6 +913,34 @@ const AdminCasesManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AddManualCaseModal
+        isOpen={addManualCaseOpen}
+        onClose={() => setAddManualCaseOpen(false)}
+        onSuccess={handleManualCaseSuccess}
+        onCaseCreated={handleCaseCreated}
+        especialidades={especialidades}
+      />
+
+        </TabsContent>
+
+        <TabsContent value="inteligente" className="space-y-6">
+          <CaseAssignmentBoard onCaseAssigned={() => refetch()} />
+        </TabsContent>
+      </Tabs>
+
+      <BulkAssignmentModal
+        isOpen={bulkAssignmentOpen}
+        onClose={() => {
+          setBulkAssignmentOpen(false);
+          setSelectedCasesForBulk([]);
+        }}
+        selectedCases={selectedCasesForBulk}
+        onSuccess={() => {
+          refetch();
+          setSelectedCasesForBulk([]);
+        }}
+      />
 
       <AddManualCaseModal
         isOpen={addManualCaseOpen}

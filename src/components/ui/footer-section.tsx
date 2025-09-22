@@ -21,7 +21,7 @@ interface FooterSectionProps {
 
 function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProps) {
   return (
-    <footer className="relative border-t bg-gradient-to-r from-blue-600 to-cyan-600 text-white transition-colors duration-300">
+    <footer className="relative border-t bg-[#0A1931] text-white transition-colors duration-300">
       <div className="container mx-auto px-4 py-12 md:px-6 lg:px-8">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Newsletter Section */}
@@ -31,7 +31,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
 
               <h2 className="text-2xl font-bold tracking-tight text-white">KlamAI</h2>
             </div>
-            <p className="mb-6 text-blue-100">
+            <p className="mb-6 text-[#F0F0F0]">
               Recibe las últimas noticias sobre tecnología legal y consejos de VitorIA directamente en tu email.
             </p>
             <form className="relative">
@@ -56,19 +56,19 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
           <div>
             <h3 className="mb-4 text-lg font-semibold text-white">Enlaces Rápidos</h3>
             <nav className="space-y-2 text-sm">
-              <a href="/" className="block transition-colors hover:text-blue-200 text-blue-100">
+              <a href="/" className="block transition-colors hover:text-[#007BFF] text-[#F0F0F0]">
                 Inicio
               </a>
-              <a href="/areas-de-practica" className="block transition-colors hover:text-blue-200 text-blue-100">
+              <a href="/areas-de-practica" className="block transition-colors hover:text-[#007BFF] text-[#F0F0F0]">
                 Áreas de Práctica
               </a>
-              <a href="/mercantil" className="block transition-colors hover:text-blue-200 text-blue-100">
+              <a href="/mercantil" className="block transition-colors hover:text-[#007BFF] text-[#F0F0F0]">
                 Derecho Mercantil
               </a>
-              <a href="/contacto" className="block transition-colors hover:text-blue-200 text-blue-100">
+              <a href="/contacto" className="block transition-colors hover:text-[#007BFF] text-[#F0F0F0]">
                 Contacto
               </a>
-              <a href="/chat" className="block transition-colors hover:text-blue-200 text-blue-100">
+              <a href="/chat" className="block transition-colors hover:text-[#007BFF] text-[#F0F0F0]">
                 Consultar con VitorIA
               </a>
             </nav>
@@ -79,16 +79,16 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
             <h3 className="mb-4 text-lg font-semibold text-white">Contacto</h3>
             <address className="space-y-3 text-sm not-italic">
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-cyan-200" />
-                <span className="text-blue-100">Valencia, España</span>
+                <MapPin className="h-4 w-4 text-[#007BFF]" />
+                <span className="text-[#F0F0F0]">Valencia, España</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-cyan-200" />
-                <span className="text-blue-100"></span>
+                <Phone className="h-4 w-4 text-[#007BFF]" />
+                <span className="text-[#F0F0F0]"></span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-cyan-200" />
-                <span className="text-blue-100">gestiones@klamai.com</span>
+                <Mail className="h-4 w-4 text-[#007BFF]" />
+                <span className="text-[#F0F0F0]">gestiones@klamai.com</span>
               </div>
             </address>
           </div>
@@ -100,7 +100,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-[#007BFF]/30 hover:border-[#007BFF]/50 transition-all duration-200">
                       <Facebook className="h-4 w-4" />
                       <span className="sr-only">Facebook</span>
                     </Button>
@@ -113,7 +113,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-[#007BFF]/30 hover:border-[#007BFF]/50 transition-all duration-200">
                       <Twitter className="h-4 w-4" />
                       <span className="sr-only">Twitter</span>
                     </Button>
@@ -126,7 +126,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-[#007BFF]/30 hover:border-[#007BFF]/50 transition-all duration-200">
                       <Instagram className="h-4 w-4" />
                       <span className="sr-only">Instagram</span>
                     </Button>
@@ -139,7 +139,7 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-cyan-500/30 hover:border-cyan-300/50 transition-all duration-200">
+                    <Button variant="outline" size="icon" className="rounded-full bg-white/20 border-white/30 text-white hover:bg-[#007BFF]/30 hover:border-[#007BFF]/50 transition-all duration-200">
                       <Linkedin className="h-4 w-4" />
                       <span className="sr-only">LinkedIn</span>
                     </Button>
@@ -152,14 +152,14 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
             </div>
             {onDarkModeToggle && (
               <div className="flex items-center space-x-2">
-                <Sun className="h-4 w-4 text-cyan-200" />
+                <Sun className="h-4 w-4 text-[#007BFF]" />
                 <Switch
                   id="dark-mode"
                   checked={darkMode}
                   onCheckedChange={onDarkModeToggle}
-                  className="data-[state=checked]:bg-cyan-500/50 data-[state=unchecked]:bg-white/20"
+                  className="data-[state=checked]:bg-[#007BFF]/50 data-[state=unchecked]:bg-white/20"
                 />
-                <Moon className="h-4 w-4 text-cyan-200" />
+                <Moon className="h-4 w-4 text-[#007BFF]" />
                 <Label htmlFor="dark-mode" className="sr-only">
                   Alternar modo oscuro
                 </Label>
@@ -170,17 +170,17 @@ function FooterSection({ darkMode = false, onDarkModeToggle }: FooterSectionProp
         
         {/* Bottom Section */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/30 pt-8 text-center md:flex-row">
-          <p className="text-sm text-blue-100">
+          <p className="text-sm text-[#F0F0F0]">
             © 2025 KlamAI. Todos los derechos reservados. | Asesoramiento jurídico con IA en España
           </p>
           <nav className="flex gap-4 text-sm">
-            <a href="/politicas-privacidad" className="transition-colors hover:text-cyan-200 text-blue-100">
+            <a href="/politicas-privacidad" className="transition-colors hover:text-[#007BFF] text-[#F0F0F0]">
               Política de Privacidad
             </a>
-            <a href="/aviso-legal" className="transition-colors hover:text-cyan-200 text-blue-100">
+            <a href="/aviso-legal" className="transition-colors hover:text-[#007BFF] text-[#F0F0F0]">
               Aviso Legal
             </a>
-            <a href="#" className="transition-colors hover:text-cyan-200 text-blue-100">
+            <a href="#" className="transition-colors hover:text-[#007BFF] text-[#F0F0F0]">
               Cookies
             </a>
           </nav>
