@@ -519,5 +519,684 @@
       "updated": "2025-09-02T14:06:30.042Z",
       "description": "Tag created on 2/9/2025"
     }
+  },
+  "feature-chat-dashboard": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Initialize Project and Integrate Vercel AI SDK Elements",
+        "description": "Set up the project environment and install @ai-sdk/react to enable use of PromptInput and PromptInputActionAddAttachments components.",
+        "details": "Install all required dependencies, especially @ai-sdk/react. Ensure the project is configured to use shadcn/ui for design consistency. Scaffold the folder structure for components, hooks, and services as per the PRD.",
+        "testStrategy": "Verify that the project builds successfully and that the imported components render without errors in a test page.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Initialize Project Environment",
+            "description": "Create a new Next.js project with TypeScript, ESLint, and configure the src/ directory structure. Set up initial version control and ensure the project is ready for dependency installation.",
+            "dependencies": [],
+            "details": "Use `npx create-next-app@latest` to scaffold the project. Select TypeScript, ESLint, Tailwind CSS (if needed for shadcn/ui compatibility), and src/ directory options. Initialize a Git repository and make the first commit with the base project files.",
+            "status": "done",
+            "testStrategy": "Verify that the project builds and runs locally with `npm run dev`. Confirm that the initial folder structure matches PRD requirements."
+          },
+          {
+            "id": 2,
+            "title": "Install and Configure Core Dependencies",
+            "description": "Install @ai-sdk/react, ai, and any other required packages (e.g., shadcn/ui, zod). Ensure all dependencies are correctly added and available for import.",
+            "dependencies": [],
+            "details": "Run `npm install ai @ai-sdk/react zod` and follow shadcn/ui installation instructions. Update package.json and ensure peer dependencies are resolved. Add shadcn/ui setup scripts if required.",
+            "status": "done",
+            "testStrategy": "Check that all dependencies are listed in package.json and can be imported in a test file without errors."
+          },
+          {
+            "id": 3,
+            "title": "Scaffold Project Folder Structure",
+            "description": "Create folders for components, hooks, and services as specified in the PRD. Add placeholder files for key modules to establish the architecture.",
+            "dependencies": [],
+            "details": "Create directories such as `src/components`, `src/hooks`, and `src/services`. Add README.md or index.ts files to each folder. Create placeholder files for PromptInput and PromptInputActionAddAttachments components.",
+            "status": "done",
+            "testStrategy": "Verify that the folder structure matches the PRD and that all placeholder files exist and are accessible."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Vercel AI SDK Components",
+            "description": "Import and set up PromptInput and PromptInputActionAddAttachments components from @ai-sdk/react in a test page. Ensure they render and function minimally.",
+            "dependencies": [],
+            "details": "Create a test page (e.g., `src/pages/test-ai.tsx`) and import the SDK components. Render them with basic props and handlers. Confirm that the components mount and display in the browser.",
+            "status": "done",
+            "testStrategy": "Open the test page in the browser and verify that both components render without errors. Check console for warnings or issues."
+          },
+          {
+            "id": 5,
+            "title": "Configure shadcn/ui for Design Consistency",
+            "description": "Set up shadcn/ui and apply its design system to the test page and SDK components. Ensure consistent styling and theme integration.",
+            "dependencies": [],
+            "details": "Follow shadcn/ui setup instructions to configure theme and global styles. Wrap SDK components in shadcn/ui layout containers and apply sample styles. Adjust Tailwind or CSS config as needed for compatibility.",
+            "status": "done",
+            "testStrategy": "Visually inspect the test page to confirm that all components use shadcn/ui styles and match the intended design system."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Implement NuevaConsultaSection Orchestrator Component",
+        "description": "Create NuevaConsultaSection.tsx to manage the two-step flow: initial form and chat interface.",
+        "details": "Develop logic to render a text input form for the initial query. On submit, trigger case creation and transition to the chat interface. Use state to manage step transitions.",
+        "testStrategy": "Test that the two-step flow works: after submitting the initial query, the chat interface appears. Validate state transitions and correct rendering.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set Up Component Structure and State Management",
+            "description": "Create the NuevaConsultaSection.tsx file and define the component structure, including state to manage the current step (initial form vs. chat interface).",
+            "dependencies": [],
+            "details": "Initialize a functional React component. Use useState to track which step is active (e.g., 'form' or 'chat'). Prepare the component to conditionally render either the initial form or the chat interface based on this state.",
+            "status": "done",
+            "testStrategy": "Render the component and verify that the correct UI is shown for the default step."
+          },
+          {
+            "id": 2,
+            "title": "Implement Initial Query Input Form",
+            "description": "Develop the UI and logic for the initial text input form where users enter their query.",
+            "dependencies": [
+              "2.1"
+            ],
+            "details": "Create a controlled input field and a submit button. Manage input value with useState. Add basic validation (e.g., non-empty input). On submit, prevent default form behavior and call a handler to process the input.",
+            "status": "done",
+            "testStrategy": "Test that the form renders, accepts input, validates, and calls the submit handler with the correct value."
+          },
+          {
+            "id": 3,
+            "title": "Integrate Case Creation Logic",
+            "description": "Implement the logic to trigger case creation when the initial query is submitted.",
+            "dependencies": [
+              "2.2"
+            ],
+            "details": "In the form submit handler, call the API or function responsible for creating a new case using the input value. Handle loading and error states. Store the resulting case ID in component state for use in the chat interface.",
+            "status": "done",
+            "testStrategy": "Mock the case creation API and verify that it is called with the correct data. Check that the case ID is stored and errors are handled."
+          },
+          {
+            "id": 4,
+            "title": "Transition to and Render Chat Interface",
+            "description": "Switch the component state to display the chat interface after successful case creation, passing necessary props such as the case ID.",
+            "dependencies": [
+              "2.3"
+            ],
+            "details": "Upon successful case creation, update the step state to 'chat'. Render the chat interface component, ensuring it receives the case ID and any other required props. Hide or disable the initial form.",
+            "status": "done",
+            "testStrategy": "Test that submitting the form transitions the UI to the chat interface and that the chat receives the correct case ID."
+          },
+          {
+            "id": 5,
+            "title": "Implement State Reset and Step Navigation Logic",
+            "description": "Add logic to allow resetting the flow or navigating back to the initial form if needed (e.g., for error recovery or new queries).",
+            "dependencies": [
+              "2.4"
+            ],
+            "details": "Provide a mechanism (such as a button or callback) to reset the component state to the initial step. Ensure all relevant state (input, case ID, errors) is cleared when resetting.",
+            "status": "done",
+            "testStrategy": "Test that the reset/navigation works as intended, returning the user to the initial form and clearing previous state."
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Develop CustomChat UI Component",
+        "description": "Build CustomChat.tsx to display the chat interface, including message rendering, file attachment UI, and typing indicators.",
+        "details": "Use PromptInput and PromptInputActionAddAttachments for input and file selection. Render chat messages, show a typing indicator, and ensure the UI matches shadcn/ui design guidelines.",
+        "testStrategy": "Check that messages are displayed, files can be selected, and the typing indicator appears when expected. Validate UI against design requirements.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set Up CustomChat Component Structure and State",
+            "description": "Create the CustomChat.tsx file, import required dependencies, and establish the component's state for messages, input, attachments, and typing status.",
+            "dependencies": [],
+            "details": "Start by creating CustomChat.tsx in the appropriate components directory. Import React, useState, useEffect, and any required hooks from the Vercel AI SDK (such as useChat). Define state variables for chat messages, input value, attached files, and a boolean for typing indicator. Ensure the component is structured to allow for future expansion and matches shadcn/ui conventions.",
+            "status": "done",
+            "testStrategy": "Render the component in isolation and verify that state variables initialize correctly and the component mounts without errors."
+          },
+          {
+            "id": 2,
+            "title": "Integrate PromptInput and File Attachment UI",
+            "description": "Implement the chat input area using PromptInput and PromptInputActionAddAttachments, enabling users to type messages and select files for attachment.",
+            "dependencies": [
+              "3.1"
+            ],
+            "details": "Import PromptInput and PromptInputActionAddAttachments from @ai-sdk/react. Place them in the chat input area at the bottom of the UI. Wire up handlers to update the input state and manage file selection, ensuring that selected files are previewed and can be removed before sending. Style the input area to match shadcn/ui design guidelines.",
+            "status": "done",
+            "testStrategy": "Test that users can type messages, select files, see file previews, and remove files before sending."
+          },
+          {
+            "id": 3,
+            "title": "Implement Message Rendering and Auto-Scroll",
+            "description": "Render the list of chat messages, including support for text and file attachments, and implement auto-scroll to the latest message.",
+            "dependencies": [
+              "3.1"
+            ],
+            "details": "Map over the messages state to render each message using shadcn/ui or custom message components. Display text, markdown, and file attachments as appropriate. Implement auto-scroll behavior so the chat view scrolls to the newest message when messages update. Ensure accessibility and responsive design.",
+            "status": "done",
+            "testStrategy": "Send and receive messages, including those with attachments, and verify that all messages render correctly and the chat view auto-scrolls to the latest message."
+          },
+          {
+            "id": 4,
+            "title": "Add Typing Indicator Logic and UI",
+            "description": "Show a typing indicator when the AI or another user is composing a message, updating the UI in real time.",
+            "dependencies": [
+              "3.1",
+              "3.3"
+            ],
+            "details": "Add a typing indicator component below the message list. Update the typing state based on incoming events or status from the chat logic (e.g., when the AI is generating a response). Animate or style the indicator according to shadcn/ui guidelines.",
+            "status": "done",
+            "testStrategy": "Trigger typing events (e.g., simulate AI response delay) and verify that the typing indicator appears and disappears at the correct times."
+          },
+          {
+            "id": 5,
+            "title": "Apply shadcn/ui Design and Accessibility Standards",
+            "description": "Ensure the entire CustomChat component adheres to shadcn/ui design guidelines, including theming, spacing, and accessibility best practices.",
+            "dependencies": [
+              "3.2",
+              "3.3",
+              "3.4"
+            ],
+            "details": "Review the component's layout, colors, spacing, and typography to ensure consistency with shadcn/ui. Implement dark/light mode support if required. Add ARIA attributes and keyboard navigation for accessibility. Refactor styles to use shadcn/ui primitives where possible.",
+            "status": "done",
+            "testStrategy": "Compare the UI against shadcn/ui reference designs, test in both light and dark modes, and use accessibility tools to validate ARIA and keyboard support."
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Create useTypebotChat Hook for Conversation Logic",
+        "description": "Implement useTypebotChat.ts to encapsulate chat logic, including API calls and session management.",
+        "details": "Abstract logic for starting and continuing chats with Typebot. Manage sessionId, handle message sending, and expose state for UI components.",
+        "testStrategy": "Unit test the hook for correct API call sequences, session management, and error handling. Mock API responses to simulate chat flow.",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Hook State and Types",
+            "description": "Establish the TypeScript types and initial state structure for the useTypebotChat hook, including sessionId, messages, loading, and error states.",
+            "dependencies": [],
+            "details": "Create TypeScript interfaces/types for chat messages, session state, and hook return values. Initialize state variables using React's useState for sessionId, messages, loading, and error. Ensure the state structure supports both chat initialization and ongoing conversation management.",
+            "status": "pending",
+            "testStrategy": "Write unit tests to verify that the initial state and types are correctly set and that the hook returns the expected structure."
+          },
+          {
+            "id": 2,
+            "title": "Implement Session Management Logic",
+            "description": "Add logic to start a new chat session and persist the sessionId for subsequent API calls.",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "Implement a function to initiate a chat session with the Typebot API, storing the returned sessionId in state. Ensure sessionId is reused for ongoing conversations and reset appropriately when starting a new chat.",
+            "status": "pending",
+            "testStrategy": "Mock the session start API and verify that sessionId is set and reused correctly across hook invocations."
+          },
+          {
+            "id": 3,
+            "title": "Implement Message Sending and Receiving",
+            "description": "Add functions to send user messages to the Typebot API and handle incoming responses, updating the chat state accordingly.",
+            "dependencies": [
+              "4.2"
+            ],
+            "details": "Create a sendMessage function that posts user input to the Typebot API using the current sessionId. Update the messages state with both user and bot messages. Handle loading and error states during API calls.",
+            "status": "pending",
+            "testStrategy": "Mock message send/receive APIs, test message flow, and ensure state updates correctly for both user and bot messages."
+          },
+          {
+            "id": 4,
+            "title": "Expose Hook API and State for UI Integration",
+            "description": "Design the hook's return value to expose state and actions needed by UI components, such as messages, loading, error, sendMessage, and session management functions.",
+            "dependencies": [
+              "4.3"
+            ],
+            "details": "Return an object from the hook containing the current messages, loading and error states, sendMessage function, and any session control methods. Ensure the API is intuitive and covers all UI integration needs.",
+            "status": "pending",
+            "testStrategy": "Write tests to confirm that the hook's API exposes all required properties and functions, and that state updates propagate as expected."
+          },
+          {
+            "id": 5,
+            "title": "Add Comprehensive Unit Tests and Mock API Integration",
+            "description": "Develop unit tests for all hook logic, including session management, message flow, error handling, and state exposure, using mocked API responses.",
+            "dependencies": [
+              "4.4"
+            ],
+            "details": "Use a testing library (e.g., React Testing Library, Jest) to simulate chat flows, session resets, and error scenarios. Mock all API calls to ensure tests are deterministic and cover edge cases.",
+            "status": "pending",
+            "testStrategy": "Ensure all logic branches are tested, including successful and failed API calls, session resets, and state updates. Achieve high code coverage for the hook."
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Develop typebotApiService for Typebot API Communication",
+        "description": "Centralize all Typebot API calls in typebotApiService.ts, including /startChat and /continueChat endpoints.",
+        "details": "Implement functions for starting a chat (sending caso_id, user_id, nombre, email, context) and continuing a chat (using sessionId). Handle API errors and return structured responses.",
+        "testStrategy": "Write integration tests for each API function, including success and failure scenarios. Validate payload structure and error propagation.",
+        "priority": "high",
+        "dependencies": [
+          4
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Typebot API Request and Response Types",
+            "description": "Create TypeScript interfaces for the request payloads and response structures for /startChat and /continueChat endpoints.",
+            "dependencies": [],
+            "details": "Analyze the expected payloads and responses for both endpoints. Define interfaces such as StartChatRequest, StartChatResponse, ContinueChatRequest, and ContinueChatResponse in a dedicated types file. Ensure all required fields (caso_id, user_id, nombre, email, context, sessionId) are represented and responses are structured for error handling.",
+            "status": "pending",
+            "testStrategy": "Validate type definitions by writing unit tests that check type compatibility and ensure all required fields are present."
+          },
+          {
+            "id": 2,
+            "title": "Implement startChat Function",
+            "description": "Develop the startChat function in typebotApiService.ts to initiate a chat session by sending the required payload to the /startChat endpoint.",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "Use the defined StartChatRequest type to construct the payload. Implement the function to make an HTTP POST request to /startChat, handle API errors, and return a structured StartChatResponse. Use async/await and try/catch for error management. Ensure the function accepts caso_id, user_id, nombre, email, and context as parameters.",
+            "status": "pending",
+            "testStrategy": "Write integration tests to verify correct payload transmission, successful chat initiation, and proper error handling for failed requests."
+          },
+          {
+            "id": 3,
+            "title": "Implement continueChat Function",
+            "description": "Develop the continueChat function in typebotApiService.ts to continue an existing chat session using sessionId.",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "Use the ContinueChatRequest type to construct the payload. Implement the function to make an HTTP POST request to /continueChat, handle API errors, and return a structured ContinueChatResponse. Ensure the function accepts sessionId and any additional required parameters.",
+            "status": "pending",
+            "testStrategy": "Write integration tests to verify correct session continuation, payload structure, and error propagation for failed requests."
+          },
+          {
+            "id": 4,
+            "title": "Centralize Error Handling and Response Formatting",
+            "description": "Create a shared error handling and response formatting utility to standardize API error management and response structures across all Typebot API functions.",
+            "dependencies": [
+              "5.2",
+              "5.3"
+            ],
+            "details": "Implement a utility function (e.g., handleApiError) that processes errors from API calls and formats them into a consistent structure. Ensure both startChat and continueChat functions use this utility for error handling and response formatting. Document the error structure for consumers of typebotApiService.",
+            "status": "pending",
+            "testStrategy": "Test error scenarios for both API functions to confirm standardized error responses and correct propagation of error details."
+          },
+          {
+            "id": 5,
+            "title": "Write Comprehensive Integration Tests for typebotApiService",
+            "description": "Develop integration tests covering all API functions, including success and failure scenarios, payload validation, and error propagation.",
+            "dependencies": [
+              "5.2",
+              "5.3",
+              "5.4"
+            ],
+            "details": "Use a testing framework (e.g., Jest) to write tests for startChat and continueChat functions. Mock API endpoints to simulate various responses. Validate that payloads match the defined types, responses are correctly structured, and errors are handled as expected. Include edge cases and invalid input scenarios.",
+            "status": "pending",
+            "testStrategy": "Run all tests and ensure coverage for both endpoints, error handling, and payload validation. Review test results for completeness and reliability."
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Integrate Supabase Edge Function for Case Creation",
+        "description": "Invoke crear-borrador-caso Edge Function with user_id when the initial query is submitted.",
+        "details": "Call the Supabase Edge Function from NuevaConsultaSection after the user submits the initial form. Store the returned caso_id for subsequent operations.",
+        "testStrategy": "Mock the Edge Function and verify that it is called with correct parameters. Ensure caso_id is correctly handled and passed to downstream logic.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configure Supabase Client for Edge Function Invocation",
+            "description": "Set up the Supabase client in the frontend to securely invoke Edge Functions, ensuring authentication headers are included.",
+            "dependencies": [],
+            "details": "Install the Supabase JS client if not already present. Initialize the client with your project's URL and anon/public key. Ensure the client is configured to send the user's JWT in the Authorization header when invoking Edge Functions, as required for authentication and authorization.",
+            "status": "pending",
+            "testStrategy": "Verify that the client is initialized correctly and that requests to Edge Functions include the necessary headers."
+          },
+          {
+            "id": 2,
+            "title": "Implement Edge Function Invocation Logic in NuevaConsultaSection",
+            "description": "Add logic to NuevaConsultaSection to invoke the crear-borrador-caso Edge Function with the user_id when the initial query form is submitted.",
+            "dependencies": [
+              "6.1"
+            ],
+            "details": "On form submission, construct a POST request to the crear-borrador-caso Edge Function endpoint using the Supabase client. Pass the user_id and any required payload fields in the request body. Handle the asynchronous response and errors appropriately.",
+            "status": "pending",
+            "testStrategy": "Mock the Edge Function endpoint and verify that it is called with the correct payload and headers when the form is submitted."
+          },
+          {
+            "id": 3,
+            "title": "Handle Edge Function Response and Store caso_id",
+            "description": "Process the response from the Edge Function and store the returned caso_id in component state for downstream use.",
+            "dependencies": [
+              "6.2"
+            ],
+            "details": "Extract the caso_id from the Edge Function's JSON response. Store it in React state or context within NuevaConsultaSection. Ensure error handling for cases where the response is malformed or missing caso_id.",
+            "status": "pending",
+            "testStrategy": "Simulate various Edge Function responses and verify that caso_id is correctly extracted and stored, and errors are handled gracefully."
+          },
+          {
+            "id": 4,
+            "title": "Integrate caso_id into Downstream Logic and UI Flow",
+            "description": "Ensure that the stored caso_id is passed to subsequent components and logic, such as chat initialization and file attachment workflows.",
+            "dependencies": [
+              "6.3"
+            ],
+            "details": "Update the NuevaConsultaSection and any child components to accept caso_id as a prop or via context. Use caso_id for initializing chat sessions, associating file uploads, and any other case-specific operations.",
+            "status": "pending",
+            "testStrategy": "Test that downstream components receive the correct caso_id and that workflows dependent on caso_id function as expected."
+          },
+          {
+            "id": 5,
+            "title": "Implement Comprehensive Testing and Error Handling",
+            "description": "Develop unit and integration tests for the Edge Function invocation flow, including error scenarios and edge cases.",
+            "dependencies": [
+              "6.4"
+            ],
+            "details": "Write tests to mock the Edge Function, simulate network errors, invalid responses, and authorization failures. Ensure that the UI provides clear feedback to users in all scenarios and that the caso_id is reliably managed throughout the flow.",
+            "status": "pending",
+            "testStrategy": "Run automated tests covering successful invocation, error handling, and UI feedback. Manually test the flow in development to confirm robustness."
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Implement File Upload to Supabase Storage",
+        "description": "Enable file selection and upload to Supabase Storage in a path associated with caso_id, showing upload progress.",
+        "details": "Use PromptInputActionAddAttachments for file selection. Upload files to Supabase Storage at casos/{caso_id}/adjuntos/. Display upload progress and handle errors. Return URLs of uploaded files.",
+        "testStrategy": "Test file selection, upload, and progress indicator. Validate that files are uploaded to the correct path and URLs are returned. Simulate upload failures to test error handling.",
+        "priority": "high",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Integrate File Selection Using PromptInputActionAddAttachments",
+            "description": "Implement the UI and logic for users to select one or more files for upload using PromptInputActionAddAttachments.",
+            "dependencies": [],
+            "details": "Render the file selection component within the chat or form interface. Ensure it supports multiple file selection and exposes the selected files as a list of File objects. Validate file types and sizes as needed before proceeding to upload.",
+            "status": "pending",
+            "testStrategy": "Test that users can select single and multiple files. Validate that the selected files are correctly listed and accessible for upload."
+          },
+          {
+            "id": 2,
+            "title": "Prepare Supabase Storage Path and Metadata for Upload",
+            "description": "Generate the correct Supabase Storage path for each file using the provided caso_id, and prepare any necessary metadata.",
+            "dependencies": [
+              "7.1"
+            ],
+            "details": "For each selected file, construct the storage path as 'casos/{caso_id}/adjuntos/{filename}'. Ensure caso_id is available and valid. Optionally, prepare metadata such as content type for each file.",
+            "status": "pending",
+            "testStrategy": "Verify that the generated paths match the expected format and include the correct caso_id and filename. Check that metadata is correctly assigned."
+          },
+          {
+            "id": 3,
+            "title": "Implement File Upload to Supabase Storage with Progress Tracking",
+            "description": "Upload each selected file to Supabase Storage at the prepared path, displaying real-time upload progress to the user.",
+            "dependencies": [
+              "7.2"
+            ],
+            "details": "Use the supabase-js SDK's upload method for each file, passing the bucket name, path, and file object. Implement progress tracking by listening to upload events or periodically updating progress based on bytes transferred. Handle large files using resumable or multipart upload if needed.",
+            "status": "pending",
+            "testStrategy": "Upload files of varying sizes and verify that progress is displayed accurately. Simulate slow network conditions to test progress updates."
+          },
+          {
+            "id": 4,
+            "title": "Handle Upload Errors and Provide User Feedback",
+            "description": "Detect and handle errors during file upload, displaying clear error messages and allowing retry or cancellation.",
+            "dependencies": [
+              "7.3"
+            ],
+            "details": "Catch errors from the upload process, such as network failures, file size limits, or permission issues. Display user-friendly error messages in the UI. Allow users to retry failed uploads or remove problematic files from the selection.",
+            "status": "pending",
+            "testStrategy": "Simulate upload failures (e.g., disconnect network, upload oversized files) and confirm that errors are caught and displayed. Test retry and cancellation flows."
+          },
+          {
+            "id": 5,
+            "title": "Return Uploaded File URLs and Integrate with Parent Workflow",
+            "description": "Collect the URLs of successfully uploaded files and return them to the parent component or workflow for further processing.",
+            "dependencies": [
+              "7.3",
+              "7.4"
+            ],
+            "details": "After each successful upload, retrieve the public URL or storage reference for the file from Supabase. Aggregate all URLs and pass them to the parent workflow, ensuring only successfully uploaded files are included.",
+            "status": "pending",
+            "testStrategy": "Verify that the returned URLs are correct and accessible. Test integration with downstream components that consume these URLs."
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Send Uploaded File URLs to Typebot",
+        "description": "Include an 'adjuntos' array with Supabase Storage URLs in the message payload sent to Typebot.",
+        "details": "After successful upload, collect file URLs and include them in the adjuntos property of the payload for /startChat and /continueChat calls via typebotApiService.",
+        "testStrategy": "Verify that the payload sent to Typebot includes the correct adjuntos array. Check that Typebot receives and processes the file links.",
+        "priority": "high",
+        "dependencies": [
+          5,
+          7
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Collect Uploaded File Paths from Supabase Storage",
+            "description": "After files are uploaded to Supabase Storage, gather the storage paths or identifiers for each uploaded file.",
+            "dependencies": [],
+            "details": "Ensure the upload logic returns or stores the file paths (bucket and object key) for each successfully uploaded file. These paths will be used to generate URLs in the next step.",
+            "status": "pending",
+            "testStrategy": "Upload multiple files and verify that their storage paths are correctly collected and available for further processing."
+          },
+          {
+            "id": 2,
+            "title": "Generate Public or Signed URLs for Uploaded Files",
+            "description": "Convert the collected Supabase Storage file paths into accessible URLs using either public URLs or signed URLs, depending on bucket permissions.",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "If the bucket is public, use Supabase's getPublicUrl method to generate URLs. If private, use createSignedUrl or createSignedUrls for temporary access. Ensure all URLs are valid and accessible as required by the application context.",
+            "status": "pending",
+            "testStrategy": "For each file path, verify that the generated URL is accessible and matches the expected format. Test both public and signed URL scenarios."
+          },
+          {
+            "id": 3,
+            "title": "Assemble 'adjuntos' Array with File URLs",
+            "description": "Create an array named 'adjuntos' containing all generated file URLs to be included in the Typebot message payload.",
+            "dependencies": [
+              "8.2"
+            ],
+            "details": "Map each generated file URL into the 'adjuntos' array. Ensure the array structure matches the expected payload schema for Typebot API calls.",
+            "status": "pending",
+            "testStrategy": "Check that the 'adjuntos' array contains all and only the intended URLs, and that its structure is correct."
+          },
+          {
+            "id": 4,
+            "title": "Integrate 'adjuntos' Array into Typebot API Payload",
+            "description": "Modify the payload construction logic for /startChat and /continueChat calls to include the 'adjuntos' array with file URLs.",
+            "dependencies": [
+              "8.3"
+            ],
+            "details": "Update typebotApiService to accept and inject the 'adjuntos' array into the payload for both chat initiation and continuation endpoints. Ensure backward compatibility if 'adjuntos' is optional.",
+            "status": "pending",
+            "testStrategy": "Send test payloads to Typebot and verify that the 'adjuntos' array is present and correctly formatted in the outgoing requests."
+          },
+          {
+            "id": 5,
+            "title": "Verify End-to-End Delivery and Processing of File URLs by Typebot",
+            "description": "Test the full flow to ensure that Typebot receives and processes the 'adjuntos' array as intended, and that file links are usable in the chat context.",
+            "dependencies": [
+              "8.4"
+            ],
+            "details": "Perform integration tests simulating user uploads, chat initiation, and continuation. Confirm that Typebot receives the URLs and that they are accessible and displayed or handled as expected in the chat interface.",
+            "status": "pending",
+            "testStrategy": "Check Typebot's received payloads, confirm file links are functional in the chat, and validate error handling for missing or invalid URLs."
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Implement Error Handling and User Feedback",
+        "description": "Display clear error messages for API failures and file upload issues throughout the chat flow.",
+        "details": "Catch and handle errors in all async operations (API calls, uploads). Show user-friendly error messages in the UI. Ensure errors do not break the flow.",
+        "testStrategy": "Simulate API and upload failures. Confirm that appropriate error messages are displayed and the UI remains stable.",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          5,
+          7
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Audit Async Operations for Error Sources",
+            "description": "Identify all async operations in the chat flow, including API calls and file uploads, and document where errors may occur.",
+            "dependencies": [],
+            "details": "Review all code handling API requests and file uploads. List each async operation and specify potential failure points (e.g., network errors, invalid responses, upload timeouts). This audit will inform where error handling logic needs to be implemented.",
+            "status": "pending",
+            "testStrategy": "Verify the audit covers all async operations by cross-referencing with the chat flow and upload logic."
+          },
+          {
+            "id": 2,
+            "title": "Implement Centralized Error Handling Logic",
+            "description": "Develop reusable error handling functions for API and upload failures, ensuring all async operations use these handlers.",
+            "dependencies": [
+              "9.1"
+            ],
+            "details": "Create error handler utilities (e.g., handleApiError, handleUploadError) that catch exceptions, log errors, and return standardized error objects. Refactor async operations to use these handlers, ensuring consistent error capture and propagation.",
+            "status": "pending",
+            "testStrategy": "Simulate failures in API and upload operations and confirm that errors are caught and processed by the centralized handlers."
+          },
+          {
+            "id": 3,
+            "title": "Design and Implement User-Friendly Error Messages",
+            "description": "Create clear, actionable, and context-aware error messages for each error scenario, following best practices for tone and guidance.",
+            "dependencies": [
+              "9.2"
+            ],
+            "details": "Draft error messages that explain the issue, avoid blaming the user, and suggest next steps or alternatives. Implement UI components to display these messages in the chat interface and upload dialogs. Use call-to-actions (e.g., retry, contact support) where appropriate.",
+            "status": "pending",
+            "testStrategy": "Trigger each error scenario and verify that the correct message appears, is understandable, and guides the user effectively."
+          },
+          {
+            "id": 4,
+            "title": "Ensure Error Messages Do Not Break Chat Flow",
+            "description": "Modify chat and upload UI logic to gracefully handle errors, maintaining conversation continuity and partial functionality where possible.",
+            "dependencies": [
+              "9.3"
+            ],
+            "details": "Update UI state management so that errors do not block further user actions. Allow users to retry failed operations, continue chatting, or access alternative features. Implement fallback responses and escalation paths (e.g., offer human support after repeated failures).",
+            "status": "pending",
+            "testStrategy": "Simulate consecutive errors and confirm that the chat flow remains usable, with options for recovery or escalation."
+          },
+          {
+            "id": 5,
+            "title": "Implement Error Logging and Feedback Collection",
+            "description": "Log all error events and provide mechanisms for users to submit feedback on error experiences, enabling continuous improvement.",
+            "dependencies": [
+              "9.4"
+            ],
+            "details": "Integrate error logging (e.g., to analytics or monitoring services) for all handled errors. Add a feedback prompt after error messages, allowing users to report issues or suggest improvements. Regularly review logs and feedback to identify patterns and refine error handling.",
+            "status": "pending",
+            "testStrategy": "Verify that errors are logged with sufficient detail and that user feedback submissions are captured and accessible for review."
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Enforce Supabase Storage RLS Policies for Security",
+        "description": "Configure Supabase Storage Row Level Security (RLS) to restrict file uploads to authorized users and their own cases.",
+        "details": "Define and test RLS policies so users can only upload and access files in their own casos/{caso_id}/adjuntos/ directories. Document policy logic.",
+        "testStrategy": "Attempt uploads and access with various user roles and cases. Ensure unauthorized access is denied and authorized access works as expected.",
+        "priority": "high",
+        "dependencies": [
+          7
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Analyze Storage Structure and User-Case Mapping",
+            "description": "Review the Supabase Storage bucket structure and determine how user authentication and caso_id are mapped to storage paths (casos/{caso_id}/adjuntos/).",
+            "dependencies": [],
+            "details": "Inspect the current storage bucket and directory organization. Confirm that each file is stored under a path that includes the relevant caso_id and that user identity (auth.uid()) can be reliably associated with allowed caso_ids. Document the mapping logic for use in policy expressions.",
+            "status": "pending",
+            "testStrategy": "Verify that for a given user and caso_id, the expected storage path is generated and accessible in code."
+          },
+          {
+            "id": 2,
+            "title": "Enable RLS on storage.objects Table",
+            "description": "Ensure Row Level Security is enabled on the storage.objects table to enforce policy checks for all storage operations.",
+            "dependencies": [
+              "10.1"
+            ],
+            "details": "In the Supabase dashboard or SQL editor, run the command to enable RLS on the storage.objects table. Confirm that no storage operations are permitted until explicit policies are defined.",
+            "status": "pending",
+            "testStrategy": "Attempt to upload or access files after enabling RLS but before adding policies; confirm that all operations are denied."
+          },
+          {
+            "id": 3,
+            "title": "Define RLS Policies for File Upload and Access",
+            "description": "Create RLS policies that allow authenticated users to upload and access files only within their authorized casos/{caso_id}/adjuntos/ directories.",
+            "dependencies": [
+              "10.2"
+            ],
+            "details": "Write SQL policies for the storage.objects table:\n- INSERT: Allow only authenticated users to upload files where the path matches casos/{caso_id}/adjuntos/ and the caso_id is authorized for the user.\n- SELECT: Allow only authenticated users to access files in their own casos/{caso_id}/adjuntos/ directories.\nUse expressions referencing auth.uid() and path parsing helpers as needed.",
+            "status": "pending",
+            "testStrategy": "Test policy logic with various users and caso_ids, ensuring only authorized uploads and access are permitted."
+          },
+          {
+            "id": 4,
+            "title": "Test RLS Policies with Multiple User Scenarios",
+            "description": "Systematically test the defined RLS policies by simulating uploads and access attempts from users with different roles and case assignments.",
+            "dependencies": [
+              "10.3"
+            ],
+            "details": "Create test users and assign them to different cases. Attempt file uploads and downloads to various casos/{caso_id}/adjuntos/ directories, including both authorized and unauthorized scenarios. Log and analyze results to confirm policy enforcement.",
+            "status": "pending",
+            "testStrategy": "Automate tests where possible. Ensure unauthorized access is denied and authorized access works as expected."
+          },
+          {
+            "id": 5,
+            "title": "Document RLS Policy Logic and Security Model",
+            "description": "Write clear documentation explaining the RLS policy logic, including how user-case authorization is enforced and how to maintain or extend the policies.",
+            "dependencies": [
+              "10.4"
+            ],
+            "details": "Document the SQL policy definitions, the rationale for each policy, and the mapping between user authentication, caso_id, and storage paths. Include guidance for future maintenance and troubleshooting.",
+            "status": "pending",
+            "testStrategy": "Have a peer review the documentation for clarity and completeness. Ensure it enables future developers to understand and safely modify the policies."
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2025-09-23T08:44:39.748Z",
+      "updated": "2025-09-23T10:14:17.757Z",
+      "description": "Tasks for feature-chat-dashboard context"
+    }
   }
 }
