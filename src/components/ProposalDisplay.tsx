@@ -17,7 +17,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
-const PricingSection = lazy(() => import('@/components/ui/pricing-section').then(m => ({ default: m.PricingSection })));
+import { PricingSection } from '@/components/ui/pricing-section';
 const AuthModal = lazy(() => import('@/components/AuthModal'));
 
 // Esquema de validación para el formulario de presupuesto
@@ -520,9 +520,7 @@ const ProposalDisplay = ({ proposalData, casoId, isModal = false, onClose }: Pro
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
         >
-          <Suspense fallback={<div className="animate-pulse bg-white/60 dark:bg-gray-800/60 rounded-xl h-64 sm:h-72 w-full" />}> 
           <PricingSection tier={singlePlan} />
-          </Suspense>
         </motion.div>
 
         {/* Sección de guardar progreso */}

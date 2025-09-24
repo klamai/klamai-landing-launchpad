@@ -54,24 +54,28 @@ const ClientMisCasos: React.FC = () => {
   // Estados específicos para el cliente
   const getClientStatusBadge = (estado: string) => {
     const statusConfig = {
-      'disponible': { 
-        label: 'En Revisión', 
-        className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-      },
-      'asignado': { 
-        label: 'En Proceso', 
-        className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-      },
-      'esperando_pago': { 
-        label: 'Por Pagar', 
-        className: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
-      },
-      'cerrado': { 
-        label: 'Finalizado', 
+      'borrador': {
+        label: 'En Borrador',
         className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
       },
-      'listo_para_propuesta': { 
-        label: 'Propuesta Lista', 
+      'disponible': {
+        label: 'En Revisión',
+        className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      },
+      'asignado': {
+        label: 'En Proceso',
+        className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+      },
+      'esperando_pago': {
+        label: 'Por Pagar',
+        className: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+      },
+      'cerrado': {
+        label: 'Finalizado',
+        className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+      },
+      'listo_para_propuesta': {
+        label: 'Propuesta Lista',
         className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
       }
     };
@@ -97,6 +101,7 @@ const ClientMisCasos: React.FC = () => {
   const getDisplayData = () => {
     if (statusFilter !== 'all') {
       const statusLabel = {
+        'borrador': 'En Borrador',
         'disponible': 'En Revisión',
         'asignado': 'En Proceso',
         'esperando_pago': 'Por Pagar',
@@ -198,6 +203,7 @@ const ClientMisCasos: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-2 border-gray-200 dark:border-gray-700">
                   <SelectItem value="all" className="rounded-lg">Todos los estados</SelectItem>
+                  <SelectItem value="borrador" className="rounded-lg">En Borrador</SelectItem>
                   <SelectItem value="disponible" className="rounded-lg">En Revisión</SelectItem>
                   <SelectItem value="asignado" className="rounded-lg">En Proceso</SelectItem>
                   <SelectItem value="esperando_pago" className="rounded-lg">Por Pagar</SelectItem>

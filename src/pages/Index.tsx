@@ -80,7 +80,7 @@ const Index = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
   const {
     register,
@@ -149,7 +149,8 @@ const Index = () => {
       const { data, error } = await supabase.functions.invoke('crear-borrador-caso', {
         body: {
           motivo_consulta: formData.consultation.trim(),
-          session_token: sessionToken
+          session_token: sessionToken,
+          cliente_id: (user && profile?.role === 'cliente') ? user.id : undefined
         }
       });
 

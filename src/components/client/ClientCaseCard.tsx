@@ -123,6 +123,10 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
   // Estados específicos para el cliente
   const getClientStatusBadge = (estado: string) => {
     const statusConfig = {
+      'borrador': {
+        label: 'En Borrador',
+        className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+      },
       'disponible': {
         label: 'En Revisión',
         className: 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 shadow-blue-100/50 dark:shadow-blue-900/20'
@@ -283,7 +287,7 @@ const ClientCaseCard: React.FC<ClientCaseCardProps> = ({
               {caso.fecha_pago && (
                 <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-800">
                   <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                  <span className="hidden sm:inline">Pagado</span>
+                  <span className="hidden sm:inline">Visita Pagada</span>
                   <span className="sm:hidden">✓</span>
                 </span>
               )}

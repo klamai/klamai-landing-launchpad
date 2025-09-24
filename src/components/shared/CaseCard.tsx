@@ -344,7 +344,7 @@ const CaseCard: React.FC<CaseCardProps> = ({
               {caso.fecha_pago && (
                 <div className="flex items-center gap-1 sm:gap-1.5 bg-green-50 dark:bg-green-900/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-green-200 dark:border-green-700">
                   <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-green-600 dark:text-green-400" />
-                  <span className="font-semibold text-green-700 dark:text-green-300 text-xs">Pagado</span>
+                  <span className="font-semibold text-green-700 dark:text-green-300 text-xs">Visita Pagada</span>
                 </div>
               )}
             </div>

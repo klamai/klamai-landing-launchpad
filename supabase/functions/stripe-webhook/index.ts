@@ -387,6 +387,7 @@ async function handleAnonymousPayment(session, supabase) {
     const { error: linkError } = await supabase.from('casos').update({
       cliente_id: newUser.user.id,
       estado: 'disponible',
+      fecha_pago: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }).eq('id', casoId);
 
@@ -763,6 +764,7 @@ async function handleExistingUser(supabase, userId, casoId, session) {
     const { error: linkError } = await supabase.from('casos').update({
       cliente_id: userId,
       estado: 'disponible',
+      fecha_pago: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }).eq('id', casoId);
 

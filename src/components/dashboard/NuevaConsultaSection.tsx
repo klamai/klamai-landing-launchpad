@@ -9,6 +9,7 @@ import { FileText, MessageSquare, Send, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { SecureLogger } from '@/utils/secureLogging';
+import { useAuth } from '@/hooks/useAuth';
 import { CustomChat } from '@/components/client/chat/CustomChat';
 
 type Step = 'form' | 'chat';
@@ -20,6 +21,7 @@ const NuevaConsultaSection = memo<NuevaConsultaSectionProps>(() => {
   const [caseId, setCaseId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user, profile } = useAuth();
 
   const uploadFilesToStorage = async (files: File[], casoId: string): Promise<string[]> => {
     const uploadedUrls: string[] = [];
@@ -77,6 +79,7 @@ const NuevaConsultaSection = memo<NuevaConsultaSectionProps>(() => {
         body: {
           motivo_consulta: formData.query.trim(),
           session_token: sessionToken,
+          cliente_id: (user && profile?.role === 'cliente') ? user.id : undefined,
           archivos_adjuntos: uploadedFileUrls.length > 0 ? uploadedFileUrls : undefined
         }
       });

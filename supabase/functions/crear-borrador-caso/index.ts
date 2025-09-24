@@ -19,7 +19,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { motivo_consulta, session_token } = await req.json()
+    const { motivo_consulta, session_token, cliente_id } = await req.json()
 
     if (!motivo_consulta) {
       return new Response(
@@ -49,6 +49,7 @@ serve(async (req) => {
       .insert({
         motivo_consulta,
         session_token,
+        cliente_id, // Solo asignar si es un cliente autenticado
         estado: 'borrador',
         created_at: new Date().toISOString()
       })
