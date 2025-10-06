@@ -220,16 +220,14 @@ export const useSignOut = () => {
       }
     },
     onSuccess: () => {
-      // Limpiar todas las queries relacionadas con autenticación
-      queryClient.removeQueries({ queryKey: ['session'] });
-      queryClient.removeQueries({ queryKey: ['profile'] });
-      queryClient.removeQueries({ queryKey: ['sessionValidation'] });
+      // Limpiar el caché de React Query de forma más agresiva
+      queryClient.clear();
       
       // Limpiar cualquier estado persistente
-      localStorage.removeItem('supabase.auth.token');
+      localStorage.clear();
       sessionStorage.clear();
       
-      console.log('Sign out completed successfully');
+      console.log('Sign out and cache cleared successfully');
     },
     onError: (error: any) => {
       console.error('Sign out failed:', error);
