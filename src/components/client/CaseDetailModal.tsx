@@ -74,10 +74,10 @@ interface ClientCaseDetailModalProps {
     ciudad_borrador?: string;
     especialidades?: { id: number; nombre: string };
     hoja_encargo_token?: string; // Token para hoja de encargo
-    profiles?: { 
-      nombre: string; 
-      apellido: string; 
-      email: string;
+    transcripcion_chat?: any;
+    profiles?: {
+      nombre: string;
+      apellido: string;
       telefono?: string;
       ciudad?: string;
     };
@@ -378,6 +378,9 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
                         </TabsTrigger>
                         <TabsTrigger value="hoja-encargo" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
                           <Shield className="h-3 w-3" /> Hoja Enc
+                        </TabsTrigger>
+                        <TabsTrigger value="chat" className="flex items-center gap-1 px-3 py-2 flex-1 min-w-[100px] max-w-[120px] md:flex-none md:min-w-[120px] md:max-w-[140px] flex-shrink-0 whitespace-nowrap text-xs">
+                          <MessageSquare className="h-3 w-3" /> Convers
                         </TabsTrigger>
                         <TabsTrigger value="interacciones" className="relative flex-1 min-w-[90px] max-w-[110px] md:flex-none md:min-w-[110px] md:max-w-[130px] flex-shrink-0 whitespace-nowrap text-xs px-3 py-2">
                           Interacc
@@ -725,6 +728,76 @@ const ClientCaseDetailModal: React.FC<ClientCaseDetailModalProps> = ({
                             <p className="text-xs">
                               El administrador puede crear una hoja de encargo cuando sea necesario.
                             </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="chat" className="space-y-4 mt-0">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {(caso as any)?.transcripcion_chat ? (
+                          <div className="space-y-4 max-h-96 overflow-y-auto">
+                            <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                              {(() => {
+                                const transcripcion = (caso as any).transcripcion_chat;
+
+                                if (typeof transcripcion === 'string') {
+                                  return (
+                                    <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
+                                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {transcripcion}
+                                      </ReactMarkdown>
+                                    </div>
+                                  );
+                                }
+
+                                if (Array.isArray(transcripcion)) {
+                                  return (
+                                    <div className="space-y-3">
+                                      {transcripcion.map((message, index) => {
+                                        const isUser = index % 2 === 0;
+                                        return (
+                                          <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[80%] p-3 rounded-lg ${
+                                              isUser
+                                                ? 'bg-blue-500 text-white rounded-br-sm'
+                                                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-sm'
+                                            }`}>
+                                              <div className="flex items-center gap-2 mb-1">
+                                                <span className={`text-xs font-semibold ${isUser ? 'text-blue-100' : 'text-gray-600 dark:text-gray-400'}`}>
+                                                  {isUser ? '👤 Usuario' : '🤖 VitorIA'}
+                                                </span>
+                                              </div>
+                                              <div className="prose prose-slate max-w-none dark:prose-invert text-sm prose-p:my-1 prose-headings:my-1">
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                  {message}
+                                                </ReactMarkdown>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto">
+                                    {JSON.stringify(transcripcion, null, 2)}
+                                  </pre>
+                                );
+                              })()}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p>No hay transcripción disponible</p>
                           </div>
                         )}
                       </CardContent>

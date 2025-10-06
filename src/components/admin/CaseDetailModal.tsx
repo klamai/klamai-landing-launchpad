@@ -638,20 +638,22 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      {updatedCaso.resumen_caso && (
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-2">Resumen del caso:</p>
                         <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                           <ScrollArea className="h-96">
-                            <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
+                            {updatedCaso.resumen_caso ? (
+                              <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                   {updatedCaso.resumen_caso}
                                 </ReactMarkdown>
-                            </div>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">No hay resumen disponible</p>
+                            )}
                           </ScrollArea>
                         </div>
                       </div>
-                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center gap-1">
@@ -669,21 +671,38 @@ const AdminCaseDetailModal: React.FC<AdminCaseDetailModalProps> = ({
                       </div>
                     </div>
 
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Guía para el abogado:</p>
+                      <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                        {updatedCaso.guia_abogado ? (
+                          <ScrollArea className="h-96">
+                            <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {updatedCaso.guia_abogado}
+                              </ReactMarkdown>
+                            </div>
+                          </ScrollArea>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No hay guía disponible</p>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {updatedCaso.tipo_lead && (
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Tipo de lead:</p>
+                          {updatedCaso.tipo_lead ? (
                             <Badge variant="secondary" className="capitalize">{updatedCaso.tipo_lead}</Badge>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">No especificado</span>
+                          )}
                         </div>
-                      )}
-                        {updatedCaso.valor_estimado && (
                         <div className="flex items-center gap-1 text-sm">
                           <Euro className="h-4 w-4 text-blue-600" />
                           <span className="font-medium text-blue-700 dark:text-blue-400">
-                              Valor estimado: {updatedCaso.valor_estimado}
+                              Valor estimado: {updatedCaso.valor_estimado || 'No especificado'}
                           </span>
                         </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
