@@ -887,19 +887,69 @@ const LawyerCaseDetailModal: React.FC<LawyerCaseDetailModalProps> = ({
                       <CardTitle className="text-base">Transcripción de la Conversación</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {caso.transcripcion_chat ? (
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
-                          {JSON.stringify(caso.transcripcion_chat, null, 2)}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p>No hay transcripción disponible</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                       {(caso as any)?.transcripcion_chat ? (
+                       <div className="space-y-4 max-h-96 overflow-y-auto">
+                         <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                           {(() => {
+                             const transcripcion = (caso as any).transcripcion_chat;
+
+                             if (typeof transcripcion === 'string') {
+                               return (
+                                 <div className="prose prose-slate max-w-none dark:prose-invert text-sm">
+                                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                     {transcripcion}
+                                   </ReactMarkdown>
+                                 </div>
+                               );
+                             }
+
+                             if (Array.isArray(transcripcion)) {
+                               return (
+                                 <div className="space-y-3">
+                                   {transcripcion.map((message, index) => {
+                                     const isUser = index % 2 === 0;
+                                     return (
+                                       <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                                         <div className={`max-w-[80%] p-3 rounded-lg ${
+                                           isUser
+                                             ? 'bg-blue-500 text-white rounded-br-sm'
+                                             : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-sm'
+                                         }`}>
+                                           <div className="flex items-center gap-2 mb-1">
+                                             <span className={`text-xs font-semibold ${isUser ? 'text-blue-100' : 'text-gray-600 dark:text-gray-400'}`}>
+                                               {isUser ? '👤 Usuario' : '🤖 VitorIA'}
+                                             </span>
+                                           </div>
+                                           <div className="prose prose-slate max-w-none dark:prose-invert text-sm prose-p:my-1 prose-headings:my-1">
+                                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                               {message}
+                                             </ReactMarkdown>
+                                           </div>
+                                         </div>
+                                       </div>
+                                     );
+                                   })}
+                                 </div>
+                               );
+                             }
+
+                             return (
+                               <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto">
+                                 {JSON.stringify(transcripcion, null, 2)}
+                               </pre>
+                             );
+                           })()}
+                         </div>
+                       </div>
+                     ) : (
+                       <div className="text-center py-8 text-muted-foreground">
+                         <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                         <p>No hay transcripción disponible</p>
+                       </div>
+                     )}
+                   </CardContent>
+                 </Card>
+               </TabsContent>
 
                 <TabsContent value="documentos-resolucion" className="space-y-4 mt-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

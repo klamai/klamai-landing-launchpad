@@ -44,15 +44,40 @@ serve(async (req) => {
     console.log('Creando caso borrador con:', { motivo_consulta, session_token })
 
     // Crear caso borrador en la base de datos
+    let casoData: any = {
+      motivo_consulta,
+      session_token,
+      cliente_id,
+      estado: 'borrador',
+      canal_atencion: 'web_vito',
+      created_at: new Date().toISOString()
+    };
+
+    if (cliente_id) {
+      const { data: profile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', cliente_id)
+        .single();
+      
+      if (profile) {
+        casoData = {
+          ...casoData,
+          nombre_borrador: profile.nombre,
+          apellido_borrador: profile.apellido,
+          email_borrador: profile.email,
+          telefono_borrador: profile.telefono,
+          ciudad_borrador: profile.ciudad,
+          tipo_perfil_borrador: profile.tipo_perfil,
+          razon_social_borrador: profile.razon_social,
+          nif_cif_borrador: profile.nif_cif,
+        };
+      }
+    }
+
     const { data: caso, error: casoError } = await supabaseClient
       .from('casos')
-      .insert({
-        motivo_consulta,
-        session_token,
-        cliente_id, // Solo asignar si es un cliente autenticado
-        estado: 'borrador',
-        created_at: new Date().toISOString()
-      })
+      .insert(casoData)
       .select('id')
       .single()
 

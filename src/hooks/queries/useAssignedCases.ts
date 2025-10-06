@@ -21,6 +21,7 @@ interface AssignedCase {
   };
   valor_estimado?: string | null;
   ciudad_borrador?: string | null;
+  transcripcion_chat?: any;
   fecha_asignacion: string;
   estado_asignacion: string;
   notas_asignacion?: string;
@@ -80,6 +81,7 @@ const fetchAssignedCases = async (): Promise<AssignedCase[]> => {
         valor_estimado,
         ciudad_borrador,
         fecha_pago,
+        transcripcion_chat,
         especialidades:especialidades (
           nombre
         ),
@@ -115,6 +117,7 @@ const fetchAssignedCases = async (): Promise<AssignedCase[]> => {
     especialidades: assignment.casos.especialidades,
     valor_estimado: assignment.casos.valor_estimado,
     ciudad_borrador: assignment.casos.ciudad_borrador,
+    transcripcion_chat: assignment.casos.transcripcion_chat,
     fecha_asignacion: assignment.fecha_asignacion,
     estado_asignacion: assignment.estado_asignacion,
     notas_asignacion: assignment.notas_asignacion,

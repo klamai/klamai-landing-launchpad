@@ -209,6 +209,7 @@ serve(async (req) => {
         caso_id: caso_id,
         user_id: user.id,
         plan_id: plan_id,
+        flujo_origen: 'dashboard_registrado',
       },
     }, {
       // Evita duplicaciones ante reintentos rápidos

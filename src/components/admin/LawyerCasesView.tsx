@@ -9,7 +9,9 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Briefcase
+  Briefcase,
+  Globe,
+  MessageCircle
 } from 'lucide-react';
 import { useAdminLawyerCases } from '@/hooks/queries/useLawyerCases';
 import { Button } from '@/components/ui/button';
@@ -55,6 +57,31 @@ const LawyerCasesView: React.FC<LawyerCasesViewProps> = ({
         return <Clock className="h-4 w-4 text-blue-600" />;
       default:
         return <AlertCircle className="h-4 w-4 text-gray-600" />;
+    }
+  };
+
+  const getChannelIcon = (canal: string | null) => {
+    if (!canal) return null;
+
+    switch (canal) {
+      case 'web_vito':
+        return (
+          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+            <Globe className="w-3 h-3 mr-1" />
+            Web
+          </Badge>
+        );
+      case 'chat_abg':
+        return (
+          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800">
+            <MessageCircle className="w-3 h-3 mr-1" />
+            Chat
+          </Badge>
+        );
+      case 'manual_admin':
+        return null; // No mostrar nada para manual
+      default:
+        return null;
     }
   };
 
@@ -208,8 +235,9 @@ const LawyerCasesView: React.FC<LawyerCasesViewProps> = ({
                   )}
                 </div>
 
-                {/* Especialidades y valor */}
+                {/* Especialidades, canal y valor */}
                 <div className="flex flex-wrap items-center gap-2 mb-4">
+                  {getChannelIcon(case_.canal_atencion)}
                   {case_.especialidades && Array.isArray(case_.especialidades) && case_.especialidades.length > 0 ? (
                     case_.especialidades.slice(0, 3).map((esp, index) => (
                       <Badge key={index} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">

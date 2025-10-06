@@ -18,6 +18,7 @@ interface LawyerCase {
   ciudad_borrador?: string;
   tipo_lead?: string;
   valor_estimado?: string;
+  canal_atencion?: string;
 }
 
 // Hook para obtener casos asignados a un abogado específico (para administradores)
@@ -47,6 +48,7 @@ export const useAdminLawyerCases = (lawyerId: string | null) => {
             ciudad_borrador,
             tipo_lead,
             valor_estimado,
+            canal_atencion,
             especialidades (
               nombre
             )
@@ -62,22 +64,23 @@ export const useAdminLawyerCases = (lawyerId: string | null) => {
       }
 
       return (data || []).map(assignment => ({
-        id: assignment.casos.id,
-        motivo_consulta: assignment.casos.motivo_consulta,
-        resumen_caso: assignment.casos.resumen_caso,
-        estado: assignment.casos.estado,
-        created_at: assignment.casos.created_at,
+        id: assignment.casos[0].id,
+        motivo_consulta: assignment.casos[0].motivo_consulta,
+        resumen_caso: assignment.casos[0].resumen_caso,
+        estado: assignment.casos[0].estado,
+        created_at: assignment.casos[0].created_at,
         fecha_asignacion: assignment.fecha_asignacion,
         estado_asignacion: assignment.estado_asignacion,
         notas_asignacion: assignment.notas_asignacion,
         asignacion_id: assignment.id,
-        especialidades: assignment.casos.especialidades,
-        nombre_borrador: assignment.casos.nombre_borrador,
-        apellido_borrador: assignment.casos.apellido_borrador,
-        email_borrador: assignment.casos.email_borrador,
-        ciudad_borrador: assignment.casos.ciudad_borrador,
-        tipo_lead: assignment.casos.tipo_lead,
-        valor_estimado: assignment.casos.valor_estimado
+        especialidades: assignment.casos[0].especialidades,
+        nombre_borrador: assignment.casos[0].nombre_borrador,
+        apellido_borrador: assignment.casos[0].apellido_borrador,
+        email_borrador: assignment.casos[0].email_borrador,
+        ciudad_borrador: assignment.casos[0].ciudad_borrador,
+        tipo_lead: assignment.casos[0].tipo_lead,
+        valor_estimado: assignment.casos[0].valor_estimado,
+        canal_atencion: assignment.casos[0].canal_atencion
       }));
     },
     enabled: !!lawyerId,

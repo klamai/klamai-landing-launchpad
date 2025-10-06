@@ -112,7 +112,7 @@ export type Database = {
         Row: {
           acepto_politicas_inicial: boolean | null
           apellido_borrador: string | null
-          canal_atencion: string | null
+          canal_atencion: Database["public"]["Enums"]["canal_atencion_enum"] | null
           cerrado_por: string | null
           chat_finalizado_at: string | null
           ciudad_borrador: string | null
@@ -1588,6 +1588,7 @@ export type Database = {
     }
     Enums: {
       abogado_tipo_enum: "super_admin" | "regular"
+      canal_atencion_enum: "web_vito" | "chat_abg" | "manual_admin"
       caso_estado_enum:
         | "borrador"
         | "esperando_pago"
@@ -1747,6 +1748,7 @@ export const Constants = {
   public: {
     Enums: {
       abogado_tipo_enum: ["super_admin", "regular"],
+      canal_atencion_enum: ["web_vito", "chat_abg", "manual_admin"],
       caso_estado_enum: [
         "borrador",
         "esperando_pago",

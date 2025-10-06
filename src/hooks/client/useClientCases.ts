@@ -67,7 +67,7 @@ export const useClientCases = () => {
       return (data as unknown) as ClientCase[];
     },
     enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutos
+    staleTime: 30 * 1000, // 30 segundos
     gcTime: 5 * 60 * 1000, // 5 minutos
   });
 }; 

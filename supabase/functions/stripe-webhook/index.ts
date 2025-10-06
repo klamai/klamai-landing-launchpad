@@ -321,7 +321,8 @@ async function handleAnonymousPayment(session, supabase) {
       }
 
     if (foundUser) {
-      // Usuario existente → vincular caso y notificar
+      // Usuario existente → usar el flujo específico para usuarios existentes encontrados en pagos anónimos
+      logStep("Found existing user in anonymous flow, using existing user flow", { userId: maskId(foundUser.id) });
       return await handleExistingUser(supabase, foundUser.id, casoId, session);
     }
 
@@ -592,7 +593,8 @@ async function handleRegisteredUserPayment(session, supabase, stripe) {
     };
   }
   try {
-    await linkCaseToUser(supabase, casoId, userId, false);
+    // ✅ CORREGIDO: Usuarios registrados que pagan desde dashboard deben tener estado 'disponible'
+    await linkCaseToUser(supabase, casoId, userId, false, true);
     // ✅ CORREGIDO: Registrar el pago en la tabla pagos con monto real de Stripe
     const paymentAmount = session.amount_total ? session.amount_total / 100 : 37.50; // Convertir de centavos
     const { error: pagoError } = await supabase.from("pagos").insert({
@@ -733,10 +735,11 @@ async function handleRegisteredUserPayment(session, supabase, stripe) {
   }
 }
 // --- FUNCIÓN AUXILIAR REUTILIZABLE ---
-async function linkCaseToUser(supabase, casoId, userId, isNewUser = false) {
+async function linkCaseToUser(supabase, casoId, userId, isNewUser = false, isRegisteredUserPayment = false) {
   // Para usuarios nuevos, el caso debe quedar en estado "disponible"
   // Para usuarios existentes no confirmados, el caso debe quedar en "pago_realizado_pendiente_registro"
-  const estadoFinal = isNewUser ? "disponible" : "pago_realizado_pendiente_registro";
+  // Para usuarios registrados pagando desde dashboard, el caso debe quedar en "disponible"
+  const estadoFinal = isRegisteredUserPayment ? "disponible" : (isNewUser ? "disponible" : "pago_realizado_pendiente_registro");
   const { error } = await supabase.from("casos").update({
     cliente_id: userId,
     estado: estadoFinal,

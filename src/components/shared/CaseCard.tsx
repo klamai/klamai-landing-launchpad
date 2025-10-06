@@ -217,20 +217,17 @@ const CaseCard: React.FC<CaseCardProps> = ({
   
   const getOriginBadge = (canal: string) => {
     // ESTILO UNIFICADO: Gris neutro para consistencia
-    const isManual = canal === 'manual_admin';
+    const canalConfig = {
+      'web_vito': { icon: <Globe className="h-3 w-3 mr-1.5" />, label: 'Web Vito' },
+      'chat_abg': { icon: <Globe className="h-3 w-3 mr-1.5" />, label: 'Chat Abogados' },
+      'manual_admin': { icon: <FileSignature className="h-3 w-3 mr-1.5" />, label: 'Manual' }
+    };
+
+    const config = canalConfig[canal as keyof typeof canalConfig] || { icon: <Globe className="h-3 w-3 mr-1.5" />, label: canal };
     return (
       <Badge variant="outline" className="text-xs font-medium px-2 py-1 rounded-md bg-gray-200/80 dark:bg-gray-700/60 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 shadow-sm">
-        {isManual ? (
-          <>
-            <FileSignature className="h-3 w-3 mr-1.5" />
-            Manual
-          </>
-        ) : (
-          <>
-            <Globe className="h-3 w-3 mr-1.5" />
-            Web
-          </>
-        )}
+        {config.icon}
+        {config.label}
       </Badge>
     );
   };

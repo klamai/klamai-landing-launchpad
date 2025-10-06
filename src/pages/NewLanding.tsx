@@ -197,7 +197,8 @@ const NewLanding = () => {
       const { data, error } = await supabase.functions.invoke('crear-borrador-caso', {
         body: {
           motivo_consulta: formData.consultation.trim(),
-          session_token: sessionToken
+          session_token: sessionToken,
+          cliente_id: user?.id
         }
       });
 
